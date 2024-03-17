@@ -85,7 +85,8 @@ function(CheckFileList LIST_VAR FOLDER)
 endfunction()
 
 set( UNITTEST_DIR ${PROJECT_SOURCE_DIR}/test/unittests )
-set( HEADER_DIR ${PROJECT_SOURCE_DIR}/external/Catch2/single_include )
+#set( HEADER_DIR ${PROJECT_SOURCE_DIR}/external/Catch2/single_include )
+set( HEADER_DIR ${UNITTEST_DIR})
 
 # Check if all sources are listed; warn if not.
 set( SOURCES_ALL
