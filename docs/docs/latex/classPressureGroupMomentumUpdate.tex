@@ -1,0 +1,73 @@
+\hypertarget{classPressureGroupMomentumUpdate}{}\section{Pressure\+Group\+Momentum\+Update Class Reference}
+\label{classPressureGroupMomentumUpdate}\index{Pressure\+Group\+Momentum\+Update@{Pressure\+Group\+Momentum\+Update}}
+
+
+Create a graph that gets the net force on each pressure group and calc the new momentum.  
+
+
+
+
+{\ttfamily \#include $<$Pressure\+Group\+Momentum\+Update.\+h$>$}
+
+Inheritance diagram for Pressure\+Group\+Momentum\+Update\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classPressureGroupMomentumUpdate}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classPressureGroupMomentumUpdate_a2bfd6839085a1c51d0e2354dd1626763}{Pressure\+Group\+Momentum\+Update} (const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ fx, const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ fy, const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ fz, const double4 $\ast$old\+\_\+momentum\+\_\+invmass, double4 $\ast$new\+\_\+momentum\+\_\+invmass, const \hyperlink{structAtomIdList__t}{Atom\+Id\+List\+\_\+t} $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ group\+\_\+atom\+\_\+ids, double timestep, int num\+Groups)
+\begin{DoxyCompactList}\small\item\em Create a graph that gets the net force on each pressure group and updates the group net momentum. \end{DoxyCompactList}\item 
+\hyperlink{classPressureGroupMomentumUpdate_aa41078d9fadcd907d39c9ba18b3920ca}{$\sim$\+Pressure\+Group\+Momentum\+Update} ()
+\begin{DoxyCompactList}\small\item\em Destroy the graph, its nodes, and free internal memory. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Additional Inherited Members}
+
+
+\subsection{Detailed Description}
+Create a graph that gets the net force on each pressure group and calc the new momentum. 
+
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classPressureGroupMomentumUpdate_a2bfd6839085a1c51d0e2354dd1626763}{}\label{classPressureGroupMomentumUpdate_a2bfd6839085a1c51d0e2354dd1626763} 
+\index{Pressure\+Group\+Momentum\+Update@{Pressure\+Group\+Momentum\+Update}!Pressure\+Group\+Momentum\+Update@{Pressure\+Group\+Momentum\+Update}}
+\index{Pressure\+Group\+Momentum\+Update@{Pressure\+Group\+Momentum\+Update}!Pressure\+Group\+Momentum\+Update@{Pressure\+Group\+Momentum\+Update}}
+\subsubsection{\texorpdfstring{Pressure\+Group\+Momentum\+Update()}{PressureGroupMomentumUpdate()}}
+{\footnotesize\ttfamily Pressure\+Group\+Momentum\+Update\+::\+Pressure\+Group\+Momentum\+Update (\begin{DoxyParamCaption}\item[{const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{fx,  }\item[{const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{fy,  }\item[{const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{fz,  }\item[{const double4 $\ast$}]{old\+\_\+momentum\+\_\+invmass,  }\item[{double4 $\ast$}]{new\+\_\+momentum\+\_\+invmass,  }\item[{const \hyperlink{structAtomIdList__t}{Atom\+Id\+List\+\_\+t} $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{group\+\_\+atom\+\_\+ids,  }\item[{double}]{timestep,  }\item[{int}]{num\+Groups }\end{DoxyParamCaption})}
+
+
+
+Create a graph that gets the net force on each pressure group and updates the group net momentum. 
+
+All units are SI compatible, defining constants (planks constant, speed of light, charge of electron..., and such) may be different. 
+\begin{DoxyParams}{Parameters}
+{\em fx,fy,fz} & the device pointers to the array of atom forces. These must be in the same order as the atom ids. \\
+\hline
+{\em old\+\_\+momentum\+\_\+invmass} & The device pointer to the array of previous net momentums, and the inverse of the net masses, num\+Groups long. \\
+\hline
+{\em new\+\_\+momentum\+\_\+invmass} & \mbox{[}out\mbox{]} The device pointer to the array of new net momentums, and the inverse of the net masses, num\+Groups long. \\
+\hline
+{\em group\+\_\+atom\+\_\+ids} & The device pointer to the array of what atoms are in each pressure group. \\
+\hline
+{\em timestep} & Time step, how long the force should be applied. \\
+\hline
+{\em num\+Groups} & Number of groups. \\
+\hline
+\end{DoxyParams}
+\hypertarget{classPressureGroupMomentumUpdate_aa41078d9fadcd907d39c9ba18b3920ca}{}\label{classPressureGroupMomentumUpdate_aa41078d9fadcd907d39c9ba18b3920ca} 
+\index{Pressure\+Group\+Momentum\+Update@{Pressure\+Group\+Momentum\+Update}!````~Pressure\+Group\+Momentum\+Update@{$\sim$\+Pressure\+Group\+Momentum\+Update}}
+\index{````~Pressure\+Group\+Momentum\+Update@{$\sim$\+Pressure\+Group\+Momentum\+Update}!Pressure\+Group\+Momentum\+Update@{Pressure\+Group\+Momentum\+Update}}
+\subsubsection{\texorpdfstring{$\sim$\+Pressure\+Group\+Momentum\+Update()}{~PressureGroupMomentumUpdate()}}
+{\footnotesize\ttfamily Pressure\+Group\+Momentum\+Update\+::$\sim$\+Pressure\+Group\+Momentum\+Update (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Destroy the graph, its nodes, and free internal memory. 
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/\hyperlink{PressureGroupMomentumUpdate_8h}{Pressure\+Group\+Momentum\+Update.\+h}\end{DoxyCompactItemize}

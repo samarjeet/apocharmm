@@ -1,0 +1,47 @@
+\hypertarget{structr123_1_1ReinterpretCtr}{}\section{r123\+:\+:Reinterpret\+Ctr$<$ To\+Type, C\+B\+R\+NG $>$ Struct Template Reference}
+\label{structr123_1_1ReinterpretCtr}\index{r123\+::\+Reinterpret\+Ctr$<$ To\+Type, C\+B\+R\+N\+G $>$@{r123\+::\+Reinterpret\+Ctr$<$ To\+Type, C\+B\+R\+N\+G $>$}}
+
+
+{\ttfamily \#include $<$Reinterpret\+Ctr.\+hpp$>$}
+
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{structr123_1_1ReinterpretCtr_a26cf9e933b35411c37070c948085ba02}{}\label{structr123_1_1ReinterpretCtr_a26cf9e933b35411c37070c948085ba02} 
+typedef To\+Type {\bfseries ctr\+\_\+type}
+\item 
+\hypertarget{structr123_1_1ReinterpretCtr_a470b21676ed709aa9d9ad524a67410f1}{}\label{structr123_1_1ReinterpretCtr_a470b21676ed709aa9d9ad524a67410f1} 
+typedef C\+B\+R\+N\+G\+::key\+\_\+type {\bfseries key\+\_\+type}
+\item 
+\hypertarget{structr123_1_1ReinterpretCtr_ae0accaee618b5eb28a24acd516b3a4c6}{}\label{structr123_1_1ReinterpretCtr_ae0accaee618b5eb28a24acd516b3a4c6} 
+typedef C\+B\+R\+N\+G\+::ctr\+\_\+type {\bfseries bctype}
+\item 
+\hypertarget{structr123_1_1ReinterpretCtr_a4b0b69c1aa58d62bb22e51e16c586bee}{}\label{structr123_1_1ReinterpretCtr_a4b0b69c1aa58d62bb22e51e16c586bee} 
+typedef C\+B\+R\+N\+G\+::ukey\+\_\+type {\bfseries ukey\+\_\+type}
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{structr123_1_1ReinterpretCtr_ad6fe140cb2f1aa215c4741f646249b16}{}\label{structr123_1_1ReinterpretCtr_ad6fe140cb2f1aa215c4741f646249b16} 
+{\bfseries R123\+\_\+\+S\+T\+A\+T\+I\+C\+\_\+\+A\+S\+S\+E\+RT} (sizeof(To\+Type)==sizeof(bctype) \&\&sizeof(typename bctype\+::value\+\_\+type) !=16, \char`\"{}Reinterpret\+Ctr\+:  sizeof(To\+Type) is not the same as sizeof(C\+B\+R\+N\+G\+::ctr\+\_\+type) or C\+B\+R\+N\+G\+::ctr\+\_\+type\+::value\+\_\+type looks like it might be \+\_\+\+\_\+m128i\char`\"{})
+\item 
+\hypertarget{structr123_1_1ReinterpretCtr_a91edc5103397372cc5509ad17c0fc83a}{}\label{structr123_1_1ReinterpretCtr_a91edc5103397372cc5509ad17c0fc83a} 
+ctr\+\_\+type {\bfseries operator()} (ctr\+\_\+type c, key\+\_\+type k)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\subsubsection*{template$<$typename To\+Type, typename C\+B\+R\+NG$>$\newline
+struct r123\+::\+Reinterpret\+Ctr$<$ To\+Type, C\+B\+R\+N\+G $>$}
+
+\hyperlink{structr123_1_1ReinterpretCtr}{Reinterpret\+Ctr} uses memcpy to map back and forth between a C\+B\+R\+NG\textquotesingle{}s ctr\+\_\+type and the specified To\+Type. For example, after\+:
+
+typedef Reinterpret\+Ctr$<$r123array4x32, Philox2x64$>$ G;
+
+G is a bona fide C\+B\+R\+NG with ctr\+\_\+type r123array4x32.
+
+W\+A\+R\+N\+I\+NG\+: \hyperlink{structr123_1_1ReinterpretCtr}{Reinterpret\+Ctr} is endian dependent. The values returned by G, declared as above, will depend on the endianness of the machine on which it runs. 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/\+Random123/Reinterpret\+Ctr.\+hpp\end{DoxyCompactItemize}

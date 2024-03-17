@@ -1,0 +1,103 @@
+\hypertarget{classPressureGroupVirialGraph}{}\section{Pressure\+Group\+Virial\+Graph Class Reference}
+\label{classPressureGroupVirialGraph}\index{Pressure\+Group\+Virial\+Graph@{Pressure\+Group\+Virial\+Graph}}
+
+
+Creates a graph that calculates the virial correction for pressure groups.  
+
+
+
+
+{\ttfamily \#include $<$Pressure\+Group\+Virial.\+h$>$}
+
+Inheritance diagram for Pressure\+Group\+Virial\+Graph\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classPressureGroupVirialGraph}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classPressureGroupVirialGraph_ae7ff1b34d814a6c977a50430167f4304}{Pressure\+Group\+Virial\+Graph} (const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ forcex, const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ forcey, const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ forcez, const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ relative\+\_\+coordsx, const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ relative\+\_\+coordsy, const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ relative\+\_\+coordsz, int num\+Atoms, double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ virial)
+\begin{DoxyCompactList}\small\item\em Create a graph that calculates and accumulates the pressure group internal virial. \end{DoxyCompactList}\item 
+\hyperlink{classPressureGroupVirialGraph_a7f8e55580a547bf7e671cdb4fb590cd9}{$\sim$\+Pressure\+Group\+Virial\+Graph} ()
+\begin{DoxyCompactList}\small\item\em Destroy the graph, its nodes, and free internal memory. \end{DoxyCompactList}\item 
+\hyperlink{classPressureGroupVirialGraph_acc008fb3d4ecd0443509fb21c92ba592}{Pressure\+Group\+Virial\+Graph} (const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ fx, const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ fy, const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ fz, const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ x, const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ y, const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ z, int num\+Atoms, double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ virial)
+\begin{DoxyCompactList}\small\item\em Create a graph that calculates and accumulates the pressure group internal virial. \end{DoxyCompactList}\item 
+\hyperlink{classPressureGroupVirialGraph_a7f8e55580a547bf7e671cdb4fb590cd9}{$\sim$\+Pressure\+Group\+Virial\+Graph} ()
+\begin{DoxyCompactList}\small\item\em Destroy the graph, its nodes, and free internal memory. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Additional Inherited Members}
+
+
+\subsection{Detailed Description}
+Creates a graph that calculates the virial correction for pressure groups. 
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classPressureGroupVirialGraph_ae7ff1b34d814a6c977a50430167f4304}{}\label{classPressureGroupVirialGraph_ae7ff1b34d814a6c977a50430167f4304} 
+\index{Pressure\+Group\+Virial\+Graph@{Pressure\+Group\+Virial\+Graph}!Pressure\+Group\+Virial\+Graph@{Pressure\+Group\+Virial\+Graph}}
+\index{Pressure\+Group\+Virial\+Graph@{Pressure\+Group\+Virial\+Graph}!Pressure\+Group\+Virial\+Graph@{Pressure\+Group\+Virial\+Graph}}
+\subsubsection{\texorpdfstring{Pressure\+Group\+Virial\+Graph()}{PressureGroupVirialGraph()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily Pressure\+Group\+Virial\+Graph\+::\+Pressure\+Group\+Virial\+Graph (\begin{DoxyParamCaption}\item[{const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{forcex,  }\item[{const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{forcey,  }\item[{const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{forcez,  }\item[{const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{relative\+\_\+coordsx,  }\item[{const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{relative\+\_\+coordsy,  }\item[{const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{relative\+\_\+coordsz,  }\item[{int}]{num\+Atoms,  }\item[{double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{virial }\end{DoxyParamCaption})}
+
+
+
+Create a graph that calculates and accumulates the pressure group internal virial. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em forcex,forcey,forcez} & the device pointers to the first element in an num\+Atoms length array. The x,y,and z components of the total force on each atom, in the same order as relative\+\_\+coordsy. The forces should be directly from the same potential as the homogenous virial, no contraint force modifications. \\
+\hline
+{\em relative\+\_\+coordsx,relative\+\_\+coordsy,relative\+\_\+coordsz} & the device pointers to the first element in an num\+Atoms length array. The x,y and z components of the relative coordinates of each atom. These coordinates are relative to the center of mass of their pressure group. The relative coordinates must never be tranformed by the boundary conditions during a simulation. \\
+\hline
+{\em num\+Atoms} & The number of atoms, and length of the forces and coords arrays. \\
+\hline
+{\em virial} & A device pointer to the virial to be written to by executing the graph. virial-\/$>$x is set as the dot product of forcex and relative\+\_\+coordsx when the graph executes, the same for y and z. T\+O\+DO Add parameter to control which components of the full 3x3 virial are calculated, possible external virial struct and enum. \\
+\hline
+\end{DoxyParams}
+\hypertarget{classPressureGroupVirialGraph_a7f8e55580a547bf7e671cdb4fb590cd9}{}\label{classPressureGroupVirialGraph_a7f8e55580a547bf7e671cdb4fb590cd9} 
+\index{Pressure\+Group\+Virial\+Graph@{Pressure\+Group\+Virial\+Graph}!````~Pressure\+Group\+Virial\+Graph@{$\sim$\+Pressure\+Group\+Virial\+Graph}}
+\index{````~Pressure\+Group\+Virial\+Graph@{$\sim$\+Pressure\+Group\+Virial\+Graph}!Pressure\+Group\+Virial\+Graph@{Pressure\+Group\+Virial\+Graph}}
+\subsubsection{\texorpdfstring{$\sim$\+Pressure\+Group\+Virial\+Graph()}{~PressureGroupVirialGraph()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily Pressure\+Group\+Virial\+Graph\+::$\sim$\+Pressure\+Group\+Virial\+Graph (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Destroy the graph, its nodes, and free internal memory. 
+
+\hypertarget{classPressureGroupVirialGraph_acc008fb3d4ecd0443509fb21c92ba592}{}\label{classPressureGroupVirialGraph_acc008fb3d4ecd0443509fb21c92ba592} 
+\index{Pressure\+Group\+Virial\+Graph@{Pressure\+Group\+Virial\+Graph}!Pressure\+Group\+Virial\+Graph@{Pressure\+Group\+Virial\+Graph}}
+\index{Pressure\+Group\+Virial\+Graph@{Pressure\+Group\+Virial\+Graph}!Pressure\+Group\+Virial\+Graph@{Pressure\+Group\+Virial\+Graph}}
+\subsubsection{\texorpdfstring{Pressure\+Group\+Virial\+Graph()}{PressureGroupVirialGraph()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily Pressure\+Group\+Virial\+Graph\+::\+Pressure\+Group\+Virial\+Graph (\begin{DoxyParamCaption}\item[{const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{fx,  }\item[{const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{fy,  }\item[{const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{fz,  }\item[{const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{x,  }\item[{const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{y,  }\item[{const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{z,  }\item[{int}]{num\+Atoms,  }\item[{double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{virial }\end{DoxyParamCaption})}
+
+
+
+Create a graph that calculates and accumulates the pressure group internal virial. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em fx,fy,fz} & the device pointers to the first element in an num\+Atoms length array. The x,y,and z components of the total force on each atom, in the same order as relative\+\_\+coordsy. The forces should be directly from the same potential as the homogenous virial, no contraint force modifications. \\
+\hline
+{\em x,y,z} & the device pointers to the first element in an num\+Atoms length array. The x,y and z components of the relative coordinates of each atom. These coordinates are relative to the center of mass of their pressure group. The relative coordinates must never be tranformed by the boundary conditions during a simulation. \\
+\hline
+{\em num\+Atoms} & The number of atoms, and length of the forces and coords arrays. \\
+\hline
+{\em virial} & A device pointer to the virial to be written to by executing the graph. virial-\/$>$x is set as the dot product of forcex and relative\+\_\+coordsx when the graph executes, the same for y and z. T\+O\+DO Add parameter to control which components of the full 3x3 virial are calculated, possible external virial struct and enum. \\
+\hline
+\end{DoxyParams}
+\hypertarget{classPressureGroupVirialGraph_a7f8e55580a547bf7e671cdb4fb590cd9}{}\label{classPressureGroupVirialGraph_a7f8e55580a547bf7e671cdb4fb590cd9} 
+\index{Pressure\+Group\+Virial\+Graph@{Pressure\+Group\+Virial\+Graph}!````~Pressure\+Group\+Virial\+Graph@{$\sim$\+Pressure\+Group\+Virial\+Graph}}
+\index{````~Pressure\+Group\+Virial\+Graph@{$\sim$\+Pressure\+Group\+Virial\+Graph}!Pressure\+Group\+Virial\+Graph@{Pressure\+Group\+Virial\+Graph}}
+\subsubsection{\texorpdfstring{$\sim$\+Pressure\+Group\+Virial\+Graph()}{~PressureGroupVirialGraph()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily Pressure\+Group\+Virial\+Graph\+::$\sim$\+Pressure\+Group\+Virial\+Graph (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Destroy the graph, its nodes, and free internal memory. 
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/\hyperlink{PressureGroupVirial_8h}{Pressure\+Group\+Virial.\+h}\item 
+/u/samar/\+Documents/git/chcuda/include/\hyperlink{PressureGroupVirialGraph_8h}{Pressure\+Group\+Virial\+Graph.\+h}\end{DoxyCompactItemize}

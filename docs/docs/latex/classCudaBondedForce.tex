@@ -1,0 +1,28 @@
+\hypertarget{classCudaBondedForce}{}\section{Cuda\+Bonded\+Force$<$ AT, CT $>$ Class Template Reference}
+\label{classCudaBondedForce}\index{Cuda\+Bonded\+Force$<$ A\+T, C\+T $>$@{Cuda\+Bonded\+Force$<$ A\+T, C\+T $>$}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classCudaBondedForce_a187a309ec2cff80cde58651b6b7027f9}{}\label{classCudaBondedForce_a187a309ec2cff80cde58651b6b7027f9} 
+{\bfseries Cuda\+Bonded\+Force} (\hyperlink{classCudaEnergyVirial}{Cuda\+Energy\+Virial} \&energy\+Virial, const char $\ast$name\+Bond, const char $\ast$name\+Ureyb, const char $\ast$name\+Angle, const char $\ast$name\+Dihe, const char $\ast$name\+Imdihe, const char $\ast$name\+Cmap)
+\item 
+\hypertarget{classCudaBondedForce_afbb956ecfefba60abf39ee5f918826e8}{}\label{classCudaBondedForce_afbb956ecfefba60abf39ee5f918826e8} 
+void {\bfseries setup\+\_\+coef} (const int nbondcoef, const float2 $\ast$h\+\_\+bondcoef, const int nureybcoef, const float2 $\ast$h\+\_\+ureybcoef, const int nanglecoef, const float2 $\ast$h\+\_\+anglecoef, const int ndihecoef, const float4 $\ast$h\+\_\+dihecoef, const int nimdihecoef, const float4 $\ast$h\+\_\+imdihecoef, const int ncmapcoef, const float2 $\ast$h\+\_\+cmapcoef)
+\item 
+\hypertarget{classCudaBondedForce_a41719ddc963ea1ef2da1fc4e174c4b95}{}\label{classCudaBondedForce_a41719ddc963ea1ef2da1fc4e174c4b95} 
+void {\bfseries setup\+\_\+list} (const int nbondlist, const \hyperlink{structbondlist__t}{bondlist\+\_\+t} $\ast$h\+\_\+bondlist, const int nureyblist, const \hyperlink{structbondlist__t}{bondlist\+\_\+t} $\ast$h\+\_\+ureyblist, const int nanglelist, const \hyperlink{structanglelist__t}{anglelist\+\_\+t} $\ast$h\+\_\+anglelist, const int ndihelist, const \hyperlink{structdihelist__t}{dihelist\+\_\+t} $\ast$h\+\_\+dihelist, const int nimdihelist, const \hyperlink{structdihelist__t}{dihelist\+\_\+t} $\ast$h\+\_\+imdihelist, const int ncmaplist, const \hyperlink{structcmaplist__t}{cmaplist\+\_\+t} $\ast$h\+\_\+cmaplist, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classCudaBondedForce_a2cb00b3eb0621b031c69db4afdd35371}{}\label{classCudaBondedForce_a2cb00b3eb0621b031c69db4afdd35371} 
+void {\bfseries setup\+\_\+list} (const float4 $\ast$xyzq, const CT boxx, const CT boxy, const CT boxz, const int $\ast$glo2loc\+\_\+ind, const int nbond\+\_\+tbl, const int $\ast$bond\+\_\+tbl, const \hyperlink{structbond__t}{bond\+\_\+t} $\ast$bond, const int nureyb\+\_\+tbl, const int $\ast$ureyb\+\_\+tbl, const \hyperlink{structbond__t}{bond\+\_\+t} $\ast$ureyb, const int nangle\+\_\+tbl, const int $\ast$angle\+\_\+tbl, const \hyperlink{structangle__t}{angle\+\_\+t} $\ast$angle, const int ndihe\+\_\+tbl, const int $\ast$dihe\+\_\+tbl, const \hyperlink{structdihe__t}{dihe\+\_\+t} $\ast$dihe, const int nimdihe\+\_\+tbl, const int $\ast$imdihe\+\_\+tbl, const \hyperlink{structdihe__t}{dihe\+\_\+t} $\ast$imdihe, const int ncmap\+\_\+tbl, const int $\ast$cmap\+\_\+tbl, const \hyperlink{structcmap__t}{cmap\+\_\+t} $\ast$cmap, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classCudaBondedForce_a762489ffa9c804e654658a6f30b529dd}{}\label{classCudaBondedForce_a762489ffa9c804e654658a6f30b529dd} 
+void {\bfseries calc\+\_\+force} (const float4 $\ast$xyzq, const CT boxx, const CT boxy, const CT boxz, const bool calc\+\_\+energy, const bool calc\+\_\+virial, const int stride, AT $\ast$force, const bool calc\+\_\+bond, const bool calc\+\_\+ureyb, const bool calc\+\_\+angle, const bool calc\+\_\+dihe, const bool calc\+\_\+imdihe, const bool calc\+\_\+cmap, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classCudaBondedForce_a0829dcaac9739741280babcb491895d1}{}\label{classCudaBondedForce_a0829dcaac9739741280babcb491895d1} 
+void {\bfseries print} ()
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/Cuda\+Bonded\+Force.\+h\end{DoxyCompactItemize}

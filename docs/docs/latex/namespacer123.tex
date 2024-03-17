@@ -1,0 +1,45 @@
+\hypertarget{namespacer123}{}\section{r123 Namespace Reference}
+\label{namespacer123}\index{r123@{r123}}
+
+
+Most of the Random123 C++ A\+PI is contained in the \hyperlink{namespacer123}{r123} namespace.  
+
+
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \hyperlink{structr123_1_1double2}{double2}
+\item 
+struct \hyperlink{structr123_1_1Engine}{Engine}
+\begin{DoxyCompactList}\small\item\em If G satisfies the requirements of a C\+B\+R\+NG, and has a ctr\+\_\+type whose value\+\_\+type is an unsigned integral type, then Engine$<$\+G$>$ satisfies the requirements of a C++11 \char`\"{}\+Uniform Random Number Engine\char`\"{} and can be used in any context where such an object is expected. \end{DoxyCompactList}\item 
+struct \hyperlink{structr123_1_1float2}{float2}
+\item 
+class \hyperlink{classr123_1_1MicroURNG}{Micro\+U\+R\+NG}
+\begin{DoxyCompactList}\small\item\em Given a C\+B\+R\+NG whose ctr\+\_\+type has an unsigned integral value\+\_\+type, Micro\+U\+R\+N\+G$<$\+C\+B\+R\+N\+G$>$(c, k) is a type that satisfies the requirements of a C++11 Uniform Random Number Generator. \end{DoxyCompactList}\item 
+struct \hyperlink{structr123_1_1ReinterpretCtr}{Reinterpret\+Ctr}
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{namespacer123_a44c7b96d6943ef6f07a688c976fae5c4}{}\label{namespacer123_a44c7b96d6943ef6f07a688c976fae5c4} 
+R123\+\_\+\+C\+U\+D\+A\+\_\+\+D\+E\+V\+I\+CE R123\+\_\+\+S\+T\+A\+T\+I\+C\+\_\+\+I\+N\+L\+I\+NE void {\bfseries sincospif} (float x, float $\ast$s, float $\ast$c)
+\item 
+\hypertarget{namespacer123_a603446b853f885a101ec6752f5da9e47}{}\label{namespacer123_a603446b853f885a101ec6752f5da9e47} 
+R123\+\_\+\+C\+U\+D\+A\+\_\+\+D\+E\+V\+I\+CE R123\+\_\+\+S\+T\+A\+T\+I\+C\+\_\+\+I\+N\+L\+I\+NE void {\bfseries sincospi} (double x, double $\ast$s, double $\ast$c)
+\item 
+\hypertarget{namespacer123_afe781081ff63812582c2f02af778a1f5}{}\label{namespacer123_afe781081ff63812582c2f02af778a1f5} 
+R123\+\_\+\+C\+U\+D\+A\+\_\+\+D\+E\+V\+I\+CE R123\+\_\+\+S\+T\+A\+T\+I\+C\+\_\+\+I\+N\+L\+I\+NE \hyperlink{structr123_1_1float2}{float2} {\bfseries boxmuller} (uint32\+\_\+t u0, uint32\+\_\+t u1)
+\item 
+\hypertarget{namespacer123_a641db790ccf468913483f1d23bb009c0}{}\label{namespacer123_a641db790ccf468913483f1d23bb009c0} 
+R123\+\_\+\+C\+U\+D\+A\+\_\+\+D\+E\+V\+I\+CE R123\+\_\+\+S\+T\+A\+T\+I\+C\+\_\+\+I\+N\+L\+I\+NE \hyperlink{structr123_1_1double2}{double2} {\bfseries boxmuller} (uint64\+\_\+t u0, uint64\+\_\+t u1)
+\item 
+{\footnotesize template$<$typename Ftype , typename Itype $>$ }\\R123\+\_\+\+C\+U\+D\+A\+\_\+\+D\+E\+V\+I\+CE R123\+\_\+\+S\+T\+A\+T\+I\+C\+\_\+\+I\+N\+L\+I\+NE Ftype \hyperlink{group__uniform_gafc96ad616364743e209c836450cc4107}{u01} (Itype in)
+\begin{DoxyCompactList}\small\item\em Input is a W-\/bit integer (signed or unsigned). \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename Ftype , typename Itype $>$ }\\R123\+\_\+\+C\+U\+D\+A\+\_\+\+D\+E\+V\+I\+CE R123\+\_\+\+S\+T\+A\+T\+I\+C\+\_\+\+I\+N\+L\+I\+NE Ftype \hyperlink{group__uniform_ga49eb4e2f3522f1b5e22b66bdc86345ce}{uneg11} (Itype in)
+\begin{DoxyCompactList}\small\item\em Return a signed value in \mbox{[}-\/1,1\mbox{]}. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename Ftype , typename Itype $>$ }\\R123\+\_\+\+C\+U\+D\+A\+\_\+\+D\+E\+V\+I\+CE R123\+\_\+\+S\+T\+A\+T\+I\+C\+\_\+\+I\+N\+L\+I\+NE Ftype \hyperlink{group__uniform_ga6d75b90f162a67226c8044c6f3198b96}{u01fixedpt} (Itype in)
+\begin{DoxyCompactList}\small\item\em Return a value in (0,1) chosen from a set of equally spaced fixed-\/point values. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Most of the Random123 C++ A\+PI is contained in the \hyperlink{namespacer123}{r123} namespace. 

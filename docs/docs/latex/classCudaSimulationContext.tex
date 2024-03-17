@@ -1,0 +1,256 @@
+\hypertarget{classCudaSimulationContext}{}\section{Cuda\+Simulation\+Context Class Reference}
+\label{classCudaSimulationContext}\index{Cuda\+Simulation\+Context@{Cuda\+Simulation\+Context}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classCudaSimulationContext_abb111e766ea4f2f5c26434909ff42684}{}\label{classCudaSimulationContext_abb111e766ea4f2f5c26434909ff42684} 
+{\bfseries Cuda\+Simulation\+Context} (int num\+Atoms, double boxx\+\_\+in, double boxy\+\_\+in, double boxz\+\_\+in, uint64\+\_\+t seed)
+\item 
+\hypertarget{classCudaSimulationContext_ab0b762b45d6076be96bf3dd38ed1db70}{}\label{classCudaSimulationContext_ab0b762b45d6076be96bf3dd38ed1db70} 
+void {\bfseries set\+Temperature} (const float temp)
+\item 
+\hypertarget{classCudaSimulationContext_a64a1d00b6efac2e9cde3b26923a2069c}{}\label{classCudaSimulationContext_a64a1d00b6efac2e9cde3b26923a2069c} 
+float {\bfseries get\+Temperature} () const
+\item 
+\hypertarget{classCudaSimulationContext_a92681840f8841ae2b45566a85156efdd}{}\label{classCudaSimulationContext_a92681840f8841ae2b45566a85156efdd} 
+void {\bfseries set\+Periodic\+Boundary\+Condition} (const P\+BC p)
+\item 
+\hypertarget{classCudaSimulationContext_aad2699c729bfbcc8c51fff0ed6745c2a}{}\label{classCudaSimulationContext_aad2699c729bfbcc8c51fff0ed6745c2a} 
+P\+BC {\bfseries get\+Periodic\+Boundary\+Condition} () const
+\item 
+\hypertarget{classCudaSimulationContext_a3e7a34c3fd6f3fc0a4d53dd47ab43cd0}{}\label{classCudaSimulationContext_a3e7a34c3fd6f3fc0a4d53dd47ab43cd0} 
+void {\bfseries set\+Coords} (std\+::vector$<$ float $>$ coords)
+\item 
+\hypertarget{classCudaSimulationContext_abcf10ad20bcfb62a1239b2f46f208e22}{}\label{classCudaSimulationContext_abcf10ad20bcfb62a1239b2f46f208e22} 
+void {\bfseries set\+Charges} (std\+::vector$<$ float $>$ charges)
+\item 
+\hypertarget{classCudaSimulationContext_a16ac6180e3670440f97beeabd4baa350}{}\label{classCudaSimulationContext_a16ac6180e3670440f97beeabd4baa350} 
+void {\bfseries set\+Periodic\+Box\+Sizes} (double x, double y, double z)
+\item 
+\hypertarget{classCudaSimulationContext_a8ce96a9eabd558ea3ffed21b2c515156}{}\label{classCudaSimulationContext_a8ce96a9eabd558ea3ffed21b2c515156} 
+void {\bfseries set\+Piston} (double pressure, double pmass)
+\item 
+\hypertarget{classCudaSimulationContext_a96308a25437fb86cf88d5d7f59b560fc}{}\label{classCudaSimulationContext_a96308a25437fb86cf88d5d7f59b560fc} 
+void {\bfseries set\+Masses} (const char $\ast$file\+Name)
+\item 
+\hypertarget{classCudaSimulationContext_a3b73f0eca80dd810e1bc593bc2ed2698}{}\label{classCudaSimulationContext_a3b73f0eca80dd810e1bc593bc2ed2698} 
+void {\bfseries assign\+Velocities} ()
+\item 
+\hypertarget{classCudaSimulationContext_aeec06154411dccd89321fa2b594f20b9}{}\label{classCudaSimulationContext_aeec06154411dccd89321fa2b594f20b9} 
+double {\bfseries calculate\+Potential\+Energy} (bool reset)
+\item 
+\hypertarget{classCudaSimulationContext_a1f25e0255919e0df3d49356b51ff3a0e}{}\label{classCudaSimulationContext_a1f25e0255919e0df3d49356b51ff3a0e} 
+double {\bfseries calculate\+Potential\+Energy\+Print} (bool reset)
+\item 
+\hypertarget{classCudaSimulationContext_ad47a55e5a08360f5bb5bbdffc0c9e9dd}{}\label{classCudaSimulationContext_ad47a55e5a08360f5bb5bbdffc0c9e9dd} 
+void {\bfseries calculate\+Kinetic\+Energy} ()
+\item 
+\hypertarget{classCudaSimulationContext_acdd86fc36567944c4433dc1616b0ac7a}{}\label{classCudaSimulationContext_acdd86fc36567944c4433dc1616b0ac7a} 
+double $\ast$ {\bfseries get\+Forces} ()
+\item 
+void \hyperlink{classCudaSimulationContext_af8e340b880ef23301085fc702226c609}{move\+Forces\+To\+Dynamics} ()
+\begin{DoxyCompactList}\small\item\em moves the calculated forces into force\+\_\+invmass array. \end{DoxyCompactList}\item 
+void \hyperlink{classCudaSimulationContext_a3f3e6058db0acba85a440d9417c5e7e2}{move\+Positions\+To\+Energy} ()
+\begin{DoxyCompactList}\small\item\em moves xyz into xyzq array. \end{DoxyCompactList}\item 
+\hypertarget{classCudaSimulationContext_a2597d60c9f2eba81cbecc27430eb8af8}{}\label{classCudaSimulationContext_a2597d60c9f2eba81cbecc27430eb8af8} 
+int {\bfseries get\+Num\+Atoms} () const
+\item 
+\hypertarget{classCudaSimulationContext_adebb325f8c0301463c0c711d9d27aede}{}\label{classCudaSimulationContext_adebb325f8c0301463c0c711d9d27aede} 
+\hyperlink{classXYZQ}{X\+Y\+ZQ} $\ast$ {\bfseries get\+X\+Y\+ZQ} ()
+\item 
+\hypertarget{classCudaSimulationContext_a647a64eaf74697553611136883c87231}{}\label{classCudaSimulationContext_a647a64eaf74697553611136883c87231} 
+int $\ast$ {\bfseries get\+\_\+loc2glo} () const
+\item 
+\hypertarget{classCudaSimulationContext_ab50cb50573965c0eb1d5cb721a469dd5}{}\label{classCudaSimulationContext_ab50cb50573965c0eb1d5cb721a469dd5} 
+int {\bfseries get\+Force\+Stride} () const
+\item 
+uint64\+\_\+t \hyperlink{classCudaSimulationContext_ae52294d7e991824018cf9c9cb543ca1e}{get\+Seed} () const
+\begin{DoxyCompactList}\small\item\em Seed for random number generator. \end{DoxyCompactList}\item 
+\hypertarget{classCudaSimulationContext_aa4c1a2889174fa13b12cd1c5d51249ac}{}\label{classCudaSimulationContext_aa4c1a2889174fa13b12cd1c5d51249ac} 
+void {\bfseries set\+Num\+Atoms} (const int num)
+\item 
+\hypertarget{classCudaSimulationContext_ace92f9f313550320d6e556f7d3545636}{}\label{classCudaSimulationContext_ace92f9f313550320d6e556f7d3545636} 
+void {\bfseries set\+Topological\+Exclusions} (const int $\ast$iblo14, const int $\ast$inb14)
+\item 
+\hypertarget{classCudaSimulationContext_a248b72f769d347724512364558425d26}{}\label{classCudaSimulationContext_a248b72f769d347724512364558425d26} 
+void {\bfseries set\+Reciprocal\+Space\+Parameters} (int nfft1, int nfft2, int nfft3, int pme\+Spline\+Order\+In, float kappa\+In)
+\item 
+\hypertarget{classCudaSimulationContext_a6a13d50ec17f5a8e286ea4d0694ddfdd}{}\label{classCudaSimulationContext_a6a13d50ec17f5a8e286ea4d0694ddfdd} 
+void {\bfseries set\+Direct\+Space\+Parameters} (float cutoff\+In)
+\item 
+\hypertarget{classCudaSimulationContext_ae12349b0d0d27f4abefdde6e0b2e2e5a}{}\label{classCudaSimulationContext_ae12349b0d0d27f4abefdde6e0b2e2e5a} 
+void {\bfseries set14\+Inclusion\+Exclusion} (const std\+::vector$<$ int $>$ \&in, const std\+::vector$<$ int $>$ \&ex)
+\item 
+\hypertarget{classCudaSimulationContext_a466032b2e7f0993d561216ecf4f645d8}{}\label{classCudaSimulationContext_a466032b2e7f0993d561216ecf4f645d8} 
+void {\bfseries set\+Vdw\+Type} (const std\+::vector$<$ int $>$ \&vdw\+Type)
+\item 
+\hypertarget{classCudaSimulationContext_a470df687e207b0c118a1c7491532a40a}{}\label{classCudaSimulationContext_a470df687e207b0c118a1c7491532a40a} 
+void {\bfseries set\+Vdw\+Param} (const std\+::vector$<$ float $>$ \&vdw\+Param)
+\item 
+\hypertarget{classCudaSimulationContext_a75c406ce602e5263c8614700d4da48e4}{}\label{classCudaSimulationContext_a75c406ce602e5263c8614700d4da48e4} 
+void {\bfseries set\+Coords\+Charges} (const std\+::vector$<$ float4 $>$ \&coords\+Charges\+In)
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classCudaSimulationContext_ae2c8c22913ba78d5ecaa6f939653b083}{}\label{classCudaSimulationContext_ae2c8c22913ba78d5ecaa6f939653b083} 
+double $\ast$ {\bfseries d\+\_\+ke}
+\item 
+\hypertarget{classCudaSimulationContext_a5d41f0a61d810c2dd0abde6618800d02}{}\label{classCudaSimulationContext_a5d41f0a61d810c2dd0abde6618800d02} 
+float {\bfseries boxx}
+\item 
+\hypertarget{classCudaSimulationContext_a3a5a2667d4317775fc338a3bad244dc9}{}\label{classCudaSimulationContext_a3a5a2667d4317775fc338a3bad244dc9} 
+float {\bfseries boxy}
+\item 
+\hypertarget{classCudaSimulationContext_a3a0b09e28d233fff25f50f4f664b12d9}{}\label{classCudaSimulationContext_a3a0b09e28d233fff25f50f4f664b12d9} 
+float {\bfseries boxz}
+\item 
+\hyperlink{structH__DVector}{H\+\_\+\+D\+Vector}$<$ uint64\+\_\+t $>$ \hyperlink{classCudaSimulationContext_aedf3a214b43fd5155f17ae8f3ce758e8}{randstep}
+\begin{DoxyCompactList}\small\item\em random number step. \end{DoxyCompactList}\item 
+\hyperlink{structVolumePiston}{Volume\+Piston} \hyperlink{classCudaSimulationContext_a9077736cc7f5dae5c741a2ebe7c21767}{piston}
+\begin{DoxyCompactList}\small\item\em Volume piston used fro integrating the dynamcis of the box size. \end{DoxyCompactList}\item 
+\hyperlink{structH__DVector}{H\+\_\+\+D\+Vector}$<$ double4 $>$ \hyperlink{classCudaSimulationContext_a861cbb2252066e6ed93a08d3dc908443}{force\+\_\+invmass}
+\begin{DoxyCompactList}\small\item\em \hyperlink{classForce}{Force} and inverse of atom masses, used in dynamics to update velocities. \end{DoxyCompactList}\item 
+\hyperlink{structH__DVector}{H\+\_\+\+D\+Vector}$<$ double4 $>$ \hyperlink{classCudaSimulationContext_af7492c16a26e127e9bc11d7e30d91ba7}{xyz}
+\begin{DoxyCompactList}\small\item\em Positions of atoms, used in dynamics. \end{DoxyCompactList}\item 
+\hyperlink{structH__DVector}{H\+\_\+\+D\+Vector}$<$ double4 $>$ \hyperlink{classCudaSimulationContext_a447bdf19525da955f30804b68a80efcf}{vel\+\_\+mass}
+\begin{DoxyCompactList}\small\item\em Velocities and masses of atoms, used in dynamics. \end{DoxyCompactList}\item 
+\hyperlink{structH__DVector}{H\+\_\+\+D\+Vector}$<$ double3 $>$ \hyperlink{classCudaSimulationContext_ab27a6d240361a27759e006728024e319}{box}
+\begin{DoxyCompactList}\small\item\em Box dimentions, used in box piston dynamics. \end{DoxyCompactList}\item 
+\hyperlink{structH__DVector}{H\+\_\+\+D\+Vector}$<$ double3 $>$ \hyperlink{classCudaSimulationContext_a2482b59305a454850b0d7d3e25f5830c}{box\+\_\+dot}
+\begin{DoxyCompactList}\small\item\em Box dimensions time derivative, used in box piston dynamics. \end{DoxyCompactList}\item 
+\hyperlink{structH__DVector}{H\+\_\+\+D\+Vector}$<$ double $>$ \hyperlink{classCudaSimulationContext_a353985244fa6f2dd2659120124f63bb5}{potential\+\_\+energy}
+\begin{DoxyCompactList}\small\item\em Potential energy. \end{DoxyCompactList}\item 
+\hyperlink{structH__DVector}{H\+\_\+\+D\+Vector}$<$ double3 $>$ \hyperlink{classCudaSimulationContext_a1f7666b2858c9720c33f04c67cd81302}{virial}
+\begin{DoxyCompactList}\small\item\em Pressure group corrected virial, related to the change in energy given a small change in box size. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classCudaSimulationContext_ae52294d7e991824018cf9c9cb543ca1e}{}\label{classCudaSimulationContext_ae52294d7e991824018cf9c9cb543ca1e} 
+\index{Cuda\+Simulation\+Context@{Cuda\+Simulation\+Context}!get\+Seed@{get\+Seed}}
+\index{get\+Seed@{get\+Seed}!Cuda\+Simulation\+Context@{Cuda\+Simulation\+Context}}
+\subsubsection{\texorpdfstring{get\+Seed()}{getSeed()}}
+{\footnotesize\ttfamily uint64\+\_\+t Cuda\+Simulation\+Context\+::get\+Seed (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Seed for random number generator. 
+
+This is used as the key for philox. \hypertarget{classCudaSimulationContext_af8e340b880ef23301085fc702226c609}{}\label{classCudaSimulationContext_af8e340b880ef23301085fc702226c609} 
+\index{Cuda\+Simulation\+Context@{Cuda\+Simulation\+Context}!move\+Forces\+To\+Dynamics@{move\+Forces\+To\+Dynamics}}
+\index{move\+Forces\+To\+Dynamics@{move\+Forces\+To\+Dynamics}!Cuda\+Simulation\+Context@{Cuda\+Simulation\+Context}}
+\subsubsection{\texorpdfstring{move\+Forces\+To\+Dynamics()}{moveForcesToDynamics()}}
+{\footnotesize\ttfamily void Cuda\+Simulation\+Context\+::move\+Forces\+To\+Dynamics (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+moves the calculated forces into force\+\_\+invmass array. 
+
+\hypertarget{classCudaSimulationContext_a3f3e6058db0acba85a440d9417c5e7e2}{}\label{classCudaSimulationContext_a3f3e6058db0acba85a440d9417c5e7e2} 
+\index{Cuda\+Simulation\+Context@{Cuda\+Simulation\+Context}!move\+Positions\+To\+Energy@{move\+Positions\+To\+Energy}}
+\index{move\+Positions\+To\+Energy@{move\+Positions\+To\+Energy}!Cuda\+Simulation\+Context@{Cuda\+Simulation\+Context}}
+\subsubsection{\texorpdfstring{move\+Positions\+To\+Energy()}{movePositionsToEnergy()}}
+{\footnotesize\ttfamily void Cuda\+Simulation\+Context\+::move\+Positions\+To\+Energy (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+moves xyz into xyzq array. 
+
+
+
+\subsection{Member Data Documentation}
+\hypertarget{classCudaSimulationContext_ab27a6d240361a27759e006728024e319}{}\label{classCudaSimulationContext_ab27a6d240361a27759e006728024e319} 
+\index{Cuda\+Simulation\+Context@{Cuda\+Simulation\+Context}!box@{box}}
+\index{box@{box}!Cuda\+Simulation\+Context@{Cuda\+Simulation\+Context}}
+\subsubsection{\texorpdfstring{box}{box}}
+{\footnotesize\ttfamily \hyperlink{structH__DVector}{H\+\_\+\+D\+Vector}$<$double3$>$ Cuda\+Simulation\+Context\+::box}
+
+
+
+Box dimentions, used in box piston dynamics. 
+
+\hypertarget{classCudaSimulationContext_a2482b59305a454850b0d7d3e25f5830c}{}\label{classCudaSimulationContext_a2482b59305a454850b0d7d3e25f5830c} 
+\index{Cuda\+Simulation\+Context@{Cuda\+Simulation\+Context}!box\+\_\+dot@{box\+\_\+dot}}
+\index{box\+\_\+dot@{box\+\_\+dot}!Cuda\+Simulation\+Context@{Cuda\+Simulation\+Context}}
+\subsubsection{\texorpdfstring{box\+\_\+dot}{box\_dot}}
+{\footnotesize\ttfamily \hyperlink{structH__DVector}{H\+\_\+\+D\+Vector}$<$double3$>$ Cuda\+Simulation\+Context\+::box\+\_\+dot}
+
+
+
+Box dimensions time derivative, used in box piston dynamics. 
+
+\hypertarget{classCudaSimulationContext_a861cbb2252066e6ed93a08d3dc908443}{}\label{classCudaSimulationContext_a861cbb2252066e6ed93a08d3dc908443} 
+\index{Cuda\+Simulation\+Context@{Cuda\+Simulation\+Context}!force\+\_\+invmass@{force\+\_\+invmass}}
+\index{force\+\_\+invmass@{force\+\_\+invmass}!Cuda\+Simulation\+Context@{Cuda\+Simulation\+Context}}
+\subsubsection{\texorpdfstring{force\+\_\+invmass}{force\_invmass}}
+{\footnotesize\ttfamily \hyperlink{structH__DVector}{H\+\_\+\+D\+Vector}$<$double4$>$ Cuda\+Simulation\+Context\+::force\+\_\+invmass}
+
+
+
+\hyperlink{classForce}{Force} and inverse of atom masses, used in dynamics to update velocities. 
+
+\hypertarget{classCudaSimulationContext_a9077736cc7f5dae5c741a2ebe7c21767}{}\label{classCudaSimulationContext_a9077736cc7f5dae5c741a2ebe7c21767} 
+\index{Cuda\+Simulation\+Context@{Cuda\+Simulation\+Context}!piston@{piston}}
+\index{piston@{piston}!Cuda\+Simulation\+Context@{Cuda\+Simulation\+Context}}
+\subsubsection{\texorpdfstring{piston}{piston}}
+{\footnotesize\ttfamily \hyperlink{structVolumePiston}{Volume\+Piston} Cuda\+Simulation\+Context\+::piston}
+
+
+
+Volume piston used fro integrating the dynamcis of the box size. 
+
+\hypertarget{classCudaSimulationContext_a353985244fa6f2dd2659120124f63bb5}{}\label{classCudaSimulationContext_a353985244fa6f2dd2659120124f63bb5} 
+\index{Cuda\+Simulation\+Context@{Cuda\+Simulation\+Context}!potential\+\_\+energy@{potential\+\_\+energy}}
+\index{potential\+\_\+energy@{potential\+\_\+energy}!Cuda\+Simulation\+Context@{Cuda\+Simulation\+Context}}
+\subsubsection{\texorpdfstring{potential\+\_\+energy}{potential\_energy}}
+{\footnotesize\ttfamily \hyperlink{structH__DVector}{H\+\_\+\+D\+Vector}$<$double$>$ Cuda\+Simulation\+Context\+::potential\+\_\+energy}
+
+
+
+Potential energy. 
+
+\hypertarget{classCudaSimulationContext_aedf3a214b43fd5155f17ae8f3ce758e8}{}\label{classCudaSimulationContext_aedf3a214b43fd5155f17ae8f3ce758e8} 
+\index{Cuda\+Simulation\+Context@{Cuda\+Simulation\+Context}!randstep@{randstep}}
+\index{randstep@{randstep}!Cuda\+Simulation\+Context@{Cuda\+Simulation\+Context}}
+\subsubsection{\texorpdfstring{randstep}{randstep}}
+{\footnotesize\ttfamily \hyperlink{structH__DVector}{H\+\_\+\+D\+Vector}$<$uint64\+\_\+t$>$ Cuda\+Simulation\+Context\+::randstep}
+
+
+
+random number step. 
+
+Increment after a random kernel. Used for 64 msbs of the counter for philox. \hypertarget{classCudaSimulationContext_a447bdf19525da955f30804b68a80efcf}{}\label{classCudaSimulationContext_a447bdf19525da955f30804b68a80efcf} 
+\index{Cuda\+Simulation\+Context@{Cuda\+Simulation\+Context}!vel\+\_\+mass@{vel\+\_\+mass}}
+\index{vel\+\_\+mass@{vel\+\_\+mass}!Cuda\+Simulation\+Context@{Cuda\+Simulation\+Context}}
+\subsubsection{\texorpdfstring{vel\+\_\+mass}{vel\_mass}}
+{\footnotesize\ttfamily \hyperlink{structH__DVector}{H\+\_\+\+D\+Vector}$<$double4$>$ Cuda\+Simulation\+Context\+::vel\+\_\+mass}
+
+
+
+Velocities and masses of atoms, used in dynamics. 
+
+\hypertarget{classCudaSimulationContext_a1f7666b2858c9720c33f04c67cd81302}{}\label{classCudaSimulationContext_a1f7666b2858c9720c33f04c67cd81302} 
+\index{Cuda\+Simulation\+Context@{Cuda\+Simulation\+Context}!virial@{virial}}
+\index{virial@{virial}!Cuda\+Simulation\+Context@{Cuda\+Simulation\+Context}}
+\subsubsection{\texorpdfstring{virial}{virial}}
+{\footnotesize\ttfamily \hyperlink{structH__DVector}{H\+\_\+\+D\+Vector}$<$double3$>$ Cuda\+Simulation\+Context\+::virial}
+
+
+
+Pressure group corrected virial, related to the change in energy given a small change in box size. 
+
+\hypertarget{classCudaSimulationContext_af7492c16a26e127e9bc11d7e30d91ba7}{}\label{classCudaSimulationContext_af7492c16a26e127e9bc11d7e30d91ba7} 
+\index{Cuda\+Simulation\+Context@{Cuda\+Simulation\+Context}!xyz@{xyz}}
+\index{xyz@{xyz}!Cuda\+Simulation\+Context@{Cuda\+Simulation\+Context}}
+\subsubsection{\texorpdfstring{xyz}{xyz}}
+{\footnotesize\ttfamily \hyperlink{structH__DVector}{H\+\_\+\+D\+Vector}$<$double4$>$ Cuda\+Simulation\+Context\+::xyz}
+
+
+
+Positions of atoms, used in dynamics. 
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/\hyperlink{CudaSimulationContext_8h}{Cuda\+Simulation\+Context.\+h}\end{DoxyCompactItemize}

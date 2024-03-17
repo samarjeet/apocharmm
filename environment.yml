@@ -1,0 +1,10 @@
+name: apoenv
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - netcdf4
+  - cmake
+  - sphinx
+  - sphinx_rtd_theme
+  - icu=70.1

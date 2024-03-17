@@ -1,0 +1,50 @@
+\hypertarget{classCudaDomdecRecip}{}\section{Cuda\+Domdec\+Recip Class Reference}
+\label{classCudaDomdecRecip}\index{Cuda\+Domdec\+Recip@{Cuda\+Domdec\+Recip}}
+Inheritance diagram for Cuda\+Domdec\+Recip\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classCudaDomdecRecip}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classCudaDomdecRecip_adaa2c67c3f03b4088290625e8bd9f74e}{}\label{classCudaDomdecRecip_adaa2c67c3f03b4088290625e8bd9f74e} 
+{\bfseries Cuda\+Domdec\+Recip} (\hyperlink{classCudaEnergyVirial}{Cuda\+Energy\+Virial} \&energy\+Virial)
+\item 
+\hypertarget{classCudaDomdecRecip_a24e6d5cb0a64a025aeb1fdee6a821a75}{}\label{classCudaDomdecRecip_a24e6d5cb0a64a025aeb1fdee6a821a75} 
+{\bfseries Cuda\+Domdec\+Recip} (const int nfftx, const int nffty, const int nfftz, const int order, const double kappa, \hyperlink{classCudaEnergyVirial}{Cuda\+Energy\+Virial} \&energy\+Virial, const char $\ast$name\+Recip, const char $\ast$name\+Self)
+\item 
+\hypertarget{classCudaDomdecRecip_a96ef44bed53448a42f5a9157a865741a}{}\label{classCudaDomdecRecip_a96ef44bed53448a42f5a9157a865741a} 
+void {\bfseries set\+Parameters} (int nfft1, int nfft2, int nfft3, int sp, float k)
+\item 
+\hypertarget{classCudaDomdecRecip_a1cbec44daee4593e45008969ac6bc9a8}{}\label{classCudaDomdecRecip_a1cbec44daee4593e45008969ac6bc9a8} 
+void {\bfseries set\+\_\+stream} (cuda\+Stream\+\_\+t stream)
+\item 
+\hypertarget{classCudaDomdecRecip_a6d0eac7f0a171854b40d2803e16c2283}{}\label{classCudaDomdecRecip_a6d0eac7f0a171854b40d2803e16c2283} 
+void {\bfseries calc} (const double inv\+\_\+boxx, const double inv\+\_\+boxy, const double inv\+\_\+boxz, const float4 $\ast$coord, const int ncoord, const bool calc\+\_\+energy, const bool calc\+\_\+virial, \hyperlink{classForce}{Force}$<$ long long int $>$ \&force)
+\item 
+\hypertarget{classCudaDomdecRecip_a3d21fc32f495b991c3cd24cd5c133215}{}\label{classCudaDomdecRecip_a3d21fc32f495b991c3cd24cd5c133215} 
+void {\bfseries calc} (const double inv\+\_\+boxx, const double inv\+\_\+boxy, const double inv\+\_\+boxz, const float4 $\ast$coord, const int ncoord, const bool calc\+\_\+energy, const bool calc\+\_\+virial, \hyperlink{classForce}{Force}$<$ float $>$ \&force)
+\item 
+\hypertarget{classCudaDomdecRecip_aaaf9f7a2192c4a6a7293a7ed75071bc8}{}\label{classCudaDomdecRecip_aaaf9f7a2192c4a6a7293a7ed75071bc8} 
+void {\bfseries calc} (const double inv\+\_\+boxx, const double inv\+\_\+boxy, const double inv\+\_\+boxz, const float4 $\ast$coord, const int ncoord, const bool calc\+\_\+energy, const bool calc\+\_\+virial, float3 $\ast$force)
+\item 
+\hypertarget{classCudaDomdecRecip_a939aa363b653daa73d94d2bcfa015afe}{}\label{classCudaDomdecRecip_a939aa363b653daa73d94d2bcfa015afe} 
+void {\bfseries calc\+\_\+block} (const double inv\+\_\+boxx, const double inv\+\_\+boxy, const double inv\+\_\+boxz, const float4 $\ast$coord, const int ncoord, const float $\ast$bixlam, const bool calc\+\_\+energy, const bool calc\+\_\+virial, \hyperlink{classForce}{Force}$<$ long long int $>$ \&force, double $\ast$biflam, const int $\ast$block\+Indexes)
+\item 
+\hypertarget{classCudaDomdecRecip_a9a81a01ef5d6385329c13423412c6e0a}{}\label{classCudaDomdecRecip_a9a81a01ef5d6385329c13423412c6e0a} 
+void {\bfseries calc\+\_\+block} (const double inv\+\_\+boxx, const double inv\+\_\+boxy, const double inv\+\_\+boxz, const float4 $\ast$coord, const int ncoord, const float $\ast$bixlam, const bool calc\+\_\+energy, const bool calc\+\_\+virial, \hyperlink{classForce}{Force}$<$ float $>$ \&force, double $\ast$biflam, const int $\ast$block\+Indexes)
+\item 
+\hypertarget{classCudaDomdecRecip_a09d3f40535886d3c153a332e9c669d81}{}\label{classCudaDomdecRecip_a09d3f40535886d3c153a332e9c669d81} 
+void {\bfseries calc\+\_\+block} (const double inv\+\_\+boxx, const double inv\+\_\+boxy, const double inv\+\_\+boxz, const float4 $\ast$coord, const int ncoord, const float $\ast$bixlam, const bool calc\+\_\+energy, const bool calc\+\_\+virial, float3 $\ast$force, double $\ast$biflam, const int $\ast$block\+Indexes)
+\item 
+\hypertarget{classCudaDomdecRecip_a0a695ab739249c06fa47033638efae3b}{}\label{classCudaDomdecRecip_a0a695ab739249c06fa47033638efae3b} 
+int {\bfseries get\+F\+F\+TX} ()
+\end{DoxyCompactItemize}
+\subsection*{Additional Inherited Members}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/Cuda\+Domdec\+Recip.\+h\end{DoxyCompactItemize}

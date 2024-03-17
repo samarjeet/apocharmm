@@ -1,0 +1,109 @@
+\hypertarget{classMatrix3d}{}\section{Matrix3d$<$ T $>$ Class Template Reference}
+\label{classMatrix3d}\index{Matrix3d$<$ T $>$@{Matrix3d$<$ T $>$}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classMatrix3d_ae6ce659b83ce95dbff6e0933fd41261a}{}\label{classMatrix3d_ae6ce659b83ce95dbff6e0933fd41261a} 
+{\bfseries Matrix3d} (const int nx, const int ny, const int nz, T $\ast$ext\+\_\+data=N\+U\+LL)
+\item 
+\hypertarget{classMatrix3d_ab4c7123ef87e71b0f8a4fe2a6b473b6b}{}\label{classMatrix3d_ab4c7123ef87e71b0f8a4fe2a6b473b6b} 
+{\bfseries Matrix3d} (const int nx, const int ny, const int nz, const int xsize, const int ysize, const int zsize, T $\ast$ext\+\_\+data=N\+U\+LL)
+\item 
+\hypertarget{classMatrix3d_a214fa561bafcef5629dc0a5a9162e7b6}{}\label{classMatrix3d_a214fa561bafcef5629dc0a5a9162e7b6} 
+{\bfseries Matrix3d} (const int nx, const int ny, const int nz, const char $\ast$filename, T $\ast$ext\+\_\+data=N\+U\+LL)
+\item 
+\hypertarget{classMatrix3d_a0dc060b22881e4d074c9e43eeaebe657}{}\label{classMatrix3d_a0dc060b22881e4d074c9e43eeaebe657} 
+void {\bfseries print\+\_\+info} ()
+\item 
+\hypertarget{classMatrix3d_a2015e215691333e3ee4fcf321b00ec7b}{}\label{classMatrix3d_a2015e215691333e3ee4fcf321b00ec7b} 
+bool {\bfseries compare} (\hyperlink{classMatrix3d}{Matrix3d}$<$ T $>$ $\ast$mat, const double tol, double \&max\+\_\+diff)
+\item 
+\hypertarget{classMatrix3d_a452265f8fa98fcd7feaec3fcefddb828}{}\label{classMatrix3d_a452265f8fa98fcd7feaec3fcefddb828} 
+void {\bfseries transpose\+\_\+xyz\+\_\+yzx\+\_\+host} (int src\+\_\+x0, int src\+\_\+y0, int src\+\_\+z0, int dst\+\_\+x0, int dst\+\_\+y0, int dst\+\_\+z0, int xlen, int ylen, int zlen, \hyperlink{classMatrix3d}{Matrix3d}$<$ T $>$ $\ast$mat)
+\item 
+\hypertarget{classMatrix3d_aca6bc24fdb30acae66f1f89b434bea6f}{}\label{classMatrix3d_aca6bc24fdb30acae66f1f89b434bea6f} 
+void {\bfseries transpose\+\_\+xyz\+\_\+yzx\+\_\+host} (\hyperlink{classMatrix3d}{Matrix3d}$<$ T $>$ $\ast$mat)
+\item 
+\hypertarget{classMatrix3d_a7eed3fb23f46d42623194e8536d06901}{}\label{classMatrix3d_a7eed3fb23f46d42623194e8536d06901} 
+void {\bfseries transpose\+\_\+xyz\+\_\+zxy\+\_\+host} (\hyperlink{classMatrix3d}{Matrix3d}$<$ T $>$ $\ast$mat)
+\item 
+\hypertarget{classMatrix3d_a970f62c82ece58f5dffcfd16c0c3b6c8}{}\label{classMatrix3d_a970f62c82ece58f5dffcfd16c0c3b6c8} 
+void {\bfseries transpose\+\_\+xyz\+\_\+yzx} (\hyperlink{classMatrix3d}{Matrix3d}$<$ T $>$ $\ast$mat)
+\item 
+\hypertarget{classMatrix3d_ab286179acccc643054d36b67a88aac0a}{}\label{classMatrix3d_ab286179acccc643054d36b67a88aac0a} 
+void {\bfseries transpose\+\_\+xyz\+\_\+yzx} (int src\+\_\+x0, int src\+\_\+y0, int src\+\_\+z0, int dst\+\_\+x0, int dst\+\_\+y0, int dst\+\_\+z0, int xlen, int ylen, int zlen, \hyperlink{classMatrix3d}{Matrix3d}$<$ T $>$ $\ast$mat)
+\item 
+\hypertarget{classMatrix3d_aa89eeeee9451a7fdfa965e7c0a80393e}{}\label{classMatrix3d_aa89eeeee9451a7fdfa965e7c0a80393e} 
+void {\bfseries transpose\+\_\+xyz\+\_\+zxy} (\hyperlink{classMatrix3d}{Matrix3d}$<$ T $>$ $\ast$mat)
+\item 
+\hypertarget{classMatrix3d_a4c0dca7e94a6c276a902523530053d73}{}\label{classMatrix3d_a4c0dca7e94a6c276a902523530053d73} 
+void {\bfseries copy\+\_\+host} (int src\+\_\+x0, int src\+\_\+y0, int src\+\_\+z0, int dst\+\_\+x0, int dst\+\_\+y0, int dst\+\_\+z0, int xlen, int ylen, int zlen, \hyperlink{classMatrix3d}{Matrix3d}$<$ T $>$ $\ast$mat)
+\item 
+\hypertarget{classMatrix3d_a0e186f5e20711362c3f755831d8b73d7}{}\label{classMatrix3d_a0e186f5e20711362c3f755831d8b73d7} 
+void {\bfseries copy} (int src\+\_\+x0, int src\+\_\+y0, int src\+\_\+z0, int dst\+\_\+x0, int dst\+\_\+y0, int dst\+\_\+z0, int xlen, int ylen, int zlen, \hyperlink{classMatrix3d}{Matrix3d}$<$ T $>$ $\ast$mat)
+\item 
+\hypertarget{classMatrix3d_adb5e54dc56bddd5cf6deebda85157516}{}\label{classMatrix3d_adb5e54dc56bddd5cf6deebda85157516} 
+void {\bfseries copy} (\hyperlink{classMatrix3d}{Matrix3d}$<$ T $>$ $\ast$mat)
+\item 
+\hypertarget{classMatrix3d_a87fd2fcb250d8e3b1bbbd0768b9331a5}{}\label{classMatrix3d_a87fd2fcb250d8e3b1bbbd0768b9331a5} 
+void {\bfseries print} (const int x0, const int x1, const int y0, const int y1, const int z0, const int z1)
+\item 
+\hypertarget{classMatrix3d_aea3e3b6e9d02625a4a76a71c3bb677bc}{}\label{classMatrix3d_aea3e3b6e9d02625a4a76a71c3bb677bc} 
+void {\bfseries load} (const int x0, const int x1, const int nx, const int y0, const int y1, const int ny, const int z0, const int z1, const int nz, const char $\ast$filename)
+\item 
+\hypertarget{classMatrix3d_a3d9308431626b0352d5b47603ef61fdc}{}\label{classMatrix3d_a3d9308431626b0352d5b47603ef61fdc} 
+void {\bfseries load} (const int nx, const int ny, const int nz, const char $\ast$filename)
+\item 
+\hypertarget{classMatrix3d_a1c2c8c9fbf3dec15f4a8563ae2dbbbc1}{}\label{classMatrix3d_a1c2c8c9fbf3dec15f4a8563ae2dbbbc1} 
+void {\bfseries scale} (const T fac)
+\item 
+\hypertarget{classMatrix3d_a16373c396a8e6cd5f4766a667308054f}{}\label{classMatrix3d_a16373c396a8e6cd5f4766a667308054f} 
+int {\bfseries get\+\_\+nx} ()
+\item 
+\hypertarget{classMatrix3d_a9408dd026d7fbac4d08302536ad581a1}{}\label{classMatrix3d_a9408dd026d7fbac4d08302536ad581a1} 
+int {\bfseries get\+\_\+ny} ()
+\item 
+\hypertarget{classMatrix3d_aee86893068958f4b1447a720d16f3a21}{}\label{classMatrix3d_aee86893068958f4b1447a720d16f3a21} 
+int {\bfseries get\+\_\+nz} ()
+\item 
+\hypertarget{classMatrix3d_a51f7e43342aa6287fda1ddea32346527}{}\label{classMatrix3d_a51f7e43342aa6287fda1ddea32346527} 
+int {\bfseries get\+\_\+xsize} ()
+\item 
+\hypertarget{classMatrix3d_a1b2d8c8be13cc6ea3f1c8e8822e10afe}{}\label{classMatrix3d_a1b2d8c8be13cc6ea3f1c8e8822e10afe} 
+int {\bfseries get\+\_\+ysize} ()
+\item 
+\hypertarget{classMatrix3d_aaaeab4d3f5cc6af74f82ac7bd42f1886}{}\label{classMatrix3d_aaaeab4d3f5cc6af74f82ac7bd42f1886} 
+int {\bfseries get\+\_\+zsize} ()
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classMatrix3d_accb9a3fa73d931d63d63745ab95d6fbe}{}\label{classMatrix3d_accb9a3fa73d931d63d63745ab95d6fbe} 
+T $\ast$ {\bfseries data}
+\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classMatrix3d_a3f51885c4443ba1b49973167bd70ba5a}{}\label{classMatrix3d_a3f51885c4443ba1b49973167bd70ba5a} 
+int {\bfseries nx}
+\item 
+\hypertarget{classMatrix3d_a006c9a3a7ec1ae18e32536a22e13e8fe}{}\label{classMatrix3d_a006c9a3a7ec1ae18e32536a22e13e8fe} 
+int {\bfseries ny}
+\item 
+\hypertarget{classMatrix3d_a066681c25c06add097736316470ee4e2}{}\label{classMatrix3d_a066681c25c06add097736316470ee4e2} 
+int {\bfseries nz}
+\item 
+\hypertarget{classMatrix3d_a7ae88ff46c6e20f95faa1ffc76804c06}{}\label{classMatrix3d_a7ae88ff46c6e20f95faa1ffc76804c06} 
+int {\bfseries xsize}
+\item 
+\hypertarget{classMatrix3d_a42f5e7f9d870544bd8e0d9c3cc41a699}{}\label{classMatrix3d_a42f5e7f9d870544bd8e0d9c3cc41a699} 
+int {\bfseries ysize}
+\item 
+\hypertarget{classMatrix3d_adc57dfb65c173d37208f42f1538c695d}{}\label{classMatrix3d_adc57dfb65c173d37208f42f1538c695d} 
+int {\bfseries zsize}
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/Matrix3d.\+h\end{DoxyCompactItemize}

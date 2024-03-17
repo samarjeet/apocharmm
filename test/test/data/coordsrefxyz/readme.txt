@@ -1,0 +1,1 @@
+Contains xyz values for crd and pbd files. Used as reference in unittesting.

@@ -1,0 +1,128 @@
+\hypertarget{group__uniform}{}\section{Uniform distribution scalar conversion functions}
+\label{group__uniform}\index{Uniform distribution scalar conversion functions@{Uniform distribution scalar conversion functions}}
+
+
+This file provides some simple functions that can be used to convert integers of various widths to floats and doubles with various characteristics.  
+
+
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\footnotesize template$<$typename Ftype , typename Itype $>$ }\\R123\+\_\+\+C\+U\+D\+A\+\_\+\+D\+E\+V\+I\+CE R123\+\_\+\+S\+T\+A\+T\+I\+C\+\_\+\+I\+N\+L\+I\+NE Ftype \hyperlink{group__uniform_gafc96ad616364743e209c836450cc4107}{r123\+::u01} (Itype in)
+\begin{DoxyCompactList}\small\item\em Input is a W-\/bit integer (signed or unsigned). \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename Ftype , typename Itype $>$ }\\R123\+\_\+\+C\+U\+D\+A\+\_\+\+D\+E\+V\+I\+CE R123\+\_\+\+S\+T\+A\+T\+I\+C\+\_\+\+I\+N\+L\+I\+NE Ftype \hyperlink{group__uniform_ga49eb4e2f3522f1b5e22b66bdc86345ce}{r123\+::uneg11} (Itype in)
+\begin{DoxyCompactList}\small\item\em Return a signed value in \mbox{[}-\/1,1\mbox{]}. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename Ftype , typename Itype $>$ }\\R123\+\_\+\+C\+U\+D\+A\+\_\+\+D\+E\+V\+I\+CE R123\+\_\+\+S\+T\+A\+T\+I\+C\+\_\+\+I\+N\+L\+I\+NE Ftype \hyperlink{group__uniform_ga6d75b90f162a67226c8044c6f3198b96}{r123\+::u01fixedpt} (Itype in)
+\begin{DoxyCompactList}\small\item\em Return a value in (0,1) chosen from a set of equally spaced fixed-\/point values. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+This file provides some simple functions that can be used to convert integers of various widths to floats and doubles with various characteristics. 
+
+It can be used to generate real-\/valued, uniformly distributed random variables from the random integers produced by the Random123 C\+B\+R\+N\+Gs.
+
+There are three templated functions\+:
+
+
+\begin{DoxyItemize}
+\item u01\+: output is as dense as possible in (0,1\}, never 0.\+0. May return 1.\+0 if and only if the number of output mantissa bits is less than the width of the input.
+\item uneg11\+: output is as dense as possible in \{-\/1,1\}, never 0.\+0. May return 1.\+0 or -\/1.\+0 if and only if the number of output mantissa bits is less than the width of the input.
+\item u01fixedpt\+: output is \char`\"{}fixed point\char`\"{}, equispaced, open at both ends, and is never 0.\+0, 0.\+5 nor 1.\+0.
+\end{DoxyItemize}
+
+The behavior of u01 and uneg11 depend on the pre-\/processor symbol\+: R123\+\_\+\+U\+N\+I\+F\+O\+R\+M\+\_\+\+F\+L\+O\+A\+T\+\_\+\+S\+T\+O\+RE. When \#defined to a non-\/zero value, u01 and uneg11 declare a volatile intermediate result, with the intention of forcing architectures that have \char`\"{}extra bits\char`\"{} in their floating point registers to more closely conform to I\+E\+EE arithmetic. When compiled this way, u01 and uneg11 will be significantly slower, as they will incur a memory write and read on every call. Without it, they may fail the \char`\"{}known answer test\char`\"{} implemented in ut\+\_\+uniform\+\_\+\+I\+E\+E\+Ekat.\+cpp even though they perform perfectly reasonable int to float conversions. We have used this option to get 32-\/bit x86 to produce the same results as 64-\/bit x86-\/64 code, but we do not recommend it for normal use.
+
+Three additional functions are defined when C++11 or newer is in use\+:
+
+
+\begin{DoxyItemize}
+\item u01all
+\item uneg11all
+\item u01fixedptall
+\end{DoxyItemize}
+
+These functions apply the corresponding conversion to every element of their argument, which must be a staticly sized array, e.\+g., an r123array or a std\+::array of an integer type.
+
+This file may not be as portable, and has not been tested as rigorously as other files in the library, e.\+g., the generators. Nevertheless, we hope it is useful and we encourage developers to copy it and modify it for their own use. We invite comments and improvements. 
+
+\subsection{Function Documentation}
+\hypertarget{group__uniform_gafc96ad616364743e209c836450cc4107}{}\label{group__uniform_gafc96ad616364743e209c836450cc4107} 
+\index{Uniform distribution scalar conversion functions@{Uniform distribution scalar conversion functions}!u01@{u01}}
+\index{u01@{u01}!Uniform distribution scalar conversion functions@{Uniform distribution scalar conversion functions}}
+\subsubsection{\texorpdfstring{u01()}{u01()}}
+{\footnotesize\ttfamily template$<$typename Ftype , typename Itype $>$ \\
+R123\+\_\+\+C\+U\+D\+A\+\_\+\+D\+E\+V\+I\+CE R123\+\_\+\+S\+T\+A\+T\+I\+C\+\_\+\+I\+N\+L\+I\+NE Ftype r123\+::u01 (\begin{DoxyParamCaption}\item[{Itype}]{in }\end{DoxyParamCaption})}
+
+
+
+Input is a W-\/bit integer (signed or unsigned). 
+
+Return a uniform real value in (0, 1\mbox{]} It is cast to a W-\/bit unsigned integer, multiplied by Ftype(2$^\wedge$-\/W) and added to Ftype(2$^\wedge$(-\/\+W-\/1)). A good compiler should optimize it down to an int-\/to-\/float conversion followed by a multiply and an add, which might be fused, depending on the architecture.
+
+If the input is a uniformly distributed integer, and if Ftype arithmetic follows I\+E\+E\+E754 round-\/to-\/nearest rules, then the result is a uniformly distributed floating point number in (0, 1\mbox{]}.
+
+
+\begin{DoxyItemize}
+\item The result is never exactly 0.\+0.
+\item The smallest value returned is 2$^\wedge$-\/(W-\/1).
+\item Let M be the number of mantissa bits in Ftype (typically 24 or 53).
+\begin{DoxyItemize}
+\item If W$>$M then the largest value retured is 1.\+0.
+\item If W$<$=M then the largest value returned is Ftype(1.\+0 -\/ 2$^\wedge$(-\/\+W-\/1)). 
+\end{DoxyItemize}
+\end{DoxyItemize}\hypertarget{group__uniform_ga6d75b90f162a67226c8044c6f3198b96}{}\label{group__uniform_ga6d75b90f162a67226c8044c6f3198b96} 
+\index{Uniform distribution scalar conversion functions@{Uniform distribution scalar conversion functions}!u01fixedpt@{u01fixedpt}}
+\index{u01fixedpt@{u01fixedpt}!Uniform distribution scalar conversion functions@{Uniform distribution scalar conversion functions}}
+\subsubsection{\texorpdfstring{u01fixedpt()}{u01fixedpt()}}
+{\footnotesize\ttfamily template$<$typename Ftype , typename Itype $>$ \\
+R123\+\_\+\+C\+U\+D\+A\+\_\+\+D\+E\+V\+I\+CE R123\+\_\+\+S\+T\+A\+T\+I\+C\+\_\+\+I\+N\+L\+I\+NE Ftype r123\+::u01fixedpt (\begin{DoxyParamCaption}\item[{Itype}]{in }\end{DoxyParamCaption})}
+
+
+
+Return a value in (0,1) chosen from a set of equally spaced fixed-\/point values. 
+
+Let\+:
+\begin{DoxyItemize}
+\item W = width of Itype, e.\+g., 32 or 64, regardless of signedness.
+\item M = mantissa bits of Ftype, e.\+g., 24, 53 or 64
+\item B = min(\+M, W)
+\end{DoxyItemize}
+
+Then the 2$^\wedge$(B-\/1) possible output values are\+: 2$^\wedge$-\/\+B$\ast$\{1, 3, 5, ..., 2$^\wedge$B -\/ 1\}
+
+The smallest output is\+: 2$^\wedge$-\/B
+
+The largest output is\+: 1 -\/ 2$^\wedge$-\/B
+
+The output is never exactly 0.\+0, nor 0.\+5, nor 1.\+0.
+
+The 2$^\wedge$(B-\/1) possible outputs\+:
+\begin{DoxyItemize}
+\item are equally likely,
+\item are uniformly spaced by 2$^\wedge$-\/(B-\/1),
+\item are balanced around 0.\+5 
+\end{DoxyItemize}\hypertarget{group__uniform_ga49eb4e2f3522f1b5e22b66bdc86345ce}{}\label{group__uniform_ga49eb4e2f3522f1b5e22b66bdc86345ce} 
+\index{Uniform distribution scalar conversion functions@{Uniform distribution scalar conversion functions}!uneg11@{uneg11}}
+\index{uneg11@{uneg11}!Uniform distribution scalar conversion functions@{Uniform distribution scalar conversion functions}}
+\subsubsection{\texorpdfstring{uneg11()}{uneg11()}}
+{\footnotesize\ttfamily template$<$typename Ftype , typename Itype $>$ \\
+R123\+\_\+\+C\+U\+D\+A\+\_\+\+D\+E\+V\+I\+CE R123\+\_\+\+S\+T\+A\+T\+I\+C\+\_\+\+I\+N\+L\+I\+NE Ftype r123\+::uneg11 (\begin{DoxyParamCaption}\item[{Itype}]{in }\end{DoxyParamCaption})}
+
+
+
+Return a signed value in \mbox{[}-\/1,1\mbox{]}. 
+
+The argument is converted to a W-\/bit signed integer, multiplied by Ftype(2$^\wedge$-\/(W-\/1)) and then added to Ftype(2$^\wedge$-\/W). A good compiler should optimize it down to an int-\/to-\/float conversion followed by a multiply and an add, which might be fused, depending on the architecture.
+
+If the input is a uniformly distributed integer, and if Ftype arithmetic follows I\+E\+E\+E754 round-\/to-\/nearest rules, then the output is a uniformly distributed floating point number in \mbox{[}-\/1, 1\mbox{]}.
+
+
+\begin{DoxyItemize}
+\item The result is never exactly 0.\+0.
+\item The smallest absolute value returned is 2$^\wedge$-\/W
+\item Let M be the number of mantissa bits in Ftype.
+\begin{DoxyItemize}
+\item If W$>$M then the largest value retured is 1.\+0 and the smallest is -\/1.\+0.
+\item If W$<$=M then the largest value returned is the Ftype(1.\+0 -\/ 2$^\wedge$-\/W) and the smallest value returned is -\/\+Ftype(1.\+0 -\/ 2$^\wedge$-\/W). 
+\end{DoxyItemize}
+\end{DoxyItemize}

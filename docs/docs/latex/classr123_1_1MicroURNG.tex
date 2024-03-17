@@ -1,0 +1,109 @@
+\hypertarget{classr123_1_1MicroURNG}{}\section{r123\+:\+:Micro\+U\+R\+NG$<$ C\+B\+R\+NG $>$ Class Template Reference}
+\label{classr123_1_1MicroURNG}\index{r123\+::\+Micro\+U\+R\+N\+G$<$ C\+B\+R\+N\+G $>$@{r123\+::\+Micro\+U\+R\+N\+G$<$ C\+B\+R\+N\+G $>$}}
+
+
+Given a C\+B\+R\+NG whose ctr\+\_\+type has an unsigned integral value\+\_\+type, Micro\+U\+R\+N\+G$<$\+C\+B\+R\+N\+G$>$(c, k) is a type that satisfies the requirements of a C++11 Uniform Random Number Generator.  
+
+
+
+
+{\ttfamily \#include $<$Micro\+U\+R\+N\+G.\+hpp$>$}
+
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classr123_1_1MicroURNG_ab0b3a77c9408dbcb2f9d6b5c67e9c3f7}{}\label{classr123_1_1MicroURNG_ab0b3a77c9408dbcb2f9d6b5c67e9c3f7} 
+typedef C\+B\+R\+NG {\bfseries cbrng\+\_\+type}
+\item 
+\hypertarget{classr123_1_1MicroURNG_a5aba882fd21e4d8f1a445f546e1e4476}{}\label{classr123_1_1MicroURNG_a5aba882fd21e4d8f1a445f546e1e4476} 
+typedef cbrng\+\_\+type\+::ctr\+\_\+type {\bfseries ctr\+\_\+type}
+\item 
+\hypertarget{classr123_1_1MicroURNG_aef90e6157f360434342ad0df4ce5f364}{}\label{classr123_1_1MicroURNG_aef90e6157f360434342ad0df4ce5f364} 
+typedef cbrng\+\_\+type\+::key\+\_\+type {\bfseries key\+\_\+type}
+\item 
+\hypertarget{classr123_1_1MicroURNG_a7e6fd93fec2fe138ee36b401ff376cfc}{}\label{classr123_1_1MicroURNG_a7e6fd93fec2fe138ee36b401ff376cfc} 
+typedef cbrng\+\_\+type\+::ukey\+\_\+type {\bfseries ukey\+\_\+type}
+\item 
+\hypertarget{classr123_1_1MicroURNG_a512957c3e7b3d22741ef0a436b973c2b}{}\label{classr123_1_1MicroURNG_a512957c3e7b3d22741ef0a436b973c2b} 
+typedef ctr\+\_\+type\+::value\+\_\+type {\bfseries result\+\_\+type}
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classr123_1_1MicroURNG_a82982e0df155e33f0899867f5d7cca53}{}\label{classr123_1_1MicroURNG_a82982e0df155e33f0899867f5d7cca53} 
+{\bfseries R123\+\_\+\+S\+T\+A\+T\+I\+C\+\_\+\+A\+S\+S\+E\+RT} (std\+::numeric\+\_\+limits$<$ result\+\_\+type $>$\+::digits $>$=B\+I\+TS, \char`\"{}The result\+\_\+type must have at least 32 bits\char`\"{})
+\item 
+\hypertarget{classr123_1_1MicroURNG_a64cd4d33b4cab5d3d9c556db68407b77}{}\label{classr123_1_1MicroURNG_a64cd4d33b4cab5d3d9c556db68407b77} 
+result\+\_\+type {\bfseries operator()} ()
+\item 
+\hypertarget{classr123_1_1MicroURNG_a19afb80312c370e1670bf8afc73d802e}{}\label{classr123_1_1MicroURNG_a19afb80312c370e1670bf8afc73d802e} 
+{\bfseries Micro\+U\+R\+NG} (cbrng\+\_\+type \+\_\+b, ctr\+\_\+type \+\_\+c0, ukey\+\_\+type \+\_\+uk)
+\item 
+\hypertarget{classr123_1_1MicroURNG_a7ecf43819bc96804892a78c6715f587b}{}\label{classr123_1_1MicroURNG_a7ecf43819bc96804892a78c6715f587b} 
+{\bfseries Micro\+U\+R\+NG} (ctr\+\_\+type \+\_\+c0, ukey\+\_\+type \+\_\+uk)
+\item 
+\hypertarget{classr123_1_1MicroURNG_a1729ed31ddf93325fee2e5413c3d3817}{}\label{classr123_1_1MicroURNG_a1729ed31ddf93325fee2e5413c3d3817} 
+const ctr\+\_\+type \& {\bfseries counter} () const
+\item 
+\hypertarget{classr123_1_1MicroURNG_add2f214254ddc2291e3b2c8b5dbe791a}{}\label{classr123_1_1MicroURNG_add2f214254ddc2291e3b2c8b5dbe791a} 
+void {\bfseries reset} (ctr\+\_\+type \+\_\+c0, ukey\+\_\+type \+\_\+uk)
+\end{DoxyCompactItemize}
+\subsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classr123_1_1MicroURNG_aa05c857c01053cf9185406d69757b101}{}\label{classr123_1_1MicroURNG_aa05c857c01053cf9185406d69757b101} 
+static R123\+\_\+\+C\+O\+N\+S\+T\+E\+X\+PR result\+\_\+type min {\bfseries R123\+\_\+\+N\+O\+\_\+\+M\+A\+C\+R\+O\+\_\+\+S\+U\+B\+ST} ()
+\item 
+\hypertarget{classr123_1_1MicroURNG_a3af623b6366d6e848d67d72e4b0f363c}{}\label{classr123_1_1MicroURNG_a3af623b6366d6e848d67d72e4b0f363c} 
+static R123\+\_\+\+C\+O\+N\+S\+T\+E\+X\+PR result\+\_\+type max {\bfseries R123\+\_\+\+N\+O\+\_\+\+M\+A\+C\+R\+O\+\_\+\+S\+U\+B\+ST} ()
+\end{DoxyCompactItemize}
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classr123_1_1MicroURNG_ac55cddda8fe0808f922f39beee587b27}{}\label{classr123_1_1MicroURNG_ac55cddda8fe0808f922f39beee587b27} 
+static const int {\bfseries B\+I\+TS} = 32
+\item 
+\hypertarget{classr123_1_1MicroURNG_a1f2787f136a8a807d14eab8cb1ca8c14}{}\label{classr123_1_1MicroURNG_a1f2787f136a8a807d14eab8cb1ca8c14} 
+static const result\+\_\+type {\bfseries \+\_\+\+Min} = 0
+\item 
+\hypertarget{classr123_1_1MicroURNG_a4faecd7ab54c7678ee66c413bb984bf0}{}\label{classr123_1_1MicroURNG_a4faecd7ab54c7678ee66c413bb984bf0} 
+static const result\+\_\+type {\bfseries \+\_\+\+Max} = $\sim$((result\+\_\+type)0)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\subsubsection*{template$<$typename C\+B\+R\+NG$>$\newline
+class r123\+::\+Micro\+U\+R\+N\+G$<$ C\+B\+R\+N\+G $>$}
+
+Given a C\+B\+R\+NG whose ctr\+\_\+type has an unsigned integral value\+\_\+type, Micro\+U\+R\+N\+G$<$\+C\+B\+R\+N\+G$>$(c, k) is a type that satisfies the requirements of a C++11 Uniform Random Number Generator. 
+
+The intended purpose is for a \hyperlink{classr123_1_1MicroURNG}{Micro\+U\+R\+NG} to be passed as an argument to a C++11 Distribution, e.\+g., std\+::normal\+\_\+distribution. See examples/\+Micro\+U\+R\+N\+G.\+cpp.
+
+The \hyperlink{classr123_1_1MicroURNG}{Micro\+U\+R\+NG} functor has a period of \char`\"{}only\char`\"{}
+
+ctr\+\_\+type.\+size()$\ast$2$^\wedge$32,
+
+after which it will silently repeat.
+
+The high 32 bits of the highest word in the counter c, passed to the constructor must be zero. \hyperlink{classr123_1_1MicroURNG}{Micro\+U\+R\+NG} uses these bits to \char`\"{}count\char`\"{}.
+
+Older versions of the library permitted a second template parameter by which the caller could control the number of bits devoted to the U\+R\+NG\textquotesingle{}s internal counter. This flexibility has been disabled because U\+R\+N\+Gs created with different numbers of counter bits could, conceivably \char`\"{}collide\char`\"{}.
+
+
+\begin{DoxyCode}
+\textcolor{keyword}{typedef} ?someCBRNG? RNG;
+RNG::ctr\_type c = ...; \textcolor{comment}{// under application control}
+RNG::key\_type k = ...; \textcolor{comment}{// }
+std::normal\_distribution<float> nd;
+MicroURNG<RNG> urng(c, k);
+\textcolor{keywordflow}{for}(???)\{
+  ...
+  nd(urng);  \textcolor{comment}{// may be called several hundred times with BITS=10}
+  ...
+\}
+\end{DoxyCode}
+ 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/\+Random123/Micro\+U\+R\+N\+G.\+hpp\end{DoxyCompactItemize}

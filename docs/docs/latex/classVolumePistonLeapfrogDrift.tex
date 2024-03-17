@@ -1,0 +1,69 @@
+\hypertarget{classVolumePistonLeapfrogDrift}{}\section{Volume\+Piston\+Leapfrog\+Drift Class Reference}
+\label{classVolumePistonLeapfrogDrift}\index{Volume\+Piston\+Leapfrog\+Drift@{Volume\+Piston\+Leapfrog\+Drift}}
+
+
+Create a graph that calculates the effect of constant pressure during the drift.  
+
+
+
+
+{\ttfamily \#include $<$Volume\+Piston\+Leapfrog\+Drift.\+h$>$}
+
+Inheritance diagram for Volume\+Piston\+Leapfrog\+Drift\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classVolumePistonLeapfrogDrift}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classVolumePistonLeapfrogDrift_a3872d09e073ce1b58d0a70beab29e487}{Volume\+Piston\+Leapfrog\+Drift} (const double3 $\ast$old\+\_\+com\+\_\+ke, const double3 $\ast$old\+\_\+box, const double3 $\ast$old\+\_\+box\+\_\+dot, double3 $\ast$new\+\_\+com\+\_\+ke, double3 $\ast$new\+\_\+box, double3 $\ast$new\+\_\+box\+\_\+dot, double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ com\+\_\+momentum\+\_\+scale, double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ com\+\_\+momentum\+\_\+prescale, double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ com\+\_\+position\+\_\+prescale, double ref\+\_\+pressure, double timestep, double piston\+\_\+mass)
+\begin{DoxyCompactList}\small\item\em Create a graph that calculates the effect of constant pressure. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Additional Inherited Members}
+
+
+\subsection{Detailed Description}
+Create a graph that calculates the effect of constant pressure during the drift. 
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classVolumePistonLeapfrogDrift_a3872d09e073ce1b58d0a70beab29e487}{}\label{classVolumePistonLeapfrogDrift_a3872d09e073ce1b58d0a70beab29e487} 
+\index{Volume\+Piston\+Leapfrog\+Drift@{Volume\+Piston\+Leapfrog\+Drift}!Volume\+Piston\+Leapfrog\+Drift@{Volume\+Piston\+Leapfrog\+Drift}}
+\index{Volume\+Piston\+Leapfrog\+Drift@{Volume\+Piston\+Leapfrog\+Drift}!Volume\+Piston\+Leapfrog\+Drift@{Volume\+Piston\+Leapfrog\+Drift}}
+\subsubsection{\texorpdfstring{Volume\+Piston\+Leapfrog\+Drift()}{VolumePistonLeapfrogDrift()}}
+{\footnotesize\ttfamily Volume\+Piston\+Leapfrog\+Drift\+::\+Volume\+Piston\+Leapfrog\+Drift (\begin{DoxyParamCaption}\item[{const double3 $\ast$}]{old\+\_\+com\+\_\+ke,  }\item[{const double3 $\ast$}]{old\+\_\+box,  }\item[{const double3 $\ast$}]{old\+\_\+box\+\_\+dot,  }\item[{double3 $\ast$}]{new\+\_\+com\+\_\+ke,  }\item[{double3 $\ast$}]{new\+\_\+box,  }\item[{double3 $\ast$}]{new\+\_\+box\+\_\+dot,  }\item[{double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{com\+\_\+momentum\+\_\+scale,  }\item[{double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{com\+\_\+momentum\+\_\+prescale,  }\item[{double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{com\+\_\+position\+\_\+prescale,  }\item[{double}]{ref\+\_\+pressure,  }\item[{double}]{timestep,  }\item[{double}]{piston\+\_\+mass }\end{DoxyParamCaption})}
+
+
+
+Create a graph that calculates the effect of constant pressure. 
+
+Piston Mass, dimensions of mass/length$^\wedge$4. 
+\begin{DoxyParams}{Parameters}
+{\em old\+\_\+com\+\_\+ke} & Device pointer to kinetic energy of pressure group momentums \\
+\hline
+{\em old\+\_\+box} & Device pointer to box lengths \\
+\hline
+{\em old\+\_\+box\+\_\+dot} & Device pointer to box length time dirivatives \\
+\hline
+{\em new\+\_\+com\+\_\+ke} & Device pointer to save post drift pressure group momentum kinetic energy \\
+\hline
+{\em new\+\_\+box} & Device pointer to save post drift box lengths \\
+\hline
+{\em new\+\_\+box\+\_\+dot} & Device pointer to save post drift box length time dirivatives \\
+\hline
+{\em com\+\_\+momentum\+\_\+scale} & Device pointer to final pressure group momentum scale. This is the total scale from predrift p group momentum to post drift p group momentum. \\
+\hline
+{\em com\+\_\+momentum\+\_\+prescale} & Device pointer to initial pressure group momentum scale. This is the scaleing of momentum that happens before the pressure group centers of mass are moved. \\
+\hline
+{\em com\+\_\+position\+\_\+prescale} & Device pointer to initial pressure group C\+OM scale. This is the scaling p group centers of mass before the are moved by their prescaled momenentums. \\
+\hline
+{\em ref\+\_\+pressure} & Reference pressure, units are not atms, it is SI compatible with other units. \\
+\hline
+{\em timestep} & Time step. \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/\hyperlink{VolumePistonLeapfrogDrift_8h}{Volume\+Piston\+Leapfrog\+Drift.\+h}\end{DoxyCompactItemize}

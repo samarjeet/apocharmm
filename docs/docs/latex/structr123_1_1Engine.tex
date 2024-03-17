@@ -1,0 +1,160 @@
+\hypertarget{structr123_1_1Engine}{}\section{r123\+:\+:Engine$<$ C\+B\+R\+NG $>$ Struct Template Reference}
+\label{structr123_1_1Engine}\index{r123\+::\+Engine$<$ C\+B\+R\+N\+G $>$@{r123\+::\+Engine$<$ C\+B\+R\+N\+G $>$}}
+
+
+If G satisfies the requirements of a C\+B\+R\+NG, and has a ctr\+\_\+type whose value\+\_\+type is an unsigned integral type, then Engine$<$\+G$>$ satisfies the requirements of a C++11 \char`\"{}\+Uniform Random Number Engine\char`\"{} and can be used in any context where such an object is expected.  
+
+
+
+
+{\ttfamily \#include $<$Engine.\+hpp$>$}
+
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{structr123_1_1Engine_a45ee0086cf8cd6d10febb76dc88f8b22}{}\label{structr123_1_1Engine_a45ee0086cf8cd6d10febb76dc88f8b22} 
+typedef C\+B\+R\+NG {\bfseries cbrng\+\_\+type}
+\item 
+\hypertarget{structr123_1_1Engine_a96e0f5f039d5efd6aae77b63bafaad90}{}\label{structr123_1_1Engine_a96e0f5f039d5efd6aae77b63bafaad90} 
+typedef C\+B\+R\+N\+G\+::ctr\+\_\+type {\bfseries ctr\+\_\+type}
+\item 
+\hypertarget{structr123_1_1Engine_a18132a79d2327990c4809b37300eddc3}{}\label{structr123_1_1Engine_a18132a79d2327990c4809b37300eddc3} 
+typedef C\+B\+R\+N\+G\+::key\+\_\+type {\bfseries key\+\_\+type}
+\item 
+\hypertarget{structr123_1_1Engine_a32973bdda8697bcbb4dde11c0366a5e3}{}\label{structr123_1_1Engine_a32973bdda8697bcbb4dde11c0366a5e3} 
+typedef C\+B\+R\+N\+G\+::ukey\+\_\+type {\bfseries ukey\+\_\+type}
+\item 
+\hypertarget{structr123_1_1Engine_a3d7cb66d43f99f5e227990af985ecb45}{}\label{structr123_1_1Engine_a3d7cb66d43f99f5e227990af985ecb45} 
+typedef ctr\+\_\+type\+::value\+\_\+type {\bfseries result\+\_\+type}
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{structr123_1_1Engine_ae1a249af828cfdac77db6c16e3f8f8eb}{}\label{structr123_1_1Engine_ae1a249af828cfdac77db6c16e3f8f8eb} 
+{\bfseries Engine} (result\+\_\+type r)
+\item 
+\hypertarget{structr123_1_1Engine_a37dd55cee849b59d678f74780f785672}{}\label{structr123_1_1Engine_a37dd55cee849b59d678f74780f785672} 
+{\bfseries Engine} (\hyperlink{structr123_1_1Engine}{Engine} \&e)
+\item 
+\hypertarget{structr123_1_1Engine_a478b486b166316597a51ffdd7b5b2d0c}{}\label{structr123_1_1Engine_a478b486b166316597a51ffdd7b5b2d0c} 
+{\bfseries Engine} (const \hyperlink{structr123_1_1Engine}{Engine} \&e)
+\item 
+\hypertarget{structr123_1_1Engine_abd535170be11324a31b5657c2465d388}{}\label{structr123_1_1Engine_abd535170be11324a31b5657c2465d388} 
+{\footnotesize template$<$typename Seed\+Seq $>$ }\\{\bfseries Engine} (Seed\+Seq \&s)
+\item 
+\hypertarget{structr123_1_1Engine_a93429593bdb12b202b4b8ed38fe08bc4}{}\label{structr123_1_1Engine_a93429593bdb12b202b4b8ed38fe08bc4} 
+void {\bfseries seed} (result\+\_\+type r)
+\item 
+\hypertarget{structr123_1_1Engine_aac89ba287bdb118699c8eb8483c2c52a}{}\label{structr123_1_1Engine_aac89ba287bdb118699c8eb8483c2c52a} 
+{\footnotesize template$<$typename Seed\+Seq $>$ }\\void {\bfseries seed} (Seed\+Seq \&s)
+\item 
+\hypertarget{structr123_1_1Engine_aff36bc97d11bc66f6c0edb75d8dc88e5}{}\label{structr123_1_1Engine_aff36bc97d11bc66f6c0edb75d8dc88e5} 
+void {\bfseries seed} ()
+\item 
+\hypertarget{structr123_1_1Engine_aca309d0b4f2a8fff1f6f2ab38c6caf93}{}\label{structr123_1_1Engine_aca309d0b4f2a8fff1f6f2ab38c6caf93} 
+result\+\_\+type {\bfseries operator()} ()
+\item 
+\hypertarget{structr123_1_1Engine_a3166cda5ff3d602244aef5dc96d489a4}{}\label{structr123_1_1Engine_a3166cda5ff3d602244aef5dc96d489a4} 
+void {\bfseries discard} (R123\+\_\+\+U\+L\+O\+N\+G\+\_\+\+L\+O\+NG skip)
+\item 
+\hypertarget{structr123_1_1Engine_ab5f45b4eb97995cc45350abee3ec8388}{}\label{structr123_1_1Engine_ab5f45b4eb97995cc45350abee3ec8388} 
+{\bfseries Engine} (const ukey\+\_\+type \&uk)
+\item 
+\hypertarget{structr123_1_1Engine_aeb178b9305cbf1fb7e11e8e33a631ba7}{}\label{structr123_1_1Engine_aeb178b9305cbf1fb7e11e8e33a631ba7} 
+{\bfseries Engine} (ukey\+\_\+type \&uk)
+\item 
+\hypertarget{structr123_1_1Engine_a5c4d68dbbccfc71f467f3c902f5b93da}{}\label{structr123_1_1Engine_a5c4d68dbbccfc71f467f3c902f5b93da} 
+void {\bfseries seed} (const ukey\+\_\+type \&uk)
+\item 
+\hypertarget{structr123_1_1Engine_a7bd6d3417cefb904c879f41d2c29e15e}{}\label{structr123_1_1Engine_a7bd6d3417cefb904c879f41d2c29e15e} 
+void {\bfseries seed} (ukey\+\_\+type \&uk)
+\item 
+\hypertarget{structr123_1_1Engine_a4df4747f3b6129428537f6300e4b94c0}{}\label{structr123_1_1Engine_a4df4747f3b6129428537f6300e4b94c0} 
+ctr\+\_\+type {\bfseries operator()} (const ctr\+\_\+type \&c) const
+\item 
+\hypertarget{structr123_1_1Engine_a807e0d14f7728978c63f4b88b7d1265f}{}\label{structr123_1_1Engine_a807e0d14f7728978c63f4b88b7d1265f} 
+key\+\_\+type {\bfseries getkey} () const
+\item 
+\hypertarget{structr123_1_1Engine_ace8373d1ae2abf7849d4d9a983e63d07}{}\label{structr123_1_1Engine_ace8373d1ae2abf7849d4d9a983e63d07} 
+void {\bfseries setkey} (const key\+\_\+type \&k)
+\item 
+\hypertarget{structr123_1_1Engine_a5e5b1e09ec6d17ad466bcf64293563c8}{}\label{structr123_1_1Engine_a5e5b1e09ec6d17ad466bcf64293563c8} 
+std\+::pair$<$ ctr\+\_\+type, result\+\_\+type $>$ {\bfseries getcounter} () const
+\item 
+\hypertarget{structr123_1_1Engine_af078e04ceae8f975e9749d46a1d061f5}{}\label{structr123_1_1Engine_af078e04ceae8f975e9749d46a1d061f5} 
+void {\bfseries setcounter} (const ctr\+\_\+type \&\+\_\+c, result\+\_\+type \+\_\+elem)
+\item 
+\hypertarget{structr123_1_1Engine_abb13a45ea570e48b1474a40dbcccd445}{}\label{structr123_1_1Engine_abb13a45ea570e48b1474a40dbcccd445} 
+void {\bfseries setcounter} (const std\+::pair$<$ ctr\+\_\+type, result\+\_\+type $>$ \&ce)
+\end{DoxyCompactItemize}
+\subsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{structr123_1_1Engine_af5441fc62932c3d099f8b16150d2aa81}{}\label{structr123_1_1Engine_af5441fc62932c3d099f8b16150d2aa81} 
+static R123\+\_\+\+C\+O\+N\+S\+T\+E\+X\+PR result\+\_\+type min {\bfseries R123\+\_\+\+N\+O\+\_\+\+M\+A\+C\+R\+O\+\_\+\+S\+U\+B\+ST} ()
+\item 
+\hypertarget{structr123_1_1Engine_a112318f7d0015ecf4c3c6a8a5c76371b}{}\label{structr123_1_1Engine_a112318f7d0015ecf4c3c6a8a5c76371b} 
+static R123\+\_\+\+C\+O\+N\+S\+T\+E\+X\+PR result\+\_\+type max {\bfseries R123\+\_\+\+N\+O\+\_\+\+M\+A\+C\+R\+O\+\_\+\+S\+U\+B\+ST} ()
+\end{DoxyCompactItemize}
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{structr123_1_1Engine_aa73e4d27847915f1438fd37b30777111}{}\label{structr123_1_1Engine_aa73e4d27847915f1438fd37b30777111} 
+static const result\+\_\+type {\bfseries \+\_\+\+Min} = 0
+\item 
+\hypertarget{structr123_1_1Engine_ae549f81e966b0414bcaf0f24b566ebd8}{}\label{structr123_1_1Engine_ae549f81e966b0414bcaf0f24b566ebd8} 
+static const result\+\_\+type {\bfseries \+\_\+\+Max} = $\sim$((result\+\_\+type)0)
+\end{DoxyCompactItemize}
+\subsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{structr123_1_1Engine_aa7ad87d7238a0f820ee37640071dee7d}{}\label{structr123_1_1Engine_aa7ad87d7238a0f820ee37640071dee7d} 
+void {\bfseries fix\+\_\+invariant} ()
+\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{structr123_1_1Engine_a5e430e850badcc4fd0f74de4a49a673b}{}\label{structr123_1_1Engine_a5e430e850badcc4fd0f74de4a49a673b} 
+cbrng\+\_\+type {\bfseries b}
+\item 
+\hypertarget{structr123_1_1Engine_adb9e1841a81f213a115e9f092f5c4654}{}\label{structr123_1_1Engine_adb9e1841a81f213a115e9f092f5c4654} 
+key\+\_\+type {\bfseries key}
+\item 
+\hypertarget{structr123_1_1Engine_afb056ed93053f4175aabc9f4e5dd7b8d}{}\label{structr123_1_1Engine_afb056ed93053f4175aabc9f4e5dd7b8d} 
+ctr\+\_\+type {\bfseries c}
+\item 
+\hypertarget{structr123_1_1Engine_a6169d4fbce1fd7725fabda4c693bf250}{}\label{structr123_1_1Engine_a6169d4fbce1fd7725fabda4c693bf250} 
+ctr\+\_\+type {\bfseries v}
+\end{DoxyCompactItemize}
+\subsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{structr123_1_1Engine_a606e3ba824542e52f12df1345126e721}{}\label{structr123_1_1Engine_a606e3ba824542e52f12df1345126e721} 
+bool {\bfseries operator==} (const \hyperlink{structr123_1_1Engine}{Engine} \&lhs, const \hyperlink{structr123_1_1Engine}{Engine} \&rhs)
+\item 
+\hypertarget{structr123_1_1Engine_af0947cdcfc03aef7ec30c9fafa660445}{}\label{structr123_1_1Engine_af0947cdcfc03aef7ec30c9fafa660445} 
+bool {\bfseries operator!=} (const \hyperlink{structr123_1_1Engine}{Engine} \&lhs, const \hyperlink{structr123_1_1Engine}{Engine} \&rhs)
+\item 
+\hypertarget{structr123_1_1Engine_ae0321571f689fca00c608d11ecad7d8d}{}\label{structr123_1_1Engine_ae0321571f689fca00c608d11ecad7d8d} 
+std\+::ostream \& {\bfseries operator$<$$<$} (std\+::ostream \&os, const \hyperlink{structr123_1_1Engine}{Engine} \&be)
+\item 
+\hypertarget{structr123_1_1Engine_ae708b771ab5ac17700d34bad875a16d9}{}\label{structr123_1_1Engine_ae708b771ab5ac17700d34bad875a16d9} 
+std\+::istream \& {\bfseries operator$>$$>$} (std\+::istream \&is, \hyperlink{structr123_1_1Engine}{Engine} \&be)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\subsubsection*{template$<$typename C\+B\+R\+NG$>$\newline
+struct r123\+::\+Engine$<$ C\+B\+R\+N\+G $>$}
+
+If G satisfies the requirements of a C\+B\+R\+NG, and has a ctr\+\_\+type whose value\+\_\+type is an unsigned integral type, then Engine$<$\+G$>$ satisfies the requirements of a C++11 \char`\"{}\+Uniform Random Number Engine\char`\"{} and can be used in any context where such an object is expected. 
+
+Note that wrapping a counter based R\+NG with a traditional A\+PI in this way obscures much of the power of counter based P\+R\+N\+Gs. Nevertheless, it may be of value in applications that are already coded to work with the C++11 random number engines.
+
+The \hyperlink{classr123_1_1MicroURNG}{Micro\+U\+R\+NG} template in \hyperlink{MicroURNG_8hpp_source}{Micro\+U\+R\+N\+G.\+hpp} provides the more limited functionality of a C++11 \char`\"{}\+Uniform
+\+Random Number Generator\char`\"{}, but leaves the application in control of counters and keys and hence may be preferable to the \hyperlink{structr123_1_1Engine}{Engine} template. For example, a \hyperlink{classr123_1_1MicroURNG}{Micro\+U\+R\+NG} allows one to use C++11 \char`\"{}\+Random Number
+\+Distributions\char`\"{} without giving up control over the counters and keys. 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/\+Random123/conventional/Engine.\+hpp\end{DoxyCompactItemize}

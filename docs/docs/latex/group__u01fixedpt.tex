@@ -1,0 +1,38 @@
+\hypertarget{group__u01fixedpt}{}\section{The u01fixedpt conversion functions}
+\label{group__u01fixedpt}\index{The u01fixedpt conversion functions@{The u01fixedpt conversion functions}}
+
+
+These functions convert unsigned W-\/bit integers to uniformly spaced real values (float or double) between 0.\+0 and 1.\+0 with mantissas of M bits.  
+
+
+These functions convert unsigned W-\/bit integers to uniformly spaced real values (float or double) between 0.\+0 and 1.\+0 with mantissas of M bits. 
+
+P\+L\+E\+A\+SE T\+H\+I\+NK C\+A\+R\+E\+F\+U\+L\+LY B\+E\+F\+O\+RE U\+S\+I\+NG T\+H\+E\+SE F\+U\+N\+C\+T\+I\+O\+NS. T\+H\+EY M\+AY N\+OT BE W\+H\+AT Y\+OU W\+A\+NT. Y\+OU M\+AY BE M\+U\+CH B\+E\+T\+T\+ER S\+E\+R\+V\+ED BY T\+HE F\+U\+N\+C\+T\+I\+O\+NS IN ./uniform.hpp.
+
+These functions produce a finite number {\itshape uniformly spaced} values in the range from 0.\+0 to 1.\+0 with uniform probability. The price of uniform spacing is that they may not utilize the entire space of possible outputs. E.\+g., u01fixedpt\+\_\+closed\+\_\+open\+\_\+32\+\_\+24 will never produce a non-\/zero value less than 2$^\wedge$-\/24, even though such values are representable in single-\/precision floating point.
+
+There are 12 functions, corresponding to the following choices\+:
+
+
+\begin{DoxyItemize}
+\item W = 32 or 64
+\item M = 24 (float) or 53 (double)
+\item open0 or closed0 \+: whether the output is open or closed at 0.\+0
+\item open1 or closed1 \+: whether the output is open or closed at 1.\+0
+\end{DoxyItemize}
+
+The W=64 M=24 cases are not implemented. To obtain an M=24 float from a uint64\+\_\+t, use a cast (possibly with right-\/shift and bitwise and) to convert some of the bits of the uint64\+\_\+t to a uint32\+\_\+t and then use u01fixedpt\+\_\+x\+\_\+y\+\_\+32\+\_\+float. Note that the 64-\/bit random integers produced by the Random123 library are random in \char`\"{}all the bits\char`\"{}, so with a little extra effort you can obtain two floats this way -- one from the high bits and one from the low bits of the 64-\/bit value.
+
+If the output is open at one end, then the extreme value (0.\+0 or 1.\+0) will never be returned. Conversely, if the output is closed at one end, then the extreme value is a possible return value.
+
+The values returned are as follows. All values are returned with equal frequency, except as noted in the closed\+\_\+closed case\+:
+
+closed\+\_\+open\+: Let P=min(\+M,\+W) there are 2$^\wedge$P possible output values\+: \{0, 1, 2, ..., 2$^\wedge$\+P-\/1\}/2$^\wedge$P
+
+open\+\_\+closed\+: Let P=min(\+M,\+W) there are 2$^\wedge$P possible values\+: \{1, 2, ..., 2$^\wedge$P\}/2$^\wedge$P
+
+open\+\_\+open\+: Let P=min(M, W+1) there are 2$^\wedge$(P-\/1) possible values\+: \{1, 3, 5, ..., 2$^\wedge$\+P-\/1\}/2$^\wedge$P
+
+closed\+\_\+closed\+: Let P=min(M, W-\/1) there are 1+2$^\wedge$P possible values\+: \{0, 1, 2, ... 2$^\wedge$P\}/2$^\wedge$P The extreme values (0.\+0 and 1.\+0) are returned with half the frequency of all others.
+
+On x86 hardware, especially on 32bit machines, the use of internal 80bit x87-\/style floating point may result in \textquotesingle{}bonus\textquotesingle{} precision, which may cause closed intervals to not be really closed, i.\+e. the conversions below might not convert U\+I\+NT\{32,64\}\+\_\+\+M\+AX to 1.\+0. This sort of issue is likely to occur when storing the output of a u01fixedpt\+\_\+$\ast$\+\_\+32\+\_\+float function in a double, though one can imagine getting extra precision artifacts when going from 64\+\_\+53 as well. Other artifacts may exist on some G\+PU hardware. The tests in kat\+\_\+u01\+\_\+main.\+h try to expose such issues, but caveat emptor. 

@@ -1,0 +1,155 @@
+\hypertarget{structVolumePiston}{}\section{Volume\+Piston Struct Reference}
+\label{structVolumePiston}\index{Volume\+Piston@{Volume\+Piston}}
+
+
+Struct to hold the volume piston parameters and some functions to help with dynamics.  
+
+
+
+
+{\ttfamily \#include $<$Volume\+Piston.\+h$>$}
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{structVolumePiston_a739d6b6559f8e7861ed9f606e87cc2d9}{}\label{structVolumePiston_a739d6b6559f8e7861ed9f606e87cc2d9} 
+C\+U\+D\+A\+\_\+\+C\+A\+L\+L\+A\+B\+L\+E\+\_\+\+M\+E\+M\+B\+ER double {\bfseries calcpe} (double3 box) const
+\item 
+\hypertarget{structVolumePiston_ac699322cd986cf421e79efc1bbedc45c}{}\label{structVolumePiston_ac699322cd986cf421e79efc1bbedc45c} 
+C\+U\+D\+A\+\_\+\+C\+A\+L\+L\+A\+B\+L\+E\+\_\+\+M\+E\+M\+B\+ER double {\bfseries calcke} (double3 box, double3 box\+\_\+dot) const
+\item 
+C\+U\+D\+A\+\_\+\+C\+A\+L\+L\+A\+B\+L\+E\+\_\+\+M\+E\+M\+B\+ER void \hyperlink{structVolumePiston_a771864206ceef0f0ae6c07e1639a8d71}{leapfrogdrift} (const double3 $\ast$old\+\_\+com\+\_\+ke, const double3 $\ast$old\+\_\+box, const double3 $\ast$old\+\_\+box\+\_\+dot, double3 $\ast$new\+\_\+com\+\_\+ke, double3 $\ast$new\+\_\+box, double3 $\ast$new\+\_\+box\+\_\+dot, double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ com\+\_\+momentum\+\_\+scale, double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ com\+\_\+momentum\+\_\+prescale, double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ com\+\_\+position\+\_\+prescale, double timestep) const
+\item 
+C\+U\+D\+A\+\_\+\+C\+A\+L\+L\+A\+B\+L\+E\+\_\+\+M\+E\+M\+B\+ER void \hyperlink{structVolumePiston_ae2ae90b94c4f05a5338a2599a5e12f96}{pressure\+Kick} (const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ box, const double3 $\ast$old\+\_\+box\+\_\+dot, double3 $\ast$new\+\_\+box\+\_\+dot, double timestep) const
+\item 
+C\+U\+D\+A\+\_\+\+C\+A\+L\+L\+A\+B\+L\+E\+\_\+\+M\+E\+M\+B\+ER void \hyperlink{structVolumePiston_ab1d3d87cae459ab285f52c694cfa35f0}{virial\+Kick} (const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ virial, const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ box, const double3 $\ast$old\+\_\+box\+\_\+dot, double3 $\ast$new\+\_\+box\+\_\+dot, double timestep) const
+\item 
+C\+U\+D\+A\+\_\+\+C\+A\+L\+L\+A\+B\+L\+E\+\_\+\+M\+E\+M\+B\+ER void \hyperlink{structVolumePiston_af199572d24c18206fa173f6f24c637f5}{kinetic\+Energy\+Kick} (const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ com\+\_\+ke, const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ box, const double3 $\ast$old\+\_\+box\+\_\+dot, double3 $\ast$new\+\_\+box\+\_\+dot, double timestep) const
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+double \hyperlink{structVolumePiston_aff364bf76db0d8e73d251dccf2301193}{pressure}
+\begin{DoxyCompactList}\small\item\em Reference pressure, units are not atms, it is SI compatible with other units. \end{DoxyCompactList}\item 
+double \hyperlink{structVolumePiston_a831ba454760bec711a2823f432b21840}{piston\+\_\+mass}
+\begin{DoxyCompactList}\small\item\em Piston Mass, dimensions of mass/length$^\wedge$4. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Struct to hold the volume piston parameters and some functions to help with dynamics. 
+
+
+
+\subsection{Member Function Documentation}
+\hypertarget{structVolumePiston_af199572d24c18206fa173f6f24c637f5}{}\label{structVolumePiston_af199572d24c18206fa173f6f24c637f5} 
+\index{Volume\+Piston@{Volume\+Piston}!kinetic\+Energy\+Kick@{kinetic\+Energy\+Kick}}
+\index{kinetic\+Energy\+Kick@{kinetic\+Energy\+Kick}!Volume\+Piston@{Volume\+Piston}}
+\subsubsection{\texorpdfstring{kinetic\+Energy\+Kick()}{kineticEnergyKick()}}
+{\footnotesize\ttfamily C\+U\+D\+A\+\_\+\+C\+A\+L\+L\+A\+B\+L\+E\+\_\+\+M\+E\+M\+B\+ER void Volume\+Piston\+::kinetic\+Energy\+Kick (\begin{DoxyParamCaption}\item[{const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{com\+\_\+ke,  }\item[{const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{box,  }\item[{const double3 $\ast$}]{old\+\_\+box\+\_\+dot,  }\item[{double3 $\ast$}]{new\+\_\+box\+\_\+dot,  }\item[{double}]{timestep }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+\begin{DoxyParams}{Parameters}
+{\em com\+\_\+ke} & Pointer to kinetic energy of pressure group momentums \\
+\hline
+{\em box} & Pointer to box lengths \\
+\hline
+{\em old\+\_\+box\+\_\+dot} & Pointer to box length time dirivatives \\
+\hline
+{\em new\+\_\+box\+\_\+dot} & Pointer to save post drift box length time dirivatives \\
+\hline
+{\em timestep} & Time step. \\
+\hline
+\end{DoxyParams}
+\hypertarget{structVolumePiston_a771864206ceef0f0ae6c07e1639a8d71}{}\label{structVolumePiston_a771864206ceef0f0ae6c07e1639a8d71} 
+\index{Volume\+Piston@{Volume\+Piston}!leapfrogdrift@{leapfrogdrift}}
+\index{leapfrogdrift@{leapfrogdrift}!Volume\+Piston@{Volume\+Piston}}
+\subsubsection{\texorpdfstring{leapfrogdrift()}{leapfrogdrift()}}
+{\footnotesize\ttfamily C\+U\+D\+A\+\_\+\+C\+A\+L\+L\+A\+B\+L\+E\+\_\+\+M\+E\+M\+B\+ER void Volume\+Piston\+::leapfrogdrift (\begin{DoxyParamCaption}\item[{const double3 $\ast$}]{old\+\_\+com\+\_\+ke,  }\item[{const double3 $\ast$}]{old\+\_\+box,  }\item[{const double3 $\ast$}]{old\+\_\+box\+\_\+dot,  }\item[{double3 $\ast$}]{new\+\_\+com\+\_\+ke,  }\item[{double3 $\ast$}]{new\+\_\+box,  }\item[{double3 $\ast$}]{new\+\_\+box\+\_\+dot,  }\item[{double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{com\+\_\+momentum\+\_\+scale,  }\item[{double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{com\+\_\+momentum\+\_\+prescale,  }\item[{double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{com\+\_\+position\+\_\+prescale,  }\item[{double}]{timestep }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+\begin{DoxyParams}{Parameters}
+{\em old\+\_\+com\+\_\+ke} & Pointer to kinetic energy of pressure group momentums \\
+\hline
+{\em old\+\_\+box} & Pointer to box lengths \\
+\hline
+{\em old\+\_\+box\+\_\+dot} & Pointer to box length time dirivatives \\
+\hline
+{\em new\+\_\+com\+\_\+ke} & Pointer to save post drift pressure group momentum kinetic energy \\
+\hline
+{\em new\+\_\+box} & Pointer to save post drift box lengths \\
+\hline
+{\em new\+\_\+box\+\_\+dot} & Pointer to save post drift box length time dirivatives \\
+\hline
+{\em com\+\_\+momentum\+\_\+scale} & Pointer to final pressure group momentum scale. This is the total scale from predrift p group momentum to post drift p group momentum. \\
+\hline
+{\em com\+\_\+momentum\+\_\+prescale} & Pointer to initial pressure group momentum scale. This is the scaleing of momentum that happens before the pressure group centers of mass are moved. \\
+\hline
+{\em com\+\_\+position\+\_\+prescale} & Pointer to initial pressure group C\+OM scale. This is the scaling p group centers of mass before the are moved by their prescaled momenentums. \\
+\hline
+{\em timestep} & Time step. \\
+\hline
+\end{DoxyParams}
+\hypertarget{structVolumePiston_ae2ae90b94c4f05a5338a2599a5e12f96}{}\label{structVolumePiston_ae2ae90b94c4f05a5338a2599a5e12f96} 
+\index{Volume\+Piston@{Volume\+Piston}!pressure\+Kick@{pressure\+Kick}}
+\index{pressure\+Kick@{pressure\+Kick}!Volume\+Piston@{Volume\+Piston}}
+\subsubsection{\texorpdfstring{pressure\+Kick()}{pressureKick()}}
+{\footnotesize\ttfamily C\+U\+D\+A\+\_\+\+C\+A\+L\+L\+A\+B\+L\+E\+\_\+\+M\+E\+M\+B\+ER void Volume\+Piston\+::pressure\+Kick (\begin{DoxyParamCaption}\item[{const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{box,  }\item[{const double3 $\ast$}]{old\+\_\+box\+\_\+dot,  }\item[{double3 $\ast$}]{new\+\_\+box\+\_\+dot,  }\item[{double}]{timestep }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+\begin{DoxyParams}{Parameters}
+{\em box} & Pointer to box lengths \\
+\hline
+{\em old\+\_\+box\+\_\+dot} & Pointer to box length time dirivatives \\
+\hline
+{\em new\+\_\+box\+\_\+dot} & Pointer to save post drift box length time dirivatives \\
+\hline
+{\em timestep} & Time step. \\
+\hline
+\end{DoxyParams}
+\hypertarget{structVolumePiston_ab1d3d87cae459ab285f52c694cfa35f0}{}\label{structVolumePiston_ab1d3d87cae459ab285f52c694cfa35f0} 
+\index{Volume\+Piston@{Volume\+Piston}!virial\+Kick@{virial\+Kick}}
+\index{virial\+Kick@{virial\+Kick}!Volume\+Piston@{Volume\+Piston}}
+\subsubsection{\texorpdfstring{virial\+Kick()}{virialKick()}}
+{\footnotesize\ttfamily C\+U\+D\+A\+\_\+\+C\+A\+L\+L\+A\+B\+L\+E\+\_\+\+M\+E\+M\+B\+ER void Volume\+Piston\+::virial\+Kick (\begin{DoxyParamCaption}\item[{const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{virial,  }\item[{const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{box,  }\item[{const double3 $\ast$}]{old\+\_\+box\+\_\+dot,  }\item[{double3 $\ast$}]{new\+\_\+box\+\_\+dot,  }\item[{double}]{timestep }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+\begin{DoxyParams}{Parameters}
+{\em virial} & Pointer to corrected virial \\
+\hline
+{\em box} & Pointer to box lengths \\
+\hline
+{\em old\+\_\+box\+\_\+dot} & Pointer to box length time dirivatives \\
+\hline
+{\em new\+\_\+box\+\_\+dot} & Pointer to save post drift box length time dirivatives \\
+\hline
+{\em timestep} & Time step. \\
+\hline
+\end{DoxyParams}
+
+
+\subsection{Member Data Documentation}
+\hypertarget{structVolumePiston_a831ba454760bec711a2823f432b21840}{}\label{structVolumePiston_a831ba454760bec711a2823f432b21840} 
+\index{Volume\+Piston@{Volume\+Piston}!piston\+\_\+mass@{piston\+\_\+mass}}
+\index{piston\+\_\+mass@{piston\+\_\+mass}!Volume\+Piston@{Volume\+Piston}}
+\subsubsection{\texorpdfstring{piston\+\_\+mass}{piston\_mass}}
+{\footnotesize\ttfamily double Volume\+Piston\+::piston\+\_\+mass}
+
+
+
+Piston Mass, dimensions of mass/length$^\wedge$4. 
+
+\hypertarget{structVolumePiston_aff364bf76db0d8e73d251dccf2301193}{}\label{structVolumePiston_aff364bf76db0d8e73d251dccf2301193} 
+\index{Volume\+Piston@{Volume\+Piston}!pressure@{pressure}}
+\index{pressure@{pressure}!Volume\+Piston@{Volume\+Piston}}
+\subsubsection{\texorpdfstring{pressure}{pressure}}
+{\footnotesize\ttfamily double Volume\+Piston\+::pressure}
+
+
+
+Reference pressure, units are not atms, it is SI compatible with other units. 
+
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/\hyperlink{VolumePiston_8h}{Volume\+Piston.\+h}\end{DoxyCompactItemize}

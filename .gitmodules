@@ -1,0 +1,12 @@
+[submodule "external/LBFGSpp"]
+	path = external/LBFGSpp
+	url = https://github.com/yixuan/LBFGSpp.git
+[submodule "external/pybind11"]
+	path = external/pybind11
+	url = https://github.com/pybind/pybind11.git
+[submodule "docs/doxygen/doxygen-awesome-css"]
+	path = docs/doxygen/doxygen-awesome-css
+	url = https://github.com/jothepro/doxygen-awesome-css.git
+[submodule "external/tinyxml2"]
+	path = external/tinyxml2
+	url = git@github.com:leethomason/tinyxml2.git

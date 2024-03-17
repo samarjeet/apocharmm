@@ -1,0 +1,85 @@
+\hypertarget{classForce}{}\section{Force$<$ T $>$ Class Template Reference}
+\label{classForce}\index{Force$<$ T $>$@{Force$<$ T $>$}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classForce_a145e0ff7bda78e4f7a02585ab872fdef}{}\label{classForce_a145e0ff7bda78e4f7a02585ab872fdef} 
+{\bfseries Force} (const int size)
+\item 
+\hypertarget{classForce_a3a736e0759745627afcc2ebb4872f621}{}\label{classForce_a3a736e0759745627afcc2ebb4872f621} 
+{\bfseries Force} (const char $\ast$filename)
+\item 
+\hypertarget{classForce_aaab76d180d88fb248796ef7bd1576aa4}{}\label{classForce_aaab76d180d88fb248796ef7bd1576aa4} 
+void {\bfseries clear} (cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classForce_af1d6088a25d72fc0f3160f8493a6af0f}{}\label{classForce_af1d6088a25d72fc0f3160f8493a6af0f} 
+bool {\bfseries compare} (\hyperlink{classForce}{Force}$<$ T $>$ \&force, const double tol, double \&max\+\_\+diff)
+\item 
+\hypertarget{classForce_a31214fcb8057b93e9848d63e01b5461f}{}\label{classForce_a31214fcb8057b93e9848d63e01b5461f} 
+void {\bfseries realloc} (int size, float fac=1.\+0f)
+\item 
+\hypertarget{classForce_a2a7df876bb86661ca8b09060b4f4be0b}{}\label{classForce_a2a7df876bb86661ca8b09060b4f4be0b} 
+int {\bfseries stride} ()
+\item 
+\hypertarget{classForce_a1f4901db11adfff6bc865d0f0bce315f}{}\label{classForce_a1f4901db11adfff6bc865d0f0bce315f} 
+int {\bfseries size} ()
+\item 
+\hypertarget{classForce_aaac0c45ec731e03e0a5bdde7f6cfd6af}{}\label{classForce_aaac0c45ec731e03e0a5bdde7f6cfd6af} 
+T $\ast$ {\bfseries xyz} ()
+\item 
+\hypertarget{classForce_a82545001d04b0bb20599025057ba58c9}{}\label{classForce_a82545001d04b0bb20599025057ba58c9} 
+T $\ast$ {\bfseries x} ()
+\item 
+\hypertarget{classForce_ad456efc59a453daf3a5be43592d708a2}{}\label{classForce_ad456efc59a453daf3a5be43592d708a2} 
+T $\ast$ {\bfseries y} ()
+\item 
+\hypertarget{classForce_aa0e7e65ca991f39db681899df78a3453}{}\label{classForce_aa0e7e65ca991f39db681899df78a3453} 
+T $\ast$ {\bfseries z} ()
+\item 
+\hypertarget{classForce_a6b5f678ada0787de43eaca4592253eb1}{}\label{classForce_a6b5f678ada0787de43eaca4592253eb1} 
+void {\bfseries get\+X\+YZ} (T $\ast$h\+\_\+x, T $\ast$h\+\_\+y, T $\ast$h\+\_\+z)
+\item 
+\hypertarget{classForce_a4e69bf4415956865798825dc78543ad2}{}\label{classForce_a4e69bf4415956865798825dc78543ad2} 
+int {\bfseries stride} () const
+\item 
+\hypertarget{classForce_ab991c5be68adf6b828aac668579a3585}{}\label{classForce_ab991c5be68adf6b828aac668579a3585} 
+int {\bfseries size} () const
+\item 
+\hypertarget{classForce_aee3c12aff68e1c93efb69350b2d22d22}{}\label{classForce_aee3c12aff68e1c93efb69350b2d22d22} 
+const T $\ast$ {\bfseries xyz} () const
+\item 
+\hypertarget{classForce_a32f507d36669148b02e3552bd0472a74}{}\label{classForce_a32f507d36669148b02e3552bd0472a74} 
+const T $\ast$ {\bfseries x} () const
+\item 
+\hypertarget{classForce_a0a397f34e01245b47b6e64fd9538cb9b}{}\label{classForce_a0a397f34e01245b47b6e64fd9538cb9b} 
+const T $\ast$ {\bfseries y} () const
+\item 
+\hypertarget{classForce_a99dfff042680ec86d2f3ef8f64ab623e}{}\label{classForce_a99dfff042680ec86d2f3ef8f64ab623e} 
+const T $\ast$ {\bfseries z} () const
+\item 
+\hypertarget{classForce_aeac8fe3db213e73b225fef79376db402}{}\label{classForce_aeac8fe3db213e73b225fef79376db402} 
+{\footnotesize template$<$typename T2 $>$ }\\void {\bfseries convert} (\hyperlink{classForce}{Force}$<$ T2 $>$ \&force, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classForce_ae2d05124169c090bf895afa17580fc84}{}\label{classForce_ae2d05124169c090bf895afa17580fc84} 
+{\footnotesize template$<$typename T2 $>$ }\\void {\bfseries convert} (cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classForce_a29464afd8594aba32e99b9024e90036b}{}\label{classForce_a29464afd8594aba32e99b9024e90036b} 
+{\footnotesize template$<$typename T2 , typename T3 $>$ }\\void {\bfseries convert\+\_\+to} (\hyperlink{classForce}{Force}$<$ T3 $>$ \&force, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classForce_aeea10a84a5b21b5be98fde0f7087a38a}{}\label{classForce_aeea10a84a5b21b5be98fde0f7087a38a} 
+{\footnotesize template$<$typename T2 , typename T3 $>$ }\\void {\bfseries convert\+\_\+add} (\hyperlink{classForce}{Force}$<$ T3 $>$ \&force, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classForce_aa8faecd8fa1ef693649ecb84e8ff43c5}{}\label{classForce_aa8faecd8fa1ef693649ecb84e8ff43c5} 
+{\footnotesize template$<$typename T2 , typename T3 $>$ }\\void {\bfseries add} (\hyperlink{classForce}{Force}$<$ T3 $>$ \&force, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classForce_a16ce29fcd48b9679d9e61f0602f9163e}{}\label{classForce_a16ce29fcd48b9679d9e61f0602f9163e} 
+{\footnotesize template$<$typename T2 $>$ }\\void {\bfseries add} (float3 $\ast$force\+\_\+data, int force\+\_\+n, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classForce_a5a85c43c44b7335cd40702e1384463a3}{}\label{classForce_a5a85c43c44b7335cd40702e1384463a3} 
+{\footnotesize template$<$typename T2 $>$ }\\void {\bfseries save} (const char $\ast$filename)
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/Force.\+h\end{DoxyCompactItemize}

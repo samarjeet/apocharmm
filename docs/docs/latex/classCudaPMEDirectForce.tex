@@ -1,0 +1,220 @@
+\hypertarget{classCudaPMEDirectForce}{}\section{Cuda\+P\+M\+E\+Direct\+Force$<$ AT, CT $>$ Class Template Reference}
+\label{classCudaPMEDirectForce}\index{Cuda\+P\+M\+E\+Direct\+Force$<$ A\+T, C\+T $>$@{Cuda\+P\+M\+E\+Direct\+Force$<$ A\+T, C\+T $>$}}
+Inheritance diagram for Cuda\+P\+M\+E\+Direct\+Force$<$ AT, CT $>$\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classCudaPMEDirectForce}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classCudaPMEDirectForce_a37a0656f51ce5edb079ac385a44ac343}{}\label{classCudaPMEDirectForce_a37a0656f51ce5edb079ac385a44ac343} 
+{\bfseries Cuda\+P\+M\+E\+Direct\+Force} (\hyperlink{classCudaEnergyVirial}{Cuda\+Energy\+Virial} \&energy\+Virial, const char $\ast$name\+Vdw, const char $\ast$name\+Elec, const char $\ast$name\+Excl)
+\item 
+\hypertarget{classCudaPMEDirectForce_a75b212b3a1129a30ce0dcaf9da78f82a}{}\label{classCudaPMEDirectForce_a75b212b3a1129a30ce0dcaf9da78f82a} 
+void {\bfseries setup} (double boxx, double boxy, double boxz, double kappa, double roff, double ron, double e14fac, int vdw\+\_\+model, int elec\+\_\+model)
+\item 
+\hypertarget{classCudaPMEDirectForce_aa10b0fc2ab0e030f9bd336b4d1cb4371}{}\label{classCudaPMEDirectForce_aa10b0fc2ab0e030f9bd336b4d1cb4371} 
+void {\bfseries get\+\_\+setup} (float \&boxx, float \&boxy, float \&boxz, float \&kappa, float \&roff, float \&ron, float \&e14fac, int \&vdw\+\_\+model, int \&elec\+\_\+model)
+\item 
+\hypertarget{classCudaPMEDirectForce_a87260fe946f2deb76f0e46e3a175f43f}{}\label{classCudaPMEDirectForce_a87260fe946f2deb76f0e46e3a175f43f} 
+void {\bfseries clear\+Textures} ()
+\item 
+\hypertarget{classCudaPMEDirectForce_a19b17fbe88dd50ed22d4bff34599cda6}{}\label{classCudaPMEDirectForce_a19b17fbe88dd50ed22d4bff34599cda6} 
+void {\bfseries get\+\_\+box\+\_\+size} (CT \&boxx, CT \&boxy, CT \&boxz)
+\item 
+\hypertarget{classCudaPMEDirectForce_a5f079b84323cc87d6e00744753a868a1}{}\label{classCudaPMEDirectForce_a5f079b84323cc87d6e00744753a868a1} 
+void {\bfseries set\+\_\+box\+\_\+size} (const CT boxx, const CT boxy, const CT boxz)
+\item 
+\hypertarget{classCudaPMEDirectForce_a167ba74f2475f5e2f5737adcde0f8bc0}{}\label{classCudaPMEDirectForce_a167ba74f2475f5e2f5737adcde0f8bc0} 
+void {\bfseries set\+\_\+box\+\_\+size} (const double3 $\ast$d\+\_\+box\+Size)
+\item 
+\hypertarget{classCudaPMEDirectForce_ae3503a8806292af61d2a43225397f811}{}\label{classCudaPMEDirectForce_ae3503a8806292af61d2a43225397f811} 
+void {\bfseries set\+\_\+calc\+\_\+vdw} (const bool calc\+\_\+vdw)
+\item 
+\hypertarget{classCudaPMEDirectForce_a5c4ad3a79e57c9212ddb43599fd604c5}{}\label{classCudaPMEDirectForce_a5c4ad3a79e57c9212ddb43599fd604c5} 
+void {\bfseries set\+\_\+calc\+\_\+elec} (const bool calc\+\_\+elec)
+\item 
+\hypertarget{classCudaPMEDirectForce_a4ade5d2448929b9e16be7f70a95b069f}{}\label{classCudaPMEDirectForce_a4ade5d2448929b9e16be7f70a95b069f} 
+bool {\bfseries get\+\_\+calc\+\_\+vdw} ()
+\item 
+\hypertarget{classCudaPMEDirectForce_a1672e6dbef6826e6a4a256a7eb355173}{}\label{classCudaPMEDirectForce_a1672e6dbef6826e6a4a256a7eb355173} 
+bool {\bfseries get\+\_\+calc\+\_\+elec} ()
+\item 
+\hypertarget{classCudaPMEDirectForce_af371a75ded80c2dfed8af667f6ef91b5}{}\label{classCudaPMEDirectForce_af371a75ded80c2dfed8af667f6ef91b5} 
+void {\bfseries set\+\_\+vdwparam} (const int nvdwparam, const CT $\ast$h\+\_\+vdwparam)
+\item 
+\hypertarget{classCudaPMEDirectForce_ac1cc762a417457f714b22086a745d4eb}{}\label{classCudaPMEDirectForce_ac1cc762a417457f714b22086a745d4eb} 
+void {\bfseries set\+\_\+vdwparam} (const int nvdwparam, const char $\ast$filename)
+\item 
+\hypertarget{classCudaPMEDirectForce_a395020f6c963099db0253b0f7d99310a}{}\label{classCudaPMEDirectForce_a395020f6c963099db0253b0f7d99310a} 
+void {\bfseries set\+\_\+vdwparam} (const std\+::vector$<$ CT $>$ vdwparam)
+\item 
+\hypertarget{classCudaPMEDirectForce_a8bd5f24897fdf3498d166b6c62354793}{}\label{classCudaPMEDirectForce_a8bd5f24897fdf3498d166b6c62354793} 
+void {\bfseries set\+\_\+vdwparam14} (const int nvdwparam, const CT $\ast$h\+\_\+vdwparam)
+\item 
+\hypertarget{classCudaPMEDirectForce_af8544e4e8351069a16d2fd69c7ef2dac}{}\label{classCudaPMEDirectForce_af8544e4e8351069a16d2fd69c7ef2dac} 
+void {\bfseries set\+\_\+vdwparam14} (const int nvdwparam, const char $\ast$filename)
+\item 
+\hypertarget{classCudaPMEDirectForce_a88fafb4e20fc47ed493b1dcb6f5fdf29}{}\label{classCudaPMEDirectForce_a88fafb4e20fc47ed493b1dcb6f5fdf29} 
+void {\bfseries set\+\_\+vdwparam14} (const std\+::vector$<$ CT $>$ vdwparam)
+\item 
+\hypertarget{classCudaPMEDirectForce_a3afbd56eb0a15d10691636dc317e2014}{}\label{classCudaPMEDirectForce_a3afbd56eb0a15d10691636dc317e2014} 
+void {\bfseries set\+\_\+vdwtype} (const int ncoord, const int $\ast$h\+\_\+vdwtype)
+\item 
+\hypertarget{classCudaPMEDirectForce_aa4632a6554912cb8097490e173172297}{}\label{classCudaPMEDirectForce_aa4632a6554912cb8097490e173172297} 
+void {\bfseries set\+\_\+vdwtype14} (const int ncoord, const int $\ast$h\+\_\+vdwtype)
+\item 
+\hypertarget{classCudaPMEDirectForce_a8a9e4398177e64104eea3575f4ab8abb}{}\label{classCudaPMEDirectForce_a8a9e4398177e64104eea3575f4ab8abb} 
+void {\bfseries set\+\_\+vdwtype} (const std\+::vector$<$ int $>$ \&vdw\+Type\+Vec)
+\item 
+\hypertarget{classCudaPMEDirectForce_a264e8631ff714bfd94ffd4f7419d2e23}{}\label{classCudaPMEDirectForce_a264e8631ff714bfd94ffd4f7419d2e23} 
+void {\bfseries set\+\_\+vdwtype14} (const std\+::vector$<$ int $>$ \&vdw\+Type\+Vec)
+\item 
+\hypertarget{classCudaPMEDirectForce_a2dbd53823bcfcf2b4c400c1d50858505}{}\label{classCudaPMEDirectForce_a2dbd53823bcfcf2b4c400c1d50858505} 
+void {\bfseries set\+\_\+vdwtype} (const int ncoord, const char $\ast$filename)
+\item 
+\hypertarget{classCudaPMEDirectForce_ae86a0371b56d11a043eae628adeaff11}{}\label{classCudaPMEDirectForce_ae86a0371b56d11a043eae628adeaff11} 
+void {\bfseries set\+\_\+vdwtype14} (const int ncoord, const char $\ast$filename)
+\item 
+\hypertarget{classCudaPMEDirectForce_a156c597a81b36f606ae6ec678ee9d5d1}{}\label{classCudaPMEDirectForce_a156c597a81b36f606ae6ec678ee9d5d1} 
+void {\bfseries set\+\_\+vdwtype} (const int ncoord, const int $\ast$glo\+\_\+vdwtype, const int $\ast$loc2glo, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classCudaPMEDirectForce_a2f5d54d2fb17ceb9512f986068cba56f}{}\label{classCudaPMEDirectForce_a2f5d54d2fb17ceb9512f986068cba56f} 
+void {\bfseries set\+\_\+sort\+\_\+vdwtype} (const int ncoord, const int $\ast$ind\+\_\+sorted, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classCudaPMEDirectForce_a5e2f4c3126ce4b98f6ce2e5e74be5f0d}{}\label{classCudaPMEDirectForce_a5e2f4c3126ce4b98f6ce2e5e74be5f0d} 
+void {\bfseries set\+\_\+sort\+\_\+vdwtype} (const int ncoord, const int $\ast$ind\+\_\+sorted)
+\item 
+\hypertarget{classCudaPMEDirectForce_ae52a39ad11c3d644a8ce9075e99dc2c2}{}\label{classCudaPMEDirectForce_ae52a39ad11c3d644a8ce9075e99dc2c2} 
+void {\bfseries set\+\_\+14\+\_\+list} (int nin14list, int nex14list, \hyperlink{structxx14list__t}{xx14list\+\_\+t} $\ast$h\+\_\+in14list, \hyperlink{structxx14list__t}{xx14list\+\_\+t} $\ast$h\+\_\+ex14list, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classCudaPMEDirectForce_aa56da928dbf9836e3af2b0d8d1b11a4a}{}\label{classCudaPMEDirectForce_aa56da928dbf9836e3af2b0d8d1b11a4a} 
+void {\bfseries set\+\_\+14\+\_\+list} (std\+::string size\+File, std\+::string val\+File, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classCudaPMEDirectForce_a0ab6c1ff2383bba0e7fbd4e2e42f00d7}{}\label{classCudaPMEDirectForce_a0ab6c1ff2383bba0e7fbd4e2e42f00d7} 
+void {\bfseries set\+\_\+14\+\_\+list} (std\+::vector$<$ int $>$ size, std\+::vector$<$ int $>$ val, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classCudaPMEDirectForce_a8b1cf6a999c187060b3480deb7cd3988}{}\label{classCudaPMEDirectForce_a8b1cf6a999c187060b3480deb7cd3988} 
+void {\bfseries set\+\_\+14\+\_\+list} (const float4 $\ast$xyzq, const float boxx, const float boxy, const float boxz, const int $\ast$glo2loc\+\_\+ind, const int nin14\+\_\+tbl, const int $\ast$in14\+\_\+tbl, const \hyperlink{structxx14__t}{xx14\+\_\+t} $\ast$in14, const int nex14\+\_\+tbl, const int $\ast$ex14\+\_\+tbl, const \hyperlink{structxx14__t}{xx14\+\_\+t} $\ast$ex14, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classCudaPMEDirectForce_ad1d326d6cbf3c5c0ce2341145e449b29}{}\label{classCudaPMEDirectForce_ad1d326d6cbf3c5c0ce2341145e449b29} 
+void {\bfseries calc\+\_\+14\+\_\+force} (const float4 $\ast$xyzq, const bool calc\+\_\+energy, const bool calc\+\_\+virial, const int stride, AT $\ast$force, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classCudaPMEDirectForce_aa194f6e6ecccb4f8642bd4a00d982e0a}{}\label{classCudaPMEDirectForce_aa194f6e6ecccb4f8642bd4a00d982e0a} 
+void {\bfseries calc\+\_\+force} (const int whichlist, const float4 $\ast$xyzq, const \hyperlink{classCudaNeighborListBuild}{Cuda\+Neighbor\+List\+Build}$<$ 32 $>$ \&nlist, const bool calc\+\_\+energy, const bool calc\+\_\+virial, const int stride, AT $\ast$force, cuda\+Stream\+\_\+t stream=0)
+\end{DoxyCompactItemize}
+\subsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classCudaPMEDirectForce_af8f3d155802b9cd8807acd32a1502854}{}\label{classCudaPMEDirectForce_af8f3d155802b9cd8807acd32a1502854} 
+void {\bfseries setup\+\_\+ewald\+\_\+force} (CT h)
+\item 
+\hypertarget{classCudaPMEDirectForce_ac2921fbfcf6a69296b3a4f0113ba2ed6}{}\label{classCudaPMEDirectForce_ac2921fbfcf6a69296b3a4f0113ba2ed6} 
+void {\bfseries set\+\_\+elec\+\_\+model} (int elec\+\_\+model, CT h=0.\+01)
+\item 
+\hypertarget{classCudaPMEDirectForce_a5eed2ed3e8255d16743912ffeebe69e2}{}\label{classCudaPMEDirectForce_a5eed2ed3e8255d16743912ffeebe69e2} 
+void {\bfseries update\+\_\+setup} ()
+\item 
+\hypertarget{classCudaPMEDirectForce_a6d4629978da5717a081753a42c11ce1a}{}\label{classCudaPMEDirectForce_a6d4629978da5717a081753a42c11ce1a} 
+void {\bfseries setup\+\_\+vdwparam} (const int type, const int nvdwparam, const CT $\ast$h\+\_\+vdwparam)
+\item 
+\hypertarget{classCudaPMEDirectForce_acda909dc533973ffa6d52a2b0a224fd3}{}\label{classCudaPMEDirectForce_acda909dc533973ffa6d52a2b0a224fd3} 
+void {\bfseries load\+\_\+vdwparam} (const char $\ast$filename, const int nvdwparam, CT $\ast$$\ast$h\+\_\+vdwparam)
+\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classCudaPMEDirectForce_a9b9ff751f9d24b7ba63c56d3596ed7dd}{}\label{classCudaPMEDirectForce_a9b9ff751f9d24b7ba63c56d3596ed7dd} 
+\hyperlink{classCudaEnergyVirial}{Cuda\+Energy\+Virial} \& {\bfseries energy\+Virial}
+\item 
+\hypertarget{classCudaPMEDirectForce_ad7d35fcba933d73734eae76acf44dc60}{}\label{classCudaPMEDirectForce_ad7d35fcba933d73734eae76acf44dc60} 
+std\+::string {\bfseries str\+Vdw}
+\item 
+\hypertarget{classCudaPMEDirectForce_acad139531c45bed69454c6b3b9c7293a}{}\label{classCudaPMEDirectForce_acad139531c45bed69454c6b3b9c7293a} 
+std\+::string {\bfseries str\+Elec}
+\item 
+\hypertarget{classCudaPMEDirectForce_a1b59c06d4ec1baee170b606eb4269134}{}\label{classCudaPMEDirectForce_a1b59c06d4ec1baee170b606eb4269134} 
+std\+::string {\bfseries str\+Excl}
+\item 
+\hypertarget{classCudaPMEDirectForce_a58c55088e6a7a9d30b4657d35a912c62}{}\label{classCudaPMEDirectForce_a58c55088e6a7a9d30b4657d35a912c62} 
+int {\bfseries nvdwparam}
+\item 
+\hypertarget{classCudaPMEDirectForce_a55394a57d60ed5d522e2804842b02293}{}\label{classCudaPMEDirectForce_a55394a57d60ed5d522e2804842b02293} 
+int {\bfseries vdwparam\+\_\+len}
+\item 
+\hypertarget{classCudaPMEDirectForce_a6a430c208d010e9b8eabc4fefbcf8738}{}\label{classCudaPMEDirectForce_a6a430c208d010e9b8eabc4fefbcf8738} 
+CT $\ast$ {\bfseries vdwparam}
+\item 
+\hypertarget{classCudaPMEDirectForce_a874707e9c8812e3f9650846d38c5c170}{}\label{classCudaPMEDirectForce_a874707e9c8812e3f9650846d38c5c170} 
+const bool {\bfseries use\+\_\+tex\+\_\+vdwparam}
+\item 
+\hypertarget{classCudaPMEDirectForce_a08ea54ce0e7c25a10fc47d7fa20aa834}{}\label{classCudaPMEDirectForce_a08ea54ce0e7c25a10fc47d7fa20aa834} 
+int {\bfseries nvdwparam14}
+\item 
+\hypertarget{classCudaPMEDirectForce_a9810606c5b67b8e1358a21dd52267b54}{}\label{classCudaPMEDirectForce_a9810606c5b67b8e1358a21dd52267b54} 
+int {\bfseries vdwparam14\+\_\+len}
+\item 
+\hypertarget{classCudaPMEDirectForce_a642c827ebec2b4ee6091c0806e262ae0}{}\label{classCudaPMEDirectForce_a642c827ebec2b4ee6091c0806e262ae0} 
+CT $\ast$ {\bfseries vdwparam14}
+\item 
+\hypertarget{classCudaPMEDirectForce_ac4023c8a6c50be1b41f87080bdab0194}{}\label{classCudaPMEDirectForce_ac4023c8a6c50be1b41f87080bdab0194} 
+const bool {\bfseries use\+\_\+tex\+\_\+vdwparam14}
+\item 
+\hypertarget{classCudaPMEDirectForce_adf204871d75c3ec17adf97b6ba19d524}{}\label{classCudaPMEDirectForce_adf204871d75c3ec17adf97b6ba19d524} 
+int {\bfseries nin14list}
+\item 
+\hypertarget{classCudaPMEDirectForce_a92377b204d75e191774541b68d40ded1}{}\label{classCudaPMEDirectForce_a92377b204d75e191774541b68d40ded1} 
+int {\bfseries in14list\+\_\+len}
+\item 
+\hypertarget{classCudaPMEDirectForce_a3b4612cc39b7a1c4d27dc095d0817b9b}{}\label{classCudaPMEDirectForce_a3b4612cc39b7a1c4d27dc095d0817b9b} 
+\hyperlink{structxx14list__t}{xx14list\+\_\+t} $\ast$ {\bfseries in14list}
+\item 
+\hypertarget{classCudaPMEDirectForce_a730b05258c0f99d09b1181869cb2b1c6}{}\label{classCudaPMEDirectForce_a730b05258c0f99d09b1181869cb2b1c6} 
+int {\bfseries nex14list}
+\item 
+\hypertarget{classCudaPMEDirectForce_ab45c98a7e4d3031c2f945590d3aca20d}{}\label{classCudaPMEDirectForce_ab45c98a7e4d3031c2f945590d3aca20d} 
+int {\bfseries ex14list\+\_\+len}
+\item 
+\hypertarget{classCudaPMEDirectForce_a773198e511dbbaad4823cc61afda9365}{}\label{classCudaPMEDirectForce_a773198e511dbbaad4823cc61afda9365} 
+\hyperlink{structxx14list__t}{xx14list\+\_\+t} $\ast$ {\bfseries ex14list}
+\item 
+\hypertarget{classCudaPMEDirectForce_a4540a3e75aa6c7045c1b5a013a627b00}{}\label{classCudaPMEDirectForce_a4540a3e75aa6c7045c1b5a013a627b00} 
+int {\bfseries vdwtype\+\_\+len}
+\item 
+\hypertarget{classCudaPMEDirectForce_ada2f2595d06925be4f06e053344e5663}{}\label{classCudaPMEDirectForce_ada2f2595d06925be4f06e053344e5663} 
+int $\ast$ {\bfseries vdwtype}
+\item 
+\hypertarget{classCudaPMEDirectForce_acd5763d38ca84cca41213b7096de3a97}{}\label{classCudaPMEDirectForce_acd5763d38ca84cca41213b7096de3a97} 
+int $\ast$ {\bfseries vdwtype14}
+\item 
+\hypertarget{classCudaPMEDirectForce_ab2591dd55c615fa945bc4e893993f4b8}{}\label{classCudaPMEDirectForce_ab2591dd55c615fa945bc4e893993f4b8} 
+int $\ast$ {\bfseries vdwtype\+Temp}
+\item 
+\hypertarget{classCudaPMEDirectForce_a52986b92c802e949a89d30bc0ba13e0e}{}\label{classCudaPMEDirectForce_a52986b92c802e949a89d30bc0ba13e0e} 
+int {\bfseries vdw\+\_\+model}
+\item 
+\hypertarget{classCudaPMEDirectForce_a51dd63375c1d2d7a0ce2bdd4e9b54fbd}{}\label{classCudaPMEDirectForce_a51dd63375c1d2d7a0ce2bdd4e9b54fbd} 
+int {\bfseries elec\+\_\+model}
+\item 
+\hypertarget{classCudaPMEDirectForce_a06b0a24d8f633f58f9e871043e66b498}{}\label{classCudaPMEDirectForce_a06b0a24d8f633f58f9e871043e66b498} 
+bool {\bfseries calc\+\_\+vdw}
+\item 
+\hypertarget{classCudaPMEDirectForce_aeea16163d9878c281ebb4ffb7a25b6fd}{}\label{classCudaPMEDirectForce_aeea16163d9878c281ebb4ffb7a25b6fd} 
+bool {\bfseries calc\+\_\+elec}
+\item 
+\hypertarget{classCudaPMEDirectForce_a56269071dd0988ba22fcaa261130f635}{}\label{classCudaPMEDirectForce_a56269071dd0988ba22fcaa261130f635} 
+CT $\ast$ {\bfseries ewald\+\_\+force}
+\item 
+\hypertarget{classCudaPMEDirectForce_a0d30e916d121a8937cc4ab6169c9fa08}{}\label{classCudaPMEDirectForce_a0d30e916d121a8937cc4ab6169c9fa08} 
+int {\bfseries n\+\_\+ewald\+\_\+force}
+\item 
+\hypertarget{classCudaPMEDirectForce_a34fdb0fe96c7fe5d2967a61dc4871bf8}{}\label{classCudaPMEDirectForce_a34fdb0fe96c7fe5d2967a61dc4871bf8} 
+\hyperlink{structDirectSettings__t}{Direct\+Settings\+\_\+t} $\ast$ {\bfseries h\+\_\+setup}
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/Cuda\+P\+M\+E\+Direct\+Force.\+h\end{DoxyCompactItemize}

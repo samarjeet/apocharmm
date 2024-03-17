@@ -1,0 +1,67 @@
+\hypertarget{classPressureGroupScaleDrift}{}\section{Pressure\+Group\+Scale\+Drift Class Reference}
+\label{classPressureGroupScaleDrift}\index{Pressure\+Group\+Scale\+Drift@{Pressure\+Group\+Scale\+Drift}}
+
+
+Create a graph that calculates the new pressure group center positions and momentums with scaling.  
+
+
+
+
+{\ttfamily \#include $<$Pressure\+Group\+Scale\+Drift.\+h$>$}
+
+Inheritance diagram for Pressure\+Group\+Scale\+Drift\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classPressureGroupScaleDrift}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classPressureGroupScaleDrift_a8cf59e5fe7570632084b614bd2000790}{Pressure\+Group\+Scale\+Drift} (const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ momentum\+\_\+scale, const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ momentum\+\_\+prescale, const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ position\+\_\+prescale, const double4 $\ast$old\+\_\+momentum\+\_\+invmass, const double4 $\ast$old\+\_\+xyzq, double4 $\ast$new\+\_\+momentum\+\_\+invmass, double4 $\ast$new\+\_\+xyzq, double timestep, int num)
+\begin{DoxyCompactList}\small\item\em Create a graph to move positions and scale pressure group centers of mass and momentum. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Additional Inherited Members}
+
+
+\subsection{Detailed Description}
+Create a graph that calculates the new pressure group center positions and momentums with scaling. 
+
+new\+\_\+momentum= old\+\_\+momentum$\ast$momentum\+\_\+scale new\+\_\+xyz= old\+\_\+xyz$\ast$position\+\_\+prescale+timestep$\ast$momentum$\ast$invmass$\ast$momentum\+\_\+prescale 
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classPressureGroupScaleDrift_a8cf59e5fe7570632084b614bd2000790}{}\label{classPressureGroupScaleDrift_a8cf59e5fe7570632084b614bd2000790} 
+\index{Pressure\+Group\+Scale\+Drift@{Pressure\+Group\+Scale\+Drift}!Pressure\+Group\+Scale\+Drift@{Pressure\+Group\+Scale\+Drift}}
+\index{Pressure\+Group\+Scale\+Drift@{Pressure\+Group\+Scale\+Drift}!Pressure\+Group\+Scale\+Drift@{Pressure\+Group\+Scale\+Drift}}
+\subsubsection{\texorpdfstring{Pressure\+Group\+Scale\+Drift()}{PressureGroupScaleDrift()}}
+{\footnotesize\ttfamily Pressure\+Group\+Scale\+Drift\+::\+Pressure\+Group\+Scale\+Drift (\begin{DoxyParamCaption}\item[{const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{momentum\+\_\+scale,  }\item[{const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{momentum\+\_\+prescale,  }\item[{const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{position\+\_\+prescale,  }\item[{const double4 $\ast$}]{old\+\_\+momentum\+\_\+invmass,  }\item[{const double4 $\ast$}]{old\+\_\+xyzq,  }\item[{double4 $\ast$}]{new\+\_\+momentum\+\_\+invmass,  }\item[{double4 $\ast$}]{new\+\_\+xyzq,  }\item[{double}]{timestep,  }\item[{int}]{num }\end{DoxyParamCaption})}
+
+
+
+Create a graph to move positions and scale pressure group centers of mass and momentum. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em momentum\+\_\+scale} & Device Pointer to total scaling of momentum. \\
+\hline
+{\em momentum\+\_\+prescale} & Device pointer to momentum scaling for position update. \\
+\hline
+{\em position\+\_\+prescale} & Device pointer to position scaling before moving. \\
+\hline
+{\em old\+\_\+momentum\+\_\+invmass} & Device pointer to array of momentums and inverse masses. \\
+\hline
+{\em old\+\_\+xyzq} & Device pointer to array of positions. \\
+\hline
+{\em new\+\_\+momentum\+\_\+invmass} & Device pointer to array of new momentums, and invers masses. \\
+\hline
+{\em new\+\_\+xyzq} & Device pointer to array of new positions. \\
+\hline
+{\em timestep} & time step. \\
+\hline
+{\em num} & number of elements in the arrays. \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/\hyperlink{PressureGroupScaleDrift_8h}{Pressure\+Group\+Scale\+Drift.\+h}\end{DoxyCompactItemize}

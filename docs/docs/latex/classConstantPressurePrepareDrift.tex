@@ -1,0 +1,83 @@
+\hypertarget{classConstantPressurePrepareDrift}{}\section{Constant\+Pressure\+Prepare\+Drift Class Reference}
+\label{classConstantPressurePrepareDrift}\index{Constant\+Pressure\+Prepare\+Drift@{Constant\+Pressure\+Prepare\+Drift}}
+
+
+Create a graph that calculates the net momentums, center of masses(\+C\+O\+M), relative coordinates to the C\+O\+Ms, internal momentums, and kinetic energies from the C\+OM motion, and kinetic energies from the internal motions.  
+
+
+
+
+{\ttfamily \#include $<$Constant\+Pressure\+Prepare\+Drift.\+h$>$}
+
+Inheritance diagram for Constant\+Pressure\+Prepare\+Drift\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classConstantPressurePrepareDrift}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classConstantPressurePrepareDrift_acdf4bbe89bee70df889d745f1c8cf08c}{Constant\+Pressure\+Prepare\+Drift} (const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ absolute\+\_\+vel\+\_\+mass, const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ absolute\+\_\+xyzq, double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ relative\+\_\+xyzq, double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ relative\+\_\+vel\+\_\+mass, \hyperlink{structComID__t}{Com\+I\+D\+\_\+t} $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ com\+\_\+ids, double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ com\+\_\+momentum\+\_\+invmass, double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ com\+\_\+kinetic\+\_\+energy, double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ total\+\_\+kinetic\+\_\+energy, const int $\ast$sorted\+\_\+atomids, int num\+Atoms, int num\+Groups)
+\begin{DoxyCompactList}\small\item\em Create a graph that calculate the net momentums, center of masses(\+C\+O\+M), relative coordinates to the C\+O\+Ms, internal momentums, and kinetic energies from the C\+OM motion, and kinetic energies from the internal motions. \end{DoxyCompactList}\item 
+\hyperlink{classConstantPressurePrepareDrift_a0df027b22f65f8ee39387d41e612120b}{$\sim$\+Constant\+Pressure\+Prepare\+Drift} ()
+\begin{DoxyCompactList}\small\item\em Destroy the graph, its nodes, and free internal memory. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Additional Inherited Members}
+
+
+\subsection{Detailed Description}
+Create a graph that calculates the net momentums, center of masses(\+C\+O\+M), relative coordinates to the C\+O\+Ms, internal momentums, and kinetic energies from the C\+OM motion, and kinetic energies from the internal motions. 
+
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classConstantPressurePrepareDrift_acdf4bbe89bee70df889d745f1c8cf08c}{}\label{classConstantPressurePrepareDrift_acdf4bbe89bee70df889d745f1c8cf08c} 
+\index{Constant\+Pressure\+Prepare\+Drift@{Constant\+Pressure\+Prepare\+Drift}!Constant\+Pressure\+Prepare\+Drift@{Constant\+Pressure\+Prepare\+Drift}}
+\index{Constant\+Pressure\+Prepare\+Drift@{Constant\+Pressure\+Prepare\+Drift}!Constant\+Pressure\+Prepare\+Drift@{Constant\+Pressure\+Prepare\+Drift}}
+\subsubsection{\texorpdfstring{Constant\+Pressure\+Prepare\+Drift()}{ConstantPressurePrepareDrift()}}
+{\footnotesize\ttfamily Constant\+Pressure\+Prepare\+Drift\+::\+Constant\+Pressure\+Prepare\+Drift (\begin{DoxyParamCaption}\item[{const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{absolute\+\_\+vel\+\_\+mass,  }\item[{const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{absolute\+\_\+xyzq,  }\item[{double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{relative\+\_\+xyzq,  }\item[{double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{relative\+\_\+vel\+\_\+mass,  }\item[{\hyperlink{structComID__t}{Com\+I\+D\+\_\+t} $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{com\+\_\+ids,  }\item[{double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{com\+\_\+momentum\+\_\+invmass,  }\item[{double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{com\+\_\+kinetic\+\_\+energy,  }\item[{double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{total\+\_\+kinetic\+\_\+energy,  }\item[{const int $\ast$}]{sorted\+\_\+atomids,  }\item[{int}]{num\+Atoms,  }\item[{int}]{num\+Groups }\end{DoxyParamCaption})}
+
+
+
+Create a graph that calculate the net momentums, center of masses(\+C\+O\+M), relative coordinates to the C\+O\+Ms, internal momentums, and kinetic energies from the C\+OM motion, and kinetic energies from the internal motions. 
+
+All units are SI compatible. 
+\begin{DoxyParams}{Parameters}
+{\em absolute\+\_\+vel\+\_\+mass} & The device pointer to the array of absolute velocity and mass of every atom. \\
+\hline
+{\em absolute\+\_\+xyzq} & The device pointer to the array of absolute atom positions. \\
+\hline
+{\em relative\+\_\+xyzq} & The device pointer to the array of atom positions relative to the center of mass of their pressure group. \\
+\hline
+{\em relative\+\_\+vel\+\_\+mass} & The device pointer to the array of relative velocity and mass of every atom. \\
+\hline
+{\em com\+\_\+ids} & The device pointer to the array of the position of the center of mass of each pressure group, and the atoms that are in the group. \\
+\hline
+{\em com\+\_\+momentum\+\_\+invmass} & The device pointer to the array of the group net momentums and inverse masses. \\
+\hline
+{\em com\+\_\+kinetic\+\_\+energy} & The xx,yy, and zz components of the groups center of mass kinetic energy. \\
+\hline
+{\em total\+\_\+kinetic\+\_\+energy} & The total kinetic energy, used for the thermostat piston. \\
+\hline
+{\em sorted\+\_\+atomids} & Array of all atom ids sorted by pressure group. \\
+\hline
+{\em num\+Atoms} & number of atoms. \\
+\hline
+{\em num\+Groups} & number of groups. \\
+\hline
+\end{DoxyParams}
+\hypertarget{classConstantPressurePrepareDrift_a0df027b22f65f8ee39387d41e612120b}{}\label{classConstantPressurePrepareDrift_a0df027b22f65f8ee39387d41e612120b} 
+\index{Constant\+Pressure\+Prepare\+Drift@{Constant\+Pressure\+Prepare\+Drift}!````~Constant\+Pressure\+Prepare\+Drift@{$\sim$\+Constant\+Pressure\+Prepare\+Drift}}
+\index{````~Constant\+Pressure\+Prepare\+Drift@{$\sim$\+Constant\+Pressure\+Prepare\+Drift}!Constant\+Pressure\+Prepare\+Drift@{Constant\+Pressure\+Prepare\+Drift}}
+\subsubsection{\texorpdfstring{$\sim$\+Constant\+Pressure\+Prepare\+Drift()}{~ConstantPressurePrepareDrift()}}
+{\footnotesize\ttfamily Constant\+Pressure\+Prepare\+Drift\+::$\sim$\+Constant\+Pressure\+Prepare\+Drift (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Destroy the graph, its nodes, and free internal memory. 
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/\hyperlink{ConstantPressurePrepareDrift_8h}{Constant\+Pressure\+Prepare\+Drift.\+h}\end{DoxyCompactItemize}

@@ -1,0 +1,66 @@
+\hypertarget{ConstantPressurePostDrift_8h}{}\section{/u/samar/\+Documents/git/chcuda/include/\+Constant\+Pressure\+Post\+Drift.h File Reference}
+\label{ConstantPressurePostDrift_8h}\index{/u/samar/\+Documents/git/chcuda/include/\+Constant\+Pressure\+Post\+Drift.\+h@{/u/samar/\+Documents/git/chcuda/include/\+Constant\+Pressure\+Post\+Drift.\+h}}
+
+
+Recombine com coordinates and relative coordinates for next force calculation.  
+
+
+{\ttfamily \#include $<$cuda\+\_\+runtime.\+h$>$}\newline
+{\ttfamily \#include $<$cuda\+\_\+utils.\+h$>$}\newline
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$array$>$}\newline
+{\ttfamily \#include $<$Pressure\+Groups\+Util.\+h$>$}\newline
+{\ttfamily \#include $<$Cuda\+Integrator\+Graph.\+h$>$}\newline
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \hyperlink{classConstantPressurePostDrift}{Constant\+Pressure\+Post\+Drift}
+\begin{DoxyCompactList}\small\item\em Create a graph that gets absolute coords back from relative coords. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\+\_\+\+\_\+global\+\_\+\+\_\+ void \hyperlink{ConstantPressurePostDrift_8h_a6218690bebf935fca185f6b1be8c03ee}{constant\+Pressure\+Post\+Drift\+Simple\+Kernel} (const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ relative\+\_\+xyzq, const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ relative\+\_\+vel\+\_\+mass, const \hyperlink{structComID__t}{Com\+I\+D\+\_\+t} $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ com\+\_\+ids, const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ com\+\_\+momentum\+\_\+invmass, double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ absolute\+\_\+xyzq, double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ absolute\+\_\+vel\+\_\+mass, const int $\ast$sorted\+\_\+atomids, int num\+Groups)
+\begin{DoxyCompactList}\small\item\em Recombine center of mass coordinates and relative coordinates to get absolute coordinates. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Recombine com coordinates and relative coordinates for next force calculation. 
+
+\begin{DoxyAuthor}{Author}
+Nathan Zimmerberg (\href{mailto:nhz2@cornell.edu}{\tt nhz2@cornell.\+edu}) 
+\end{DoxyAuthor}
+\begin{DoxyDate}{Date}
+
+\end{DoxyDate}
+
+
+\subsection{Function Documentation}
+\hypertarget{ConstantPressurePostDrift_8h_a6218690bebf935fca185f6b1be8c03ee}{}\label{ConstantPressurePostDrift_8h_a6218690bebf935fca185f6b1be8c03ee} 
+\index{Constant\+Pressure\+Post\+Drift.\+h@{Constant\+Pressure\+Post\+Drift.\+h}!constant\+Pressure\+Post\+Drift\+Simple\+Kernel@{constant\+Pressure\+Post\+Drift\+Simple\+Kernel}}
+\index{constant\+Pressure\+Post\+Drift\+Simple\+Kernel@{constant\+Pressure\+Post\+Drift\+Simple\+Kernel}!Constant\+Pressure\+Post\+Drift.\+h@{Constant\+Pressure\+Post\+Drift.\+h}}
+\subsubsection{\texorpdfstring{constant\+Pressure\+Post\+Drift\+Simple\+Kernel()}{constantPressurePostDriftSimpleKernel()}}
+{\footnotesize\ttfamily \+\_\+\+\_\+global\+\_\+\+\_\+ void constant\+Pressure\+Post\+Drift\+Simple\+Kernel (\begin{DoxyParamCaption}\item[{const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{relative\+\_\+xyzq,  }\item[{const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{relative\+\_\+vel\+\_\+mass,  }\item[{const \hyperlink{structComID__t}{Com\+I\+D\+\_\+t} $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{com\+\_\+ids,  }\item[{const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{com\+\_\+momentum\+\_\+invmass,  }\item[{double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{absolute\+\_\+xyzq,  }\item[{double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{absolute\+\_\+vel\+\_\+mass,  }\item[{const int $\ast$}]{sorted\+\_\+atomids,  }\item[{int}]{num\+Groups }\end{DoxyParamCaption})}
+
+
+
+Recombine center of mass coordinates and relative coordinates to get absolute coordinates. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em relative\+\_\+xyzq} & The device pointer to the array of atom positions relative to the center of mass of their pressure group. \\
+\hline
+{\em relative\+\_\+vel\+\_\+mass} & The device pointer to the array of relative velocity and mass of every atom. \\
+\hline
+{\em com\+\_\+ids} & The device pointer to the array of the position of the center of mass of each pressure group, and the atoms that are in the group. \\
+\hline
+{\em com\+\_\+momentum\+\_\+invmass} & The device pointer to the array of the group net momentums and inverse masses. \\
+\hline
+{\em absolute\+\_\+xyzq} & The device pointer to the array of absolute atom positions. \\
+\hline
+{\em absolute\+\_\+vel\+\_\+mass} & The device pointer to the array of absolute velocity and mass of every atom. \\
+\hline
+{\em sorted\+\_\+atomids} & Array of all atom ids sorted by pressure group. \\
+\hline
+{\em num\+Groups} & number of groups. \\
+\hline
+\end{DoxyParams}

@@ -1,0 +1,48 @@
+\hypertarget{SimpleLeapfrogGraph_8h}{}\section{/u/samar/\+Documents/git/chcuda/include/\+Simple\+Leapfrog\+Graph.h File Reference}
+\label{SimpleLeapfrogGraph_8h}\index{/u/samar/\+Documents/git/chcuda/include/\+Simple\+Leapfrog\+Graph.\+h@{/u/samar/\+Documents/git/chcuda/include/\+Simple\+Leapfrog\+Graph.\+h}}
+
+
+Graph with a simple leapfrog integrator, no constriants or pistons.  
+
+
+{\ttfamily \#include $<$cuda\+\_\+runtime.\+h$>$}\newline
+{\ttfamily \#include $<$cuda\+\_\+utils.\+h$>$}\newline
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$Cuda\+Integrator\+Graph.\+h$>$}\newline
+{\ttfamily \#include $<$array$>$}\newline
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \hyperlink{structSimpleLeapfrogGraphInputs}{Simple\+Leapfrog\+Graph\+Inputs}
+\begin{DoxyCompactList}\small\item\em Struct for Simple leapfrog kernel input. \end{DoxyCompactList}\item 
+class \hyperlink{classSimpleLeapfrogGraph}{Simple\+Leapfrog\+Graph}
+\begin{DoxyCompactList}\small\item\em Create a graph to do the simple leapfrog integration. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\+\_\+\+\_\+global\+\_\+\+\_\+ void \hyperlink{SimpleLeapfrogGraph_8h_a120a2b2b23c030a28f76f67c2d3db871}{Simple\+Leapfrog\+Graph\+Kernel} (\hyperlink{structSimpleLeapfrogGraphInputs}{Simple\+Leapfrog\+Graph\+Inputs} in)
+\begin{DoxyCompactList}\small\item\em Update the on step positions and previous half step velocities using the leap frog algorithm. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Graph with a simple leapfrog integrator, no constriants or pistons. 
+
+\begin{DoxyAuthor}{Author}
+Nathan Zimmerberg (\href{mailto:nhz2@cornell.edu}{\tt nhz2@cornell.\+edu}) 
+\end{DoxyAuthor}
+\begin{DoxyDate}{Date}
+
+\end{DoxyDate}
+
+
+\subsection{Function Documentation}
+\hypertarget{SimpleLeapfrogGraph_8h_a120a2b2b23c030a28f76f67c2d3db871}{}\label{SimpleLeapfrogGraph_8h_a120a2b2b23c030a28f76f67c2d3db871} 
+\index{Simple\+Leapfrog\+Graph.\+h@{Simple\+Leapfrog\+Graph.\+h}!Simple\+Leapfrog\+Graph\+Kernel@{Simple\+Leapfrog\+Graph\+Kernel}}
+\index{Simple\+Leapfrog\+Graph\+Kernel@{Simple\+Leapfrog\+Graph\+Kernel}!Simple\+Leapfrog\+Graph.\+h@{Simple\+Leapfrog\+Graph.\+h}}
+\subsubsection{\texorpdfstring{Simple\+Leapfrog\+Graph\+Kernel()}{SimpleLeapfrogGraphKernel()}}
+{\footnotesize\ttfamily \+\_\+\+\_\+global\+\_\+\+\_\+ void Simple\+Leapfrog\+Graph\+Kernel (\begin{DoxyParamCaption}\item[{\hyperlink{structSimpleLeapfrogGraphInputs}{Simple\+Leapfrog\+Graph\+Inputs}}]{in }\end{DoxyParamCaption})}
+
+
+
+Update the on step positions and previous half step velocities using the leap frog algorithm. 
+

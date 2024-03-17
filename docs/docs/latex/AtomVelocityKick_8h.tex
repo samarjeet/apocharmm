@@ -1,0 +1,71 @@
+\hypertarget{AtomVelocityKick_8h}{}\section{/u/samar/\+Documents/git/chcuda/include/\+Atom\+Velocity\+Kick.h File Reference}
+\label{AtomVelocityKick_8h}\index{/u/samar/\+Documents/git/chcuda/include/\+Atom\+Velocity\+Kick.\+h@{/u/samar/\+Documents/git/chcuda/include/\+Atom\+Velocity\+Kick.\+h}}
+
+
+Graphs and kernels to update the atom velocities by a force.  
+
+
+{\ttfamily \#include $<$cuda\+\_\+runtime.\+h$>$}\newline
+{\ttfamily \#include $<$cuda\+\_\+utils.\+h$>$}\newline
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$Cuda\+Integrator\+Graph.\+h$>$}\newline
+{\ttfamily \#include $<$array$>$}\newline
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\+\_\+\+\_\+global\+\_\+\+\_\+ void \hyperlink{AtomVelocityKick_8h_a1cc1954157f2b939d9debcdd8b8f7052}{atom\+Velocity\+Kick\+Simple\+Kernel} (const double4 $\ast$old\+\_\+vel\+\_\+mass, const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ force\+\_\+invmass, double $\ast$new\+\_\+vel\+\_\+mass, int num\+Atoms, double timestep)
+\begin{DoxyCompactList}\small\item\em Update atom velocities based on their invese mass, their force, and the timestep. \end{DoxyCompactList}\item 
+class \hyperlink{AtomVelocityKick_8h_aac6e80352e9c23dcacae463cfccf1aeb}{Atom\+Velocity\+Kick} (public \+:Atom\+Velocity\+Kick(const double4 $\ast$old\+\_\+vel\+\_\+mass, const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ force\+\_\+invmass, double $\ast$new\+\_\+vel\+\_\+mass, int num\+Atoms, double timestep);private \+:void initialize\+Graph(void);cuda\+Kernel\+Node\+Params myparams;std\+::array$<$ void $\ast$, 8 $>$ kernel\+Args;cuda\+Graph\+Node\+\_\+t mynode;const double4 $\ast$old\+\_\+vel\+\_\+mass;const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ force\+\_\+invmass;double $\ast$new\+\_\+vel\+\_\+mass;int num\+Atoms;double timestep)
+\begin{DoxyCompactList}\small\item\em Create a graph that updates the atom velocities based on the forces. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Graphs and kernels to update the atom velocities by a force. 
+
+\begin{DoxyAuthor}{Author}
+Nathan Zimmerberg (\href{mailto:nhz2@cornell.edu}{\tt nhz2@cornell.\+edu}) 
+\end{DoxyAuthor}
+\begin{DoxyDate}{Date}
+
+\end{DoxyDate}
+
+
+\subsection{Function Documentation}
+\hypertarget{AtomVelocityKick_8h_aac6e80352e9c23dcacae463cfccf1aeb}{}\label{AtomVelocityKick_8h_aac6e80352e9c23dcacae463cfccf1aeb} 
+\index{Atom\+Velocity\+Kick.\+h@{Atom\+Velocity\+Kick.\+h}!Atom\+Velocity\+Kick@{Atom\+Velocity\+Kick}}
+\index{Atom\+Velocity\+Kick@{Atom\+Velocity\+Kick}!Atom\+Velocity\+Kick.\+h@{Atom\+Velocity\+Kick.\+h}}
+\subsubsection{\texorpdfstring{Atom\+Velocity\+Kick()}{AtomVelocityKick()}}
+{\footnotesize\ttfamily class Atom\+Velocity\+Kick (\begin{DoxyParamCaption}\item[{public \+:Atom\+Velocity\+Kick(const double4 $\ast$old\+\_\+vel\+\_\+mass, const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ force\+\_\+invmass, double $\ast$new\+\_\+vel\+\_\+mass, int num\+Atoms, double timestep);private \+:void initialize\+Graph(void);cuda\+Kernel\+Node\+Params myparams;std\+::array$<$ void $\ast$, 8 $>$ kernel\+Args;cuda\+Graph\+Node\+\_\+t mynode;const double4 $\ast$old\+\_\+vel\+\_\+mass;const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ force\+\_\+invmass;double $\ast$new\+\_\+vel\+\_\+mass;int num\+Atoms;double}]{timestep }\end{DoxyParamCaption})}
+
+
+
+Create a graph that updates the atom velocities based on the forces. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em timestep} & Device pointer to atom velocity and mass. Device pointer to force and inverse mass of atoms. Device pointer to updated atom velocities. Number of atoms. Time step. \\
+\hline
+\end{DoxyParams}
+\hypertarget{AtomVelocityKick_8h_a1cc1954157f2b939d9debcdd8b8f7052}{}\label{AtomVelocityKick_8h_a1cc1954157f2b939d9debcdd8b8f7052} 
+\index{Atom\+Velocity\+Kick.\+h@{Atom\+Velocity\+Kick.\+h}!atom\+Velocity\+Kick\+Simple\+Kernel@{atom\+Velocity\+Kick\+Simple\+Kernel}}
+\index{atom\+Velocity\+Kick\+Simple\+Kernel@{atom\+Velocity\+Kick\+Simple\+Kernel}!Atom\+Velocity\+Kick.\+h@{Atom\+Velocity\+Kick.\+h}}
+\subsubsection{\texorpdfstring{atom\+Velocity\+Kick\+Simple\+Kernel()}{atomVelocityKickSimpleKernel()}}
+{\footnotesize\ttfamily \+\_\+\+\_\+global\+\_\+\+\_\+ void atom\+Velocity\+Kick\+Simple\+Kernel (\begin{DoxyParamCaption}\item[{const double4 $\ast$}]{old\+\_\+vel\+\_\+mass,  }\item[{const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{force\+\_\+invmass,  }\item[{double $\ast$}]{new\+\_\+vel\+\_\+mass,  }\item[{int}]{num\+Atoms,  }\item[{double}]{timestep }\end{DoxyParamCaption})}
+
+
+
+Update atom velocities based on their invese mass, their force, and the timestep. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em old\+\_\+vel\+\_\+mass} & Device pointer to atom velocity and mass. \\
+\hline
+{\em force\+\_\+invmass} & Device pointer to force and inverse mass of atoms. \\
+\hline
+{\em new\+\_\+vel\+\_\+mass} & Device pointer to updated atom velocities. \\
+\hline
+{\em num\+Atoms} & Number of atoms. \\
+\hline
+{\em timestep} & Time step. \\
+\hline
+\end{DoxyParams}

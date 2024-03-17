@@ -1,0 +1,128 @@
+\hypertarget{classnv_1_1vec4}{}\section{nv\+:\+:vec4$<$ T $>$ Class Template Reference}
+\label{classnv_1_1vec4}\index{nv\+::vec4$<$ T $>$@{nv\+::vec4$<$ T $>$}}
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classnv_1_1vec4_a09fb8b95c9c02056c65620ea2fba281b}{}\label{classnv_1_1vec4_a09fb8b95c9c02056c65620ea2fba281b} 
+typedef T {\bfseries value\+\_\+type}
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classnv_1_1vec4_a8937bf15df78e84c5a9983924823d02d}{}\label{classnv_1_1vec4_a8937bf15df78e84c5a9983924823d02d} 
+int {\bfseries size} () const
+\item 
+\hypertarget{classnv_1_1vec4_a0470436181d9e8f169f71bba61e5f4ee}{}\label{classnv_1_1vec4_a0470436181d9e8f169f71bba61e5f4ee} 
+{\bfseries vec4} (const T \&t=T())
+\item 
+\hypertarget{classnv_1_1vec4_a49189b4f132699a853a585e7abd3d4a4}{}\label{classnv_1_1vec4_a49189b4f132699a853a585e7abd3d4a4} 
+{\bfseries vec4} (const T $\ast$tp)
+\item 
+\hypertarget{classnv_1_1vec4_a2ba35eefe81119c372be34475d33a49c}{}\label{classnv_1_1vec4_a2ba35eefe81119c372be34475d33a49c} 
+{\bfseries vec4} (const T v0, const T v1, const T v2, const T v3)
+\item 
+\hypertarget{classnv_1_1vec4_aaa0de52ffe83b44710ded7a797f978f6}{}\label{classnv_1_1vec4_aaa0de52ffe83b44710ded7a797f978f6} 
+{\bfseries vec4} (const \hyperlink{classnv_1_1vec3}{vec3}$<$ T $>$ \&u, T v0)
+\item 
+\hypertarget{classnv_1_1vec4_ab62d37042a2dcf73249ac20464b64d84}{}\label{classnv_1_1vec4_ab62d37042a2dcf73249ac20464b64d84} 
+{\bfseries vec4} (const \hyperlink{classnv_1_1vec2}{vec2}$<$ T $>$ \&u, T v0, T v1)
+\item 
+\hypertarget{classnv_1_1vec4_a1c7530b525dc0b5b52c35bbfb0cf5a1e}{}\label{classnv_1_1vec4_a1c7530b525dc0b5b52c35bbfb0cf5a1e} 
+const T $\ast$ {\bfseries get\+\_\+value} () const
+\item 
+\hypertarget{classnv_1_1vec4_a3ff55b6469beb2b7ac4abb389cc91921}{}\label{classnv_1_1vec4_a3ff55b6469beb2b7ac4abb389cc91921} 
+\hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \& {\bfseries set\+\_\+value} (const T $\ast$rhs)
+\item 
+\hypertarget{classnv_1_1vec4_adab48546512b2c5a4f359061441fa661}{}\label{classnv_1_1vec4_adab48546512b2c5a4f359061441fa661} 
+T \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (int i)
+\item 
+\hypertarget{classnv_1_1vec4_a8094ae9a3c2932b991a1aee968bd8ecf}{}\label{classnv_1_1vec4_a8094ae9a3c2932b991a1aee968bd8ecf} 
+const T \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (int i) const
+\item 
+\hypertarget{classnv_1_1vec4_ad8942f10311bdcfae11cef5dbfcf487a}{}\label{classnv_1_1vec4_ad8942f10311bdcfae11cef5dbfcf487a} 
+{\bfseries operator T$\ast$} ()
+\item 
+\hypertarget{classnv_1_1vec4_ae464a39da81243597effea0da547c776}{}\label{classnv_1_1vec4_ae464a39da81243597effea0da547c776} 
+{\bfseries operator const T $\ast$} () const
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classnv_1_1vec4_a0a4b52c987431d28ab17a5063882bf77}{}\label{classnv_1_1vec4_a0a4b52c987431d28ab17a5063882bf77} 
+\begin{tabbing}
+xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=xx\=\kill
+union \{\\
+\hypertarget{unionnv_1_1vec4_1_1_0D18_a34f697e3853408dd0cd65df51105b36d}{}\label{unionnv_1_1vec4_1_1_0D18_a34f697e3853408dd0cd65df51105b36d} 
+\>struct \{\\
+\>\>T {\bfseries x}\\
+\>\>T {\bfseries y}\\
+\>\>T {\bfseries z}\\
+\>\>T {\bfseries w}\\
+\>\} \\
+\hypertarget{unionnv_1_1vec4_1_1_0D18_a89abbd9128173c927bb3bb1a204f507c}{}\label{unionnv_1_1vec4_1_1_0D18_a89abbd9128173c927bb3bb1a204f507c} 
+\>struct \{\\
+\>\>T {\bfseries s}\\
+\>\>T {\bfseries t}\\
+\>\>T {\bfseries r}\\
+\>\>T {\bfseries q}\\
+\>\} \\
+\>T {\bfseries \_array} \mbox{[}4\mbox{]}\\
+\}; \\
+
+\end{tabbing}\end{DoxyCompactItemize}
+\subsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classnv_1_1vec4_ae65c5a39b3a0919fbd11005040b83d93}{}\label{classnv_1_1vec4_ae65c5a39b3a0919fbd11005040b83d93} 
+\hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \& {\bfseries operator$\ast$=} (\hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&lhs, T d)
+\item 
+\hypertarget{classnv_1_1vec4_adb31e94e1ef43e088572ee682aa5ab6c}{}\label{classnv_1_1vec4_adb31e94e1ef43e088572ee682aa5ab6c} 
+\hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \& {\bfseries operator$\ast$=} (\hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&lhs, const \hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&rhs)
+\item 
+\hypertarget{classnv_1_1vec4_a0c2ce7247eaf12932a608e657e3aec52}{}\label{classnv_1_1vec4_a0c2ce7247eaf12932a608e657e3aec52} 
+\hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \& {\bfseries operator/=} (\hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&lhs, T d)
+\item 
+\hypertarget{classnv_1_1vec4_a19980a11fa7178d3cb0d8ca2380fbd8e}{}\label{classnv_1_1vec4_a19980a11fa7178d3cb0d8ca2380fbd8e} 
+\hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \& {\bfseries operator/=} (\hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&lhs, const \hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&rhs)
+\item 
+\hypertarget{classnv_1_1vec4_abea67e054b76ea133d0b20187cb6da7e}{}\label{classnv_1_1vec4_abea67e054b76ea133d0b20187cb6da7e} 
+\hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \& {\bfseries operator+=} (\hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&lhs, const \hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&rhs)
+\item 
+\hypertarget{classnv_1_1vec4_a54e1e773b4df6a71b19eb4b5781a7ead}{}\label{classnv_1_1vec4_a54e1e773b4df6a71b19eb4b5781a7ead} 
+\hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \& {\bfseries operator-\/=} (\hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&lhs, const \hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&rhs)
+\item 
+\hypertarget{classnv_1_1vec4_a8cc817f95174f06a8388b7fc2b8c2d3f}{}\label{classnv_1_1vec4_a8cc817f95174f06a8388b7fc2b8c2d3f} 
+\hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ {\bfseries operator-\/} (const \hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&rhs)
+\item 
+\hypertarget{classnv_1_1vec4_a5ddc069514681de9e350c3f082431fd7}{}\label{classnv_1_1vec4_a5ddc069514681de9e350c3f082431fd7} 
+\hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ {\bfseries operator+} (const \hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&lhs, const \hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&rhs)
+\item 
+\hypertarget{classnv_1_1vec4_a212f0e52efde08a0093d329fcdaad1a3}{}\label{classnv_1_1vec4_a212f0e52efde08a0093d329fcdaad1a3} 
+\hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ {\bfseries operator-\/} (const \hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&lhs, const \hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&rhs)
+\item 
+\hypertarget{classnv_1_1vec4_ac8719df8fcfe7bd7c41d23018f00357f}{}\label{classnv_1_1vec4_ac8719df8fcfe7bd7c41d23018f00357f} 
+\hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ {\bfseries operator$\ast$} (const \hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&lhs, T rhs)
+\item 
+\hypertarget{classnv_1_1vec4_a75870d1aa79efe3fb376f3b28052da06}{}\label{classnv_1_1vec4_a75870d1aa79efe3fb376f3b28052da06} 
+\hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ {\bfseries operator$\ast$} (T lhs, const \hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&rhs)
+\item 
+\hypertarget{classnv_1_1vec4_a636e2ea72649260c3f304e6262456491}{}\label{classnv_1_1vec4_a636e2ea72649260c3f304e6262456491} 
+\hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ {\bfseries operator$\ast$} (const \hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&lhs, const \hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&rhs)
+\item 
+\hypertarget{classnv_1_1vec4_a6b55551a180bd0607a442da9bb6ccea8}{}\label{classnv_1_1vec4_a6b55551a180bd0607a442da9bb6ccea8} 
+\hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ {\bfseries operator/} (const \hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&lhs, T rhs)
+\item 
+\hypertarget{classnv_1_1vec4_a713208aac0e72cd0679403ee461d7b62}{}\label{classnv_1_1vec4_a713208aac0e72cd0679403ee461d7b62} 
+\hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ {\bfseries operator/} (const \hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&lhs, const \hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&rhs)
+\item 
+\hypertarget{classnv_1_1vec4_af17126e65a8b03eaab3cc44f09d298d0}{}\label{classnv_1_1vec4_af17126e65a8b03eaab3cc44f09d298d0} 
+bool {\bfseries operator==} (const \hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&lhs, const \hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&rhs)
+\item 
+\hypertarget{classnv_1_1vec4_a7ebfb7c5815e8cec967b56c867105d29}{}\label{classnv_1_1vec4_a7ebfb7c5815e8cec967b56c867105d29} 
+bool {\bfseries operator!=} (const \hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&lhs, const \hyperlink{classnv_1_1vec4}{vec4}$<$ T $>$ \&rhs)
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/nv\+Vector.\+h\end{DoxyCompactItemize}

@@ -1,0 +1,40 @@
+\hypertarget{classCudaNeighborList}{}\section{Cuda\+Neighbor\+List$<$ tilesize $>$ Class Template Reference}
+\label{classCudaNeighborList}\index{Cuda\+Neighbor\+List$<$ tilesize $>$@{Cuda\+Neighbor\+List$<$ tilesize $>$}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classCudaNeighborList_a195cb796422518b661ac7d1c08fb14a2}{}\label{classCudaNeighborList_a195cb796422518b661ac7d1c08fb14a2} 
+{\bfseries Cuda\+Neighbor\+List} (const \hyperlink{classCudaTopExcl}{Cuda\+Top\+Excl} \&top\+Excl, const int nx, const int ny, const int nz)
+\item 
+\hypertarget{classCudaNeighborList_a9c3f22487d9ccc310a7423d84e9761a1}{}\label{classCudaNeighborList_a9c3f22487d9ccc310a7423d84e9761a1} 
+void {\bfseries register\+List} (std\+::vector$<$ int $>$ \&num\+Int\+Zone, std\+::vector$<$ std\+::vector$<$ int $>$ $>$ \&int\+Zones, const char $\ast$filename=N\+U\+LL)
+\item 
+\hypertarget{classCudaNeighborList_afa5fef8705b03909572827b528c90672}{}\label{classCudaNeighborList_afa5fef8705b03909572827b528c90672} 
+void {\bfseries sort} (const int ind\+List, const int $\ast$zone\+\_\+patom, const float4 $\ast$xyzq, float4 $\ast$xyzq\+\_\+sorted, int $\ast$loc2glo, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classCudaNeighborList_afe2e41c8aa957a87b2ecfb06e586a266}{}\label{classCudaNeighborList_afe2e41c8aa957a87b2ecfb06e586a266} 
+void {\bfseries build} (const int ind\+List, const int $\ast$zone\+\_\+patom, const float boxx, const float boxy, const float boxz, const float rcut, const float4 $\ast$xyzq, const int $\ast$loc2glo, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classCudaNeighborList_ad178c1accd50c60a1df81fbb9b81ec1f}{}\label{classCudaNeighborList_ad178c1accd50c60a1df81fbb9b81ec1f} 
+int $\ast$ {\bfseries get\+\_\+glo2loc} ()
+\item 
+\hypertarget{classCudaNeighborList_a96b7d2f83fa52799f79b83df80f75e39}{}\label{classCudaNeighborList_a96b7d2f83fa52799f79b83df80f75e39} 
+int $\ast$ {\bfseries get\+\_\+ind\+\_\+sorted} ()
+\item 
+\hypertarget{classCudaNeighborList_acf881a8245ab7e077122bda0ab57f9de}{}\label{classCudaNeighborList_acf881a8245ab7e077122bda0ab57f9de} 
+int {\bfseries get\+Num\+List} ()
+\item 
+\hypertarget{classCudaNeighborList_a2158fc32438bb35d3b2170fb0ee36fed}{}\label{classCudaNeighborList_a2158fc32438bb35d3b2170fb0ee36fed} 
+void {\bfseries set\+\_\+test} (bool test\+\_\+in)
+\item 
+\hypertarget{classCudaNeighborList_ac481b590ff46bd7bcf159c0655b9f080}{}\label{classCudaNeighborList_ac481b590ff46bd7bcf159c0655b9f080} 
+\hyperlink{classCudaNeighborListBuild}{Cuda\+Neighbor\+List\+Build}$<$ tilesize $>$ \& {\bfseries get\+Builder} (const int ind\+List)
+\item 
+\hypertarget{classCudaNeighborList_a2b1c5d91c32e1628090998b9639320fa}{}\label{classCudaNeighborList_a2b1c5d91c32e1628090998b9639320fa} 
+void {\bfseries analyze} ()
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/Cuda\+Neighbor\+List.\+h\end{DoxyCompactItemize}

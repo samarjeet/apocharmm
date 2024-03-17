@@ -1,0 +1,42 @@
+\hypertarget{random__utils_8h}{}\section{/u/samar/\+Documents/git/chcuda/include/random\+\_\+utils.h File Reference}
+\label{random__utils_8h}\index{/u/samar/\+Documents/git/chcuda/include/random\+\_\+utils.\+h@{/u/samar/\+Documents/git/chcuda/include/random\+\_\+utils.\+h}}
+
+
+Utilites to easily generate normal distrobutions using counter based R\+NG on host or device.  
+
+
+{\ttfamily \#include $<$cuda\+\_\+runtime.\+h$>$}\newline
+{\ttfamily \#include $<$cuda\+\_\+utils.\+h$>$}\newline
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$Random123/philox.\+h$>$}\newline
+{\ttfamily \#include $<$Random123/boxmuller.\+hpp$>$}\newline
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+C\+U\+D\+A\+\_\+\+C\+A\+L\+L\+A\+B\+L\+E\+\_\+\+M\+E\+M\+B\+ER double2 \hyperlink{random__utils_8h_ae0879a93cd76438e8e7d371759d29abd}{randnormal} (uint64\+\_\+t key, uint64\+\_\+t counter\+\_\+msw, uint64\+\_\+t counter\+\_\+lsw)
+\begin{DoxyCompactList}\small\item\em Returns independent normalally distributed double2 based on the counters and key. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Utilites to easily generate normal distrobutions using counter based R\+NG on host or device. 
+
+\begin{DoxyAuthor}{Author}
+Nathan Zimmerberg (\href{mailto:nhz2@cornell.edu}{\tt nhz2@cornell.\+edu}) 
+\end{DoxyAuthor}
+\begin{DoxyDate}{Date}
+05 Aug 2019 
+\end{DoxyDate}
+
+
+\subsection{Function Documentation}
+\hypertarget{random__utils_8h_ae0879a93cd76438e8e7d371759d29abd}{}\label{random__utils_8h_ae0879a93cd76438e8e7d371759d29abd} 
+\index{random\+\_\+utils.\+h@{random\+\_\+utils.\+h}!randnormal@{randnormal}}
+\index{randnormal@{randnormal}!random\+\_\+utils.\+h@{random\+\_\+utils.\+h}}
+\subsubsection{\texorpdfstring{randnormal()}{randnormal()}}
+{\footnotesize\ttfamily C\+U\+D\+A\+\_\+\+C\+A\+L\+L\+A\+B\+L\+E\+\_\+\+M\+E\+M\+B\+ER double2 randnormal (\begin{DoxyParamCaption}\item[{uint64\+\_\+t}]{key,  }\item[{uint64\+\_\+t}]{counter\+\_\+msw,  }\item[{uint64\+\_\+t}]{counter\+\_\+lsw }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Returns independent normalally distributed double2 based on the counters and key. 
+
+Uses the philox random C\+B\+R\+NG 4x32\+\_\+10 and boxmuller. 

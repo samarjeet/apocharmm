@@ -1,0 +1,108 @@
+The Random123 library is portable across C, C++, C\+U\+DA, Open\+CL environments, and multiple operating systems (Linux, Windows 7, Mac OS X, Free\+B\+SD, Solaris).
+
+This level of portability requires the abstraction of some features and idioms that are either not standardized (e.\+g., asm statments), or for which different vendors have their own standards (e.\+g., S\+SE intrinsics) or for which vendors simply refuse to conform to well-\/established standards (e.\+g., $<$inttypes.\+h$>$).
+
+\hyperlink{compilerfeatures_8h_source}{Random123/features/compilerfeatures.\+h} conditionally includes a compiler-\/or-\/\+O\+S-\/specific Random123/featires/\+X\+X\+Xfeatures.\+h file which defines appropriate values for the preprocessor symbols which can be used with a specific compiler or OS. Those symbols will then be used by other header files and source files in the Random123 library (and may be used by applications) to control what actually gets presented to the compiler.
+
+Most of the symbols are boolean valued. In general, they will {\bfseries always} be defined with value either 1 or 0, so do {\bfseries N\+OT} use \#ifdef. Use \#if R123\+\_\+\+U\+S\+E\+\_\+\+S\+O\+M\+E\+T\+H\+I\+NG instead.
+
+Library users can override any value by defining the pp-\/symbol with a compiler option, e.\+g., \begin{DoxyVerb}cc -DR123_USE_MULHILO64_C99 
+\end{DoxyVerb}
+
+
+will use a strictly c99 version of the full-\/width 64x64-\/$>$128-\/bit multiplication function, even if it would be disabled by default.
+
+All boolean-\/valued pre-\/processor symbols in \hyperlink{compilerfeatures_8h_source}{Random123/features/compilerfeatures.\+h} start with the prefix R123\+\_\+\+U\+S\+E\+\_\+ \begin{DoxyVerb}         AES_NI
+         AES_OPENSSL
+         SSE4_2
+         SSE4_1
+         SSE
+
+         STD_RANDOM
+
+         GNU_UINT128
+         ASM_GNU
+         ASM_MSASM
+
+         CPUID_MSVC
+
+         CXX11_RANDOM
+         CXX11_TYPE_TRAITS
+         CXX11_STATIC_ASSERT
+         CXX11_CONSTEXPR
+         CXX11_UNRESTRICTED_UNIONS
+         CXX11_EXPLICIT_CONVERSIONS
+         CXX11_LONG_LONG
+         CXX11_STD_ARRAY
+         CXX11 
+   
+         X86INTRIN_H
+         IA32INTRIN_H
+         XMMINTRIN_H
+         EMMINTRIN_H
+         SMMINTRIN_H
+         WMMINTRIN_H
+         INTRIN_H
+
+         MULHILO32_ASM
+         MULHILO64_ASM
+         MULHILO64_MSVC_INTRIN
+         MULHILO64_CUDA_INTRIN
+         MULHILO64_OPENCL_INTRIN
+         MULHILO64_C99
+
+         U01_DOUBLE\end{DoxyVerb}
+ Most have obvious meanings. Some non-\/obvious ones\+:
+
+A\+E\+S\+\_\+\+NI and A\+E\+S\+\_\+\+O\+P\+E\+N\+S\+SL are not mutually exclusive. You can have one, both or neither.
+
+G\+N\+U\+\_\+\+U\+I\+N\+T128 says that it\textquotesingle{}s safe to use \+\_\+\+\_\+uint128\+\_\+t, but it does not require its use. In particular, it should be used in mulhilo$<$uint64\+\_\+t$>$ only if M\+U\+L\+H\+I\+L\+O64\+\_\+\+A\+SM is unset.
+
+If the X\+X\+X\+I\+N\+T\+R\+I\+N\+\_\+H macros are true, then one should 
+\begin{DoxyCode}
+\textcolor{preprocessor}{#include <xxxintrin.h>}
+\end{DoxyCode}
+ to gain accesss to compiler intrinsics.
+
+The C\+X\+X11\+\_\+\+S\+O\+M\+E\+\_\+\+F\+E\+A\+T\+U\+RE macros allow the code to use specific features of the C++11 language and library. The catchall In the absence of a specific C\+X\+X11\+\_\+\+S\+O\+M\+E\+\_\+\+F\+E\+A\+T\+U\+RE, the feature is controlled by the catch-\/all R123\+\_\+\+U\+S\+E\+\_\+\+C\+X\+X11 macro.
+
+U01\+\_\+\+D\+O\+U\+B\+LE defaults on, and can be turned off (set to 0) if one does not want the utility functions that convert to double (i.\+e. u01\+\_\+$\ast$\+\_\+53()), e.\+g. on Open\+CL without the cl\+\_\+khr\+\_\+fp64 extension.
+
+There are a number of invariants that are always true. Application code may choose to rely on these\+:
+
+
+\begin{DoxyItemize}
+\item A\+S\+M\+\_\+\+G\+NU and A\+S\+M\+\_\+\+M\+A\+SM are mutually exclusive 
+\item The \char`\"{}higher\char`\"{} S\+SE values imply the lower ones. 
+\end{DoxyItemize}
+
+There are also non-\/boolean valued symbols\+:
+
+
+\begin{DoxyItemize}
+\item R123\+\_\+\+S\+T\+A\+T\+I\+C\+\_\+\+I\+N\+L\+I\+NE -\/ According to both C99 and G\+N\+U99, the \textquotesingle{}static inline\textquotesingle{} declaration allows the compiler to not emit code if the function is not used. Note that the semantics of \textquotesingle{}inline\textquotesingle{}, \textquotesingle{}static\textquotesingle{} and \textquotesingle{}extern\textquotesingle{} in gcc have changed over time and are subject to modification by command line options, e.\+g., -\/std=gnu89, -\/fgnu-\/inline. Nevertheless, it appears that the meaning of \textquotesingle{}static inline\textquotesingle{} has not changed over time and (with a little luck) the use of \textquotesingle{}static inline\textquotesingle{} here will be portable between versions of gcc and to other C99 compilers. See\+: \href{http://gcc.gnu.org/onlinedocs/gcc/Inline.html}{\tt http\+://gcc.\+gnu.\+org/onlinedocs/gcc/\+Inline.\+html} \href{http://www.greenend.org.uk/rjk/2003/03/inline.html}{\tt http\+://www.\+greenend.\+org.\+uk/rjk/2003/03/inline.\+html}
+
+
+\item R123\+\_\+\+F\+O\+R\+C\+E\+\_\+\+I\+N\+L\+I\+N\+E(decl) -\/ which expands to \textquotesingle{}decl\textquotesingle{}, adorned with the compiler-\/specific embellishments to strongly encourage that the declared function be inlined. If there is no such compiler-\/specific magic, it should expand to decl, unadorned.
+
+
+\item R123\+\_\+\+C\+U\+D\+A\+\_\+\+D\+E\+V\+I\+CE -\/ which expands to {\bfseries device} (or something else with sufficiently similar semantics) when C\+U\+DA is in use, and expands to nothing in other cases.
+
+
+\item R123\+\_\+\+M\+E\+T\+A\+L\+\_\+\+T\+H\+R\+E\+A\+D\+\_\+\+A\+D\+D\+R\+E\+S\+S\+\_\+\+S\+P\+A\+CE -\/ which expands to \textquotesingle{}thread\textquotesingle{} (or something else with sufficiently similar semantics) when compiling a Metal kernel, and expands to nothing in other cases.
+
+
+\item R123\+\_\+\+A\+S\+S\+E\+R\+T(x) -\/ which expands to assert(x), or maybe to nothing at all if we\textquotesingle{}re in an environment so feature-\/poor that you can\textquotesingle{}t even call assert (I\textquotesingle{}m looking at you, C\+U\+DA and Open\+CL), or even include assert.\+h safely (Open\+CL).
+
+
+\item R123\+\_\+\+S\+T\+A\+T\+I\+C\+\_\+\+A\+S\+S\+E\+R\+T(expr,msg) -\/ which expands to static\+\_\+assert(expr,msg), or to an expression that will raise a compile-\/time exception if expr is not true.
+
+
+\item R123\+\_\+\+U\+L\+O\+N\+G\+\_\+\+L\+O\+NG -\/ which expands to a declaration of the longest available unsigned integer.
+
+
+\item R123\+\_\+64\+B\+I\+T(x) -\/ expands to something equivalent to U\+I\+N\+T64\+\_\+\+C(x) from $<$stdint.\+h$>$, even in environments where $<$stdint.\+h$>$ is not available, e.\+g., M\+S\+VC and Open\+CL.
+
+
+\item R123\+\_\+\+B\+U\+I\+L\+T\+I\+N\+\_\+\+E\+X\+P\+E\+C\+T(expr,likely\+\_\+value) -\/ expands to something with the semantics of gcc\textquotesingle{}s \+\_\+\+\_\+builtin\+\_\+expect(expr,likely\+\_\+value). If the environment has nothing like \+\_\+\+\_\+builtin\+\_\+expect, it should expand to just expr. 
+\end{DoxyItemize}

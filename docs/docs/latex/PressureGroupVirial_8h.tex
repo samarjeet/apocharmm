@@ -1,0 +1,34 @@
+\hypertarget{PressureGroupVirial_8h}{}\section{/u/samar/\+Documents/git/chcuda/include/\+Pressure\+Group\+Virial.h File Reference}
+\label{PressureGroupVirial_8h}\index{/u/samar/\+Documents/git/chcuda/include/\+Pressure\+Group\+Virial.\+h@{/u/samar/\+Documents/git/chcuda/include/\+Pressure\+Group\+Virial.\+h}}
+
+
+Functions and kernals to Calculate the correction to the virial to account for pressure groups.  
+
+
+{\ttfamily \#include $<$array$>$}\newline
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$cuda\+\_\+runtime.\+h$>$}\newline
+{\ttfamily \#include $<$cuda\+\_\+utils.\+h$>$}\newline
+{\ttfamily \#include $<$Cuda\+Integrator\+Graph.\+h$>$}\newline
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \hyperlink{classPressureGroupVirialGraph}{Pressure\+Group\+Virial\+Graph}
+\begin{DoxyCompactList}\small\item\em Creates a graph that calculates the virial correction for pressure groups. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{PressureGroupVirial_8h_a0ddf6c2589840bc12e0f3d642fba8d0d}{}\label{PressureGroupVirial_8h_a0ddf6c2589840bc12e0f3d642fba8d0d} 
+\+\_\+\+\_\+global\+\_\+\+\_\+ void \hyperlink{PressureGroupVirial_8h_a0ddf6c2589840bc12e0f3d642fba8d0d}{pressure\+Group\+Virial\+Simple\+Kernel} (const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ forcex, const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ forcey, const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ forcez, const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ relative\+\_\+coordsx, const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ relative\+\_\+coordsy, const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ relative\+\_\+coordsz, int num\+Atoms, double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ virial)
+\begin{DoxyCompactList}\small\item\em Result is an array of the sum of the element wise product of each force and its position. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Functions and kernals to Calculate the correction to the virial to account for pressure groups. 
+
+\begin{DoxyAuthor}{Author}
+Nathan Zimmerberg (\href{mailto:nhz2@cornell.edu}{\tt nhz2@cornell.\+edu}) 
+\end{DoxyAuthor}
+\begin{DoxyDate}{Date}
+17 Jul 2019 
+\end{DoxyDate}

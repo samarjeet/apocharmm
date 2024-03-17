@@ -1,0 +1,61 @@
+\hypertarget{VolumePistonKick_8h}{}\section{/u/samar/\+Documents/git/chcuda/include/\+Volume\+Piston\+Kick.h File Reference}
+\label{VolumePistonKick_8h}\index{/u/samar/\+Documents/git/chcuda/include/\+Volume\+Piston\+Kick.\+h@{/u/samar/\+Documents/git/chcuda/include/\+Volume\+Piston\+Kick.\+h}}
+
+
+Classes and kernels to update box\+\_\+dot based on the virial.  
+
+
+{\ttfamily \#include $<$cuda\+\_\+runtime.\+h$>$}\newline
+{\ttfamily \#include $<$cuda\+\_\+utils.\+h$>$}\newline
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$Cuda\+Integrator\+Graph.\+h$>$}\newline
+{\ttfamily \#include $<$array$>$}\newline
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \hyperlink{classVolumePistonKick}{Volume\+Piston\+Kick}
+\begin{DoxyCompactList}\small\item\em Create graph that updates the box time dirivative. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\+\_\+\+\_\+global\+\_\+\+\_\+ void \hyperlink{VolumePistonKick_8h_acce03afcd0cac9d2670cc67d3cc1c234}{volume\+Piston\+Kick\+Kernel} (const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ box, const double3 $\ast$old\+\_\+box\+\_\+dot, const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ virial, double3 $\ast$new\+\_\+box\+\_\+dot, double timestep, double piston\+\_\+mass)
+\begin{DoxyCompactList}\small\item\em Update the box time dirivative based on the virial. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Classes and kernels to update box\+\_\+dot based on the virial. 
+
+\begin{DoxyAuthor}{Author}
+Nathan Zimmerberg (\href{mailto:nhz2@cornell.edu}{\tt nhz2@cornell.\+edu}) 
+\end{DoxyAuthor}
+\begin{DoxyDate}{Date}
+
+\end{DoxyDate}
+
+
+\subsection{Function Documentation}
+\hypertarget{VolumePistonKick_8h_acce03afcd0cac9d2670cc67d3cc1c234}{}\label{VolumePistonKick_8h_acce03afcd0cac9d2670cc67d3cc1c234} 
+\index{Volume\+Piston\+Kick.\+h@{Volume\+Piston\+Kick.\+h}!volume\+Piston\+Kick\+Kernel@{volume\+Piston\+Kick\+Kernel}}
+\index{volume\+Piston\+Kick\+Kernel@{volume\+Piston\+Kick\+Kernel}!Volume\+Piston\+Kick.\+h@{Volume\+Piston\+Kick.\+h}}
+\subsubsection{\texorpdfstring{volume\+Piston\+Kick\+Kernel()}{volumePistonKickKernel()}}
+{\footnotesize\ttfamily \+\_\+\+\_\+global\+\_\+\+\_\+ void volume\+Piston\+Kick\+Kernel (\begin{DoxyParamCaption}\item[{const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{box,  }\item[{const double3 $\ast$}]{old\+\_\+box\+\_\+dot,  }\item[{const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{virial,  }\item[{double3 $\ast$}]{new\+\_\+box\+\_\+dot,  }\item[{double}]{timestep,  }\item[{double}]{piston\+\_\+mass }\end{DoxyParamCaption})}
+
+
+
+Update the box time dirivative based on the virial. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em box} & device pointer to box dimensions. \\
+\hline
+{\em old\+\_\+box\+\_\+dot} & device pointer to box time dirivative. \\
+\hline
+{\em virial} & device pointer to Corrected virial. \\
+\hline
+{\em new\+\_\+box\+\_\+dot} & device pointer to new box time dirivatives. \\
+\hline
+{\em timestep} & Time step. \\
+\hline
+{\em piston\+\_\+mass} & Piston mass, dimensions of mass/length$^\wedge$4. \\
+\hline
+\end{DoxyParams}

@@ -1,0 +1,52 @@
+\hypertarget{PrintEnergiesGraph_8h}{}\section{/u/samar/\+Documents/git/chcuda/include/\+Print\+Energies\+Graph.h File Reference}
+\label{PrintEnergiesGraph_8h}\index{/u/samar/\+Documents/git/chcuda/include/\+Print\+Energies\+Graph.\+h@{/u/samar/\+Documents/git/chcuda/include/\+Print\+Energies\+Graph.\+h}}
+
+
+graphs and kernels to print the kinetic energy.  
+
+
+{\ttfamily \#include $<$cuda\+\_\+runtime.\+h$>$}\newline
+{\ttfamily \#include $<$cuda\+\_\+utils.\+h$>$}\newline
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$array$>$}\newline
+{\ttfamily \#include $<$Cuda\+Integrator\+Graph.\+h$>$}\newline
+{\ttfamily \#include $<$Volume\+Piston.\+h$>$}\newline
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \hyperlink{structPrintEnergiesGraphInputs}{Print\+Energies\+Graph\+Inputs}
+\begin{DoxyCompactList}\small\item\em input for the graph that prints out the components of the total system energy. \end{DoxyCompactList}\item 
+class \hyperlink{classPrintEnergiesGraph}{Print\+Energies\+Graph}
+\begin{DoxyCompactList}\small\item\em Create a graph to print the system energies. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\+\_\+\+\_\+global\+\_\+\+\_\+ void \hyperlink{PrintEnergiesGraph_8h_a9b7572a78f4ffe9016a2b11285146cb5}{Print\+Energies\+Graph\+Kernel} (\hyperlink{structPrintEnergiesGraphInputs}{Print\+Energies\+Graph\+Inputs} in)
+\begin{DoxyCompactList}\small\item\em Print out Energies. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+graphs and kernels to print the kinetic energy. 
+
+\begin{DoxyAuthor}{Author}
+Nathan Zimmerberg (\href{mailto:nhz2@cornell.edu}{\tt nhz2@cornell.\+edu}) 
+\end{DoxyAuthor}
+\begin{DoxyDate}{Date}
+
+\end{DoxyDate}
+
+
+\subsection{Function Documentation}
+\hypertarget{PrintEnergiesGraph_8h_a9b7572a78f4ffe9016a2b11285146cb5}{}\label{PrintEnergiesGraph_8h_a9b7572a78f4ffe9016a2b11285146cb5} 
+\index{Print\+Energies\+Graph.\+h@{Print\+Energies\+Graph.\+h}!Print\+Energies\+Graph\+Kernel@{Print\+Energies\+Graph\+Kernel}}
+\index{Print\+Energies\+Graph\+Kernel@{Print\+Energies\+Graph\+Kernel}!Print\+Energies\+Graph.\+h@{Print\+Energies\+Graph.\+h}}
+\subsubsection{\texorpdfstring{Print\+Energies\+Graph\+Kernel()}{PrintEnergiesGraphKernel()}}
+{\footnotesize\ttfamily \+\_\+\+\_\+global\+\_\+\+\_\+ void Print\+Energies\+Graph\+Kernel (\begin{DoxyParamCaption}\item[{\hyperlink{structPrintEnergiesGraphInputs}{Print\+Energies\+Graph\+Inputs}}]{in }\end{DoxyParamCaption})}
+
+
+
+Print out Energies. 
+
+Example\+: Potential Energy,0,Kinetic Energy,0,Box Piston Potential Energy,0,Box Piston Kinetic Energy,0
+
+Units are SI compatible. 

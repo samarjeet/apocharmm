@@ -1,0 +1,130 @@
+\hypertarget{classCudaPMERecip}{}\section{Cuda\+P\+M\+E\+Recip$<$ AT, CT, C\+T2 $>$ Class Template Reference}
+\label{classCudaPMERecip}\index{Cuda\+P\+M\+E\+Recip$<$ A\+T, C\+T, C\+T2 $>$@{Cuda\+P\+M\+E\+Recip$<$ A\+T, C\+T, C\+T2 $>$}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classCudaPMERecip_ab603d7df52a74df1ec8a297e7c7960ff}{}\label{classCudaPMERecip_ab603d7df52a74df1ec8a297e7c7960ff} 
+{\bfseries Cuda\+P\+M\+E\+Recip} (\hyperlink{classCudaEnergyVirial}{Cuda\+Energy\+Virial} \&energy\+Virial)
+\item 
+\hypertarget{classCudaPMERecip_a8d7162c8b90917765687af7e9084022a}{}\label{classCudaPMERecip_a8d7162c8b90917765687af7e9084022a} 
+{\bfseries Cuda\+P\+M\+E\+Recip} (int nfftx, int nffty, int nfftz, int order, F\+F\+Ttype fft\+\_\+type, int nnode, int mynode, \hyperlink{classCudaEnergyVirial}{Cuda\+Energy\+Virial} \&energy\+Virial, const char $\ast$name\+Recip, const char $\ast$name\+Self, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classCudaPMERecip_aea4a4ba79bc3019bc42cb84edb484dc3}{}\label{classCudaPMERecip_aea4a4ba79bc3019bc42cb84edb484dc3} 
+void {\bfseries set\+Params} (int nfft1, int nfft2, int nfft3, int ord)
+\item 
+\hypertarget{classCudaPMERecip_a44888114a2db33858b3c14bc0e2d4715}{}\label{classCudaPMERecip_a44888114a2db33858b3c14bc0e2d4715} 
+void {\bfseries setup\+\_\+grid\+\_\+texture} (CT $\ast$data, const int data\+\_\+len)
+\item 
+\hypertarget{classCudaPMERecip_a68539c2121342493a6e1ed24c7cd24c3}{}\label{classCudaPMERecip_a68539c2121342493a6e1ed24c7cd24c3} 
+void {\bfseries print\+\_\+info} ()
+\item 
+\hypertarget{classCudaPMERecip_ae9bd543d63eb7897a572e8a074bd3126}{}\label{classCudaPMERecip_ae9bd543d63eb7897a572e8a074bd3126} 
+void {\bfseries set\+\_\+stream} (cuda\+Stream\+\_\+t stream)
+\item 
+\hypertarget{classCudaPMERecip_a4f1a154c20e19da29d785719956eef2b}{}\label{classCudaPMERecip_a4f1a154c20e19da29d785719956eef2b} 
+void {\bfseries spread\+\_\+charge} (const int ncoord, const \hyperlink{classBspline}{Bspline}$<$ CT $>$ \&bspline)
+\item 
+\hypertarget{classCudaPMERecip_a2ae3f80940f7b2d3ded80a29650be9cf}{}\label{classCudaPMERecip_a2ae3f80940f7b2d3ded80a29650be9cf} 
+void {\bfseries spread\+\_\+charge} (const float4 $\ast$xyzq, const int ncoord, const double $\ast$recip)
+\item 
+\hypertarget{classCudaPMERecip_a5a51525491c0ba1d6e6c941976333ae3}{}\label{classCudaPMERecip_a5a51525491c0ba1d6e6c941976333ae3} 
+void {\bfseries spread\+\_\+charge\+\_\+block} (const float4 $\ast$xyzq, const int ncoord, const float $\ast$bixlam, const int $\ast$block\+Indexes, const double $\ast$recip)
+\item 
+\hypertarget{classCudaPMERecip_a62b0e684d24e90eb8073200eff211f54}{}\label{classCudaPMERecip_a62b0e684d24e90eb8073200eff211f54} 
+void {\bfseries scalar\+\_\+sum} (const double $\ast$recip, const double kappa, const bool calc\+\_\+energy, const bool calc\+\_\+virial)
+\item 
+\hypertarget{classCudaPMERecip_a254ebf794806e929ee52c2afba4c5b1d}{}\label{classCudaPMERecip_a254ebf794806e929ee52c2afba4c5b1d} 
+void {\bfseries calc\+\_\+self\+\_\+energy} (const float4 $\ast$xyzq, const int ncoord, const double kappa)
+\item 
+\hypertarget{classCudaPMERecip_a6e59ee35b534eefeba47a1bd2ccf6e4c}{}\label{classCudaPMERecip_a6e59ee35b534eefeba47a1bd2ccf6e4c} 
+void {\bfseries calc\+\_\+self\+\_\+energy\+\_\+block} (const float4 $\ast$xyzq, const int ncoord, const double kappa, const float $\ast$bixlam, double $\ast$biflam, const int $\ast$block\+Indexes)
+\item 
+\hypertarget{classCudaPMERecip_a9851647dc81ec97299ec48757f758364}{}\label{classCudaPMERecip_a9851647dc81ec97299ec48757f758364} 
+void {\bfseries gather\+\_\+force} (const int ncoord, const double $\ast$recip, const \hyperlink{classBspline}{Bspline}$<$ CT $>$ \&bspline, const int stride, CT $\ast$force)
+\item 
+\hypertarget{classCudaPMERecip_af4ae56f936724b33327b4b252f25a0cd}{}\label{classCudaPMERecip_af4ae56f936724b33327b4b252f25a0cd} 
+{\footnotesize template$<$typename FT $>$ }\\void {\bfseries gather\+\_\+force} (const float4 $\ast$xyzq, const int ncoord, const double $\ast$recip, const int stride, FT $\ast$force)
+\item 
+\hypertarget{classCudaPMERecip_a1545f894c2fd03387dd159af7939a8e3}{}\label{classCudaPMERecip_a1545f894c2fd03387dd159af7939a8e3} 
+{\footnotesize template$<$typename FT $>$ }\\void {\bfseries gather\+\_\+force\+\_\+block} (const float4 $\ast$xyzq, const int ncoord, const double $\ast$recip, const int stride, FT $\ast$force, const float $\ast$bixlam, double $\ast$biflam, const int $\ast$block\+Indexes)
+\item 
+\hypertarget{classCudaPMERecip_a7ec365cc8c4a9cb3cb5b58d575ebf40c}{}\label{classCudaPMERecip_a7ec365cc8c4a9cb3cb5b58d575ebf40c} 
+void {\bfseries x\+\_\+fft\+\_\+r2c} (C\+T2 $\ast$data)
+\item 
+\hypertarget{classCudaPMERecip_af59edddef7fc70c6788594d7872b2001}{}\label{classCudaPMERecip_af59edddef7fc70c6788594d7872b2001} 
+void {\bfseries x\+\_\+fft\+\_\+c2r} (C\+T2 $\ast$data)
+\item 
+\hypertarget{classCudaPMERecip_a3e83fe23990aa4501e64255473828ba5}{}\label{classCudaPMERecip_a3e83fe23990aa4501e64255473828ba5} 
+void {\bfseries y\+\_\+fft\+\_\+c2c} (C\+T2 $\ast$data, const int direction)
+\item 
+\hypertarget{classCudaPMERecip_a86a345d67878a9f8d42bfc3c0eadbbd9}{}\label{classCudaPMERecip_a86a345d67878a9f8d42bfc3c0eadbbd9} 
+void {\bfseries z\+\_\+fft\+\_\+c2c} (C\+T2 $\ast$data, const int direction)
+\item 
+\hypertarget{classCudaPMERecip_a7b6245521dd5912a5ec31c7c13f7433c}{}\label{classCudaPMERecip_a7b6245521dd5912a5ec31c7c13f7433c} 
+void {\bfseries r2c\+\_\+fft} ()
+\item 
+\hypertarget{classCudaPMERecip_ae638f74b6074d4c50fdd41ff84a8bfdd}{}\label{classCudaPMERecip_ae638f74b6074d4c50fdd41ff84a8bfdd} 
+void {\bfseries c2r\+\_\+fft} ()
+\item 
+\hypertarget{classCudaPMERecip_a6fdbe5f297b227e69d8cf7638012f296}{}\label{classCudaPMERecip_a6fdbe5f297b227e69d8cf7638012f296} 
+int {\bfseries get\+\_\+nfftx} ()
+\item 
+\hypertarget{classCudaPMERecip_a16d048d9f9f23644a6021c45c685c0ef}{}\label{classCudaPMERecip_a16d048d9f9f23644a6021c45c685c0ef} 
+int {\bfseries get\+\_\+nffty} ()
+\item 
+\hypertarget{classCudaPMERecip_a8380c164295fb5fe3f8c823b8c655b85}{}\label{classCudaPMERecip_a8380c164295fb5fe3f8c823b8c655b85} 
+int {\bfseries get\+\_\+nfftz} ()
+\item 
+\hypertarget{classCudaPMERecip_a0bd7a8bb0e484230f3cb61b7d89f4104}{}\label{classCudaPMERecip_a0bd7a8bb0e484230f3cb61b7d89f4104} 
+int {\bfseries get\+\_\+order} ()
+\item 
+\hypertarget{classCudaPMERecip_a5e1bca0437dbb6b876dcb8058dde326c}{}\label{classCudaPMERecip_a5e1bca0437dbb6b876dcb8058dde326c} 
+void {\bfseries set\+\_\+order} (int order)
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classCudaPMERecip_ae1147621dd9140cdb434b4a651ab0248}{}\label{classCudaPMERecip_ae1147621dd9140cdb434b4a651ab0248} 
+CT $\ast$ {\bfseries data1}
+\item 
+\hypertarget{classCudaPMERecip_a4848c10367c77a2f9284b78fff736c8d}{}\label{classCudaPMERecip_a4848c10367c77a2f9284b78fff736c8d} 
+CT $\ast$ {\bfseries data2}
+\item 
+\hypertarget{classCudaPMERecip_a50db202a7b64ef0b473bc298c4409fa8}{}\label{classCudaPMERecip_a50db202a7b64ef0b473bc298c4409fa8} 
+int {\bfseries data1\+\_\+len}
+\item 
+\hypertarget{classCudaPMERecip_ad0e8bdffe5f64f58801622cbe80c4144}{}\label{classCudaPMERecip_ad0e8bdffe5f64f58801622cbe80c4144} 
+int {\bfseries data2\+\_\+len}
+\item 
+\hypertarget{classCudaPMERecip_acbd804d0a5f6d7f03d55512b99e2f52c}{}\label{classCudaPMERecip_acbd804d0a5f6d7f03d55512b99e2f52c} 
+F\+F\+Ttype {\bfseries fft\+\_\+type}
+\item 
+\hypertarget{classCudaPMERecip_ae632cdafcbb064958f5ddc0fee98b626}{}\label{classCudaPMERecip_ae632cdafcbb064958f5ddc0fee98b626} 
+\hyperlink{classMatrix3d}{Matrix3d}$<$ AT $>$ $\ast$ {\bfseries accum\+\_\+grid}
+\item 
+\hypertarget{classCudaPMERecip_a638e85a71755377aa5f87f6f9d9558f3}{}\label{classCudaPMERecip_a638e85a71755377aa5f87f6f9d9558f3} 
+\hyperlink{classMatrix3d}{Matrix3d}$<$ CT $>$ $\ast$ {\bfseries charge\+\_\+grid}
+\item 
+\hypertarget{classCudaPMERecip_a143ed80f1d166622e6ad21114e89661a}{}\label{classCudaPMERecip_a143ed80f1d166622e6ad21114e89661a} 
+\hyperlink{classMatrix3d}{Matrix3d}$<$ CT $>$ $\ast$ {\bfseries solved\+\_\+grid}
+\item 
+\hypertarget{classCudaPMERecip_a1bcf6b29d30fb6b6e2ee5d7fe30bded1}{}\label{classCudaPMERecip_a1bcf6b29d30fb6b6e2ee5d7fe30bded1} 
+\hyperlink{classMatrix3d}{Matrix3d}$<$ C\+T2 $>$ $\ast$ {\bfseries xfft\+\_\+grid}
+\item 
+\hypertarget{classCudaPMERecip_a0639f91d85ffdc0a1444395bec433902}{}\label{classCudaPMERecip_a0639f91d85ffdc0a1444395bec433902} 
+\hyperlink{classMatrix3d}{Matrix3d}$<$ C\+T2 $>$ $\ast$ {\bfseries yfft\+\_\+grid}
+\item 
+\hypertarget{classCudaPMERecip_a9020023c824dbee5a04a39f62d6a4adc}{}\label{classCudaPMERecip_a9020023c824dbee5a04a39f62d6a4adc} 
+\hyperlink{classMatrix3d}{Matrix3d}$<$ C\+T2 $>$ $\ast$ {\bfseries zfft\+\_\+grid}
+\item 
+\hypertarget{classCudaPMERecip_aa351fc06109560d4e4799647f0305e0d}{}\label{classCudaPMERecip_aa351fc06109560d4e4799647f0305e0d} 
+\hyperlink{classMatrix3d}{Matrix3d}$<$ C\+T2 $>$ $\ast$ {\bfseries xyfft\+\_\+grid}
+\item 
+\hypertarget{classCudaPMERecip_ad55d7f051b50bf024eb02b9dacbc7f85}{}\label{classCudaPMERecip_ad55d7f051b50bf024eb02b9dacbc7f85} 
+\hyperlink{classMatrix3d}{Matrix3d}$<$ C\+T2 $>$ $\ast$ {\bfseries fft\+\_\+grid}
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/Cuda\+P\+M\+E\+Recip.\+h\end{DoxyCompactItemize}

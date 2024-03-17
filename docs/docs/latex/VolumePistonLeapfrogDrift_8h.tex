@@ -1,0 +1,74 @@
+\hypertarget{VolumePistonLeapfrogDrift_8h}{}\section{/u/samar/\+Documents/git/chcuda/include/\+Volume\+Piston\+Leapfrog\+Drift.h File Reference}
+\label{VolumePistonLeapfrogDrift_8h}\index{/u/samar/\+Documents/git/chcuda/include/\+Volume\+Piston\+Leapfrog\+Drift.\+h@{/u/samar/\+Documents/git/chcuda/include/\+Volume\+Piston\+Leapfrog\+Drift.\+h}}
+
+
+this is where the volume updates are calculated for a leapfrog integrator during the drift.  
+
+
+{\ttfamily \#include $<$cuda\+\_\+runtime.\+h$>$}\newline
+{\ttfamily \#include $<$cuda\+\_\+utils.\+h$>$}\newline
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$Cuda\+Integrator\+Graph.\+h$>$}\newline
+{\ttfamily \#include $<$array$>$}\newline
+{\ttfamily \#include $<$Pressure\+Groups\+Util.\+h$>$}\newline
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \hyperlink{classVolumePistonLeapfrogDrift}{Volume\+Piston\+Leapfrog\+Drift}
+\begin{DoxyCompactList}\small\item\em Create a graph that calculates the effect of constant pressure during the drift. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\+\_\+\+\_\+global\+\_\+\+\_\+ void \hyperlink{VolumePistonLeapfrogDrift_8h_a290cb2b122df3abd1e8241b422cd77cd}{volume\+Piston\+Leapfrog\+Drift\+Kernel} (const double3 $\ast$old\+\_\+com\+\_\+ke, const double3 $\ast$old\+\_\+box, const double3 $\ast$old\+\_\+box\+\_\+dot, double3 $\ast$new\+\_\+com\+\_\+ke, double3 $\ast$new\+\_\+box, double3 $\ast$new\+\_\+box\+\_\+dot, double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ com\+\_\+momentum\+\_\+scale, double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ com\+\_\+momentum\+\_\+prescale, double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ com\+\_\+position\+\_\+prescale, double ref\+\_\+pressure, double timestep, double piston\+\_\+mass)
+\begin{DoxyCompactList}\small\item\em Calculate new box lengths and scaling for center of mass coordinate, momentums and the new kinetic energy. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+this is where the volume updates are calculated for a leapfrog integrator during the drift. 
+
+\begin{DoxyAuthor}{Author}
+Nathan Zimmerberg (\href{mailto:nhz2@cornell.edu}{\tt nhz2@cornell.\+edu}) 
+\end{DoxyAuthor}
+\begin{DoxyDate}{Date}
+
+\end{DoxyDate}
+
+
+\subsection{Function Documentation}
+\hypertarget{VolumePistonLeapfrogDrift_8h_a290cb2b122df3abd1e8241b422cd77cd}{}\label{VolumePistonLeapfrogDrift_8h_a290cb2b122df3abd1e8241b422cd77cd} 
+\index{Volume\+Piston\+Leapfrog\+Drift.\+h@{Volume\+Piston\+Leapfrog\+Drift.\+h}!volume\+Piston\+Leapfrog\+Drift\+Kernel@{volume\+Piston\+Leapfrog\+Drift\+Kernel}}
+\index{volume\+Piston\+Leapfrog\+Drift\+Kernel@{volume\+Piston\+Leapfrog\+Drift\+Kernel}!Volume\+Piston\+Leapfrog\+Drift.\+h@{Volume\+Piston\+Leapfrog\+Drift.\+h}}
+\subsubsection{\texorpdfstring{volume\+Piston\+Leapfrog\+Drift\+Kernel()}{volumePistonLeapfrogDriftKernel()}}
+{\footnotesize\ttfamily \+\_\+\+\_\+global\+\_\+\+\_\+ void volume\+Piston\+Leapfrog\+Drift\+Kernel (\begin{DoxyParamCaption}\item[{const double3 $\ast$}]{old\+\_\+com\+\_\+ke,  }\item[{const double3 $\ast$}]{old\+\_\+box,  }\item[{const double3 $\ast$}]{old\+\_\+box\+\_\+dot,  }\item[{double3 $\ast$}]{new\+\_\+com\+\_\+ke,  }\item[{double3 $\ast$}]{new\+\_\+box,  }\item[{double3 $\ast$}]{new\+\_\+box\+\_\+dot,  }\item[{double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{com\+\_\+momentum\+\_\+scale,  }\item[{double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{com\+\_\+momentum\+\_\+prescale,  }\item[{double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{com\+\_\+position\+\_\+prescale,  }\item[{double}]{ref\+\_\+pressure,  }\item[{double}]{timestep,  }\item[{double}]{piston\+\_\+mass }\end{DoxyParamCaption})}
+
+
+
+Calculate new box lengths and scaling for center of mass coordinate, momentums and the new kinetic energy. 
+
+Only use one thread for this kernel. Uses The Anderson Barostat, with homogenous expansions. 
+\begin{DoxyParams}{Parameters}
+{\em old\+\_\+com\+\_\+ke} & Device pointer to kinetic energy of pressure group momentums \\
+\hline
+{\em old\+\_\+box} & Device pointer to box lengths \\
+\hline
+{\em old\+\_\+box\+\_\+dot} & Device pointer to box length time dirivatives \\
+\hline
+{\em new\+\_\+com\+\_\+ke} & Device pointer to save post drift pressure group momentum kinetic energy \\
+\hline
+{\em new\+\_\+box} & Device pointer to save post drift box lengths \\
+\hline
+{\em new\+\_\+box\+\_\+dot} & Device pointer to save post drift box length time dirivatives \\
+\hline
+{\em com\+\_\+momentum\+\_\+scale} & Device pointer to final pressure group momentum scale. This is the total scale from predrift p group momentum to post drift p group momentum. \\
+\hline
+{\em com\+\_\+momentum\+\_\+prescale} & Device pointer to initial pressure group momentum scale. This is the scaleing of momentum that happens before the pressure group centers of mass are moved. \\
+\hline
+{\em com\+\_\+position\+\_\+prescale} & Device pointer to initial pressure group C\+OM scale. This is the scaling p group centers of mass before the are moved by their prescaled momenentums. \\
+\hline
+{\em ref\+\_\+pressure} & Reference pressure, units are not atms, it is SI compatible with other units. \\
+\hline
+{\em timestep} & Time step. \\
+\hline
+{\em piston\+\_\+mass} & Piston Mass, dimensions of mass/length$^\wedge$4. \\
+\hline
+\end{DoxyParams}

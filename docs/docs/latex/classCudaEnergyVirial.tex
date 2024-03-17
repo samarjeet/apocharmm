@@ -1,0 +1,53 @@
+\hypertarget{classCudaEnergyVirial}{}\section{Cuda\+Energy\+Virial Class Reference}
+\label{classCudaEnergyVirial}\index{Cuda\+Energy\+Virial@{Cuda\+Energy\+Virial}}
+Inheritance diagram for Cuda\+Energy\+Virial\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classCudaEnergyVirial}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classCudaEnergyVirial_abd7c7541d63e6070b090d911cfb27eb0}{}\label{classCudaEnergyVirial_abd7c7541d63e6070b090d911cfb27eb0} 
+void {\bfseries clear} (cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classCudaEnergyVirial_a16fb1cc80eb715665e18f0d68dd27f79}{}\label{classCudaEnergyVirial_a16fb1cc80eb715665e18f0d68dd27f79} 
+void {\bfseries clear\+Energy} (cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classCudaEnergyVirial_aa25dbdc2b516c3edad08972c0aed6c62}{}\label{classCudaEnergyVirial_aa25dbdc2b516c3edad08972c0aed6c62} 
+void {\bfseries clear\+Eterm\+Device} (std\+::string \&name\+Eterm, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classCudaEnergyVirial_adaaf288d88c47f0fa9edb344dec51a6f}{}\label{classCudaEnergyVirial_adaaf288d88c47f0fa9edb344dec51a6f} 
+void {\bfseries clear\+Virial} (cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classCudaEnergyVirial_a0b480c2fcd79d10e60e78630ccda151c}{}\label{classCudaEnergyVirial_a0b480c2fcd79d10e60e78630ccda151c} 
+void {\bfseries calc\+Virial} (const int ncoord, const float4 $\ast$xyzq, const double boxx, const double boxy, const double boxz, const int stride, const double $\ast$force, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classCudaEnergyVirial_aec2ddf4b9c9b48d293076292fc673243}{}\label{classCudaEnergyVirial_aec2ddf4b9c9b48d293076292fc673243} 
+void {\bfseries copy\+To\+Host} (cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classCudaEnergyVirial_ab269fa6df3d5ad84463614447b32748f}{}\label{classCudaEnergyVirial_ab269fa6df3d5ad84463614447b32748f} 
+\hyperlink{structVirial__t}{Virial\+\_\+t} $\ast$ {\bfseries get\+Virial\+Pointer} ()
+\item 
+\hypertarget{classCudaEnergyVirial_aed8dcbf3e902dc8562c829798406c568}{}\label{classCudaEnergyVirial_aed8dcbf3e902dc8562c829798406c568} 
+double $\ast$ {\bfseries get\+Energy\+Pointer} (std\+::string \&name)
+\item 
+\hypertarget{classCudaEnergyVirial_aa0c31fb5443de9daae00b05a5f7a73d5}{}\label{classCudaEnergyVirial_aa0c31fb5443de9daae00b05a5f7a73d5} 
+double {\bfseries get\+Energy} (std\+::string \&name)
+\item 
+\hypertarget{classCudaEnergyVirial_ab834443e15f701d1f8613f738b21ed6e}{}\label{classCudaEnergyVirial_ab834443e15f701d1f8613f738b21ed6e} 
+double {\bfseries get\+Energy} (const char $\ast$name)
+\item 
+\hypertarget{classCudaEnergyVirial_a7a18adcc1edd0e33b3586e4098810e8c}{}\label{classCudaEnergyVirial_a7a18adcc1edd0e33b3586e4098810e8c} 
+void {\bfseries get\+Virial} (double $\ast$virmat)
+\item 
+\hypertarget{classCudaEnergyVirial_a101478267c320a2c6b65b2f8a2079440}{}\label{classCudaEnergyVirial_a101478267c320a2c6b65b2f8a2079440} 
+void {\bfseries get\+Sforce} (double $\ast$sforce)
+\end{DoxyCompactItemize}
+\subsection*{Additional Inherited Members}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/Cuda\+Energy\+Virial.\+h\end{DoxyCompactItemize}

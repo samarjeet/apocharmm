@@ -1,0 +1,69 @@
+\hypertarget{PressureGroupScaleDrift_8h}{}\section{/u/samar/\+Documents/git/chcuda/include/\+Pressure\+Group\+Scale\+Drift.h File Reference}
+\label{PressureGroupScaleDrift_8h}\index{/u/samar/\+Documents/git/chcuda/include/\+Pressure\+Group\+Scale\+Drift.\+h@{/u/samar/\+Documents/git/chcuda/include/\+Pressure\+Group\+Scale\+Drift.\+h}}
+
+
+Classes and kernels to move and scale the centers of mass and net momentums of each pressure group.  
+
+
+{\ttfamily \#include $<$cuda\+\_\+runtime.\+h$>$}\newline
+{\ttfamily \#include $<$cuda\+\_\+utils.\+h$>$}\newline
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$array$>$}\newline
+{\ttfamily \#include $<$Cuda\+Integrator\+Graph.\+h$>$}\newline
+{\ttfamily \#include $<$Pressure\+Groups\+Util.\+h$>$}\newline
+{\ttfamily \#include $<$nv\+Vector.\+h$>$}\newline
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \hyperlink{classPressureGroupScaleDrift}{Pressure\+Group\+Scale\+Drift}
+\begin{DoxyCompactList}\small\item\em Create a graph that calculates the new pressure group center positions and momentums with scaling. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\+\_\+\+\_\+global\+\_\+\+\_\+ void \hyperlink{PressureGroupScaleDrift_8h_a17750f308f6b38f528643d66f56dfc9c}{scale\+Drift\+Simple\+Kernel} (const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ momentum\+\_\+scale, const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ momentum\+\_\+prescale, const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ position\+\_\+prescale, const double4 $\ast$old\+\_\+momentum\+\_\+invmass, const double4 $\ast$old\+\_\+xyzq, double4 $\ast$new\+\_\+momentum\+\_\+invmass, double4 $\ast$new\+\_\+xyzq, double timestep, int num)
+\begin{DoxyCompactList}\small\item\em calculate new positions and momentums with scaling. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Classes and kernels to move and scale the centers of mass and net momentums of each pressure group. 
+
+\begin{DoxyAuthor}{Author}
+Nathan Zimmerberg (\href{mailto:nhz2@cornell.edu}{\tt nhz2@cornell.\+edu}) 
+\end{DoxyAuthor}
+\begin{DoxyDate}{Date}
+
+\end{DoxyDate}
+
+
+\subsection{Function Documentation}
+\hypertarget{PressureGroupScaleDrift_8h_a17750f308f6b38f528643d66f56dfc9c}{}\label{PressureGroupScaleDrift_8h_a17750f308f6b38f528643d66f56dfc9c} 
+\index{Pressure\+Group\+Scale\+Drift.\+h@{Pressure\+Group\+Scale\+Drift.\+h}!scale\+Drift\+Simple\+Kernel@{scale\+Drift\+Simple\+Kernel}}
+\index{scale\+Drift\+Simple\+Kernel@{scale\+Drift\+Simple\+Kernel}!Pressure\+Group\+Scale\+Drift.\+h@{Pressure\+Group\+Scale\+Drift.\+h}}
+\subsubsection{\texorpdfstring{scale\+Drift\+Simple\+Kernel()}{scaleDriftSimpleKernel()}}
+{\footnotesize\ttfamily \+\_\+\+\_\+global\+\_\+\+\_\+ void scale\+Drift\+Simple\+Kernel (\begin{DoxyParamCaption}\item[{const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{momentum\+\_\+scale,  }\item[{const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{momentum\+\_\+prescale,  }\item[{const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{position\+\_\+prescale,  }\item[{const double4 $\ast$}]{old\+\_\+momentum\+\_\+invmass,  }\item[{const double4 $\ast$}]{old\+\_\+xyzq,  }\item[{double4 $\ast$}]{new\+\_\+momentum\+\_\+invmass,  }\item[{double4 $\ast$}]{new\+\_\+xyzq,  }\item[{double}]{timestep,  }\item[{int}]{num }\end{DoxyParamCaption})}
+
+
+
+calculate new positions and momentums with scaling. 
+
+new\+\_\+momentum= old\+\_\+momentum$\ast$momentum\+\_\+scale new\+\_\+xyz= old\+\_\+xyz$\ast$position\+\_\+prescale+timestep$\ast$momentum$\ast$invmass$\ast$momentum\+\_\+prescale 
+\begin{DoxyParams}{Parameters}
+{\em momentum\+\_\+scale} & Device Pointer to total scaling of momentum. \\
+\hline
+{\em momentum\+\_\+prescale} & Device pointer to momentum scaling for position update. \\
+\hline
+{\em position\+\_\+prescale} & Device pointer to position scaling before moving. \\
+\hline
+{\em old\+\_\+momentum\+\_\+invmass} & Device pointer to array of momentums and inverse masses. \\
+\hline
+{\em old\+\_\+xyzq} & Device pointer to array of positions. \\
+\hline
+{\em new\+\_\+momentum\+\_\+invmass} & Device pointer to array of new momentums, and invers masses. \\
+\hline
+{\em new\+\_\+xyzq} & Device pointer to array of new positions. \\
+\hline
+{\em timestep} & time step. \\
+\hline
+{\em num} & number of elements in the arrays. \\
+\hline
+\end{DoxyParams}

@@ -1,0 +1,58 @@
+\hypertarget{classBspline}{}\section{Bspline$<$ T $>$ Class Template Reference}
+\label{classBspline}\index{Bspline$<$ T $>$@{Bspline$<$ T $>$}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classBspline_a9f37f4526e8eabbf677ad4ec50619e2c}{}\label{classBspline_a9f37f4526e8eabbf677ad4ec50619e2c} 
+{\bfseries Bspline} (const int ncoord, const int order, const int nfftx, const int nffty, const int nfftz)
+\item 
+\hypertarget{classBspline_a8a2e8a8a733db362d0eb5721a8eb28f9}{}\label{classBspline_a8a2e8a8a733db362d0eb5721a8eb28f9} 
+{\footnotesize template$<$typename B $>$ }\\void {\bfseries set\+\_\+recip} (const B $\ast$recip)
+\item 
+\hypertarget{classBspline_ae1f0a588d6c4a30952b88aade492e391}{}\label{classBspline_ae1f0a588d6c4a30952b88aade492e391} 
+void {\bfseries fill\+\_\+bspline} (const float4 $\ast$xyzq, const int ncoord)
+\item 
+\hypertarget{classBspline_a7e42dc6c4a297d24811a96cbde9a9bff}{}\label{classBspline_a7e42dc6c4a297d24811a96cbde9a9bff} 
+void {\bfseries print\+\_\+dtheta} (int start, int end)
+\item 
+\hypertarget{classBspline_ad78b6b8017abd6c4cc2218902ac64030}{}\label{classBspline_ad78b6b8017abd6c4cc2218902ac64030} 
+bool {\bfseries compare\+\_\+dtheta} (\hyperlink{classBspline}{Bspline} \&a, int ncoord, double tol)
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classBspline_a0335fe4b5ef40fec3cde8bf053df310b}{}\label{classBspline_a0335fe4b5ef40fec3cde8bf053df310b} 
+T $\ast$ {\bfseries thetax}
+\item 
+\hypertarget{classBspline_a797ff566b9f78f48bcf0a3eac52bd54a}{}\label{classBspline_a797ff566b9f78f48bcf0a3eac52bd54a} 
+T $\ast$ {\bfseries thetay}
+\item 
+\hypertarget{classBspline_acea2e27d5e5227a8b32255f3176ca401}{}\label{classBspline_acea2e27d5e5227a8b32255f3176ca401} 
+T $\ast$ {\bfseries thetaz}
+\item 
+\hypertarget{classBspline_aad85d4dc1b9072071e92b55f3fca9007}{}\label{classBspline_aad85d4dc1b9072071e92b55f3fca9007} 
+T $\ast$ {\bfseries dthetax}
+\item 
+\hypertarget{classBspline_a60816bde76f2f515164908a868dfbd9a}{}\label{classBspline_a60816bde76f2f515164908a868dfbd9a} 
+T $\ast$ {\bfseries dthetay}
+\item 
+\hypertarget{classBspline_a96d814a15beded714c6bf97316b6cc55}{}\label{classBspline_a96d814a15beded714c6bf97316b6cc55} 
+T $\ast$ {\bfseries dthetaz}
+\item 
+\hypertarget{classBspline_ae596ebc2b8d2c25d4ab36660f48ba14c}{}\label{classBspline_ae596ebc2b8d2c25d4ab36660f48ba14c} 
+int $\ast$ {\bfseries gix}
+\item 
+\hypertarget{classBspline_af0e14d459ce48fbee106123e5cc31c50}{}\label{classBspline_af0e14d459ce48fbee106123e5cc31c50} 
+int $\ast$ {\bfseries giy}
+\item 
+\hypertarget{classBspline_a020d909fb452187ac9c1f06541902243}{}\label{classBspline_a020d909fb452187ac9c1f06541902243} 
+int $\ast$ {\bfseries giz}
+\item 
+\hypertarget{classBspline_a16412a3fc067ee981e4f171c77e5cb1b}{}\label{classBspline_a16412a3fc067ee981e4f171c77e5cb1b} 
+T $\ast$ {\bfseries charge}
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/Bspline.\+h\end{DoxyCompactItemize}

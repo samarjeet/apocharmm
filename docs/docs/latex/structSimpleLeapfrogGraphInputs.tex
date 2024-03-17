@@ -1,0 +1,109 @@
+\hypertarget{structSimpleLeapfrogGraphInputs}{}\section{Simple\+Leapfrog\+Graph\+Inputs Struct Reference}
+\label{structSimpleLeapfrogGraphInputs}\index{Simple\+Leapfrog\+Graph\+Inputs@{Simple\+Leapfrog\+Graph\+Inputs}}
+
+
+Struct for Simple leapfrog kernel input.  
+
+
+
+
+{\ttfamily \#include $<$Simple\+Leapfrog\+Graph.\+h$>$}
+
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+const double4 $\ast$ \hyperlink{structSimpleLeapfrogGraphInputs_a01fc1ca37ad0127b87feb3d757d6f41c}{old\+\_\+xyzq}
+\begin{DoxyCompactList}\small\item\em Device pointer to old positions. \end{DoxyCompactList}\item 
+const double4 $\ast$ \hyperlink{structSimpleLeapfrogGraphInputs_a0bc70243226e08c936bb36c5dcaa37cc}{old\+\_\+velmass}
+\begin{DoxyCompactList}\small\item\em Device pointer to old velocity. \end{DoxyCompactList}\item 
+const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ \hyperlink{structSimpleLeapfrogGraphInputs_a0f2c8a7955eede32a5ae9be6fcf9c894}{force\+\_\+invmass}
+\begin{DoxyCompactList}\small\item\em Device pointer to force inverse mass. \end{DoxyCompactList}\item 
+double4 $\ast$ \hyperlink{structSimpleLeapfrogGraphInputs_a769f1661c0f9d43ffa98066b106049ab}{new\+\_\+xyzq}
+\begin{DoxyCompactList}\small\item\em Device pointer to new positions. \end{DoxyCompactList}\item 
+double4 $\ast$ \hyperlink{structSimpleLeapfrogGraphInputs_aaacb07a926ff1a46ac5c8d0edc21d2af}{new\+\_\+velmass}
+\begin{DoxyCompactList}\small\item\em Device pointer to new velocities. \end{DoxyCompactList}\item 
+int \hyperlink{structSimpleLeapfrogGraphInputs_af774c2d3b4033330bb43cbbe3398059f}{num\+Atoms}
+\begin{DoxyCompactList}\small\item\em Number of atoms. \end{DoxyCompactList}\item 
+double \hyperlink{structSimpleLeapfrogGraphInputs_a197aa8d9f5695cda2406de1aff9b4e3b}{timestep}
+\begin{DoxyCompactList}\small\item\em Time step. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Struct for Simple leapfrog kernel input. 
+
+\subsection{Member Data Documentation}
+\hypertarget{structSimpleLeapfrogGraphInputs_a0f2c8a7955eede32a5ae9be6fcf9c894}{}\label{structSimpleLeapfrogGraphInputs_a0f2c8a7955eede32a5ae9be6fcf9c894} 
+\index{Simple\+Leapfrog\+Graph\+Inputs@{Simple\+Leapfrog\+Graph\+Inputs}!force\+\_\+invmass@{force\+\_\+invmass}}
+\index{force\+\_\+invmass@{force\+\_\+invmass}!Simple\+Leapfrog\+Graph\+Inputs@{Simple\+Leapfrog\+Graph\+Inputs}}
+\subsubsection{\texorpdfstring{force\+\_\+invmass}{force\_invmass}}
+{\footnotesize\ttfamily const double4$\ast$ \+\_\+\+\_\+restrict\+\_\+\+\_\+ Simple\+Leapfrog\+Graph\+Inputs\+::force\+\_\+invmass}
+
+
+
+Device pointer to force inverse mass. 
+
+\hypertarget{structSimpleLeapfrogGraphInputs_aaacb07a926ff1a46ac5c8d0edc21d2af}{}\label{structSimpleLeapfrogGraphInputs_aaacb07a926ff1a46ac5c8d0edc21d2af} 
+\index{Simple\+Leapfrog\+Graph\+Inputs@{Simple\+Leapfrog\+Graph\+Inputs}!new\+\_\+velmass@{new\+\_\+velmass}}
+\index{new\+\_\+velmass@{new\+\_\+velmass}!Simple\+Leapfrog\+Graph\+Inputs@{Simple\+Leapfrog\+Graph\+Inputs}}
+\subsubsection{\texorpdfstring{new\+\_\+velmass}{new\_velmass}}
+{\footnotesize\ttfamily double4$\ast$ Simple\+Leapfrog\+Graph\+Inputs\+::new\+\_\+velmass}
+
+
+
+Device pointer to new velocities. 
+
+\hypertarget{structSimpleLeapfrogGraphInputs_a769f1661c0f9d43ffa98066b106049ab}{}\label{structSimpleLeapfrogGraphInputs_a769f1661c0f9d43ffa98066b106049ab} 
+\index{Simple\+Leapfrog\+Graph\+Inputs@{Simple\+Leapfrog\+Graph\+Inputs}!new\+\_\+xyzq@{new\+\_\+xyzq}}
+\index{new\+\_\+xyzq@{new\+\_\+xyzq}!Simple\+Leapfrog\+Graph\+Inputs@{Simple\+Leapfrog\+Graph\+Inputs}}
+\subsubsection{\texorpdfstring{new\+\_\+xyzq}{new\_xyzq}}
+{\footnotesize\ttfamily double4$\ast$ Simple\+Leapfrog\+Graph\+Inputs\+::new\+\_\+xyzq}
+
+
+
+Device pointer to new positions. 
+
+\hypertarget{structSimpleLeapfrogGraphInputs_af774c2d3b4033330bb43cbbe3398059f}{}\label{structSimpleLeapfrogGraphInputs_af774c2d3b4033330bb43cbbe3398059f} 
+\index{Simple\+Leapfrog\+Graph\+Inputs@{Simple\+Leapfrog\+Graph\+Inputs}!num\+Atoms@{num\+Atoms}}
+\index{num\+Atoms@{num\+Atoms}!Simple\+Leapfrog\+Graph\+Inputs@{Simple\+Leapfrog\+Graph\+Inputs}}
+\subsubsection{\texorpdfstring{num\+Atoms}{numAtoms}}
+{\footnotesize\ttfamily int Simple\+Leapfrog\+Graph\+Inputs\+::num\+Atoms}
+
+
+
+Number of atoms. 
+
+\hypertarget{structSimpleLeapfrogGraphInputs_a0bc70243226e08c936bb36c5dcaa37cc}{}\label{structSimpleLeapfrogGraphInputs_a0bc70243226e08c936bb36c5dcaa37cc} 
+\index{Simple\+Leapfrog\+Graph\+Inputs@{Simple\+Leapfrog\+Graph\+Inputs}!old\+\_\+velmass@{old\+\_\+velmass}}
+\index{old\+\_\+velmass@{old\+\_\+velmass}!Simple\+Leapfrog\+Graph\+Inputs@{Simple\+Leapfrog\+Graph\+Inputs}}
+\subsubsection{\texorpdfstring{old\+\_\+velmass}{old\_velmass}}
+{\footnotesize\ttfamily const double4$\ast$ Simple\+Leapfrog\+Graph\+Inputs\+::old\+\_\+velmass}
+
+
+
+Device pointer to old velocity. 
+
+\hypertarget{structSimpleLeapfrogGraphInputs_a01fc1ca37ad0127b87feb3d757d6f41c}{}\label{structSimpleLeapfrogGraphInputs_a01fc1ca37ad0127b87feb3d757d6f41c} 
+\index{Simple\+Leapfrog\+Graph\+Inputs@{Simple\+Leapfrog\+Graph\+Inputs}!old\+\_\+xyzq@{old\+\_\+xyzq}}
+\index{old\+\_\+xyzq@{old\+\_\+xyzq}!Simple\+Leapfrog\+Graph\+Inputs@{Simple\+Leapfrog\+Graph\+Inputs}}
+\subsubsection{\texorpdfstring{old\+\_\+xyzq}{old\_xyzq}}
+{\footnotesize\ttfamily const double4$\ast$ Simple\+Leapfrog\+Graph\+Inputs\+::old\+\_\+xyzq}
+
+
+
+Device pointer to old positions. 
+
+\hypertarget{structSimpleLeapfrogGraphInputs_a197aa8d9f5695cda2406de1aff9b4e3b}{}\label{structSimpleLeapfrogGraphInputs_a197aa8d9f5695cda2406de1aff9b4e3b} 
+\index{Simple\+Leapfrog\+Graph\+Inputs@{Simple\+Leapfrog\+Graph\+Inputs}!timestep@{timestep}}
+\index{timestep@{timestep}!Simple\+Leapfrog\+Graph\+Inputs@{Simple\+Leapfrog\+Graph\+Inputs}}
+\subsubsection{\texorpdfstring{timestep}{timestep}}
+{\footnotesize\ttfamily double Simple\+Leapfrog\+Graph\+Inputs\+::timestep}
+
+
+
+Time step. 
+
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/\hyperlink{SimpleLeapfrogGraph_8h}{Simple\+Leapfrog\+Graph.\+h}\end{DoxyCompactItemize}

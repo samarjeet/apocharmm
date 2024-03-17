@@ -1,0 +1,48 @@
+\hypertarget{PressureGroupMomentumUpdate_8h}{}\section{/u/samar/\+Documents/git/chcuda/include/\+Pressure\+Group\+Momentum\+Update.h File Reference}
+\label{PressureGroupMomentumUpdate_8h}\index{/u/samar/\+Documents/git/chcuda/include/\+Pressure\+Group\+Momentum\+Update.\+h@{/u/samar/\+Documents/git/chcuda/include/\+Pressure\+Group\+Momentum\+Update.\+h}}
+
+
+The class and kernels to update the net momentums of the pressure groups.  
+
+
+{\ttfamily \#include $<$cuda\+\_\+runtime.\+h$>$}\newline
+{\ttfamily \#include $<$cuda\+\_\+utils.\+h$>$}\newline
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$Cuda\+Integrator\+Graph.\+h$>$}\newline
+{\ttfamily \#include $<$array$>$}\newline
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \hyperlink{structAtomIdList__t}{Atom\+Id\+List\+\_\+t}
+\begin{DoxyCompactList}\small\item\em Type to store an array of atom ids. \end{DoxyCompactList}\item 
+class \hyperlink{classPressureGroupMomentumUpdate}{Pressure\+Group\+Momentum\+Update}
+\begin{DoxyCompactList}\small\item\em Create a graph that gets the net force on each pressure group and calc the new momentum. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\+\_\+\+\_\+global\+\_\+\+\_\+ void \hyperlink{PressureGroupMomentumUpdate_8h_a30db48890cf03041635806727cba5e84}{pressure\+Group\+Momentum\+Update\+Simple\+Kernel} (const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ forcex, const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ forcey, const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ forcez, const double4 $\ast$old\+\_\+momentum\+\_\+invmass, double4 $\ast$new\+\_\+momentum\+\_\+invmass, const \hyperlink{structAtomIdList__t}{Atom\+Id\+List\+\_\+t} $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ group\+\_\+atom\+\_\+ids, double timestep, int num\+Groups)
+\begin{DoxyCompactList}\small\item\em Set the new momentums to the old momentums + the net force$\ast$ timestep. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+The class and kernels to update the net momentums of the pressure groups. 
+
+\begin{DoxyAuthor}{Author}
+Nathan Zimmerberg (\href{mailto:nhz2@cornell.edu}{\tt nhz2@cornell.\+edu}) 
+\end{DoxyAuthor}
+\begin{DoxyDate}{Date}
+
+\end{DoxyDate}
+
+
+\subsection{Function Documentation}
+\hypertarget{PressureGroupMomentumUpdate_8h_a30db48890cf03041635806727cba5e84}{}\label{PressureGroupMomentumUpdate_8h_a30db48890cf03041635806727cba5e84} 
+\index{Pressure\+Group\+Momentum\+Update.\+h@{Pressure\+Group\+Momentum\+Update.\+h}!pressure\+Group\+Momentum\+Update\+Simple\+Kernel@{pressure\+Group\+Momentum\+Update\+Simple\+Kernel}}
+\index{pressure\+Group\+Momentum\+Update\+Simple\+Kernel@{pressure\+Group\+Momentum\+Update\+Simple\+Kernel}!Pressure\+Group\+Momentum\+Update.\+h@{Pressure\+Group\+Momentum\+Update.\+h}}
+\subsubsection{\texorpdfstring{pressure\+Group\+Momentum\+Update\+Simple\+Kernel()}{pressureGroupMomentumUpdateSimpleKernel()}}
+{\footnotesize\ttfamily \+\_\+\+\_\+global\+\_\+\+\_\+ void pressure\+Group\+Momentum\+Update\+Simple\+Kernel (\begin{DoxyParamCaption}\item[{const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{forcex,  }\item[{const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{forcey,  }\item[{const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{forcez,  }\item[{const double4 $\ast$}]{old\+\_\+momentum\+\_\+invmass,  }\item[{double4 $\ast$}]{new\+\_\+momentum\+\_\+invmass,  }\item[{const \hyperlink{structAtomIdList__t}{Atom\+Id\+List\+\_\+t} $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{group\+\_\+atom\+\_\+ids,  }\item[{double}]{timestep,  }\item[{int}]{num\+Groups }\end{DoxyParamCaption})}
+
+
+
+Set the new momentums to the old momentums + the net force$\ast$ timestep. 
+

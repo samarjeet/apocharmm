@@ -1,0 +1,82 @@
+\hypertarget{classCudaNeighborListBuild}{}\section{Cuda\+Neighbor\+List\+Build$<$ tilesize $>$ Class Template Reference}
+\label{classCudaNeighborListBuild}\index{Cuda\+Neighbor\+List\+Build$<$ tilesize $>$@{Cuda\+Neighbor\+List\+Build$<$ tilesize $>$}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classCudaNeighborListBuild_af5bdc90d0ba8f34bae48bb6b07994e63}{}\label{classCudaNeighborListBuild_af5bdc90d0ba8f34bae48bb6b07994e63} 
+{\bfseries Cuda\+Neighbor\+List\+Build} (const int n\+\_\+int\+\_\+zone\+\_\+max, const int izone\+Start, const int izone\+End)
+\item 
+\hypertarget{classCudaNeighborListBuild_ae96e56ea2910e0444c7441cdd9db2fbf}{}\label{classCudaNeighborListBuild_ae96e56ea2910e0444c7441cdd9db2fbf} 
+{\bfseries Cuda\+Neighbor\+List\+Build} (const int n\+\_\+int\+\_\+zone\+\_\+max, const int izone\+Start, const int izone\+End, const char $\ast$filename)
+\item 
+\hypertarget{classCudaNeighborListBuild_a05f9d6a9a77c5fcab2453333155d0c04}{}\label{classCudaNeighborListBuild_a05f9d6a9a77c5fcab2453333155d0c04} 
+void {\bfseries build} (const int ncell, const int cell\+Start, const int max\+Num\+Excl, const \hyperlink{structZoneParam__t}{Zone\+Param\+\_\+t} $\ast$h\+\_\+\+Zone\+Param, const \hyperlink{structZoneParam__t}{Zone\+Param\+\_\+t} $\ast$d\+\_\+\+Zone\+Param, const float boxx, const float boxy, const float boxz, const float rcut, const float4 $\ast$xyzq, const int $\ast$loc2glo, const int $\ast$glo2loc, const int $\ast$atom\+Excl\+Pos, const int $\ast$atom\+Excl, const int4 $\ast$cell\+\_\+xyz\+\_\+zone, const int $\ast$col\+\_\+ncellz, const int $\ast$col\+\_\+cell, const float $\ast$cell\+\_\+bz, const int $\ast$cell\+\_\+patom, const \hyperlink{structbb__t}{bb\+\_\+t} $\ast$bb, \hyperlink{structNlistParam__t}{Nlist\+Param\+\_\+t} $\ast$h\+\_\+\+Nlist\+Param, \hyperlink{structNlistParam__t}{Nlist\+Param\+\_\+t} $\ast$d\+\_\+\+Nlist\+Param, cuda\+Stream\+\_\+t stream)
+\item 
+\hypertarget{classCudaNeighborListBuild_a0d68fef441662e05ff6326de14dd7cf6}{}\label{classCudaNeighborListBuild_a0d68fef441662e05ff6326de14dd7cf6} 
+void {\bfseries test\+\_\+build} (const int $\ast$zone\+\_\+patom, const int ncol\+\_\+tot, const int ncell\+\_\+tot, const \hyperlink{structZoneParam__t}{Zone\+Param\+\_\+t} $\ast$h\+\_\+\+Zone\+Param, const int atom\+Excl\+Pos\+Len, const int $\ast$atom\+Excl\+Pos, const int atom\+Excl\+Len, const int $\ast$atom\+Excl, const double boxx, const double boxy, const double boxz, const double rcut, const float4 $\ast$xyzq, const int $\ast$loc2glo, const int $\ast$glo2loc, const int ncoord\+\_\+glo, const int $\ast$cell\+\_\+patom, const int $\ast$col\+\_\+cell, const float $\ast$cell\+\_\+bz, const \hyperlink{structbb__t}{bb\+\_\+t} $\ast$bb)
+\item 
+\hypertarget{classCudaNeighborListBuild_ab4f99c809fe21ba1d978f28b0773aa19}{}\label{classCudaNeighborListBuild_ab4f99c809fe21ba1d978f28b0773aa19} 
+void {\bfseries build\+\_\+excl} (const float boxx, const float boxy, const float boxz, const float rcut, const int n\+\_\+ijlist, const int3 $\ast$ijlist, const int $\ast$cell\+\_\+patom, const float4 $\ast$xyzq, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classCudaNeighborListBuild_a77dfc36f257bc6fe50a3ad4c026ac96b}{}\label{classCudaNeighborListBuild_a77dfc36f257bc6fe50a3ad4c026ac96b} 
+void {\bfseries add\+\_\+tile\+\_\+top} (const int ntile\+\_\+top, const int $\ast$tile\+\_\+ind\+\_\+top, const \hyperlink{structtile__excl__t}{tile\+\_\+excl\+\_\+t}$<$ tilesize $>$ $\ast$tile\+\_\+excl\+\_\+top, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classCudaNeighborListBuild_a380a0d65aabb186f9e0b86c67eb18acc}{}\label{classCudaNeighborListBuild_a380a0d65aabb186f9e0b86c67eb18acc} 
+void {\bfseries set\+\_\+ientry} (int n\+\_\+ientry, \hyperlink{structientry__t}{ientry\+\_\+t} $\ast$h\+\_\+ientry, cuda\+Stream\+\_\+t stream)
+\item 
+\hypertarget{classCudaNeighborListBuild_a5ce4bca5691c0814a14a2f6912432555}{}\label{classCudaNeighborListBuild_a5ce4bca5691c0814a14a2f6912432555} 
+void {\bfseries remove\+\_\+empty\+\_\+tiles} ()
+\item 
+\hypertarget{classCudaNeighborListBuild_af0d7778aba625825d70fd97c90c2e87f}{}\label{classCudaNeighborListBuild_af0d7778aba625825d70fd97c90c2e87f} 
+void {\bfseries analyze} ()
+\item 
+\hypertarget{classCudaNeighborListBuild_ae7aa8dcc77c35d61cbb56dec89790cf8}{}\label{classCudaNeighborListBuild_ae7aa8dcc77c35d61cbb56dec89790cf8} 
+void {\bfseries set\+\_\+test} (bool test\+\_\+in)
+\item 
+\hypertarget{classCudaNeighborListBuild_aaa00a73e94b8c96c194cfa8b20c4f1a9}{}\label{classCudaNeighborListBuild_aaa00a73e94b8c96c194cfa8b20c4f1a9} 
+int {\bfseries get\+\_\+n\+\_\+ientry} ()
+\item 
+\hypertarget{classCudaNeighborListBuild_a9914d67f6e093e2f218b0852deda471a}{}\label{classCudaNeighborListBuild_a9914d67f6e093e2f218b0852deda471a} 
+int {\bfseries get\+\_\+n\+\_\+ientry\+\_\+est} ()
+\item 
+\hypertarget{classCudaNeighborListBuild_a087b6c04b2ec42f647ee54f47f278d28}{}\label{classCudaNeighborListBuild_a087b6c04b2ec42f647ee54f47f278d28} 
+\hyperlink{structientry__t}{ientry\+\_\+t} $\ast$ {\bfseries get\+\_\+ientry} ()
+\item 
+\hypertarget{classCudaNeighborListBuild_a0f5a0722bef6c6bb5c00e125936141d8}{}\label{classCudaNeighborListBuild_a0f5a0722bef6c6bb5c00e125936141d8} 
+int {\bfseries get\+\_\+n\+\_\+tile} ()
+\item 
+\hypertarget{classCudaNeighborListBuild_a93ef44685dc6badfe43e773cd0b80ca5}{}\label{classCudaNeighborListBuild_a93ef44685dc6badfe43e773cd0b80ca5} 
+int {\bfseries get\+\_\+n\+\_\+tile\+\_\+est} ()
+\item 
+\hypertarget{classCudaNeighborListBuild_a66b423a0ca041876f61fb4b2c30a41a2}{}\label{classCudaNeighborListBuild_a66b423a0ca041876f61fb4b2c30a41a2} 
+int $\ast$ {\bfseries get\+\_\+tile\+\_\+indj} ()
+\item 
+\hypertarget{classCudaNeighborListBuild_a05c7d9e85176113dcd1958c3b4d29c99}{}\label{classCudaNeighborListBuild_a05c7d9e85176113dcd1958c3b4d29c99} 
+\hyperlink{structtile__excl__t}{tile\+\_\+excl\+\_\+t}$<$ tilesize $>$ $\ast$ {\bfseries get\+\_\+tile\+\_\+excl} ()
+\item 
+\hypertarget{classCudaNeighborListBuild_a6548fc99f3c48c50de200cf3f53de1fc}{}\label{classCudaNeighborListBuild_a6548fc99f3c48c50de200cf3f53de1fc} 
+int {\bfseries get\+\_\+n\+\_\+ientry} () const
+\item 
+\hypertarget{classCudaNeighborListBuild_a0d5be632f9f9f879d44da8e64e4212f3}{}\label{classCudaNeighborListBuild_a0d5be632f9f9f879d44da8e64e4212f3} 
+int {\bfseries get\+\_\+n\+\_\+ientry\+\_\+est} () const
+\item 
+\hypertarget{classCudaNeighborListBuild_a9137aaf9022f65bb8225c887e0e31f37}{}\label{classCudaNeighborListBuild_a9137aaf9022f65bb8225c887e0e31f37} 
+const \hyperlink{structientry__t}{ientry\+\_\+t} $\ast$ {\bfseries get\+\_\+ientry} () const
+\item 
+\hypertarget{classCudaNeighborListBuild_afc22efe52ea577b36d13a07accf75064}{}\label{classCudaNeighborListBuild_afc22efe52ea577b36d13a07accf75064} 
+int {\bfseries get\+\_\+n\+\_\+tile} () const
+\item 
+\hypertarget{classCudaNeighborListBuild_a11283f4519dd71ab55f8da8344365b8e}{}\label{classCudaNeighborListBuild_a11283f4519dd71ab55f8da8344365b8e} 
+int {\bfseries get\+\_\+n\+\_\+tile\+\_\+est} () const
+\item 
+\hypertarget{classCudaNeighborListBuild_a073af5f36d92769e0a4f5f4f043bc01c}{}\label{classCudaNeighborListBuild_a073af5f36d92769e0a4f5f4f043bc01c} 
+const int $\ast$ {\bfseries get\+\_\+tile\+\_\+indj} () const
+\item 
+\hypertarget{classCudaNeighborListBuild_a9dfe17855da9ce9e30f574323450cb71}{}\label{classCudaNeighborListBuild_a9dfe17855da9ce9e30f574323450cb71} 
+const \hyperlink{structtile__excl__t}{tile\+\_\+excl\+\_\+t}$<$ tilesize $>$ $\ast$ {\bfseries get\+\_\+tile\+\_\+excl} () const
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/Cuda\+Neighbor\+List\+Build.\+h\end{DoxyCompactItemize}

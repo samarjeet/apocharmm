@@ -1,0 +1,46 @@
+\hypertarget{classCudaNeighborListSort}{}\section{Cuda\+Neighbor\+List\+Sort Class Reference}
+\label{classCudaNeighborListSort}\index{Cuda\+Neighbor\+List\+Sort@{Cuda\+Neighbor\+List\+Sort}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classCudaNeighborListSort_ab7019676e4e8933befee1bfd5e2e2a6c}{}\label{classCudaNeighborListSort_ab7019676e4e8933befee1bfd5e2e2a6c} 
+{\bfseries Cuda\+Neighbor\+List\+Sort} (const int tilesize, const int izone\+Start, const int izone\+End)
+\item 
+\hypertarget{classCudaNeighborListSort_a7e00d2338c340628ca8a665fc9e6fb39}{}\label{classCudaNeighborListSort_a7e00d2338c340628ca8a665fc9e6fb39} 
+void {\bfseries calc\+\_\+min\+\_\+max\+\_\+xyz} (const int $\ast$zone\+\_\+patom, const float4 $\ast$xyzq, \hyperlink{structZoneParam__t}{Zone\+Param\+\_\+t} $\ast$h\+\_\+\+Zone\+Param, \hyperlink{structZoneParam__t}{Zone\+Param\+\_\+t} $\ast$d\+\_\+\+Zone\+Param, cuda\+Stream\+\_\+t stream)
+\item 
+\hypertarget{classCudaNeighborListSort_a93c27a19a9356ab33355eb5d7bd088ec}{}\label{classCudaNeighborListSort_a93c27a19a9356ab33355eb5d7bd088ec} 
+void {\bfseries sort\+\_\+setup} (const int $\ast$zone\+\_\+patom, \hyperlink{structZoneParam__t}{Zone\+Param\+\_\+t} $\ast$h\+\_\+\+Zone\+Param, \hyperlink{structZoneParam__t}{Zone\+Param\+\_\+t} $\ast$d\+\_\+\+Zone\+Param, cuda\+Stream\+\_\+t stream)
+\item 
+\hypertarget{classCudaNeighborListSort_a58deebb87534d1c6af464a7c645c994e}{}\label{classCudaNeighborListSort_a58deebb87534d1c6af464a7c645c994e} 
+void {\bfseries sort\+\_\+realloc} ()
+\item 
+\hypertarget{classCudaNeighborListSort_a8ca1fc5149e9b047cdf7342b4ed9e8ef}{}\label{classCudaNeighborListSort_a8ca1fc5149e9b047cdf7342b4ed9e8ef} 
+void {\bfseries sort\+\_\+core} (const int $\ast$zone\+\_\+patom, const int cell\+Start, const int col\+Start, \hyperlink{structZoneParam__t}{Zone\+Param\+\_\+t} $\ast$h\+\_\+\+Zone\+Param, \hyperlink{structZoneParam__t}{Zone\+Param\+\_\+t} $\ast$d\+\_\+\+Zone\+Param, \hyperlink{structNlistParam__t}{Nlist\+Param\+\_\+t} $\ast$d\+\_\+\+Nlist\+Param, int $\ast$cell\+\_\+patom, int $\ast$col\+\_\+ncellz, int4 $\ast$cell\+\_\+xyz\+\_\+zone, int $\ast$col\+\_\+cell, int $\ast$ind\+\_\+sorted, const float4 $\ast$xyzq, float4 $\ast$xyzq\+\_\+sorted, cuda\+Stream\+\_\+t stream)
+\item 
+\hypertarget{classCudaNeighborListSort_aa89785d0d4ff572855f824aa4303e348}{}\label{classCudaNeighborListSort_aa89785d0d4ff572855f824aa4303e348} 
+void {\bfseries sort\+\_\+build\+\_\+indices} (const int $\ast$zone\+\_\+patom, const int cell\+Start, int $\ast$cell\+\_\+patom, const float4 $\ast$xyzq, int $\ast$loc2glo, int $\ast$glo2loc, int $\ast$ind\+\_\+sorted, \hyperlink{structbb__t}{bb\+\_\+t} $\ast$bb, float $\ast$cell\+\_\+bz, cuda\+Stream\+\_\+t stream)
+\item 
+\hypertarget{classCudaNeighborListSort_a6467189a310c4b615c681eeb89a60854}{}\label{classCudaNeighborListSort_a6467189a310c4b615c681eeb89a60854} 
+bool {\bfseries test\+\_\+sort} (const int $\ast$zone\+\_\+patom, const int cell\+Start, const \hyperlink{structZoneParam__t}{Zone\+Param\+\_\+t} $\ast$h\+\_\+\+Zone\+Param, const float4 $\ast$xyzq, const float4 $\ast$xyzq\+\_\+sorted, const int $\ast$ind\+\_\+sorted, const int $\ast$cell\+\_\+patom)
+\item 
+\hypertarget{classCudaNeighborListSort_a52e7541e7b188f6b8c18c0c28cceb6ce}{}\label{classCudaNeighborListSort_a52e7541e7b188f6b8c18c0c28cceb6ce} 
+void {\bfseries set\+\_\+test} (bool test\+\_\+in)
+\item 
+\hypertarget{classCudaNeighborListSort_add7ef063f53b58cfae333baddc66a4c9}{}\label{classCudaNeighborListSort_add7ef063f53b58cfae333baddc66a4c9} 
+int {\bfseries get\+\_\+ncol\+\_\+tot} ()
+\item 
+\hypertarget{classCudaNeighborListSort_aa0073d05204b40663482d7d4ec51c05c}{}\label{classCudaNeighborListSort_aa0073d05204b40663482d7d4ec51c05c} 
+int {\bfseries get\+\_\+ncoord\+\_\+tot} ()
+\item 
+\hypertarget{classCudaNeighborListSort_a730b915eb141a2496fa88c5ca1289c7d}{}\label{classCudaNeighborListSort_a730b915eb141a2496fa88c5ca1289c7d} 
+int {\bfseries get\+\_\+ncell\+\_\+max} ()
+\item 
+\hypertarget{classCudaNeighborListSort_aa341d6c819cedbe8c4d365441b6d7377}{}\label{classCudaNeighborListSort_aa341d6c819cedbe8c4d365441b6d7377} 
+int {\bfseries get\+\_\+ncell} ()
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/Cuda\+Neighbor\+List\+Sort.\+h\end{DoxyCompactItemize}

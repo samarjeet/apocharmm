@@ -1,0 +1,55 @@
+\hypertarget{KineticEnergyGraph_8h}{}\section{/u/samar/\+Documents/git/chcuda/include/\+Kinetic\+Energy\+Graph.h File Reference}
+\label{KineticEnergyGraph_8h}\index{/u/samar/\+Documents/git/chcuda/include/\+Kinetic\+Energy\+Graph.\+h@{/u/samar/\+Documents/git/chcuda/include/\+Kinetic\+Energy\+Graph.\+h}}
+
+
+Class and kernels to calculate the total kinetic energy.  
+
+
+{\ttfamily \#include $<$cuda\+\_\+runtime.\+h$>$}\newline
+{\ttfamily \#include $<$cuda\+\_\+utils.\+h$>$}\newline
+{\ttfamily \#include $<$stdint.\+h$>$}\newline
+{\ttfamily \#include $<$Cuda\+Integrator\+Graph.\+h$>$}\newline
+{\ttfamily \#include $<$array$>$}\newline
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \hyperlink{classKineticEnergyGraph}{Kinetic\+Energy\+Graph}
+\begin{DoxyCompactList}\small\item\em Create a graph that calculates the kinetic energy. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\+\_\+\+\_\+global\+\_\+\+\_\+ void \hyperlink{KineticEnergyGraph_8h_a5b86eabaf4a77a475f390b51659757ee}{kinetic\+Energy\+Simple\+Kernel} (const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ vel\+\_\+mass, double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ total\+\_\+kinetic\+\_\+energy, int num\+Atoms)
+\begin{DoxyCompactList}\small\item\em calculate the total kinetic energy \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Class and kernels to calculate the total kinetic energy. 
+
+\begin{DoxyAuthor}{Author}
+Nathan Zimmerberg (\href{mailto:nhz2@cornell.edu}{\tt nhz2@cornell.\+edu}) 
+\end{DoxyAuthor}
+\begin{DoxyDate}{Date}
+
+\end{DoxyDate}
+
+
+\subsection{Function Documentation}
+\hypertarget{KineticEnergyGraph_8h_a5b86eabaf4a77a475f390b51659757ee}{}\label{KineticEnergyGraph_8h_a5b86eabaf4a77a475f390b51659757ee} 
+\index{Kinetic\+Energy\+Graph.\+h@{Kinetic\+Energy\+Graph.\+h}!kinetic\+Energy\+Simple\+Kernel@{kinetic\+Energy\+Simple\+Kernel}}
+\index{kinetic\+Energy\+Simple\+Kernel@{kinetic\+Energy\+Simple\+Kernel}!Kinetic\+Energy\+Graph.\+h@{Kinetic\+Energy\+Graph.\+h}}
+\subsubsection{\texorpdfstring{kinetic\+Energy\+Simple\+Kernel()}{kineticEnergySimpleKernel()}}
+{\footnotesize\ttfamily \+\_\+\+\_\+global\+\_\+\+\_\+ void kinetic\+Energy\+Simple\+Kernel (\begin{DoxyParamCaption}\item[{const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{vel\+\_\+mass,  }\item[{double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{total\+\_\+kinetic\+\_\+energy,  }\item[{int}]{num\+Atoms }\end{DoxyParamCaption})}
+
+
+
+calculate the total kinetic energy 
+
+
+\begin{DoxyParams}{Parameters}
+{\em vel\+\_\+mass} & The device pointer to the array of velocity and mass of every atom. \\
+\hline
+{\em total\+\_\+kinetic\+\_\+energy} & The total kinetic energy. \\
+\hline
+{\em num\+Atoms} & number of atoms. \\
+\hline
+\end{DoxyParams}

@@ -1,0 +1,70 @@
+\hypertarget{classXYZQ}{}\section{X\+Y\+ZQ Class Reference}
+\label{classXYZQ}\index{X\+Y\+ZQ@{X\+Y\+ZQ}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classXYZQ_ac952868df5c6443d1bbbd1fdd1df48cf}{}\label{classXYZQ_ac952868df5c6443d1bbbd1fdd1df48cf} 
+{\bfseries X\+Y\+ZQ} (int ncoord, int align=warpsize)
+\item 
+\hypertarget{classXYZQ_a14dba782e7793407478ad97bc62219ad}{}\label{classXYZQ_a14dba782e7793407478ad97bc62219ad} 
+{\bfseries X\+Y\+ZQ} (const char $\ast$filename, int align=warpsize)
+\item 
+\hypertarget{classXYZQ_a8c52a476e3a374075572596a80baba7e}{}\label{classXYZQ_a8c52a476e3a374075572596a80baba7e} 
+void {\bfseries set\+\_\+ncoord} (const int ncrd)
+\item 
+\hypertarget{classXYZQ_ab81af48d3d75d04ef5aee908c53f41cc}{}\label{classXYZQ_ab81af48d3d75d04ef5aee908c53f41cc} 
+void {\bfseries realloc} (int ncoord\+\_\+new, float fac=1.\+0f)
+\item 
+\hypertarget{classXYZQ_a7d2d9d0066070c8d9ba650e4a952e7c1}{}\label{classXYZQ_a7d2d9d0066070c8d9ba650e4a952e7c1} 
+void {\bfseries resize} (int ncoord\+\_\+new, float fac=1.\+0f)
+\item 
+\hypertarget{classXYZQ_aa429168e6b1fd60eb5eb3fe2994cbe73}{}\label{classXYZQ_aa429168e6b1fd60eb5eb3fe2994cbe73} 
+void {\bfseries set\+\_\+xyzq} (int ncopy, const float4 $\ast$h\+\_\+xyzq, size\+\_\+t offset=0, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classXYZQ_a64a2f7a04044cc0f98450db7b240b927}{}\label{classXYZQ_a64a2f7a04044cc0f98450db7b240b927} 
+void {\bfseries set\+\_\+xyzq} (const \hyperlink{classcudaXYZ}{cuda\+X\+YZ}$<$ double $>$ \&coord, const float $\ast$q, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classXYZQ_af930e9c6a44ec965b95972b5305ca3d4}{}\label{classXYZQ_af930e9c6a44ec965b95972b5305ca3d4} 
+void {\bfseries set\+\_\+xyzq} (const \hyperlink{classcudaXYZ}{cuda\+X\+YZ}$<$ double $>$ \&coord, const float $\ast$q, const int $\ast$loc2glo, const float3 $\ast$xyz\+\_\+shift, const double boxx, const double boxy, const double boxz, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classXYZQ_a71c8b38cb9597607937afbaf096ade8f}{}\label{classXYZQ_a71c8b38cb9597607937afbaf096ade8f} 
+void {\bfseries set\+\_\+xyz} (const \hyperlink{classcudaXYZ}{cuda\+X\+YZ}$<$ double $>$ \&coord, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classXYZQ_abebf79ca3e939e8c120683b664941ee1}{}\label{classXYZQ_abebf79ca3e939e8c120683b664941ee1} 
+void {\bfseries set\+\_\+xyz} (const \hyperlink{classcudaXYZ}{cuda\+X\+YZ}$<$ double $>$ \&coord, const int start, const int end, const float3 $\ast$xyz\+\_\+shift, const double boxx, const double boxy, const double boxz, cuda\+Stream\+\_\+t stream=0)
+\item 
+\hypertarget{classXYZQ_a8c241380db8116c4ee51c250a5ac488e}{}\label{classXYZQ_a8c241380db8116c4ee51c250a5ac488e} 
+bool {\bfseries compare} (\hyperlink{classXYZQ}{X\+Y\+ZQ} \&xyzq\+\_\+in, const double tol, double \&max\+\_\+diff)
+\item 
+\hypertarget{classXYZQ_a1f2e73eb1e3e584b938fb85b1a90338c}{}\label{classXYZQ_a1f2e73eb1e3e584b938fb85b1a90338c} 
+void {\bfseries print} (const int start, const int end, std\+::ostream \&out)
+\item 
+\hypertarget{classXYZQ_aefb394e8c57e748cd45d1d1b11efff91}{}\label{classXYZQ_aefb394e8c57e748cd45d1d1b11efff91} 
+void {\bfseries save} (const char $\ast$filename)
+\item 
+\hypertarget{classXYZQ_a4a83bb66b6eaa28b739b2e33bd63c0fb}{}\label{classXYZQ_a4a83bb66b6eaa28b739b2e33bd63c0fb} 
+float4 $\ast$ {\bfseries get\+Device\+X\+Y\+ZQ} ()
+\item 
+\hypertarget{classXYZQ_a47a1039f97b2b58f9c87b06f07371e69}{}\label{classXYZQ_a47a1039f97b2b58f9c87b06f07371e69} 
+void {\bfseries set\+Device\+X\+Y\+ZQ} (float4 $\ast$in)
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classXYZQ_ab8e50a45c8fc45ce746b0ac80938d9db}{}\label{classXYZQ_ab8e50a45c8fc45ce746b0ac80938d9db} 
+int {\bfseries align}
+\item 
+\hypertarget{classXYZQ_a96a7ca11354e5df5bfa344cd9e171e50}{}\label{classXYZQ_a96a7ca11354e5df5bfa344cd9e171e50} 
+int {\bfseries ncoord}
+\item 
+\hypertarget{classXYZQ_a70df9f6ea3ec361b9efc297bcfdbfa6e}{}\label{classXYZQ_a70df9f6ea3ec361b9efc297bcfdbfa6e} 
+int {\bfseries xyzq\+\_\+len}
+\item 
+\hypertarget{classXYZQ_ab24be1814bde15c39f437fab575d03f7}{}\label{classXYZQ_ab24be1814bde15c39f437fab575d03f7} 
+float4 $\ast$ {\bfseries xyzq}
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/X\+Y\+Z\+Q.\+h\end{DoxyCompactItemize}

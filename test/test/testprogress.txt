@@ -1,0 +1,79 @@
+List of all currently compiled tests
+
+ X Test  #1: unittest-integrators -- minimal testing for each integrator (200 steps per integrator)
+Useful, working, passing, not complete (some integrators missing).
+Tests that each integrator can run 1 or 2k steps without crashing everything. NO ASSERTION : the final energies should be monitored. Should use restart files to make sure it's "cruising". NO LIPID sustem yet. Some integrators still missing (Verlet bugged, VMMS ?). Nevertheless, useful, passing.
+
+
+ X Test  #2: unittest-argon1000 
+1000 argon box. Theoretically useful, but NO ASSERTIONS. 
+
+ X Test #16: unittest-ForceManager
+Bunch of minimal testing of basic functions of the FM. Not exhaustive. No assertions per se but a lot of "CHECK_NOTHROW"
+
+  Test #17: unittest-ForceManagerGenerator
+Tests that FMGenerator does indeed scale charges as expected. A few very basic tests. Not very involved. 
+
+  Test #18: unittest-eds
+ForceManager initialization problem : the (composite)FM given as input to create a Context is initialized, but NOT the resulting shared_ptr<ForceManager> belonging to the newly created CharmmContext. This was turned into a unittest in unittest-CharmmContext
+
+  Test  #3: unittest-benzene_pyrrole
+Fails. FEP testing, but NO ASSERTION. Should be called FEP ?
+
+  Test  #4: unittest-sep_benzene_pyrrole
+Same as unittest-benzene-pyrrole in the conclusions ?
+
+  Test #12: unittest-fep
+No Assertions. Not working (cudaFree(devPHILOXStates) bug). 
+
+  Test #14: unittest-bridgeEDS
+Initialize not available for BEDS ForceManagers ? Prob easy to fix.
+
+ X Test  #5: unittest-holonomic
+Useful, working, passing. Sets up dhfr system, propagate 1000 steps, checks that constraints are applied to right atoms and that length are conserved.
+
+  X Test  #6: unittest-langevinPiston
+Runs Lanvevin piston integrator on waterbox system for 20k 2fs steps. NO ASSERTIONS.
+
+  X Test  #7: unittest-langevinThermostat
+Runs Langevin thermostat on waterbox system for 100k 2fs steps. Asserts that holonomic constraints are still respected. This is already tested by unittest-holonomic
+
+  X Test  #8: unittest-readCoordinates
+Tests basic functions of the CharmmCrds. Useful, working, passing.
+
+  X Test  #9: unittest-psf
+Experiments to generate PSF using apocharmm. NOT A UNITTEST.
+
+  X Test #10: unittest-readPRM
+Tests reading prm file. Checks that reading a new prm file replaces older value: CURRENTLY IT DOESNT. 
+Checks how well the "BondedParamsAndList" object, generated when matching a CharmmPSF with a CharmmParameters, counts the interactions. CURRENTLY BUGGED. That is nevertheless a good unittest.
+Useful, working, NOT PASSING.
+
+  X Test #11: unittest-p21
+Sets up a waterbox, and a lipid bilayer system, with p21 boundary conditions. Runs 2000 steps for each. Compares forces at the end. Still some bug  -- probably image update default.
+Useful, working, NOT PASSING. 
+
+
+  X Test #13: unittest-waterbox
+Waterbox (50 AA), langevin and V-Verlet, 100k steps.
+Waterbox (150AA), langevin, 100 steps. 
+No assertions, but in good shape to become a good water testsystem. Need to monitor conservation of quantities (E, T, P depending on integrator), and need a proper, already heated up restartfile.
+The PSF for the 150AA box is missing !
+
+  X Test #15: unittest-Integrator
+Tests very basic functions of the Integrator class. Should be merged to integrators ?
+
+ X Test #19: unittest-Subscribers
+Tests basic functions of subscribers, length of output for several of them. Does not test NetCDF. Useful, simple. Not passing because of CompositeFM<->CharmmContext problem as seen earlier
+
+ X Test #20: unittest-eneForces
+For several systems (water dimer, 10 argon atoms, waterbox, pritein in vacuum, solvated protein) checks energies/forces/virial values vs CHARMM reference. 
+Tests are not all there (protein missing mostly). Very useful, NOT PASSING. Still missing a lipid system test.
+
+  New ! unittest-CharmmContext
+
+
+
+For each "system-test" (argon1000, waterbox,...), we should do:
+ - a decent minimization. Assert that it runs. Assert improvement ?
+ - for each integrator, run a dynamics, and MONITOR : assert energy/temperature conservation, for example.

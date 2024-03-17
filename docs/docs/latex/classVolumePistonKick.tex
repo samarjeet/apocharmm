@@ -1,0 +1,61 @@
+\hypertarget{classVolumePistonKick}{}\section{Volume\+Piston\+Kick Class Reference}
+\label{classVolumePistonKick}\index{Volume\+Piston\+Kick@{Volume\+Piston\+Kick}}
+
+
+Create graph that updates the box time dirivative.  
+
+
+
+
+{\ttfamily \#include $<$Volume\+Piston\+Kick.\+h$>$}
+
+Inheritance diagram for Volume\+Piston\+Kick\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classVolumePistonKick}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classVolumePistonKick_adb5bdb93bb01be95881e4aeb5be3d3a7}{Volume\+Piston\+Kick} (const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ box, const double3 $\ast$old\+\_\+box\+\_\+dot, const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ virial, double3 $\ast$new\+\_\+box\+\_\+dot, double timestep, double piston\+\_\+mass)
+\begin{DoxyCompactList}\small\item\em Create graph that updates the box time dirivative. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Additional Inherited Members}
+
+
+\subsection{Detailed Description}
+Create graph that updates the box time dirivative. 
+
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classVolumePistonKick_adb5bdb93bb01be95881e4aeb5be3d3a7}{}\label{classVolumePistonKick_adb5bdb93bb01be95881e4aeb5be3d3a7} 
+\index{Volume\+Piston\+Kick@{Volume\+Piston\+Kick}!Volume\+Piston\+Kick@{Volume\+Piston\+Kick}}
+\index{Volume\+Piston\+Kick@{Volume\+Piston\+Kick}!Volume\+Piston\+Kick@{Volume\+Piston\+Kick}}
+\subsubsection{\texorpdfstring{Volume\+Piston\+Kick()}{VolumePistonKick()}}
+{\footnotesize\ttfamily Volume\+Piston\+Kick\+::\+Volume\+Piston\+Kick (\begin{DoxyParamCaption}\item[{const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{box,  }\item[{const double3 $\ast$}]{old\+\_\+box\+\_\+dot,  }\item[{const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{virial,  }\item[{double3 $\ast$}]{new\+\_\+box\+\_\+dot,  }\item[{double}]{timestep,  }\item[{double}]{piston\+\_\+mass }\end{DoxyParamCaption})}
+
+
+
+Create graph that updates the box time dirivative. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em box} & device pointer to box dimensions. \\
+\hline
+{\em old\+\_\+box\+\_\+dot} & device pointer to box time dirivative. \\
+\hline
+{\em virial} & device pointer to Corrected virial. \\
+\hline
+{\em new\+\_\+box\+\_\+dot} & device pointer to new box time dirivatives. \\
+\hline
+{\em timestep} & Time step. \\
+\hline
+{\em piston\+\_\+mass} & Piston mass, dimensions of mass/length$^\wedge$4. \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/\hyperlink{VolumePistonKick_8h}{Volume\+Piston\+Kick.\+h}\end{DoxyCompactItemize}

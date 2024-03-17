@@ -1,0 +1,73 @@
+\hypertarget{classCudaPMEDirectForceBase}{}\section{Cuda\+P\+M\+E\+Direct\+Force\+Base$<$ AT, CT $>$ Class Template Reference}
+\label{classCudaPMEDirectForceBase}\index{Cuda\+P\+M\+E\+Direct\+Force\+Base$<$ A\+T, C\+T $>$@{Cuda\+P\+M\+E\+Direct\+Force\+Base$<$ A\+T, C\+T $>$}}
+Inheritance diagram for Cuda\+P\+M\+E\+Direct\+Force\+Base$<$ AT, CT $>$\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classCudaPMEDirectForceBase}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classCudaPMEDirectForceBase_a6e4bda7a4b887057ef166501efe1f5e3}{}\label{classCudaPMEDirectForceBase_a6e4bda7a4b887057ef166501efe1f5e3} 
+virtual void {\bfseries setup} (double boxx, double boxy, double boxz, double kappa, double roff, double ron, double e14fac, int vdw\+\_\+model, int elec\+\_\+model)=0
+\item 
+\hypertarget{classCudaPMEDirectForceBase_afdbb13017b16e7badb33879a86e4b29b}{}\label{classCudaPMEDirectForceBase_afdbb13017b16e7badb33879a86e4b29b} 
+virtual void {\bfseries get\+\_\+setup} (float \&boxx, float \&boxy, float \&boxz, float \&kappa, float \&roff, float \&ron, float \&e14fac, int \&vdw\+\_\+model, int \&elec\+\_\+model)=0
+\item 
+\hypertarget{classCudaPMEDirectForceBase_ace3a0538a11e847c206ca907930632ba}{}\label{classCudaPMEDirectForceBase_ace3a0538a11e847c206ca907930632ba} 
+virtual void {\bfseries get\+\_\+box\+\_\+size} (CT \&boxx, CT \&boxy, CT \&boxz)=0
+\item 
+\hypertarget{classCudaPMEDirectForceBase_a79cecb72fc19f3cba6c56ea70188da9a}{}\label{classCudaPMEDirectForceBase_a79cecb72fc19f3cba6c56ea70188da9a} 
+virtual void {\bfseries set\+\_\+box\+\_\+size} (const CT boxx, const CT boxy, const CT boxz)=0
+\item 
+\hypertarget{classCudaPMEDirectForceBase_a0c8f1fd6e11240463530a906b1a0d260}{}\label{classCudaPMEDirectForceBase_a0c8f1fd6e11240463530a906b1a0d260} 
+virtual void {\bfseries set\+\_\+calc\+\_\+vdw} (const bool calc\+\_\+vdw)=0
+\item 
+\hypertarget{classCudaPMEDirectForceBase_ae8ea0ffc4fa34fa947cdace047111ea3}{}\label{classCudaPMEDirectForceBase_ae8ea0ffc4fa34fa947cdace047111ea3} 
+virtual void {\bfseries set\+\_\+calc\+\_\+elec} (const bool calc\+\_\+elec)=0
+\item 
+\hypertarget{classCudaPMEDirectForceBase_a5bf42c88ac2bc32723eb538a523b3aad}{}\label{classCudaPMEDirectForceBase_a5bf42c88ac2bc32723eb538a523b3aad} 
+virtual bool {\bfseries get\+\_\+calc\+\_\+vdw} ()=0
+\item 
+\hypertarget{classCudaPMEDirectForceBase_a9144d91225fcd7c84a9fe1a56b25119a}{}\label{classCudaPMEDirectForceBase_a9144d91225fcd7c84a9fe1a56b25119a} 
+virtual bool {\bfseries get\+\_\+calc\+\_\+elec} ()=0
+\item 
+\hypertarget{classCudaPMEDirectForceBase_a202f784903e8444b04f2b943d8fb2a81}{}\label{classCudaPMEDirectForceBase_a202f784903e8444b04f2b943d8fb2a81} 
+virtual void {\bfseries set\+\_\+vdwparam} (const int nvdwparam, const CT $\ast$h\+\_\+vdwparam)=0
+\item 
+\hypertarget{classCudaPMEDirectForceBase_af58b02699036a1a84d9caaf6e4b55f1c}{}\label{classCudaPMEDirectForceBase_af58b02699036a1a84d9caaf6e4b55f1c} 
+virtual void {\bfseries set\+\_\+vdwparam} (const int nvdwparam, const char $\ast$filename)=0
+\item 
+\hypertarget{classCudaPMEDirectForceBase_ab65455bb482279b4b7287f347d88368d}{}\label{classCudaPMEDirectForceBase_ab65455bb482279b4b7287f347d88368d} 
+virtual void {\bfseries set\+\_\+vdwparam14} (const int nvdwparam, const CT $\ast$h\+\_\+vdwparam)=0
+\item 
+\hypertarget{classCudaPMEDirectForceBase_a29398f2e91b8615e8161439f3d69c61b}{}\label{classCudaPMEDirectForceBase_a29398f2e91b8615e8161439f3d69c61b} 
+virtual void {\bfseries set\+\_\+vdwparam14} (const int nvdwparam, const char $\ast$filename)=0
+\item 
+\hypertarget{classCudaPMEDirectForceBase_a8702e64c4c6994f40e29e6f665a8a79b}{}\label{classCudaPMEDirectForceBase_a8702e64c4c6994f40e29e6f665a8a79b} 
+virtual void {\bfseries set\+\_\+vdwtype} (const int ncoord, const int $\ast$h\+\_\+vdwtype)=0
+\item 
+\hypertarget{classCudaPMEDirectForceBase_ad91c8d20c9cb7f8a96e5d3452c53534f}{}\label{classCudaPMEDirectForceBase_ad91c8d20c9cb7f8a96e5d3452c53534f} 
+virtual void {\bfseries set\+\_\+vdwtype} (const int ncoord, const char $\ast$filename)=0
+\item 
+\hypertarget{classCudaPMEDirectForceBase_a93184411ca2fc4f89611e3c407d7d95f}{}\label{classCudaPMEDirectForceBase_a93184411ca2fc4f89611e3c407d7d95f} 
+virtual void {\bfseries set\+\_\+vdwtype} (const int ncoord, const int $\ast$glo\+\_\+vdwtype, const int $\ast$loc2glo, cuda\+Stream\+\_\+t stream=0)=0
+\item 
+\hypertarget{classCudaPMEDirectForceBase_acdc1269a7448e495c4298c89603881e9}{}\label{classCudaPMEDirectForceBase_acdc1269a7448e495c4298c89603881e9} 
+virtual void {\bfseries set\+\_\+14\+\_\+list} (int nin14list, int nex14list, \hyperlink{structxx14list__t}{xx14list\+\_\+t} $\ast$h\+\_\+in14list, \hyperlink{structxx14list__t}{xx14list\+\_\+t} $\ast$h\+\_\+ex14list, cuda\+Stream\+\_\+t stream=0)=0
+\item 
+\hypertarget{classCudaPMEDirectForceBase_a596d15a35fd6153ab187da5ae0a763d2}{}\label{classCudaPMEDirectForceBase_a596d15a35fd6153ab187da5ae0a763d2} 
+virtual void {\bfseries set\+\_\+14\+\_\+list} (const float4 $\ast$xyzq, const float boxx, const float boxy, const float boxz, const int $\ast$glo2loc\+\_\+ind, const int nin14\+\_\+tbl, const int $\ast$in14\+\_\+tbl, const \hyperlink{structxx14__t}{xx14\+\_\+t} $\ast$in14, const int nex14\+\_\+tbl, const int $\ast$ex14\+\_\+tbl, const \hyperlink{structxx14__t}{xx14\+\_\+t} $\ast$ex14, cuda\+Stream\+\_\+t stream=0)=0
+\item 
+\hypertarget{classCudaPMEDirectForceBase_a537ecd649336b282e150995ca141ccb8}{}\label{classCudaPMEDirectForceBase_a537ecd649336b282e150995ca141ccb8} 
+virtual void {\bfseries calc\+\_\+14\+\_\+force} (const float4 $\ast$xyzq, const bool calc\+\_\+energy, const bool calc\+\_\+virial, const int stride, AT $\ast$force, cuda\+Stream\+\_\+t stream=0)=0
+\item 
+\hypertarget{classCudaPMEDirectForceBase_a0484932e1c3d441f66b3b1ada4921e7d}{}\label{classCudaPMEDirectForceBase_a0484932e1c3d441f66b3b1ada4921e7d} 
+virtual void {\bfseries calc\+\_\+force} (const int whichlist, const float4 $\ast$xyzq, const \hyperlink{classCudaNeighborListBuild}{Cuda\+Neighbor\+List\+Build}$<$ 32 $>$ \&nlist, const bool calc\+\_\+energy, const bool calc\+\_\+virial, const int stride, AT $\ast$force, cuda\+Stream\+\_\+t stream=0)=0
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/Cuda\+P\+M\+E\+Direct\+Force.\+h\end{DoxyCompactItemize}

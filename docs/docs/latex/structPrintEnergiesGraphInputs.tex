@@ -1,0 +1,99 @@
+\hypertarget{structPrintEnergiesGraphInputs}{}\section{Print\+Energies\+Graph\+Inputs Struct Reference}
+\label{structPrintEnergiesGraphInputs}\index{Print\+Energies\+Graph\+Inputs@{Print\+Energies\+Graph\+Inputs}}
+
+
+input for the graph that prints out the components of the total system energy.  
+
+
+
+
+{\ttfamily \#include $<$Print\+Energies\+Graph.\+h$>$}
+
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ \hyperlink{structPrintEnergiesGraphInputs_adc38d3e47b0b4ab22dfb7b0253ccefff}{velmass}
+\begin{DoxyCompactList}\small\item\em Device pointer to Velocity and mass of each atom. \end{DoxyCompactList}\item 
+const double $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ \hyperlink{structPrintEnergiesGraphInputs_a6faa1be5d040282aca80b029942ab2eb}{potential\+\_\+energy}
+\begin{DoxyCompactList}\small\item\em Device pointer to potential of all atoms. \end{DoxyCompactList}\item 
+const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ \hyperlink{structPrintEnergiesGraphInputs_a1e348a5a2a281ba456f7fa8955b43c02}{box}
+\begin{DoxyCompactList}\small\item\em Device pointer to box dimensions. \end{DoxyCompactList}\item 
+const double3 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ \hyperlink{structPrintEnergiesGraphInputs_a19e4bdc53ef87010bb737cb6860ec653}{box\+\_\+dot}
+\begin{DoxyCompactList}\small\item\em Device pointer to time derivative of box dimensions. \end{DoxyCompactList}\item 
+\hyperlink{structVolumePiston}{Volume\+Piston} \hyperlink{structPrintEnergiesGraphInputs_a37b64e2334e0ee6481ecb96081417f2a}{piston}
+\begin{DoxyCompactList}\small\item\em Piston Parameters. \end{DoxyCompactList}\item 
+int \hyperlink{structPrintEnergiesGraphInputs_a959260c65f04a41a113f62ef76504966}{num\+Atoms}
+\begin{DoxyCompactList}\small\item\em Number of Atoms. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+input for the graph that prints out the components of the total system energy. 
+
+
+
+\subsection{Member Data Documentation}
+\hypertarget{structPrintEnergiesGraphInputs_a1e348a5a2a281ba456f7fa8955b43c02}{}\label{structPrintEnergiesGraphInputs_a1e348a5a2a281ba456f7fa8955b43c02} 
+\index{Print\+Energies\+Graph\+Inputs@{Print\+Energies\+Graph\+Inputs}!box@{box}}
+\index{box@{box}!Print\+Energies\+Graph\+Inputs@{Print\+Energies\+Graph\+Inputs}}
+\subsubsection{\texorpdfstring{box}{box}}
+{\footnotesize\ttfamily const double3$\ast$ \+\_\+\+\_\+restrict\+\_\+\+\_\+ Print\+Energies\+Graph\+Inputs\+::box}
+
+
+
+Device pointer to box dimensions. 
+
+\hypertarget{structPrintEnergiesGraphInputs_a19e4bdc53ef87010bb737cb6860ec653}{}\label{structPrintEnergiesGraphInputs_a19e4bdc53ef87010bb737cb6860ec653} 
+\index{Print\+Energies\+Graph\+Inputs@{Print\+Energies\+Graph\+Inputs}!box\+\_\+dot@{box\+\_\+dot}}
+\index{box\+\_\+dot@{box\+\_\+dot}!Print\+Energies\+Graph\+Inputs@{Print\+Energies\+Graph\+Inputs}}
+\subsubsection{\texorpdfstring{box\+\_\+dot}{box\_dot}}
+{\footnotesize\ttfamily const double3$\ast$ \+\_\+\+\_\+restrict\+\_\+\+\_\+ Print\+Energies\+Graph\+Inputs\+::box\+\_\+dot}
+
+
+
+Device pointer to time derivative of box dimensions. 
+
+\hypertarget{structPrintEnergiesGraphInputs_a959260c65f04a41a113f62ef76504966}{}\label{structPrintEnergiesGraphInputs_a959260c65f04a41a113f62ef76504966} 
+\index{Print\+Energies\+Graph\+Inputs@{Print\+Energies\+Graph\+Inputs}!num\+Atoms@{num\+Atoms}}
+\index{num\+Atoms@{num\+Atoms}!Print\+Energies\+Graph\+Inputs@{Print\+Energies\+Graph\+Inputs}}
+\subsubsection{\texorpdfstring{num\+Atoms}{numAtoms}}
+{\footnotesize\ttfamily int Print\+Energies\+Graph\+Inputs\+::num\+Atoms}
+
+
+
+Number of Atoms. 
+
+\hypertarget{structPrintEnergiesGraphInputs_a37b64e2334e0ee6481ecb96081417f2a}{}\label{structPrintEnergiesGraphInputs_a37b64e2334e0ee6481ecb96081417f2a} 
+\index{Print\+Energies\+Graph\+Inputs@{Print\+Energies\+Graph\+Inputs}!piston@{piston}}
+\index{piston@{piston}!Print\+Energies\+Graph\+Inputs@{Print\+Energies\+Graph\+Inputs}}
+\subsubsection{\texorpdfstring{piston}{piston}}
+{\footnotesize\ttfamily \hyperlink{structVolumePiston}{Volume\+Piston} Print\+Energies\+Graph\+Inputs\+::piston}
+
+
+
+Piston Parameters. 
+
+\hypertarget{structPrintEnergiesGraphInputs_a6faa1be5d040282aca80b029942ab2eb}{}\label{structPrintEnergiesGraphInputs_a6faa1be5d040282aca80b029942ab2eb} 
+\index{Print\+Energies\+Graph\+Inputs@{Print\+Energies\+Graph\+Inputs}!potential\+\_\+energy@{potential\+\_\+energy}}
+\index{potential\+\_\+energy@{potential\+\_\+energy}!Print\+Energies\+Graph\+Inputs@{Print\+Energies\+Graph\+Inputs}}
+\subsubsection{\texorpdfstring{potential\+\_\+energy}{potential\_energy}}
+{\footnotesize\ttfamily const double$\ast$ \+\_\+\+\_\+restrict\+\_\+\+\_\+ Print\+Energies\+Graph\+Inputs\+::potential\+\_\+energy}
+
+
+
+Device pointer to potential of all atoms. 
+
+\hypertarget{structPrintEnergiesGraphInputs_adc38d3e47b0b4ab22dfb7b0253ccefff}{}\label{structPrintEnergiesGraphInputs_adc38d3e47b0b4ab22dfb7b0253ccefff} 
+\index{Print\+Energies\+Graph\+Inputs@{Print\+Energies\+Graph\+Inputs}!velmass@{velmass}}
+\index{velmass@{velmass}!Print\+Energies\+Graph\+Inputs@{Print\+Energies\+Graph\+Inputs}}
+\subsubsection{\texorpdfstring{velmass}{velmass}}
+{\footnotesize\ttfamily const double4$\ast$ \+\_\+\+\_\+restrict\+\_\+\+\_\+ Print\+Energies\+Graph\+Inputs\+::velmass}
+
+
+
+Device pointer to Velocity and mass of each atom. 
+
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/\hyperlink{PrintEnergiesGraph_8h}{Print\+Energies\+Graph.\+h}\end{DoxyCompactItemize}

@@ -1,0 +1,65 @@
+\hypertarget{classConstantPressurePostDrift}{}\section{Constant\+Pressure\+Post\+Drift Class Reference}
+\label{classConstantPressurePostDrift}\index{Constant\+Pressure\+Post\+Drift@{Constant\+Pressure\+Post\+Drift}}
+
+
+Create a graph that gets absolute coords back from relative coords.  
+
+
+
+
+{\ttfamily \#include $<$Constant\+Pressure\+Post\+Drift.\+h$>$}
+
+Inheritance diagram for Constant\+Pressure\+Post\+Drift\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classConstantPressurePostDrift}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classConstantPressurePostDrift_ac04e5c4bcbd6f48169085138a157c2e8}{Constant\+Pressure\+Post\+Drift} (const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ relative\+\_\+xyzq, const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ relative\+\_\+vel\+\_\+mass, const \hyperlink{structComID__t}{Com\+I\+D\+\_\+t} $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ com\+\_\+ids, const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ com\+\_\+momentum\+\_\+invmass, double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ absolute\+\_\+xyzq, double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+ absolute\+\_\+vel\+\_\+mass, const int $\ast$sorted\+\_\+atomids, int num\+Groups)
+\begin{DoxyCompactList}\small\item\em Create a graph that gets absolute coords back from relative coords. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Additional Inherited Members}
+
+
+\subsection{Detailed Description}
+Create a graph that gets absolute coords back from relative coords. 
+
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classConstantPressurePostDrift_ac04e5c4bcbd6f48169085138a157c2e8}{}\label{classConstantPressurePostDrift_ac04e5c4bcbd6f48169085138a157c2e8} 
+\index{Constant\+Pressure\+Post\+Drift@{Constant\+Pressure\+Post\+Drift}!Constant\+Pressure\+Post\+Drift@{Constant\+Pressure\+Post\+Drift}}
+\index{Constant\+Pressure\+Post\+Drift@{Constant\+Pressure\+Post\+Drift}!Constant\+Pressure\+Post\+Drift@{Constant\+Pressure\+Post\+Drift}}
+\subsubsection{\texorpdfstring{Constant\+Pressure\+Post\+Drift()}{ConstantPressurePostDrift()}}
+{\footnotesize\ttfamily Constant\+Pressure\+Post\+Drift\+::\+Constant\+Pressure\+Post\+Drift (\begin{DoxyParamCaption}\item[{const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{relative\+\_\+xyzq,  }\item[{const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{relative\+\_\+vel\+\_\+mass,  }\item[{const \hyperlink{structComID__t}{Com\+I\+D\+\_\+t} $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{com\+\_\+ids,  }\item[{const double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{com\+\_\+momentum\+\_\+invmass,  }\item[{double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{absolute\+\_\+xyzq,  }\item[{double4 $\ast$\+\_\+\+\_\+restrict\+\_\+\+\_\+}]{absolute\+\_\+vel\+\_\+mass,  }\item[{const int $\ast$}]{sorted\+\_\+atomids,  }\item[{int}]{num\+Groups }\end{DoxyParamCaption})}
+
+
+
+Create a graph that gets absolute coords back from relative coords. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em relative\+\_\+xyzq} & The device pointer to the array of atom positions relative to the center of mass of their pressure group. \\
+\hline
+{\em relative\+\_\+vel\+\_\+mass} & The device pointer to the array of relative velocity and mass of every atom. \\
+\hline
+{\em com\+\_\+ids} & The device pointer to the array of the position of the center of mass of each pressure group, and the atoms that are in the group. \\
+\hline
+{\em com\+\_\+momentum\+\_\+invmass} & The device pointer to the array of the group net momentums and inverse masses. \\
+\hline
+{\em absolute\+\_\+xyzq} & The device pointer to the array of absolute atom positions. \\
+\hline
+{\em absolute\+\_\+vel\+\_\+mass} & The device pointer to the array of absolute velocity and mass of every atom. \\
+\hline
+{\em sorted\+\_\+atomids} & Array of all atom ids sorted by pressure group. \\
+\hline
+{\em num\+Groups} & number of groups. \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/u/samar/\+Documents/git/chcuda/include/\hyperlink{ConstantPressurePostDrift_8h}{Constant\+Pressure\+Post\+Drift.\+h}\end{DoxyCompactItemize}

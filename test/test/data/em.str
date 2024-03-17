@@ -1,0 +1,263 @@
+* Toppar for the ethane methanol mutation based on CGenFF
+* 
+
+read rtf card append flex
+* Topology for mutation
+*
+36  1
+
+!hydrogens
+MASS   256 HGA1     1.00800  ! alphatic proton, CH
+MASS   257 HGA2     1.00800  ! alphatic proton, CH2
+MASS   258 HGA3     1.00800  ! alphatic proton, CH3
+MASS   259 HGA4     1.00800  ! alkene proton; RHC=
+MASS   260 HGA5     1.00800  ! alkene proton; H2C=CR
+MASS   261 HGA6     1.00800  ! aliphatic H on fluorinated C, monofluoro
+MASS   262 HGA7     1.00800  ! aliphatic H on fluorinated C, difluoro
+MASS   263 HGAAM0   1.00800  ! aliphatic H, NEUTRAL trimethylamine (#)
+MASS   264 HGAAM1   1.00800  ! aliphatic H, NEUTRAL dimethylamine (#)
+MASS   265 HGAAM2   1.00800  ! aliphatic H, NEUTRAL methylamine (#)
+!(#) EXTREME care is required when doing atom typing on compounds that look like this. Use ONLY
+!on NEUTRAL METHYLAMINE groups, NOT Schiff Bases, but DO use on 2 out of 3 guanidine nitrogens
+MASS   266 HGP1     1.00800  ! polar H
+MASS   267 HGP2     1.00800  ! polar H, +ve charge
+MASS   268 HGP3     1.00800  ! polar H, thiol
+MASS   269 HGP4     1.00800  ! polar H, neutral conjugated -NH2 group (NA bases)
+MASS   270 HGP5     1.00800  ! polar H on quarternary ammonium salt (choline)
+MASS   271 HGPAM1   1.00800  ! polar H, NEUTRAL dimethylamine (#)
+MASS   272 HGPAM2   1.00800  ! polar H, NEUTRAL methylamine (#)
+MASS   273 HGPAM3   1.00800  ! polar H, NEUTRAL ammonia (#)
+!(#) EXTREME care is required when doing atom typing on compounds that look like this. Use ONLY
+!on NEUTRAL METHYLAMINE groups, NOT Schiff Bases, but DO use on 2 out of 3 guanidine nitrogens
+MASS   274 HGR51    1.00800  ! nonpolar H, neutral 5-mem planar ring C, LJ based on benzene
+MASS   275 HGR52    1.00800  ! Aldehyde H, formamide H (RCOH); nonpolar H, neutral 5-mem planar ring C adjacent to heteroatom or + charge
+MASS   276 HGR53    1.00800  ! nonpolar H, +ve charge HIS he1(+1)
+MASS   277 HGR61    1.00800  ! aromatic H
+MASS   278 HGR62    1.00800  ! nonpolar H, neutral 6-mem planar ring C adjacent to heteroatom
+MASS   279 HGR63    1.00800  ! nonpolar H, NAD+ nicotineamide all ring CH hydrogens
+MASS   280 HGR71    1.00800  ! nonpolar H, neutral 7-mem arom ring, AZUL, azulene, kevo
+!carbons
+MASS   281 CG1T1   12.01100  ! alkyn C
+MASS   282 CG1N1   12.01100  ! C for cyano group
+MASS   283 CG2D1   12.01100  ! alkene; RHC= ; imine C
+MASS   284 CG2D2   12.01100  ! alkene; H2C=
+MASS   285 CG2D1O  12.01100  ! double bond carbon adjacent to heteroatom. In conjugated systems, the atom to which it is double bonded must be CG2DC1.
+MASS   286 CG2D2O  12.01100  ! double bond carbon adjacent to heteroatom. In conjugated systems, the atom to which it is double bonded must be CG2DC2.
+MASS   287 CG2DC1  12.01100  ! conjugated alkenes, R2C=CR2
+MASS   288 CG2DC2  12.01100  ! conjugated alkenes, R2C=CR2
+MASS   289 CG2DC3  12.01100  ! conjugated alkenes, H2C=
+MASS   290 CG2N1   12.01100  ! conjugated C in guanidine/guanidinium
+MASS   291 CG2N2   12.01100  ! conjugated C in amidinium cation
+MASS   292 CG2O1   12.01100  ! carbonyl C: amides
+MASS   293 CG2O2   12.01100  ! carbonyl C: esters, [neutral] carboxylic acids
+MASS   294 CG2O3   12.01100  ! carbonyl C: [negative] carboxylates
+MASS   295 CG2O4   12.01100  ! carbonyl C: aldehydes
+MASS   296 CG2O5   12.01100  ! carbonyl C: ketones
+MASS   297 CG2O6   12.01100  ! carbonyl C: urea, carbonate
+MASS   298 CG2O7   12.01100  ! CO2 carbon
+MASS   299 CG2R51  12.01100  ! 5-mem ring, his CG, CD2(0), trp
+MASS   300 CG2R52  12.01100  ! 5-mem ring, double bound to N, PYRZ, pyrazole
+MASS   301 CG2R53  12.01100  ! 5-mem ring, double bound to N and adjacent to another heteroatom, purine C8, his CE1 (0,+1), 2PDO, kevo
+MASS   302 CG2R61  12.01100  ! 6-mem aromatic C
+MASS   303 CG2R62  12.01100  ! 6-mem aromatic C for protonated pyridine (NIC) and rings containing carbonyls (see CG2R63) (NA)
+MASS   304 CG2R63  12.01100  ! 6-mem aromatic amide carbon (NA) (and other 6-mem aromatic carbonyls?)
+MASS   305 CG2R64  12.01100  ! 6-mem aromatic amidine and guanidine carbon (between 2 or 3 Ns and double-bound to one of them), NA, PYRM
+MASS   306 CG2R66  12.01100  ! 6-mem aromatic carbon bound to F
+MASS   307 CG2R67  12.01100  ! 6-mem aromatic carbon of biphenyl
+MASS   308 CG2RC0  12.01100  ! 6/5-mem ring bridging C, guanine C4,C5, trp
+MASS   309 CG2R71  12.01100  ! 7-mem ring arom C, AZUL, azulene, kevo
+MASS   310 CG2RC7  12.01100  ! sp2 ring connection with single bond(!), AZUL, azulene, kevo
+MASS   311 CG301   12.01100  ! aliphatic C, no hydrogens, neopentane
+MASS   312 CG302   12.01100  ! aliphatic C, no hydrogens, trifluoromethyl
+MASS   313 CG311   12.01100  ! aliphatic C with 1 H, CH
+MASS   314 CG312   12.01100  ! aliphatic C with 1 H, difluoromethyl
+MASS   315 CG314   12.01100  ! aliphatic C with 1 H, adjacent to positive N (PROT NTER) (+)
+MASS   316 CG321   12.01100  ! aliphatic C for CH2
+MASS   317 CG322   12.01100  ! aliphatic C for CH2, monofluoromethyl
+MASS   318 CG323   12.01100  ! aliphatic C for CH2, thiolate carbon
+MASS   319 CG324   12.01100  ! aliphatic C for CH2, adjacent to positive N (piperidine) (+)
+MASS   320 CG331   12.01100  ! aliphatic C for methyl group (-CH3)
+MASS   321 CG334   12.01100  ! aliphatic C for methyl group (-CH3), adjacent to positive N (PROT NTER) (+)
+MASS   322 CG3AM0  12.01100  ! aliphatic C for CH3, NEUTRAL trimethylamine methyl carbon (#)
+MASS   323 CG3AM1  12.01100  ! aliphatic C for CH3, NEUTRAL dimethylamine methyl carbon (#)
+MASS   324 CG3AM2  12.01100  ! aliphatic C for CH3, NEUTRAL methylamine methyl carbon (#)
+!(#) EXTREME care is required when doing atom typing on compounds that look like this. Use ONLY
+!on NEUTRAL METHYLAMINE groups, NOT ETHYL, NOT Schiff Bases, but DO use on 2 out of 3 guanidine nitrogens
+MASS   325 CG3C31  12.01100  ! cyclopropyl carbon
+!MASS   326 CG3C41  12.01100  ! cyclobutyl carbon RESERVED!
+MASS   327 CG3C50  12.01100  ! 5-mem ring aliphatic quaternary C (cholesterol, bile acids)
+MASS   328 CG3C51  12.01100  ! 5-mem ring aliphatic CH  (proline CA, furanoses)
+MASS   329 CG3C52  12.01100  ! 5-mem ring aliphatic CH2 (proline CB/CG/CD, THF, deoxyribose)
+MASS   330 CG3C53  12.01100  ! 5-mem ring aliphatic CH  adjacent to positive N (proline.H+ CA) (+)
+MASS   331 CG3C54  12.01100  ! 5-mem ring aliphatic CH2 adjacent to positive N (proline.H+ CD) (+)
+MASS   332 CG3RC1  12.01100  ! bridgehead in bicyclic systems containing at least one 5-membered or smaller ring
+!(+) Includes protonated Shiff base (NG3D5, NG2R52 in 2HPP) but NOT amidinium (NG2R52 in IMIM), guanidinium
+!nitrogens
+MASS   333 NG1T1   14.00700  ! N for cyano group
+MASS   334 NG2D1   14.00700  ! N for neutral imine/Schiff's base (C=N-R, acyclic amidine, gunaidine)
+MASS   335 NG2S0   14.00700  ! N,N-disubstituted amide, proline N (CO=NRR')
+MASS   336 NG2S1   14.00700  ! peptide nitrogen (CO=NHR)
+MASS   337 NG2S2   14.00700  ! terminal amide nitrogen (CO=NH2)
+MASS   338 NG2S3   14.00700  ! external amine ring nitrogen (planar/aniline), phosphoramidate
+MASS   339 NG2O1   14.00700  ! NITB, nitrobenzene
+MASS   340 NG2P1   14.00700  ! N for protonated imine/Schiff's base (C=N(+)H-R, acyclic amidinium, guanidinium)
+MASS   341 NG2R50  14.00700  ! double bound neutral 5-mem planar ring, purine N7
+MASS   342 NG2R51  14.00700  ! single bound neutral 5-mem planar (all atom types sp2) ring, his, trp pyrrole (fused)
+MASS   343 NG2R52  14.00700  ! protonated schiff base, amidinium, guanidinium in 5-membered ring, HIS, 2HPP, kevo
+MASS   344 NG2R53  14.00700  ! amide in 5-memebered NON-SP2 ring (slightly pyramidized), 2PDO, kevo
+MASS   345 NG2R60  14.00700  ! double bound neutral 6-mem planar ring, pyr1, pyzn
+MASS   346 NG2R61  14.00700  ! single bound neutral 6-mem planar ring imino nitrogen; glycosyl linkage
+MASS   347 NG2R62  14.00700  ! double bound 6-mem planar ring with heteroatoms in o or m, pyrd, pyrm
+MASS   348 NG2RC0  14.00700  ! 6/5-mem ring bridging N, indolizine, INDZ, kevo
+MASS   349 NG301   14.00700  ! neutral trimethylamine nitrogen
+MASS   350 NG311   14.00700  ! neutral dimethylamine nitrogen
+MASS   351 NG321   14.00700  ! neutral methylamine nitrogen
+MASS   352 NG331   14.00700  ! neutral ammonia nitrogen
+MASS   353 NG3C51  14.00700  ! secondary sp3 amine in 5-membered ring
+MASS   354 NG3N1   14.00700  ! N in hydrazine, HDZN
+MASS   355 NG3P0   14.00700  ! quarternary N+, choline
+MASS   356 NG3P1   14.00700  ! tertiary NH+ (PIP)
+MASS   357 NG3P2   14.00700  ! secondary NH2+ (proline)
+MASS   358 NG3P3   14.00700  ! primary NH3+, phosphatidylethanolamine
+!oxygens
+MASS   359 OG2D1   15.99940  ! carbonyl O: amides, esters, [neutral] carboxylic acids, aldehydes, uera
+MASS   360 OG2D2   15.99940  ! carbonyl O: negative groups: carboxylates, carbonate
+MASS   361 OG2D3   15.99940  ! carbonyl O: ketones
+MASS   362 OG2D4   15.99940  ! 6-mem aromatic carbonyl oxygen (nucleic bases)
+MASS   363 OG2D5   15.99940  ! CO2 oxygen
+MASS   364 OG2N1   15.99940  ! NITB, nitrobenzene
+MASS   365 OG2P1   15.99940  ! =O in phosphate or sulfate
+MASS   366 OG2R50  15.99940  ! FURA, furan
+MASS   367 OG3R60  15.99940  ! O in 6-mem cyclic enol ether (PY01, PY02) or ester
+MASS   368 OG301   15.99940  ! ether -O- !SHOULD WE HAVE A SEPARATE ENOL ETHER??? IF YES, SHOULD WE MERGE IT WITH OG3R60???
+MASS   369 OG302   15.99940  ! ester -O-
+MASS   370 OG303   15.99940  ! phosphate/sulfate ester oxygen
+MASS   371 OG304   15.99940  ! linkage oxygen in pyrophosphate/pyrosulphate
+MASS   372 OG311   15.99940  ! hydroxyl oxygen
+MASS   373 OG312   15.99940  ! ionized alcohol oxygen
+MASS   374 OG3C51  15.99940  ! 5-mem furanose ring oxygen (ether)
+MASS   375 OG3C61  15.99940  ! DIOX, dioxane, ether in 6-membered ring !SHOULD WE MERGE THIS WITH OG3R60???
+!sulphurs
+MASS   376 SG2D1   32.06000  ! thiocarbonyl S
+MASS   377 SG2R50  32.06000  ! THIP, thiophene
+MASS   378 SG311   32.06000  ! sulphur, SH, -S-
+MASS   379 SG301   32.06000  ! sulfur C-S-S-C type
+MASS   380 SG302   32.06000  ! thiolate sulfur (-1)
+MASS   381 SG3O1   32.06000  ! sulfate -1 sulfur
+MASS   382 SG3O2   32.06000  ! neutral sulfone/sulfonamide sulfur
+MASS   383 SG3O3   32.06000  ! neutral sulfoxide sulfur
+!halogens
+MASS   384 CLGA1   35.45300  ! CLET, DCLE, chloroethane, 1,1-dichloroethane
+MASS   385 CLGA3   35.45300  ! TCLE, 1,1,1-trichloroethane
+MASS   386 CLGR1   35.45300  ! CHLB, chlorobenzene
+MASS   387 BRGA1   79.90400  ! BRET, bromoethane
+MASS   388 BRGA2   79.90400  ! DBRE, 1,1-dibromoethane
+MASS   389 BRGA3   79.90400  ! TBRE, 1,1,1-dibromoethane
+MASS   390 BRGR1   79.90400  ! BROB, bromobenzene
+MASS   391 IGR1   126.90447  ! IODB, iodobenzene
+MASS   392 FGA1    18.99800  ! aliphatic fluorine, monofluoro
+MASS   393 FGA2    18.99800  ! aliphatic fluorine, difluoro
+MASS   394 FGA3    18.99800  ! aliphatic fluorine, trifluoro
+MASS   395 FGP1    18.99800  ! anionic F, for ALF4 AlF4-
+MASS   396 FGR1    18.99800  ! aromatic flourine
+!miscellaneous
+MASS   397 PG0     30.97380  ! neutral phosphate
+MASS   398 PG1     30.97380  ! phosphate -1
+MASS   399 PG2     30.97380  ! phosphate -2
+MASS   400 ALG1    26.98154  ! Aluminum, for ALF4, AlF4-
+
+!MASS   410 HGTIP3   1.00800  ! polar H, TIPS3P WATER HYDROGEN
+!MASS   411 OGTIP3  15.99940  ! TIPS3P WATER OXYGEN
+!MASS   412 DUM      0.00000  ! dummy atom
+!MASS   413 HE       4.00260  ! helium
+!MASS   414 NE      20.17970  ! neon
+
+DEFA FIRS NONE LAST NONE
+AUTO ANGLES DIHE
+
+!RESI ETHA          0.00 ! C2H6 ethane
+!GROUP
+!ATOM  H11 HGA3     0.09 !  H11      H21
+!ATOM  H12 HGA3     0.09 !    \      /
+!ATOM  H13 HGA3     0.09 ! H12-C1--C2-H22
+!ATOM  C1  CG331   -0.27 !    /      \
+!GROUP                   !  H13      H23
+!ATOM  H21 HGA3     0.09
+!ATOM  H22 HGA3     0.09
+!ATOM  H23 HGA3     0.09
+!ATOM  C2  CG331   -0.27
+!BOND C1 H11  C1 H12  C1 H13
+!BOND C1 C2   C2 H21  C2 H22  C2 H23
+!IC  C2  H11 *C1 H12  0.00 0.00  120.0 0.0  0.0
+!IC  C2  H11 *C1 H13  0.00 0.00 -120.0 0.0  0.0
+!IC  H11 C1  C2  H21  0.00 0.00  180.0 0.0  0.0
+!IC  C1  H21 *C2 H22  0.00 0.00  120.0 0.0  0.0
+!IC  C1  H21 *C2 H23  0.00 0.00 -120.0 0.0  0.0
+
+!RESI MEOH          0.00 ! CH4O methanol, adm jr.
+!GROUP
+!ATOM CB   CG331   -0.04 !  H11
+!ATOM OG   OG311   -0.65 !     \
+!ATOM HG1  HGP1     0.42 ! H12--C1--O1
+!ATOM HB1  HGA3     0.09 !     /      \
+!ATOM HB2  HGA3     0.09 !  H13       HO1
+!ATOM HB3  HGA3     0.09 !
+!BOND CB  OG  OG HG1
+!BOND CB HB1  CB HB2  CB  HB3
+!DONO HG1 OG
+!ACCE OG
+! only for analysis
+!IC HG1  OG   CB   HB1   0.0000  0.0000  180.0000  0.0000  0.0000
+!IC OG   HB1  *CB  HB2   0.0000  0.0000  120.0000  0.0000  0.0000
+!IC OG   HB1  *CB  HB3   0.0000  0.0000 -120.0000  0.0000  0.0000
+
+RESI EM         0.00  ! Dual Topology Ethane-Methanol
+GROUP
+ATOM  C1   CG331   -0.27 
+ATOM  OG  OG311    0.00 C2 H21 H22 H23
+ATOM  HG1 HGP1     0.00 C2 H21 H22 H23
+ATOM  H11 HGA3     0.09 
+ATOM  H12 HGA3     0.09 
+ATOM  H13 HGA3     0.09 
+GROUP                   
+ATOM  C2  CG331   -0.27 OG HG1
+ATOM  H21 HGA3     0.09 OG HG1
+ATOM  H22 HGA3     0.09 OG HG1
+ATOM  H23 HGA3     0.09 OG HG1
+BOND C1 H11  C1 H12  C1 H13
+BOND C1 C2   C2 H21  C2 H22  C2 H23
+BOND C1  OG  OG HG1
+IC  H11 C1 C2 H21    1.0   100.00  0.00 100.0  1.0 
+IC  C2  H11 *C1 H12  0.00 0.00  120.0 0.0  0.0
+IC  C2  H11 *C1 H13  0.00 0.00 -120.0 0.0  0.0
+IC  H11 C1  C2  H21  0.00 0.00  180.0 0.0  0.0
+IC  C1  H21 *C2 H22  0.00 0.00  120.0 0.0  0.0
+IC  C1  H21 *C2 H23  0.00 0.00 -120.0 0.0  0.0
+IC HG1  OG   C1   H11   0.0000  0.0000  180.0000  0.0000  0.0000
+IC OG   H11  *C1  H12   0.0000  0.0000  120.0000  0.0000  0.0000
+IC OG   H11  *C1  H13   0.0000  0.0000 -120.0000  0.0000  0.0000
+
+
+!IC  H11 C1 C2 H21    1.0   100.00  0.00 100.0  1.0 
+!IC  H11 C1 OG HG1    1.0   110.00  0.00 100.0  1.0 
+!IC  C2  H11 *C1 H12  0.00 0.00  120.0 0.0  0.0
+!IC  C2  H11 *C1 H13  0.00 0.00 -120.0 0.0  0.0
+!IC  C1  H21 *C2 H22  0.00 0.00  120.0 0.0  0.0
+!IC  C1  H21 *C2 H23  0.00 0.00 -120.0 0.0  0.0
+!IC HG1 OG   C1 H11  0.00 0.00  180.0  0.0 0.0
+!IC OG  C1 C2 H21  1.00 0.00  180.0  110.0 1.0
+
+
+END
+
+!read param card flex append
+!* Missing parameters for dual topology
+!*
+!ANGLES
+!!atom types     Ktheta    Theta0   ! Kub     S0
+!CG331 CG331 OG331   75.70    110.10 ! from CG331  CG321  OG311  
+!OG331 CG331 CG331   75.70    110.10 ! from CG331  CG321  OG311  
+!END
+
+
+return
