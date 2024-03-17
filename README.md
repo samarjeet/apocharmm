@@ -20,7 +20,7 @@ Samarjeet Prasad (NIH)
 
 Antti-Pekka Hynninen
 Bernard R. Brooks (NIH)
-# testapocharmm
+# apocharmm
 
 
 ## Installation 
@@ -39,7 +39,7 @@ Suggested installation method using [conda](https://conda.io):
 ```
 git clone git@github.com:samarjeet/apocharmm --recursive
 ```
-(if you already cloned this repo, but forgot the `--recursive` flag, simply run `git submodule update --init --force --remote` from within the testapocharmm directory).
+(if you already cloned this repo, but forgot the `--recursive` flag, simply run `git submodule update --init --force --remote` from within the apocharmm directory).
 
 2. Create & activate the right conda environment : 
 ```
