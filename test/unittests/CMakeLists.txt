@@ -109,6 +109,7 @@ add_library( CatchMain OBJECT ${UNITTEST_DIR}/${SOURCES_UNITTESTS_MAIN} ${HEADER
 
 
 foreach( name ${TARGETS_UNITTESTS_TESTS} )
+    message("samar ${name}")
     add_executable( ${name} ${name}.cpp $<TARGET_OBJECTS:CatchMain> ${HEADER_DIR}/catch.hpp )
     target_compile_definitions(${name} PUBLIC DATA_PATH="${PROJECT_SOURCE_DIR}/test/data/")
     target_link_libraries( ${name} PRIVATE ${EXTERNAL_LIBRARIES})
