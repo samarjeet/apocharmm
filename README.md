@@ -37,7 +37,7 @@ Suggested installation method using [conda](https://conda.io):
 
 1. Clone this repository via 
 ```
-git clone git@github.com:samarjeet/testapocharmm --recursive
+git clone git@github.com:samarjeet/apocharmm --recursive
 ```
 (if you already cloned this repo, but forgot the `--recursive` flag, simply run `git submodule update --init --force --remote` from within the testapocharmm directory).
 
