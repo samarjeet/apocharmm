@@ -1,6 +1,7 @@
 ## About ##
 
 CHARMM GPU-only molecular dynamics package.
+N.B. : This is version 0.0.1 of the code. We are adding some bug-fixes right now (like local file radings, constant save intervals etc). Please wait for this message to go away before using apoCHARMM for your prodcution runs. 
 
 ## License ##
 
