@@ -37,7 +37,9 @@ TEST_CASE("CharmmContext", "[unit]") {
     // Check temperature getter/setter
     auto ctx = std::make_shared<CharmmContext>(fm);
     ctx->setTemperature(t1);
+    std::cout << "Set temperature to " << ctx->getTemperature() << std::endl;
     REQUIRE(ctx->getTemperature() == t1);
+
 
     // Checking copy constructor
     auto ctx2 = std::make_shared<CharmmContext>(*ctx);

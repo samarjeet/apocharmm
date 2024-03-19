@@ -65,7 +65,7 @@ void DcdSubscriber::initialize() {
   numAtoms = charmmContext->getNumAtoms();
   // Writing the headers
   int firstStep = 0;
-  int interval = 0;
+  int interval = 1000; // TODO : get it from integrator
   float timeStep = 0.001;
   int boxFlag = 0;
 
