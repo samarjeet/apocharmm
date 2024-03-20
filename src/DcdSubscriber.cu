@@ -64,10 +64,11 @@ void DcdSubscriber::initialize() {
   }
   numAtoms = charmmContext->getNumAtoms();
   // Writing the headers
-  int firstStep = 0;
-  int interval = 1000; // TODO : get it from integrator
-  float timeStep = 0.001;
-  int boxFlag = 0;
+  int firstStep = 0; // TODO : get the firstStep from integrator
+  int interval = reportFreq;
+  float timeStep = integrator->getTimeStep();
+  // int boxFlag = 0;
+  int boxFlag = 1; // adding unit cell dimensions
 
   DcdHeader header;
   header.size1 = 84;
@@ -84,7 +85,7 @@ void DcdSubscriber::initialize() {
   header.ints1[5] = 0;
   header.ints1[6] = 0;
   header.ints1[7] = 0;
-  header.ints1[8] = 0;
+  header.ints1[8] = 0; // Number of fixed atoms
 
   header.timeStep = timeStep;
 
@@ -97,14 +98,15 @@ void DcdSubscriber::initialize() {
   header.ints2[6] = 0;
   header.ints2[7] = 0;
   header.ints2[8] = 0;
-  header.ints2[9] = 24;
+  header.ints2[9] = 35;
   header.ints2[10] = 84;
+
   header.ints2[11] = 164;
   header.ints2[12] = 2;
-
   // header.str1 = "Created by CHARMM";
   // header.str2 = "Created at time ";
   header.last[0] = 164;
+
   header.last[1] = 4;
   header.last[2] = numAtoms;
   header.last[3] = 4;
@@ -122,6 +124,28 @@ void DcdSubscriber::update() {
     initialize();
   }
   // std::cout << "In DCD update\n";
+
+  auto boxDimensions = charmmContext->getBoxDimensions();
+  /*
+  std::cout << "Box dimensions: " << boxDimensions[0] << " " << boxDimensions[1]
+            << " " << boxDimensions[2] << std::endl;
+  float timeStep = integrator->getTimeStep();
+  std::cout << "Time step: " << timeStep << std::endl;
+  */
+  // write 6 floats
+  float zero;
+  int boxSize = 6 * sizeof(double);
+
+  fout.write((char *)&boxSize, sizeof(int));
+
+  fout.write((char *)&boxDimensions[0], sizeof(double));
+  fout.write((char *)&zero, sizeof(double));
+  fout.write((char *)&boxDimensions[1], sizeof(double));
+  fout.write((char *)&zero, sizeof(double));
+  fout.write((char *)&zero, sizeof(double));
+  fout.write((char *)&boxDimensions[2], sizeof(double));
+
+  fout.write((char *)&boxSize, sizeof(int));
 
   auto xyzq = *(this->charmmContext->getXYZQ()->getHostXYZQ());
 
@@ -150,7 +174,7 @@ void DcdSubscriber::update() {
   fout.seekp(8);
   fout.write((char *)&numFramesWritten, sizeof(int));
 
-  int p = numFramesWritten * 1000;
+  int p = numFramesWritten * reportFreq;
   fout.seekp(20);
   fout.write((char *)&p, sizeof(int));
 

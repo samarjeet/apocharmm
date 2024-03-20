@@ -243,14 +243,8 @@ TEST_CASE("basicDynamics", "[unit]") {
 
   SECTION("DcdSubscriber") {
     auto myDcdSub = std::make_shared<DcdSubscriber>("DcdSub.dcd", 10);
-    auto ctx2 = std::make_shared<CharmmContext>(fm);
-    auto crd2 = std::make_shared<CharmmCrd>(dataPath + "argon_10.crd");
-    ctx2->setCoordinates(crd);
-    ctx2->assignVelocitiesAtTemperature(300);
-    auto integrator2 = std::make_shared<CudaVelocityVerletIntegrator>(0.001);
-    integrator2->setSimulationContext(ctx2);
-    integrator2->subscribe(myDcdSub);
-    CHECK_NOTHROW(integrator2->propagate(30));
+    integrator->subscribe(myDcdSub);
+    CHECK_NOTHROW(integrator->propagate(1000));
   }
 
   SECTION("Multiple subscribers") {
