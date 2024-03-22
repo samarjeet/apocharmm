@@ -98,7 +98,7 @@ void DcdSubscriber::initialize() {
   header.ints2[6] = 0;
   header.ints2[7] = 0;
   header.ints2[8] = 0;
-  header.ints2[9] = 35;
+  header.ints2[9] = 35; // CHARMM version, should be >= 22
   header.ints2[10] = 84;
 
   header.ints2[11] = 164;
@@ -126,13 +126,8 @@ void DcdSubscriber::update() {
   // std::cout << "In DCD update\n";
 
   auto boxDimensions = charmmContext->getBoxDimensions();
-  /*
-  std::cout << "Box dimensions: " << boxDimensions[0] << " " << boxDimensions[1]
-            << " " << boxDimensions[2] << std::endl;
-  float timeStep = integrator->getTimeStep();
-  std::cout << "Time step: " << timeStep << std::endl;
-  */
-  // write 6 floats
+  
+  // write 6 double
   float zero;
   int boxSize = 6 * sizeof(double);
 

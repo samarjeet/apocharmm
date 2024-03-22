@@ -120,7 +120,7 @@ void CudaIntegrator::propagate(int numSteps) {
   }
 
   // Logging
-  if (true) {
+  if (false) {
     if (not context->hasLoggerSet()) {
       context->setLogger();
     }

@@ -11,6 +11,7 @@
 #include "CharmmContext.h"
 #include "CharmmCrd.h"
 #include "CompositeSubscriber.h"
+#include "Constants.h"
 #include "CudaLangevinThermostatIntegrator.h"
 #include "EDSForceManager.h"
 #include "ForceManagerGenerator.h"
@@ -19,6 +20,7 @@
 #include "catch.hpp"
 #include "test_paths.h"
 #include <iostream>
+#include <random>
 #include <vector>
 
 TEST_CASE("rex", "[energy]") {
@@ -64,40 +66,80 @@ TEST_CASE("rex", "[energy]") {
     ctx0->assignVelocitiesAtTemperature(300);
     ctx1->assignVelocitiesAtTemperature(300);
 
-    ctx0->calculateForces(false, true, true);
-    ctx0->calculatePotentialEnergy(true, true);
-    ctx1->calculateForces(false, true, true);
-    ctx1->calculatePotentialEnergy(true, true);
+    auto integrator0 =
+        std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
+    integrator0->setFriction(5.0);
+    integrator0->setBathTemperature(300.0);
+    integrator0->setSimulationContext(ctx0);
 
-    auto pe00 = ctx0->getPotentialEnergy();
-    pe00.transferFromDevice();
-    std::cout << "Potential energy 0:" << pe00[0] << std::endl;
+    auto integrator1 =
+        std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
+    integrator1->setFriction(5.0);
+    integrator1->setBathTemperature(300.0);
+    integrator1->setSimulationContext(ctx1);
 
-    auto pe11 = ctx1->getPotentialEnergy();
-    pe11.transferFromDevice();
-    std::cout << "Potential energy 1:" << pe11[0] << std::endl;
+    for (int i = 0; i < 100; i++) {
 
-    // Swap the coordinates and calculate the potential energy
+      integrator0->propagate(1000);
+      integrator1->propagate(1000);
 
-    auto temp_crd0 = ctx0->getCoordinates();
-    auto temp_crd1 = ctx1->getCoordinates();
+      // ctx0->calculateForces(false, true, true);
+      ctx0->calculatePotentialEnergy(true, true);
+      // ctx1->calculateForces(false, true, true);
+      ctx1->calculatePotentialEnergy(true, true);
 
-    ctx0->setCoordinates(temp_crd1);
-    ctx1->setCoordinates(temp_crd0);
-    std::cout << "\n\nSwapped" << std::endl;
+      auto pe00 = ctx0->getPotentialEnergy();
+      pe00.transferFromDevice();
+      std::cout << "Potential energy 0:" << pe00[0] << std::endl;
 
-    // Now calculate the energies
-    // ctx0->calculateForces(false, true, true);
-    ctx0->calculatePotentialEnergy(true, true);
-    // ctx1->calculateForces(false, true, true);
-    ctx1->calculatePotentialEnergy(true, true);
+      auto pe11 = ctx1->getPotentialEnergy();
+      pe11.transferFromDevice();
+      std::cout << "Potential energy 1:" << pe11[0] << std::endl;
 
-    pe00 = ctx0->getPotentialEnergy();
-    pe00.transferFromDevice();
-    std::cout << "Potential energy 0:" << pe00[0] << std::endl;
+      // Swap the coordinates and calculate the potential energy
 
-    pe11 = ctx1->getPotentialEnergy();
-    pe11.transferFromDevice();
-    std::cout << "Potential energy 1:" << pe11[0] << std::endl;
+      auto temp_crd0 = ctx0->getCoordinates();
+      auto temp_crd1 = ctx1->getCoordinates();
+
+      ctx0->setCoordinates(temp_crd1);
+      ctx1->setCoordinates(temp_crd0);
+      std::cout << "\n\nSwapped" << std::endl;
+
+      // Now calculate the energies
+      ctx0->calculatePotentialEnergy(true, true);
+      ctx1->calculatePotentialEnergy(true, true);
+
+      auto pe01 = ctx0->getPotentialEnergy(); // psf 0 and coords 1
+      pe01.transferFromDevice();
+      std::cout << "Potential energy 0:" << pe01[0] << std::endl;
+
+      auto pe10 = ctx1->getPotentialEnergy(); // psf 1 and coords 0
+      pe10.transferFromDevice();
+      std::cout << "Potential energy 1:" << pe10[0] << std::endl;
+
+      double T = 300;
+      double kT = charmm::constants::kBoltz * T;
+      double beta = 1 / kT;
+      auto delta = beta * (pe01[0] + pe10[0] - pe00[0] - pe11[0]);
+      std::cout << "Delta: " << delta << std::endl;
+
+      double prob = delta <= 0 ? 1 : exp(-delta);
+      std::cout << "Probability: " << prob << std::endl;
+
+      std::random_device rd;
+      std::mt19937 gen(rd());
+      std::uniform_real_distribution<> dis(0, 1);
+
+      double r = dis(gen);
+      std::cout << "Random number: " << r << std::endl;
+
+      if (r < prob) {
+        std::cout << "Accepted" << std::endl;
+      } else {
+        std::cout << "Rejected" << std::endl;
+        ctx0->setCoordinates(temp_crd0);
+        ctx1->setCoordinates(temp_crd1);
+      }
+    }
   }
 }

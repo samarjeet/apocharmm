@@ -242,9 +242,43 @@ TEST_CASE("basicDynamics", "[unit]") {
   }
 
   SECTION("DcdSubscriber") {
-    auto myDcdSub = std::make_shared<DcdSubscriber>("DcdSub.dcd", 10);
+    int reportFrequency = 10;
+    auto myDcdSub =
+        std::make_shared<DcdSubscriber>("DcdSub.dcd", reportFrequency);
     integrator->subscribe(myDcdSub);
     CHECK_NOTHROW(integrator->propagate(1000));
+
+    // Read the content of the binary file "DcdSub.dcd"
+    std::ifstream dcdFile("DcdSub.dcd", std::ios::binary);
+    REQUIRE(dcdFile);
+    // Check the header
+    int size;
+    dcdFile.read(reinterpret_cast<char *>(&size), sizeof(int));
+    REQUIRE(size == 84);
+    char header[84];
+    dcdFile.read(header, size);
+    REQUIRE(header[0] == 'C');
+    REQUIRE(header[1] == 'O');
+    REQUIRE(header[2] == 'R');
+    REQUIRE(header[3] == 'D');
+
+    int readReportFrequency = (int)header[12];
+    REQUIRE(readReportFrequency == reportFrequency);
+
+    int end_size;
+    dcdFile.read(reinterpret_cast<char *>(&end_size), sizeof(int));
+    REQUIRE(end_size == size);
+
+    dcdFile.read(reinterpret_cast<char *>(&size), sizeof(int));
+    REQUIRE(size == 164);
+    size = 164;
+    int numTitleLines; // = 2
+    dcdFile.read(reinterpret_cast<char *>(&numTitleLines), sizeof(int));
+    REQUIRE(numTitleLines == 2);
+    char header2[160];
+
+    // dcdFile.read(reinterpret_cast<char *>(&end_size), sizeof(int));
+    //  REQUIRE(end_size == size);
   }
 
   SECTION("Multiple subscribers") {
