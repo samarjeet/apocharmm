@@ -83,9 +83,7 @@ TEST_CASE("rex", "[energy]") {
       integrator0->propagate(1000);
       integrator1->propagate(1000);
 
-      // ctx0->calculateForces(false, true, true);
       ctx0->calculatePotentialEnergy(true, true);
-      // ctx1->calculateForces(false, true, true);
       ctx1->calculatePotentialEnergy(true, true);
 
       auto pe00 = ctx0->getPotentialEnergy();
