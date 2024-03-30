@@ -75,12 +75,12 @@ TEST_CASE("sep_benzene_pyrrole", "[free energy]") {
     CudaLangevinThermostatIntegrator equilIntegrator(0.001);
     equilIntegrator.setFriction(5.0);
     equilIntegrator.setBathTemperature(300.0);
-    equilIntegrator.setSimulationContext(ctx);
+    equilIntegrator.setCharmmContext(ctx);
 
     CudaLangevinThermostatIntegrator integrator(0.001);
     integrator.setFriction(5.0);
     integrator.setBathTemperature(300.0);
-    integrator.setSimulationContext(ctx);
+    integrator.setCharmmContext(ctx);
 
     int iter = 0;
 

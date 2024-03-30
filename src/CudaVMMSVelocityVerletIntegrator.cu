@@ -21,7 +21,7 @@ CudaVMMSVelocityVerletIntegrator::CudaVMMSVelocityVerletIntegrator(
 
 void CudaVMMSVelocityVerletIntegrator::initialize() {}
 
-void CudaVMMSVelocityVerletIntegrator::setSimulationContexts(
+void CudaVMMSVelocityVerletIntegrator::setCharmmContexts(
     std::vector<CharmmContext> ctxs) {
   contexts = ctxs;
   std::cout << "Contexts set in VMMSIntegrator" << std::endl;

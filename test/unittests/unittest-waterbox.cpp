@@ -58,7 +58,7 @@ TEST_CASE("waterbox", "[energy conservation]") {
   ctx->getPotentialEnergy();
 
   CudaMinimizer minimizer;
-  minimizer.setSimulationContext(ctx);
+  minimizer.setCharmmContext(ctx);
   minimizer.minimize(10000);
 
   ctx->calculatePotentialEnergy(true, true);
@@ -72,7 +72,7 @@ TEST_CASE("waterbox", "[energy conservation]") {
       0.001, bathTemperature, frictionCoeff);
   integrator->setFriction(0.0);
   // integrator.setDebugPrintFrequency(100);
-  integrator->setSimulationContext(ctx);
+  integrator->setCharmmContext(ctx);
   // integrator.subscribe(restartSub);
 
   integrator->propagate(100);
@@ -100,7 +100,7 @@ psf = std::make_shared<CharmmPSF>("../test/data/water2.psf");
   SECTION("velocity Verlet") {
     integratorMargin = .01;
     auto integrator = std::make_shared<CudaVelocityVerletIntegrator>(0.001);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
     for (int i = 0; i < nFrames; i++) {
       integrator->propagate(nStepsPerFrame);
       epotCC = ctx->getPotentialEnergy();
@@ -114,7 +114,7 @@ psf = std::make_shared<CharmmPSF>("../test/data/water2.psf");
     integratorMargin = .01;
     auto integrator =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.001, 300, 0.0);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
     for (int i = 0; i < nFrames; i++) {
       integrator->propagate(nStepsPerFrame);
       epotCC = ctx->getPotentialEnergy();
@@ -128,7 +128,7 @@ psf = std::make_shared<CharmmPSF>("../test/data/water2.psf");
     integratorMargin = .01;
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.001);
     integrator->setPistonFriction(0.0);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
     integrator->setBathTemperature(300.0);
     for (int i = 0; i < nFrames; i++) {
       integrator->propagate(nStepsPerFrame);

@@ -60,7 +60,7 @@ TEST_CASE("argon1000", "[energy conservation]") {
   SECTION("velocity Verlet") {
     integratorMargin = .01;
     auto integrator = std::make_shared<CudaVelocityVerletIntegrator>(0.001);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
     for (int i = 0; i < nFrames; i++) {
       integrator->propagate(nStepsPerFrame);
       epotCC = ctx->getPotentialEnergy();
@@ -76,7 +76,7 @@ TEST_CASE("argon1000", "[energy conservation]") {
     integratorMargin = .1;
     auto integrator =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.001, 300., 0.0);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
     for (int i = 0; i < nFrames; i++) {
       integrator->propagate(nStepsPerFrame);
       epotCC = ctx->getPotentialEnergy();

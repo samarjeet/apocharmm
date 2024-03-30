@@ -118,7 +118,7 @@ TEST_CASE("CharmmContext", "[unit]") {
     // pressure from integrator ?
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
     integrator->setPistonFriction(0.0);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
     integrator->setCrystalType(CRYSTAL::CUBIC);
     // integrator->setDebugPrintFrequency(1);
     ctx->computePressure();

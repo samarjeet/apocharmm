@@ -35,7 +35,7 @@ TEST_CASE("logger", "[unit]") {
   ctx->assignVelocitiesAtTemperature(300.0);
 
   auto integrator = std::make_shared<CudaVelocityVerletIntegrator>(0.001);
-  integrator->setSimulationContext(ctx);
+  integrator->setCharmmContext(ctx);
 
   integrator->propagate(100);
 

@@ -22,7 +22,7 @@ CudaMinimizer::CudaMinimizer() {
   verboseFlag = false;
 }
 
-void CudaMinimizer::setSimulationContext(std::shared_ptr<CharmmContext> csc) {
+void CudaMinimizer::setCharmmContext(std::shared_ptr<CharmmContext> csc) {
   context = csc;
 }
 

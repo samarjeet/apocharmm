@@ -16,7 +16,7 @@
 
 CudaHolonomicConstraint::CudaHolonomicConstraint() {}
 
-void CudaHolonomicConstraint::setSimulationContext(
+void CudaHolonomicConstraint::setCharmmContext(
     std::shared_ptr<CharmmContext> ctx) {
   context = ctx;
 
@@ -40,7 +40,7 @@ void CudaHolonomicConstraint::setSimulationContext(
 
 void CudaHolonomicConstraint::setup(double ts) {
   timeStep = ts;
-  //xyzq_stored.set_ncoord(context->getNumAtoms());
+  // xyzq_stored.set_ncoord(context->getNumAtoms());
   coords_stored.allocate(context->getNumAtoms());
 
   settleWaterIndex = context->getWaterMolecules();

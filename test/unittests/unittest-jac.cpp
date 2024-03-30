@@ -47,7 +47,7 @@ TEST_CASE("verlet integrator", "[dynamics]") {
     ctx->assignVelocitiesAtTemperature(300);
 
     CudaVelocityVerletIntegrator integrator(0.001);
-    integrator.setSimulationContext(ctx);
+    integrator.setCharmmContext(ctx);
 
     // integrator.propagate(20000);
     // auto subscriber = std::make_shared<NetCDFSubscriber>("vv_jac.nc", ctx);

@@ -20,7 +20,7 @@ private:
 public:
   CudaLeapFrogIntegrator(double timeStep);
 
-  void setSimulationContext(std::shared_ptr<CharmmContext> charmmContext);
+  void setCharmmContext(std::shared_ptr<CharmmContext> charmmContext);
 
   // Put these in the base class
   void initialize() override;

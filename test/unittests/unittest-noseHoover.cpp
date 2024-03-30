@@ -44,7 +44,7 @@ TEST_CASE("noseHooverThermostat", "[dynamics]") {
     std::cout << ctx->calculatePotentialEnergy(true, true) << std::endl;
 
     CudaMinimizer min;
-    min.setSimulationContext(ctx);
+    min.setCharmmContext(ctx);
     min.minimize(10);
     std::cout <<"Energy after min : " << ctx->calculatePotentialEnergy(true, true) << std::endl;
     ctx->assignVelocitiesAtTemperature(300);
@@ -58,9 +58,9 @@ TEST_CASE("noseHooverThermostat", "[dynamics]") {
     calculateKineticEnergyTest(velMass.getHostArray(), kineticEnegy);
 
     auto integrator = CudaNoseHooverThermostatIntegrator(0.001);
-    integrator.setSimulationContext(ctx);
+    integrator.setCharmmContext(ctx);
     //auto integrator = CudaVelocityVerletIntegrator(0.001);
-    //integrator.setSimulationContext(ctx);
+    //integrator.setCharmmContext(ctx);
     //integrator.propagate(1000);
 
     /*

@@ -68,9 +68,9 @@ public:
    *
    * @param[in] ctx CharmmContext to be linked
    */
-  virtual void setSimulationContext(std::shared_ptr<CharmmContext> ctx);
+  virtual void setCharmmContext(std::shared_ptr<CharmmContext> ctx);
 
-  std::shared_ptr<CharmmContext> getSimulationContext();
+  std::shared_ptr<CharmmContext> getCharmmContext();
 
   // remove this
   // void initializeOldNewCoords(int numAtoms);

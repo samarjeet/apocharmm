@@ -211,7 +211,7 @@ TEST_CASE("basicDynamics", "[unit]") {
 
   auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(.001);
   integrator->setPistonFriction(20.0);
-  integrator->setSimulationContext(ctx);
+  integrator->setCharmmContext(ctx);
   integrator->setCrystalType(CRYSTAL::CUBIC);
   std::vector<double> pistonmass = {500.0};
   integrator->setPistonMass(pistonmass);
@@ -336,7 +336,7 @@ TEST_CASE("MBARSubscriber") {
   SECTION("save") {
     auto integrator =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002, 300., 12.);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
     auto myRestartSubWrite =
         std::make_shared<RestartSubscriber>("restartWaterThermostat.res", 10);
     integrator->subscribe(myRestartSubWrite);
@@ -374,7 +374,7 @@ TEST_CASE("MBARSubscriber") {
 
     auto integrator =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002, 300., 12.);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
 
     integrator->subscribe(readRestartSub);
 
@@ -428,7 +428,7 @@ TEST_CASE("debugpy") {
 
   auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
   integrator->setPistonFriction(10.0);
-  integrator->setSimulationContext(ctx);
+  integrator->setCharmmContext(ctx);
   integrator->setCrystalType(CRYSTAL::TETRAGONAL);
   integrator->setPistonMass({500.0, 500.0});
 
@@ -481,7 +481,7 @@ SECTION("MethaneCCSAI") {
 
     auto integrator =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.001, 300., 5.);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
 
     auto mbarsub = std::make_shared<MBARSubscriber>("mbarsub.out", 10);
     integrator->subscribe(mbarsub);

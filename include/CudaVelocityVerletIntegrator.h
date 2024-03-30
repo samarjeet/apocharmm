@@ -25,7 +25,7 @@ public:
 
   // Put these in the base class
   // void setContext();
-  void setSimulationContext(std::shared_ptr<CharmmContext> charmmContext);
+  void setCharmmContext(std::shared_ptr<CharmmContext> charmmContext);
   void initialize();
   void propagateOneStep() override;
   std::map<std::string, std::string> getIntegratorDescriptors() override;

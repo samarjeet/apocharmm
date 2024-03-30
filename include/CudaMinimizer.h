@@ -27,7 +27,7 @@ public:
   CudaMinimizer();
 
   // This should not be a raw pointer
-  void setSimulationContext(std::shared_ptr<CharmmContext> csc);
+  void setCharmmContext(std::shared_ptr<CharmmContext> csc);
   void minimize(int numSteps);
   void minimize();
 

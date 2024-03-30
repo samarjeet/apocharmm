@@ -26,7 +26,7 @@ TEST_CASE("checkpint", "[basic][extra]") {
   std::vector<double> boxDims = {50.0, 50.0, 50.0};
   std::vector<std::string> prmFiles{dataPath + "toppar_water_ions.str"};
 
-  SECTION("write") {
+  SECTION("writeRead") {
     // Read topology, parameters, PSF, and coordinates
     auto prm = std::make_shared<CharmmParameters>(prmFiles);
     auto psf = std::make_shared<CharmmPSF>(dataPath + "waterbox.psf");
@@ -45,20 +45,37 @@ TEST_CASE("checkpint", "[basic][extra]") {
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
     integrator->setCrystalType(CRYSTAL::CUBIC);
     integrator->setPistonFriction(12.0);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
 
     // Create checkpoint object and checkpoint the current state of the
     // simulation
     auto checkpoint = std::make_shared<Checkpoint>("test.chk");
-    checkpoint->writeCheckpoint(ctx);
-    // checkpoint->writeCheckpoint(integrator);
-    // checkpoint->writeCheckpoint(ctx, integrator);
+    checkpoint->writeCheckpoint(integrator);
 
-    // // Run simulation
-    // integrator->propagate(nsteps);
+    auto coordsFromContext = ctx->getCoordinates();
+    std::cout << "size of coords : " << coordsFromContext.size() << std::endl;
+    // coordsFromContext.transferFromDevice();
+    auto coordsChargesFromContext = ctx->getCoordinatesCharges();
+    coordsChargesFromContext.transferFromDevice();
+
+    // Read from checkpoint file
+    auto checkpoint1 = std::make_shared<Checkpoint>("test.chk");
+
+    // Setup new CHARMM context
+    auto ctx1 = std::make_shared<CharmmContext>(fm);
+    ctx1->setupFromCheckpoint(checkpoint1);
+
+    std::cout << "size of coords : " << ctx->getNumAtoms() << std::endl;
+
+    // Setup new integrator
+    auto integrator1 = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
+    // integrator->setupFromCheckpoint(checkpoint1);
+
+    CHECK(ctx->getNumAtoms() == ctx1->getNumAtoms());
+
+    //     CHECK(CompareVectors1(coordsChargesFromContext.getHostArray(),
+    //                           coordsChargesFromCheckpoint.getHostArray()));
   }
-
-  SECTION("read") {}
 
   /* *
   SECTION("identicalPropagation") {
@@ -71,11 +88,11 @@ TEST_CASE("checkpint", "[basic][extra]") {
     integrator1->setPistonFriction(0.0);
     integrator1->setSeedForPistonFriction(rdmSeed);
     integrator1->setNoseHooverFlag(false);
-    integrator1->setSimulationContext(ctx);
+    integrator1->setCharmmContext(ctx);
     // auto integrator1 =
     //     std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
     // integrator1->setFriction(0.0);
-    // integrator1->setSimulationContext(ctx);
+    // integrator1->setCharmmContext(ctx);
 
     // Create a restart file
     auto restartsub = std::make_shared<RestartSubscriber>("idprop.res", nsteps);
@@ -107,11 +124,11 @@ TEST_CASE("checkpint", "[basic][extra]") {
     integrator2->setPistonFriction(0.0);
     integrator2->setSeedForPistonFriction(rdmSeed);
     integrator2->setNoseHooverFlag(false);
-    integrator2->setSimulationContext(ctx2);
+    integrator2->setCharmmContext(ctx2);
     // auto integrator2 =
     //     std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
     // integrator2->setFriction(0.0);
-    // integrator2->setSimulationContext(ctx2);
+    // integrator2->setCharmmContext(ctx2);
 
     integrator2->propagate(nsteps);
     auto xyzq2 = ctx2->getCoordinatesCharges();
@@ -136,11 +153,11 @@ TEST_CASE("checkpint", "[basic][extra]") {
     integrator3->setPistonFriction(0.0);
     integrator3->setSeedForPistonFriction(rdmSeed);
     integrator3->setNoseHooverFlag(false);
-    integrator3->setSimulationContext(ctx3);
+    integrator3->setCharmmContext(ctx3);
     // auto integrator3 =
     //     std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
     // integrator3->setFriction(0.0);
-    // integrator3->setSimulationContext(ctx2);
+    // integrator3->setCharmmContext(ctx2);
 
     auto restartsub3 = std::make_shared<RestartSubscriber>("idprop.res");
     integrator3->subscribe(restartsub3);
@@ -244,7 +261,7 @@ TEST_CASE("checkpint", "[basic][extra]") {
     // auto integrator2 = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
     // integrator2->setCrystalType(CRYSTAL::CUBIC);
     // integrator2->setPistonFriction(0.0);
-    // integrator2->setSimulationContext(ctx2);
+    // integrator2->setCharmmContext(ctx2);
     // integrator2->setSeedForPistonFriction(rdmSeed);
     // auto restartsub2 =
     //     std::make_shared<RestartSubscriber>("idprop.res", 4 * nsteps);

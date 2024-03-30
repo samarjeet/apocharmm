@@ -70,13 +70,13 @@ TEST_CASE("benzene_pyrrole", "[free energy]") {
         // ctx->calculatePressure();
         auto thermostat = CudaLangevinThermostatIntegrator(0.002);
         thermostat.setBathTemperature(300.0);
-        thermostat.setSimulationContext(ctx);
+        thermostat.setCharmmContext(ctx);
         thermostat.setFriction(12.0);
         thermostat.propagate(10000);
 
         auto integrator = CudaLangevinPistonIntegrator(0.002);
 
-        integrator.setSimulationContext(ctx);
+        integrator.setCharmmContext(ctx);
         integrator.setPistonMass(50.0);
         integrator.setPistonFriction(20.0);
 
@@ -106,23 +106,23 @@ TEST_CASE("benzene_pyrrole", "[free energy]") {
     CudaLangevinThermostatIntegrator equilIntegrator(0.001);
     equilIntegrator.setFriction(5.0);
     equilIntegrator.setBathTemperature(300.0);
-    equilIntegrator.setSimulationContext(ctx);
+    equilIntegrator.setCharmmContext(ctx);
 
     CudaLangevinThermostatIntegrator integrator(0.001);
     integrator.setFriction(5.0);
     integrator.setBathTemperature(300.0);
-    integrator.setSimulationContext(ctx);
+    integrator.setCharmmContext(ctx);
 
     /*
     auto equilIntegrator = CudaLangevinPistonIntegrator(0.001);
-    equilIntegrator.setSimulationContext(ctx);
+    equilIntegrator.setCharmmContext(ctx);
     equilIntegrator.setPistonMass(204.0);
     equilIntegrator.setPistonFriction(20.0);
     equilIntegrator.setBathTemperature(300.0);
     equilIntegrator.setCrystalType(CRYSTAL::CUBIC);
 
     auto integrator = CudaLangevinPistonIntegrator(0.001);
-    integrator.setSimulationContext(ctx);
+    integrator.setCharmmContext(ctx);
     integrator.setPistonMass(204.0);
     integrator.setPistonFriction(20.0);
     integrator.setBathTemperature(300.0);

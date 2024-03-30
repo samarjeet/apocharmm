@@ -285,7 +285,7 @@ TEST_CASE("MBARForceManager", "[unit]") {
     ctx->assignVelocitiesAtTemperature(300.0);
 
     auto integrator = CudaLangevinThermostatIntegrator(0.001, 300.0, 5.0);
-    integrator.setSimulationContext(ctx);
+    integrator.setCharmmContext(ctx);
     integrator.propagate(10);
 
     // Now to get some energies...
@@ -402,7 +402,7 @@ TEST_CASE("MBARForceManager", "[unit]") {
     // Check propagation with langevin piston
     auto integrator = CudaLangevinPistonIntegrator(0.002);
     integrator.setBathTemperature(310.0);
-    integrator.setSimulationContext(mbarctx);
+    integrator.setCharmmContext(mbarctx);
     integrator.setPistonFriction(12.0);
     integrator.setCrystalType(CRYSTAL::TETRAGONAL);
 

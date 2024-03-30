@@ -30,8 +30,11 @@
 #include "cuda_utils.h"
 #include <random_utils.h>
 
-// Forward declaration ?
+// #include "Checkpoint.h"
+
+// Forward declaration
 class Logger;
+class Checkpoint;
 
 /**
  * @brief Mediator class for the MD simulation.
@@ -59,6 +62,8 @@ public:
    * does not change the original
    */
   CharmmContext(const CharmmContext &ctxIn);
+
+  void setupFromCheckpoint(std::shared_ptr<Checkpoint> checkpoint);
 
   /**
    * @brief Set the coordinates <b>and the charges</b>

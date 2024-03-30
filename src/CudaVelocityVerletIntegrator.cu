@@ -19,10 +19,10 @@ CudaVelocityVerletIntegrator::CudaVelocityVerletIntegrator(ts_t timeStep)
   stepsSinceLastReport = 0;
 }
 
-void CudaVelocityVerletIntegrator::setSimulationContext(
+void CudaVelocityVerletIntegrator::setCharmmContext(
     std::shared_ptr<CharmmContext> ctx) {
 
-  CudaIntegrator::setSimulationContext(ctx);
+  CudaIntegrator::setCharmmContext(ctx);
 }
 
 void CudaVelocityVerletIntegrator::initialize() {}

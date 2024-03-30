@@ -54,7 +54,7 @@ std::vector<double> getRestartFileEntry(std::string fname,
 std::shared_ptr<CudaLangevinThermostatIntegrator>
 setupLangevinThermostatIntegrator(std::shared_ptr<CharmmContext> ctx) {
   auto integrator = std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-  integrator->setSimulationContext(ctx);
+  integrator->setCharmmContext(ctx);
   integrator->setFriction(12.0);
   integrator->setBathTemperature(300.0);
   return integrator;
@@ -64,7 +64,7 @@ std::shared_ptr<CudaLangevinPistonIntegrator>
 setupLangevinPistonIntegrator(std::shared_ptr<CharmmContext> ctx) {
   auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
   integrator->setPistonFriction(20.0);
-  integrator->setSimulationContext(ctx);
+  integrator->setCharmmContext(ctx);
   integrator->setCrystalType(CRYSTAL::CUBIC);
   return integrator;
 }
@@ -72,7 +72,7 @@ setupLangevinPistonIntegrator(std::shared_ptr<CharmmContext> ctx) {
 std::shared_ptr<CudaVelocityVerletIntegrator>
 setupVelocityVerletIntegrator(std::shared_ptr<CharmmContext> ctx) {
   auto integrator = std::make_shared<CudaVelocityVerletIntegrator>(0.002);
-  integrator->setSimulationContext(ctx);
+  integrator->setCharmmContext(ctx);
   return integrator;
 }
 
@@ -176,7 +176,7 @@ TEST_CASE("restart") {
   SECTION("save") {
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
     integrator->setPistonFriction(20.0);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
     integrator->setCrystalType(CRYSTAL::CUBIC);
     integrator->propagate(20);
 
@@ -270,7 +270,7 @@ TEST_CASE("restart") {
     // it
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
     integrator->setPistonFriction(20.0);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
     integrator->setCrystalType(CRYSTAL::CUBIC);
     auto writeSub = std::make_shared<RestartSubscriber>(fileName, 10);
 
@@ -305,7 +305,7 @@ TEST_CASE("restart") {
   SECTION("savingPoint") {
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
     integrator->setPistonFriction(20.0);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
     integrator->setCrystalType(CRYSTAL::CUBIC);
     auto savingpointres1 =
         std::make_shared<RestartSubscriber>("savingPoint1.res", 10);
@@ -330,7 +330,7 @@ TEST_CASE("restart") {
 
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
     integrator->setPistonFriction(20.0);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
     integrator->setCrystalType(CRYSTAL::CUBIC);
 
     integrator->subscribe(readRestartSub);
@@ -394,7 +394,7 @@ TEST_CASE("restart") {
     auto wrongCrystalIntegrator =
         std::make_shared<CudaLangevinPistonIntegrator>(0.002);
     wrongCrystalIntegrator->setPistonFriction(20.0);
-    wrongCrystalIntegrator->setSimulationContext(ctx);
+    wrongCrystalIntegrator->setCharmmContext(ctx);
     wrongCrystalIntegrator->setCrystalType(CRYSTAL::TETRAGONAL);
     auto wrongRestartSub = std::make_shared<RestartSubscriber>(fileName, 30);
     wrongCrystalIntegrator->subscribe(wrongRestartSub);
@@ -417,11 +417,11 @@ TEST_CASE("restart") {
     integrator1->setPistonFriction(0.0);
     integrator1->setSeedForPistonFriction(rdmSeed);
     integrator1->setNoseHooverFlag(false);
-    integrator1->setSimulationContext(ctx);
+    integrator1->setCharmmContext(ctx);
     // auto integrator1 =
     //     std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
     // integrator1->setFriction(0.0);
-    // integrator1->setSimulationContext(ctx);
+    // integrator1->setCharmmContext(ctx);
 
     // Create a restart file
     auto restartsub = std::make_shared<RestartSubscriber>("idprop.res", nsteps);
@@ -453,11 +453,11 @@ TEST_CASE("restart") {
     integrator2->setPistonFriction(0.0);
     integrator2->setSeedForPistonFriction(rdmSeed);
     integrator2->setNoseHooverFlag(false);
-    integrator2->setSimulationContext(ctx2);
+    integrator2->setCharmmContext(ctx2);
     // auto integrator2 =
     //     std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
     // integrator2->setFriction(0.0);
-    // integrator2->setSimulationContext(ctx2);
+    // integrator2->setCharmmContext(ctx2);
 
     integrator2->propagate(nsteps);
     auto xyzq2 = ctx2->getCoordinatesCharges();
@@ -482,11 +482,11 @@ TEST_CASE("restart") {
     integrator3->setPistonFriction(0.0);
     integrator3->setSeedForPistonFriction(rdmSeed);
     integrator3->setNoseHooverFlag(false);
-    integrator3->setSimulationContext(ctx3);
+    integrator3->setCharmmContext(ctx3);
     // auto integrator3 =
     //     std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
     // integrator3->setFriction(0.0);
-    // integrator3->setSimulationContext(ctx2);
+    // integrator3->setCharmmContext(ctx2);
 
     auto restartsub3 = std::make_shared<RestartSubscriber>("idprop.res");
     integrator3->subscribe(restartsub3);
@@ -590,7 +590,7 @@ TEST_CASE("restart") {
     // auto integrator2 = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
     // integrator2->setCrystalType(CRYSTAL::CUBIC);
     // integrator2->setPistonFriction(0.0);
-    // integrator2->setSimulationContext(ctx2);
+    // integrator2->setCharmmContext(ctx2);
     // integrator2->setSeedForPistonFriction(rdmSeed);
     // auto restartsub2 =
     //     std::make_shared<RestartSubscriber>("idprop.res", 4 * nsteps);
@@ -658,7 +658,7 @@ TEST_CASE("restartRead") {
 
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
     integrator->setPistonFriction(20.0);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
     integrator->setCrystalType(CRYSTAL::CUBIC);
 
     // setting positions [->context]

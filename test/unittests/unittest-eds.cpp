@@ -144,7 +144,7 @@ TEST_CASE("consph", "[unit]") {
     auto integrator = std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
     integrator->setFriction(5.0);
     integrator->setBathTemperature(T);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
 
     auto compositeSub = std::make_shared<CompositeSubscriber>("mbar.out");
     compositeSub->setReportFreq(100);
@@ -269,13 +269,13 @@ TEST_CASE("consph", "[unit]") {
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
     integrator_0->setFriction(5.0);
     integrator_0->setBathTemperature(T);
-    integrator_0->setSimulationContext(ctx_0);
+    integrator_0->setCharmmContext(ctx_0);
 
     auto integrator_1 =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
     integrator_1->setFriction(5.0);
     integrator_1->setBathTemperature(T);
-    integrator_1->setSimulationContext(ctx_1);
+    integrator_1->setCharmmContext(ctx_1);
 
     auto compositeSub_0 = std::make_shared<CompositeSubscriber>("mbar_0.out");
     compositeSub_0->setReportFreq(100);
@@ -444,7 +444,7 @@ TEST_CASE("eds", "[energy]") {
     integrator->setBathTemperature(300.0);
     std::cout << "isinit " << fmEDS->isInitialized()
               << ctx->getForceManager()->isInitialized() << std::endl;
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
 
     auto compositeSub = std::make_shared<CompositeSubscriber>("mbar.out");
     compositeSub->setReportFreq(100);
@@ -501,7 +501,7 @@ TEST_CASE("eds", "[energy]") {
       ctx->assignVelocitiesAtTemperature(300);
 
       CudaVelocityVerletIntegrator integrator(0.001);
-      integrator.setSimulationContext(ctx);
+      integrator.setCharmmContext(ctx);
 
       auto subscriber = std::make_shared<NetCDFSubscriber>("vv_eds_2cle.nc",
     ctx); ctx->subscribe(subscriber); auto dualTopologySubscriber =
@@ -553,7 +553,7 @@ TEST_CASE("eds", "[energy]") {
     ctx->assignVelocitiesAtTemperature(100);
 
     //CudaVelocityVerletIntegrator integrator(0.001);
-    //integrator.setSimulationContext(ctx);
+    //integrator.setCharmmContext(ctx);
 
     //auto subscriber = std::make_shared<NetCDFSubscriber>("vv_eds_water.nc",
   ctx);

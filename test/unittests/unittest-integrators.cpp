@@ -43,7 +43,7 @@ setupLangevinPistonIntegrator(std::shared_ptr<CharmmContext> ctx) {
   std::shared_ptr<CudaLangevinPistonIntegrator> integrator =
       std::make_shared<CudaLangevinPistonIntegrator>(0.001);
   integrator->setPistonFriction(10.0);
-  integrator->setSimulationContext(ctx);
+  integrator->setCharmmContext(ctx);
   integrator->setCrystalType(CRYSTAL::CUBIC);
   integrator->setPistonMass({500.0});
   return integrator;
@@ -53,7 +53,7 @@ std::shared_ptr<CudaLangevinThermostatIntegrator>
 setupLangevinThermostatIntegrator(std::shared_ptr<CharmmContext> ctx) {
   std::shared_ptr<CudaLangevinThermostatIntegrator> integrator =
       std::make_shared<CudaLangevinThermostatIntegrator>(0.001);
-  integrator->setSimulationContext(ctx);
+  integrator->setCharmmContext(ctx);
   integrator->setBathTemperature(300.0);
   integrator->setFriction(12.0);
   return integrator;
@@ -63,7 +63,7 @@ std::shared_ptr<CudaLeapFrogIntegrator>
 setupLeapFrogIntegrator(std::shared_ptr<CharmmContext> ctx) {
   std::shared_ptr<CudaLeapFrogIntegrator> integrator =
       std::make_shared<CudaLeapFrogIntegrator>(0.001);
-  integrator->setSimulationContext(ctx);
+  integrator->setCharmmContext(ctx);
   return integrator;
 }
 
@@ -71,7 +71,7 @@ std::shared_ptr<CudaVelocityVerletIntegrator>
 setupVelocityVerletIntegrator(std::shared_ptr<CharmmContext> ctx) {
   std::shared_ptr<CudaVelocityVerletIntegrator> integrator =
       std::make_shared<CudaVelocityVerletIntegrator>(0.001);
-  integrator->setSimulationContext(ctx);
+  integrator->setCharmmContext(ctx);
   return integrator;
 }
 
@@ -79,7 +79,7 @@ std::shared_ptr<CudaVerletIntegrator>
 setupVerletIntegrator(std::shared_ptr<CharmmContext> ctx) {
   std::shared_ptr<CudaVerletIntegrator> integrator =
       std::make_shared<CudaVerletIntegrator>(0.001);
-  integrator->setSimulationContext(ctx);
+  integrator->setCharmmContext(ctx);
   return integrator;
 }
 
@@ -103,10 +103,10 @@ TEST_CASE("Basic functions", "[unittest]") {
 
     auto integrator = std::make_shared<CudaVelocityVerletIntegrator>(0.001);
     CHECK_THROWS(integrator->propagate(10));
-    CHECK_NOTHROW(integrator->setSimulationContext(ctx));
+    CHECK_NOTHROW(integrator->setCharmmContext(ctx));
 
     // exception if setting a context to integrator already having one
-    CHECK_THROWS(integrator->setSimulationContext(ctx));
+    CHECK_THROWS(integrator->setCharmmContext(ctx));
 
     integrator->setDebugPrintFrequency(10);
 
@@ -158,7 +158,7 @@ TEST_CASE("Basic functions", "[unittest]") {
     ctx->setCoordinates(crd);
     auto integr =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002, 300, 12.);
-    integr->setSimulationContext(ctx);
+    integr->setCharmmContext(ctx);
     // This should throw ! That's what we're testing.
     CHECK_THROWS(integr->propagate(10));
   }
@@ -175,7 +175,7 @@ TEST_CASE("Basic functions", "[unittest]") {
     ctx->setCoordinates(crd);
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
     integrator->setPistonFriction(12.0);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
     integrator->setCrystalType(CRYSTAL::CUBIC);
     integrator->setPistonMass({500.0});
     integrator->propagate(100);
@@ -327,7 +327,7 @@ TEST_CASE("waterDimer", "[gasphase]") {
     auto integrator =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002, 300, 0.0);
     integrator->setDebugPrintFrequency(100);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
     CHECK_NOTHROW(integrator->propagate(nsteps));
   }
 }
@@ -385,8 +385,8 @@ TEST_CASE("deterministic") {
         integrator2 = std::make_shared<CudaVelocityVerletIntegrator>(0.001);
     integrator1->setDebugPrintFrequency(1);
     integrator2->setDebugPrintFrequency(1);
-    integrator1->setSimulationContext(ctx1);
-    integrator2->setSimulationContext(ctx2);
+    integrator1->setCharmmContext(ctx1);
+    integrator2->setCharmmContext(ctx2);
 
     // Check that initial velocities are identical
     CudaContainer<double4> vel1 = ctx1->getVelocityMass(),
@@ -443,8 +443,8 @@ TEST_CASE("deterministic") {
              0.001, 300, 0.0),
          integrator2 = std::make_shared<CudaLangevinThermostatIntegrator>(
              0.001, 300, 0.0);
-    integrator1->setSimulationContext(ctx1);
-    integrator2->setSimulationContext(ctx2);
+    integrator1->setCharmmContext(ctx1);
+    integrator2->setCharmmContext(ctx2);
 
     // Check that initial velocities are identical
     CudaContainer<double4> vel1 = ctx1->getVelocityMass(),

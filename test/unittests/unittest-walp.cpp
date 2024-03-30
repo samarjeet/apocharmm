@@ -52,7 +52,7 @@ TEST_CASE("verlet integrator", "[dynamics]") {
     //std::cin >> inp;
 
     CudaVelocityVerletIntegrator integrator(0.001);
-    integrator.setSimulationContext(ctx);
+    integrator.setCharmmContext(ctx);
 
     integrator.propagate(50000);
     //  auto subscriber = std::make_shared<DcdSubscriber>("vv_walp.dcd", ctx);
