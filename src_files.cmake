@@ -3,6 +3,7 @@ list(APPEND src_files
   src/CharmmContext.cu
   src/Checkpoint.cu
   src/CheckpointSubscriber.cu
+  src/Coordinates.cu
   src/CudaContainer.cu
 #  src/Constraints.cu
   src/CudaBondedForce.cu

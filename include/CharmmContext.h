@@ -80,7 +80,7 @@ public:
    * ForceManager CharmmPSF object.  Also resets the neighborlist
    * @param crd  vector of vector (dimensions N,3) of atom coordinates
    */
-  void setCoordinates(const std::vector<std::vector<double>> crd);
+  void setCoordinates(const std::vector<std::vector<double>> coords);
 
   /**
    * @brief Returns the coordinates as a vector of vector of double
@@ -166,6 +166,8 @@ public:
    * @brief Calculates kinetic energy and puts it on device memory
    * DOES NOT transfers the KE to the host memory
    * @return CudaContainer with kinetic energy on host memory
+   *
+   * @todo not impl/not used
    */
   CudaContainer<double> getKineticEnergy_();
 

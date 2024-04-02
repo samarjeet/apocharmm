@@ -24,9 +24,9 @@ Checkpoint::Checkpoint(const std::string &fileName)
   m_HeaderFields["onStepPistonPosition"] = 6;
   m_HeaderFields["halfStepPistonPosition"] = 7;
   m_HeaderFields["onStepPistonVelocity"] = 8;
-  m_HeaderFields["pistonNoseHooverPosition"] = 9;
-  m_HeaderFields["pistonNoseHooverVelocity"] = 10;
-  m_HeaderFields["pistonNoseHooverForce"] = 11;
+  m_HeaderFields["noseHooverPistonPosition"] = 9;
+  m_HeaderFields["noseHooverPistonVelocity"] = 10;
+  m_HeaderFields["noseHooverPistonForce"] = 11;
 }
 
 void Checkpoint::writeCheckpoint(std::shared_ptr<CharmmContext> ctx) {
@@ -107,10 +107,10 @@ void Checkpoint::writeHeader(std::ofstream &fout, const int numAtoms,
                               sizeof(double); // Offset for onStepPistonVelocity
   buffer[9] =
       buffer[8] + pistonDegreesOfFreedom *
-                      sizeof(double); // Offset for pistonNoseHooverPosition
+                      sizeof(double); // Offset for noseHooverPistonPosition
   buffer[10] =
-      buffer[9] + sizeof(double); // Offset for pistonNoseHooverVelocity
-  buffer[11] = buffer[10] + sizeof(double); // Offset for pistonNoseHooverForce
+      buffer[9] + sizeof(double); // Offset for noseHooverPistonVelocity
+  buffer[11] = buffer[10] + sizeof(double); // Offset for noseHooverPistonForce
 
   fout.write(reinterpret_cast<char *>(buffer.data()), NUM_FIELDS_BYTES);
 

@@ -4,7 +4,7 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author: Samarjeet Prasad
+// Author: Samarjeet Prasad, James E. Gonzales II
 //
 // ENDLICENSE
 
@@ -23,21 +23,21 @@
  */
 class Coordinates {
 public:
-  //Coordinates(const std::string &fileName);
-  
-  /** @brief Returns coordinates as a 4*N sized vector 
-   * @return vector<float4> 
-   */
-  const std::vector<float4> getCoordinates() { return coords; }
+  // Coordinates(const std::string &fileName);
 
-  /** @brief Returns the size of the coords vector 
+  /** @brief Returns coordinates as a 4*N sized vector
+   * @return vector<float4>
+   */
+  std::vector<std::vector<double>> getCoordinates(void) const;
+
+  /** @brief Returns the size of the coords vector
    * @return int
    */
-  int getNumAtoms() const { return coords.size(); }
+  int getNumAtoms(void) const;
 
 protected:
   int numAtoms;
   // std::vector<double3> coords;
   std::vector<float4> coords;
-  //void readCharmmCrdFile(std::string fileName);
+  // void readCharmmCrdFile(std::string fileName);
 };

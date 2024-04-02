@@ -3,7 +3,7 @@ set( SOURCES_UNITTESTS_TESTS
     # Base tests
     unittest-CharmmContext.cpp
     unittest-ForceManager.cpp
-    unittest-Subscribers.cpp
+    unittest-subscribers.cpp
     unittest-readCoordinates.cpp
     unittest-integrators.cpp
     unittest-readPRM.cpp
@@ -12,7 +12,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-logger.cpp
     unittest-utils.cpp
     unittest-cudaContainers.cpp
-    unittest-Restart.cpp
+    unittest-restart.cpp
     unittest-checkpoint.cpp
 
     # Ref tests

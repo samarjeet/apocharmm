@@ -314,6 +314,7 @@ TEST_CASE("basicDynamics", "[unit]") {
 
   SECTION("DynaSubscriber") {
     auto myDynaSub = std::make_shared<DynaSubscriber>("dyna.out", 1);
+    integrator->setDebugPrintFrequency(1);
     integrator->subscribe(myDynaSub);
     integrator->propagate(4);
     // Check the content of "dyna.out"

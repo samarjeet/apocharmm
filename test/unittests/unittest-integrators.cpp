@@ -184,10 +184,10 @@ TEST_CASE("Basic functions", "[unittest]") {
     integrator->initialize();
     // internal variables for the pistons (Nose-Hoover and langevin) should now
     // be zeroed out
-    CHECK(integrator->getPistonNoseHooverForce() == 0.0);
-    CHECK(integrator->getPistonNoseHooverForcePrevious() == 0.0);
-    CHECK(integrator->getPistonNoseHooverVelocity() == 0.0);
-    CHECK(integrator->getPistonNoseHooverVelocityPrevious() == 0.0);
+    CHECK(integrator->getNoseHooverPistonForce() == 0.0);
+    CHECK(integrator->getNoseHooverPistonForcePrevious() == 0.0);
+    CHECK(integrator->getNoseHooverPistonVelocity() == 0.0);
+    CHECK(integrator->getNoseHooverPistonVelocityPrevious() == 0.0);
     integrator->getOnStepPistonVelocity().transferFromDevice();
     CHECK(integrator->getOnStepPistonVelocity()[0] == 0.0);
     integrator->getHalfStepPistonVelocity().transferFromDevice();

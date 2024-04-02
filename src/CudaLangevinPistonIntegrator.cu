@@ -36,12 +36,12 @@ CudaLangevinPistonIntegrator::CudaLangevinPistonIntegrator(ts_t timeStep,
 
   noseHooverFlag = true;
   // setNoseHooverPistonMass(computeNoseHooverPistonMass());
-  pistonNoseHooverPosition = 0.0;
-  pistonNoseHooverForce = 0.0; // tentative bugfix
-  pistonNoseHooverForcePrevious = 0.0;
+  noseHooverPistonPosition = 0.0;
+  noseHooverPistonForce = 0.0; // tentative bugfix
+  noseHooverPistonForcePrevious = 0.0;
 
-  pistonNoseHooverVelocity = 0.0;         // tentative bugfix;
-  pistonNoseHooverVelocityPrevious = 0.0; // tentative bugfix
+  noseHooverPistonVelocity = 0.0;         // tentative bugfix;
+  noseHooverPistonVelocityPrevious = 0.0; // tentative bugfix
 
   setBathTemperature(300.0);
 
@@ -195,7 +195,7 @@ double CudaLangevinPistonIntegrator::computeNoseHooverPistonMass() {
 }
 
 void CudaLangevinPistonIntegrator::setNoseHooverPistonMass(double _nhMass) {
-  pistonNoseHooverMass = _nhMass;
+  noseHooverPistonMass = _nhMass;
 }
 
 void CudaLangevinPistonIntegrator::setCrystalType(CRYSTAL _crystalType) {
@@ -214,6 +214,10 @@ void CudaLangevinPistonIntegrator::setCrystalType(CRYSTAL _crystalType) {
     break;
   }
   allocatePistonVariables();
+}
+
+CRYSTAL CudaLangevinPistonIntegrator::getCrystalType(void) const {
+  return crystalType;
 }
 
 void CudaLangevinPistonIntegrator::setSurfaceTension(double st) {
@@ -341,10 +345,10 @@ void CudaLangevinPistonIntegrator::initialize() {
   setNoseHooverPistonMass(computeNoseHooverPistonMass());
   // Reset Nose-Hoover piston variables (if integrator is reused from earlier,
   // e.g.)
-  pistonNoseHooverForce = 0.0;
-  pistonNoseHooverForcePrevious = 0.0;
-  pistonNoseHooverVelocity = 0.0;
-  pistonNoseHooverVelocityPrevious = 0.0;
+  noseHooverPistonForce = 0.0;
+  noseHooverPistonForcePrevious = 0.0;
+  noseHooverPistonVelocity = 0.0;
+  noseHooverPistonVelocityPrevious = 0.0;
   onStepPistonVelocity.setToValue(0.0);
   halfStepPistonVelocity.setToValue(0.0);
   onStepPistonPosition.setToValue(0.0);
@@ -453,7 +457,7 @@ __global__ static void nonBarostatHalfStepVelocityUpdate(
  * velocity, the predicted coordinate change and the predicted coordinates */
 __global__ void predictorCorrectorKernel(
     bool noseHooverFlag, int numAtoms, double timeStep,
-    double pistonNoseHooverVelocity, double4 *coordsRef, double4 *velMass,
+    double noseHooverPistonVelocity, double4 *coordsRef, double4 *velMass,
     double4 *coords, double4 *coordsDeltaPrevious, double4 *coordsDelta,
     double4 *coordsDeltaPredicted, double *onStepCrystalFactor,
     double *halfStepCrystalFactor) {
@@ -478,11 +482,11 @@ __global__ void predictorCorrectorKernel(
 
     if (noseHooverFlag) {
       coordsDeltaPredicted[i].x -=
-          timeStep * timeStep * onStepVelocityX * pistonNoseHooverVelocity;
+          timeStep * timeStep * onStepVelocityX * noseHooverPistonVelocity;
       coordsDeltaPredicted[i].y -=
-          timeStep * timeStep * onStepVelocityY * pistonNoseHooverVelocity;
+          timeStep * timeStep * onStepVelocityY * noseHooverPistonVelocity;
       coordsDeltaPredicted[i].z -=
-          timeStep * timeStep * onStepVelocityZ * pistonNoseHooverVelocity;
+          timeStep * timeStep * onStepVelocityZ * noseHooverPistonVelocity;
     }
 
     velMass[i].x = onStepVelocityX;
@@ -1133,10 +1137,10 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
   //}
 
   //  std::cout << " =initial pistonnosehoovervelocity: "
-  //            << pistonNoseHooverVelocity << std::endl;
+  //            << noseHooverPistonVelocity << std::endl;
   //
-  pistonNoseHooverVelocityPrevious = pistonNoseHooverVelocity;
-  pistonNoseHooverForcePrevious = pistonNoseHooverForce;
+  noseHooverPistonVelocityPrevious = noseHooverPistonVelocity;
+  noseHooverPistonForcePrevious = noseHooverPistonForce;
 
   nonBarostatHalfStepVelocityUpdate<<<numBlocks, numThreads, 0,
                                       *integratorStream>>>(
@@ -1361,32 +1365,32 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
       double onStepKineticEnergy =
           context->computeTemperature() *
           (0.5 * numDegreesOfFreedom * charmm::constants::kBoltz);
-      pistonNoseHooverForce = 2.0 * timeStep *
+      noseHooverPistonForce = 2.0 * timeStep *
                               (onStepKineticEnergy - referenceKineticEnergy) /
-                              pistonNoseHooverMass;
-      if (pistonNoseHooverForcePrevious == 0.0) {
-        pistonNoseHooverForcePrevious = pistonNoseHooverForce;
+                              noseHooverPistonMass;
+      if (noseHooverPistonForcePrevious == 0.0) {
+        noseHooverPistonForcePrevious = noseHooverPistonForce;
       }
 
-      pistonNoseHooverVelocity =
-          pistonNoseHooverVelocityPrevious +
-          (pistonNoseHooverForce + pistonNoseHooverForcePrevious) / 2.0;
+      noseHooverPistonVelocity =
+          noseHooverPistonVelocityPrevious +
+          (noseHooverPistonForce + noseHooverPistonForcePrevious) / 2.0;
       // std::cout << "onStepKineticEnergy: " << onStepKineticEnergy <<
       // std::endl; std::cout << "referenceKineticEnergy: " <<
       // referenceKineticEnergy
       //          << std::endl;
-      // std::cout << "pistonNHmass: " << pistonNoseHooverMass <<
-      // std::endl; std::cout << "pistonNoseHooverForce: " <<
-      // pistonNoseHooverForce
+      // std::cout << "pistonNHmass: " << noseHooverPistonMass <<
+      // std::endl; std::cout << "noseHooverPistonForce: " <<
+      // noseHooverPistonForce
       //          << std::endl;
     }
 
-    //    std::cout << "pistonNoseHooverVelocity: " << pistonNoseHooverVelocity
+    //    std::cout << "noseHooverPistonVelocity: " << noseHooverPistonVelocity
     //              << std::endl;
-    //    std::cout << "pistonNoseHooverForcePrevious: "
-    //              << pistonNoseHooverForcePrevious << std::endl;
-    //    std::cout << "pistonNoseHooverVelocityPrevious: "
-    //              << pistonNoseHooverVelocityPrevious << std::endl;
+    //    std::cout << "noseHooverPistonForcePrevious: "
+    //              << noseHooverPistonForcePrevious << std::endl;
+    //    std::cout << "noseHooverPistonVelocityPrevious: "
+    //              << noseHooverPistonVelocityPrevious << std::endl;
     //
     projectPistonQuantitiesToCrystalQuantities(
         crystalType, timeStep, onStepPistonPosition, halfStepPistonPosition,
@@ -1422,12 +1426,12 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
     //        coordsDelta.getHostArray().data()[0].x
     //                  << std::endl;
     //        std::cout << "timestep: " << timeStep << std::endl;
-    //        std::cout << "pistonNoseHooverVelocity: " <<
-    //        pistonNoseHooverVelocity
+    //        std::cout << "noseHooverPistonVelocity: " <<
+    //        noseHooverPistonVelocity
     //                  << std::endl;
 
     predictorCorrectorKernel<<<numBlocks, numThreads, 0, *integratorStream>>>(
-        noseHooverFlag, numAtoms, timeStep, pistonNoseHooverVelocity,
+        noseHooverFlag, numAtoms, timeStep, noseHooverPistonVelocity,
         coordsRef.getDeviceArray().data(), velMass, coords,
         coordsDeltaPreviousDevice, coordsDeltaDevice,
         coordsDeltaPredicted.getDeviceArray().data(),
@@ -1554,13 +1558,13 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
     double onStepKineticEnergy =
         context->computeTemperature() *
         (0.5 * numDegreesOfFreedom * charmm::constants::kBoltz);
-    pistonNoseHooverForce = 2.0 * timeStep *
+    noseHooverPistonForce = 2.0 * timeStep *
                             (onStepKineticEnergy - referenceKineticEnergy) /
-                            pistonNoseHooverMass;
+                            noseHooverPistonMass;
 
-    pistonNoseHooverVelocity =
-        pistonNoseHooverVelocityPrevious +
-        (pistonNoseHooverForce + pistonNoseHooverForcePrevious) / 2.0;
+    noseHooverPistonVelocity =
+        noseHooverPistonVelocityPrevious +
+        (noseHooverPistonForce + noseHooverPistonForcePrevious) / 2.0;
   }
 
   // start : MovePressureCalculationToEndTesting
@@ -1656,8 +1660,8 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
   // *********************
 
   if (noseHooverFlag) {
-    pistonNoseHooverPosition += pistonNoseHooverVelocity * timeStep +
-                                0.5 * pistonNoseHooverForce * timeStep;
+    noseHooverPistonPosition += noseHooverPistonVelocity * timeStep +
+                                0.5 * noseHooverPistonForce * timeStep;
   }
   updateSPKernel<<<numBlocks, numThreads, 0, *integratorStream>>>(numAtoms,
                                                                   xyzq, coords);
@@ -1725,7 +1729,7 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
               << pe + ke + pistonPotentialEnergy + pistonKineticEnergy + hfcten
               << std::endl;
 
-    // std::cout << "HFCTE = " << hfcten << std::endl;
+    std::cout << "HFCTE = " << hfcten << std::endl;
 
     std::cout << "Temperature : " << context->computeTemperature() << "\n";
     std::cout << "Surface tension instantaneous : "
@@ -1797,47 +1801,65 @@ void CudaLangevinPistonIntegrator::setCoordsDeltaPrevious(
   coordsDeltaPrevious.transferToDevice();
 }
 
-void CudaLangevinPistonIntegrator::setOnStepPistonVelocity(
-    const std::vector<double> _onStepPistonVelocity) {
+// void CudaLangevinPistonIntegrator::setOnStepPistonVelocity(
+//     const std::vector<double> _onStepPistonVelocity) {
 
-  assert((_onStepPistonVelocity.size() == pistonDegreesOfFreedom,
-          "Wrong size in setOnStepPistonVelocity"));
+//   assert((_onStepPistonVelocity.size() == pistonDegreesOfFreedom,
+//           "Wrong size in setOnStepPistonVelocity"));
 
-  CudaContainer<double> temp;
-  temp.allocate(_onStepPistonVelocity.size());
-  temp.setHostArray(_onStepPistonVelocity);
-  temp.transferToDevice(); // technically not needed ? as calculation on piston
-                           // dofs are done on host side
-  setOnStepPistonVelocity(temp);
-}
+//   CudaContainer<double> temp;
+//   temp.allocate(_onStepPistonVelocity.size());
+//   temp.setHostArray(_onStepPistonVelocity);
+//   temp.transferToDevice(); // technically not needed ? as calculation on
+//   piston
+//                            // dofs are done on host side
+//   setOnStepPistonVelocity(temp);
+// }
 
-void CudaLangevinPistonIntegrator::setOnStepPistonPosition(
-    const std::vector<double> _onStepPistonPosition) {
+// void CudaLangevinPistonIntegrator::setHalfStepPistonVelocity(
+//     const std::vector<double> _halfStepPistonVelocity) {
 
-  assert((_onStepPistonPosition.size() == pistonDegreesOfFreedom,
-          "Wrong size in setOnStepPistonPosition"));
+//   assert((_halfStepPistonVelocity.size() == pistonDegreesOfFreedom,
+//           "Wrong size in setHalfStepPistonVelocity"));
 
-  CudaContainer<double> temp;
-  temp.allocate(_onStepPistonPosition.size());
-  temp.setHostArray(_onStepPistonPosition);
-  temp.transferToDevice(); // technically not needed ? as calculation on piston
-                           // dofs are done on host side
-  setOnStepPistonPosition(temp);
-}
+//   CudaContainer<double> temp;
+//   temp.allocate(_halfStepPistonVelocity.size());
+//   temp.setHostArray(_halfStepPistonVelocity);
+//   temp.transferToDevice(); // technically not needed ? as calculation on
+//   piston
+//                            // dofs are done on host side
+//   setHalfStepPistonVelocity(temp);
+// }
 
-void CudaLangevinPistonIntegrator::setHalfStepPistonPosition(
-    const std::vector<double> _halfStepPistonPosition) {
+// void CudaLangevinPistonIntegrator::setOnStepPistonPosition(
+//     const std::vector<double> _onStepPistonPosition) {
 
-  assert((_halfStepPistonPosition.size() == pistonDegreesOfFreedom,
-          "Wrong size in setHalfStepPistonPosition"));
+//   assert((_onStepPistonPosition.size() == pistonDegreesOfFreedom,
+//           "Wrong size in setOnStepPistonPosition"));
 
-  CudaContainer<double> temp;
-  temp.allocate(_halfStepPistonPosition.size());
-  temp.setHostArray(_halfStepPistonPosition);
-  temp.transferToDevice(); // technically not needed ? as calculation on piston
-                           // dofs are done on host side
-  setHalfStepPistonPosition(temp);
-}
+//   CudaContainer<double> temp;
+//   temp.allocate(_onStepPistonPosition.size());
+//   temp.setHostArray(_onStepPistonPosition);
+//   temp.transferToDevice(); // technically not needed ? as calculation on
+//   piston
+//                            // dofs are done on host side
+//   setOnStepPistonPosition(temp);
+// }
+
+// void CudaLangevinPistonIntegrator::setHalfStepPistonPosition(
+//     const std::vector<double> _halfStepPistonPosition) {
+
+//   assert((_halfStepPistonPosition.size() == pistonDegreesOfFreedom,
+//           "Wrong size in setHalfStepPistonPosition"));
+
+//   CudaContainer<double> temp;
+//   temp.allocate(_halfStepPistonPosition.size());
+//   temp.setHostArray(_halfStepPistonPosition);
+//   temp.transferToDevice(); // technically not needed ? as calculation on
+//   piston
+//                            // dofs are done on host side
+//   setHalfStepPistonPosition(temp);
+// }
 
 std::map<std::string, std::string>
 CudaLangevinPistonIntegrator::getIntegratorDescriptors() {
@@ -1847,6 +1869,6 @@ CudaLangevinPistonIntegrator::getIntegratorDescriptors() {
   ret["bathTemperature"] = std::to_string(bathTemperature);
   ret["referencePressure"] = std::to_string(referencePressure[0]);
   ret["pistonMass"] = std::to_string(pistonMass[0]);
-  ret["pistonNoseHooverMass"] = std::to_string(pistonNoseHooverMass);
+  ret["noseHooverPistonMass"] = std::to_string(noseHooverPistonMass);
   return ret;
 }

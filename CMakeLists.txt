@@ -14,7 +14,7 @@ add_subdirectory(external/pybind11)
 #set(CUDA_NVCC_FLAGS_DEBUG ${CUDA_NVCC_FLAGS_DEBUG} "-g -G -gencode arch=compute_60,code=sm_60" CACHE STRING "Debug flags for cuda" FORCE)
 
 set(CMAKE_CUDA_FLAGS_DEBUG ${CUDA_NVCC_FLAGS_DEBUG} "-g -G -O0 -gencode arch=compute_70,code=sm_70" CACHE STRING "Debug flags for cuda" FORCE)
-set(CMAKE_CUDA_FLAGS_RELEASE ${CUDA_NVCC_FLAGS_RELEASE} "-lineinfo -gencode arch=compute_70,code=sm_70 -gencode arch=compute_80,code=sm_80" CACHE STRING "Release flags for cuda" FORCE)
+set(CMAKE_CUDA_FLAGS_RELEASE ${CUDA_NVCC_FLAGS_RELEASE} "-O3 -lineinfo -gencode arch=compute_70,code=sm_70 -gencode arch=compute_80,code=sm_80" CACHE STRING "Release flags for cuda" FORCE)
 
 # chcudalib can be STATIC SHARED MODULE
 include(src_files.cmake )
@@ -26,7 +26,7 @@ find_package (Python COMPONENTS Interpreter Development)
 
 add_library(chcudalib STATIC ${src_files})
 target_include_directories(chcudalib PUBLIC include)
-set_property(TARGET chcudalib PROPERTY CUDA_ARCHITECTURES 60 70)
+set_property(TARGET chcudalib PROPERTY CUDA_ARCHITECTURES 60 70 80)
 target_compile_definitions(chcudalib PUBLIC USE_TEXTURE_OBJECTS)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)

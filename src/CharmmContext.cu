@@ -73,7 +73,9 @@ void CharmmContext::setMasses(const std::vector<double> &masses) {
 void CharmmContext::setNumAtoms(const int num) { numAtoms = num; }
 
 void CharmmContext::setCoordinates(const std::shared_ptr<Coordinates> crd) {
-  auto coords = crd->getCoordinates();
+  // auto coords = crd->getCoordinates();
+  this->setCoordinates(crd->getCoordinates());
+  /* *
   if (!forceManager->isComposite()) {
     assert(coords.size() == forceManager->getPSF()->getNumAtoms());
   }
@@ -107,13 +109,50 @@ void CharmmContext::setCoordinates(const std::shared_ptr<Coordinates> crd) {
   coordsCharge.allocate(coords.size());
   coordsCharge.set(crdCharges);
   resetNeighborList();
+  * */
 }
 
-void CharmmContext::setCoordinates(const std::vector<std::vector<double>> crd) {
+void CharmmContext::setCoordinates(
+    const std::vector<std::vector<double>> coords) {
+  // Constructor for CharmmCrd casts to float4 which loses precision when
+  // reading from restart file
   // 1. Create a charmmCrd using this vec{vec{double}}
   // 2. Call setCoordinates(charmmCrd) with that newly created crd
-  auto charmmCrd = std::make_shared<CharmmCrd>(crd);
-  setCoordinates(charmmCrd);
+  // auto charmmCrd = std::make_shared<CharmmCrd>(crd);
+  // setCoordinates(charmmCrd);
+  if (!forceManager->isComposite()) {
+    assert(coords.size() == forceManager->getPSF()->getNumAtoms());
+  }
+  if (!forceManager->hasCharmmContext()) {
+    linkBackForceManager();
+  }
+  setNumAtoms(coords.size());
+
+  velocityMass.allocate(numAtoms);
+  setMasses(forceManager->getPSF()->getAtomMasses());
+
+  useHolonomicConstraints(usingHolonomicConstraints);
+  auto charges =
+      forceManager->getPSF()->getAtomCharges(); // this is a std::vector<double>
+
+  // 4N-sized vector to contain spatial coords + atomic charges
+  std::vector<double4> crdCharges(coords.size());
+  for (int i = 0; i < numAtoms; i++)
+    crdCharges[i] = {coords[i][0], coords[i][1], coords[i][2],
+                     static_cast<double>(static_cast<float>(charges[i]))};
+
+  // xyzq gets initialized with coords (crd->getCoordinates()) + the charges
+  // extracted from the PSF
+  xyzq.set_ncoord(coords.size());
+  std::vector<float4> fcrds(numAtoms);
+  for (int i = 0; i < numAtoms; i++)
+    fcrds[i] = make_float4(crdCharges[i].x, crdCharges[i].y, crdCharges[i].z,
+                           crdCharges[i].w);
+  xyzq.set_xyzq(coords.size(), fcrds.data(), 0);
+
+  coordsCharge.allocate(coords.size());
+  coordsCharge.set(crdCharges);
+  resetNeighborList();
 }
 
 std::vector<std::vector<double>> CharmmContext::getCoordinates() {

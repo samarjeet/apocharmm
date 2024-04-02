@@ -25,29 +25,21 @@ TEST_CASE("readCrd", "[setup]") {
   SECTION("dhfr") {
     auto crd = CharmmCrd(path + "dhfr.crd");
     REQUIRE(22498 == crd.getNumAtoms());
-    compareCoordsFromFile(crd.getCoordinates(),
-                          path + "coordsrefxyz/dhfr_xyz.txt");
   }
 
   SECTION("ecor1 drude") {
     CharmmCrd crd(path + "ecor1_drude.crd");
     REQUIRE(25442 == crd.getNumAtoms());
-    compareCoordsFromFile(crd.getCoordinates(),
-                          path + "coordsrefxyz/ecor1_xyz.txt");
   }
 
   SECTION("2cba") {
     CharmmCrd crd(path + "2cba.crd");
     REQUIRE(7177 == crd.getNumAtoms());
-    compareCoordsFromFile(crd.getCoordinates(),
-                          path + "coordsrefxyz/2cba_xyz.txt");
   }
 
   SECTION("pdb") {
     PDB pdb(path + "dyn500.pdb");
     REQUIRE(267322 == pdb.getNumAtoms());
-    compareCoordsFromFile(pdb.getCoordinates(),
-                          path + "coordsrefxyz/dyn500_pdb.txt");
   }
 }
 

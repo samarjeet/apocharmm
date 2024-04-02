@@ -126,7 +126,7 @@ TEST_CASE("integratorCoverage") {
   SECTION("langevinPiston") {
     std::shared_ptr<CudaLangevinPistonIntegrator> integrator =
         setupLangevinPistonIntegrator(ctx);
-    restartFileName = "langevinPistonRestartTest.res";
+    restartFileName = "langevinPistonRestartTest.rst";
     checkRuns(integrator, restartFileName);
 
     auto integrator2 = setupLangevinPistonIntegrator(ctx2);
@@ -135,7 +135,7 @@ TEST_CASE("integratorCoverage") {
 
   SECTION("velocityVerlet") {
     auto integrator = setupVelocityVerletIntegrator(ctx);
-    restartFileName = "velocityVerletRestartTest.res";
+    restartFileName = "velocityVerletRestartTest.rst";
     checkRuns(integrator, restartFileName);
     auto integrator2 = setupVelocityVerletIntegrator(ctx2);
     checkRestart(integrator2, restartFileName);
@@ -143,7 +143,7 @@ TEST_CASE("integratorCoverage") {
 
   SECTION("langevinThermostat") {
     auto integrator = setupLangevinThermostatIntegrator(ctx);
-    restartFileName = "langevinThermostatRestartTest.res";
+    restartFileName = "langevinThermostatRestartTest.rst";
     checkRuns(integrator, restartFileName);
     auto integrator2 = setupLangevinThermostatIntegrator(ctx2);
     checkRestart(integrator2, restartFileName);
@@ -171,7 +171,7 @@ TEST_CASE("restart") {
 
   double pistonNHposition, pistonNHvelocity, pistonNHforce;
 
-  std::string fileName = "restartWater.res";
+  std::string fileName = "restartWater.rst";
 
   SECTION("save") {
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
@@ -212,9 +212,9 @@ TEST_CASE("restart") {
                             coordsDeltaPrevious[numAtoms - 1].y,
                             coordsDeltaPrevious[numAtoms - 1].z};
 
-    pistonNHposition = integrator->getPistonNoseHooverPosition();
-    pistonNHvelocity = integrator->getPistonNoseHooverVelocityPrevious();
-    pistonNHforce = integrator->getPistonNoseHooverForcePrevious();
+    pistonNHposition = integrator->getNoseHooverPistonPosition();
+    pistonNHvelocity = integrator->getNoseHooverPistonVelocityPrevious();
+    pistonNHforce = integrator->getNoseHooverPistonForcePrevious();
 
     // Weird bug: using NoseHoover (setNoseHooverFlag(true))
     // causes the gdb-run version to crash (velocities explode).
@@ -258,8 +258,9 @@ TEST_CASE("restart") {
 
     // Nose-Hoover variables
     auto restartFileNHposition = myRestartSub->readNoseHooverPistonPosition();
-    auto restartFileNHvelocity = myRestartSub->readNoseHooverPistonVelocity();
-    auto restartFileNHforce = myRestartSub->readNoseHooverPistonForce();
+    auto restartFileNHvelocity =
+        myRestartSub->readNoseHooverPistonVelocityPrevious();
+    auto restartFileNHforce = myRestartSub->readNoseHooverPistonForcePrevious();
     CHECK(restartFileNHposition == Approx(pistonNHposition));
     CHECK(restartFileNHvelocity == Approx(pistonNHvelocity));
     CHECK(restartFileNHforce == Approx(pistonNHforce));
@@ -308,7 +309,7 @@ TEST_CASE("restart") {
     integrator->setSimulationContext(ctx);
     integrator->setCrystalType(CRYSTAL::CUBIC);
     auto savingpointres1 =
-        std::make_shared<RestartSubscriber>("savingPoint1.res", 10);
+        std::make_shared<RestartSubscriber>("savingPoint1.rst", 10);
     integrator->subscribe(savingpointres1);
     integrator->propagate(10);
 
@@ -326,7 +327,7 @@ TEST_CASE("restart") {
   SECTION("readWrapped") {
     auto readRestartSub = std::make_shared<RestartSubscriber>(fileName, 30);
     // Check the restart file content is the expected number of lines
-    REQUIRE(lineCounter(fileName) == ctx->getNumAtoms() * 3 + 10 + 7 + 9);
+    REQUIRE(lineCounter(fileName) == ctx->getNumAtoms() * 3 + 10 + 7 + 9 + 13);
 
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
     integrator->setPistonFriction(20.0);
@@ -348,9 +349,11 @@ TEST_CASE("restart") {
     auto osppref = getRestartFileEntry(fileName, "!onStepPistonPosition");
     auto ospvref = getRestartFileEntry(fileName, "!onStepPistonVelocity");
     auto hspref = getRestartFileEntry(fileName, "!halfStepPistonPosition");
-    auto nhpref = getRestartFileEntry(fileName, "!pistonNoseHooverPosition");
-    auto nhvref = getRestartFileEntry(fileName, "!pistonNoseHooverVelocity");
-    auto nhfref = getRestartFileEntry(fileName, "!pistonNoseHooverForce");
+    auto nhpref = getRestartFileEntry(fileName, "!noseHooverPistonPosition");
+    auto nhvref =
+        getRestartFileEntry(fileName, "!noseHooverPistonVelocityPrevious");
+    auto nhfref =
+        getRestartFileEntry(fileName, "!noseHooverPistonForcePrevious");
 
     std::vector<double> firstCoord, firstVel, firstCoordsDeltaPrevious;
     CudaContainer<double4> ctxCoords = ctx->getCoordinatesCharges(),
@@ -360,10 +363,10 @@ TEST_CASE("restart") {
     CudaContainer<double> ospp = integrator->getOnStepPistonPosition(),
                           ospv = integrator->getOnStepPistonVelocity(),
                           hsp = integrator->getHalfStepPistonPosition();
-    std::vector<double> nhpp = {integrator->getPistonNoseHooverPosition()},
+    std::vector<double> nhpp = {integrator->getNoseHooverPistonPosition()},
                         nhpv =
-                            {integrator->getPistonNoseHooverVelocityPrevious()},
-                        nhpf = {integrator->getPistonNoseHooverForcePrevious()};
+                            {integrator->getNoseHooverPistonVelocityPrevious()},
+                        nhpf = {integrator->getNoseHooverPistonForcePrevious()};
     ctxCoords.transferFromDevice();
     ctxVel.transferFromDevice();
     coordsDeltaPrevious.transferFromDevice();
@@ -400,236 +403,281 @@ TEST_CASE("restart") {
     wrongCrystalIntegrator->subscribe(wrongRestartSub);
     CHECK_THROWS(wrongRestartSub->readRestart());
   }
+}
 
-  /* *
-  // Test that (with a no-randomness integrator) the result of a propagation
-  // starting from the restart file is the same as the one starting from the
-  // initial conditions.
-  // For now, only tests it for deterministic prop (no friction in the
-  // langevin piston)
-  SECTION("identicalPropagation") {
-    int rdmSeed = 144, nsteps = 1000;
+// Test that (with a no-randomness integrator) the result of a propagation
+// starting from the restart file is the same as the one starting from the
+// initial conditions.
+// For now, only tests it for deterministic prop (no friction in the
+// langevin piston)
+TEST_CASE("identicalPropagation") {
+  std::string dataPath = getDataPath();
+  std::vector<std::string> prmFiles{dataPath + "toppar_water_ions.str"};
+  std::vector<double> boxDim = {50.0, 50.0, 50.0};
+  int rdmSeed = 314159, nsteps = 5000;
+  std::string fileName = "idprop.rst";
 
-    // Setup integrator
-    auto integrator1 = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
-    integrator1->setCrystalType(CRYSTAL::CUBIC);
-    // integrator1->setPistonFriction(12.0);
-    integrator1->setPistonFriction(0.0);
-    integrator1->setSeedForPistonFriction(rdmSeed);
-    integrator1->setNoseHooverFlag(false);
-    integrator1->setSimulationContext(ctx);
-    // auto integrator1 =
-    //     std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    // integrator1->setFriction(0.0);
-    // integrator1->setSimulationContext(ctx);
+  // Topology, parameters, PSF, and coordinates
+  auto prm1 = std::make_shared<CharmmParameters>(prmFiles);
+  auto psf1 = std::make_shared<CharmmPSF>(dataPath + "waterbox.psf");
+  auto crd1 = std::make_shared<CharmmCrd>(dataPath + "waterbox.crd");
 
-    // Create a restart file
-    auto restartsub = std::make_shared<RestartSubscriber>("idprop.res", nsteps);
-    integrator1->subscribe(restartsub);
-    integrator1->propagate(nsteps);
-    integrator1->unsubscribe(restartsub);
+  // Setup force manager
+  auto fm1 = std::make_shared<ForceManager>(psf1, prm1);
+  fm1->setBoxDimensions(boxDim);
 
-    auto xyzq1 = ctx->getCoordinatesCharges();
-    xyzq1.transferFromDevice();
+  // Setup CHARMM context
+  auto ctx1 = std::make_shared<CharmmContext>(fm1);
+  ctx1->setCoordinates(crd1);
+  ctx1->assignVelocitiesAtTemperature(300.0);
 
-    // Make sure that the integrator is actually deterministic
-    auto prm2 = std::make_shared<CharmmParameters>(prmFiles);
-    auto psf2 = std::make_shared<CharmmPSF>(dataPath + "waterbox.psf");
+  // Setup integrator
+  auto integrator1 = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
+  integrator1->setCrystalType(CRYSTAL::CUBIC);
+  // integrator1->setPistonFriction(12.0);
+  integrator1->setPistonFriction(0.0);
+  integrator1->setSeedForPistonFriction(rdmSeed);
+  integrator1->setNoseHooverFlag(false);
+  integrator1->setSimulationContext(ctx1);
 
-    auto fm2 = std::make_shared<ForceManager>(psf2, prm2);
-    fm2->setBoxDimensions(boxDim);
+  // Create a restart file
+  auto restartsub = std::make_shared<RestartSubscriber>(fileName, nsteps);
+  integrator1->subscribe(restartsub);
 
-    auto ctx2 = std::make_shared<CharmmContext>(fm2);
-    auto crd2 = std::make_shared<CharmmCrd>(dataPath + "waterbox.crd");
+  // Propagate first simulation
+  integrator1->propagate(nsteps);
+  integrator1->unsubscribe(restartsub);
 
-    ctx2->setCoordinates(crd2);
-    ctx2->assignVelocitiesAtTemperature(300);
+  // Create a duplicate system the exact same way to ensure that the
+  // integrator being used is deterministic
 
-    // Setup second integrator and run dynamics to ensure that trajectories are
-    // deterministic
-    auto integrator2 = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
-    integrator2->setCrystalType(CRYSTAL::CUBIC);
-    // integrator2->setPistonFriction(12.0);
-    integrator2->setPistonFriction(0.0);
-    integrator2->setSeedForPistonFriction(rdmSeed);
-    integrator2->setNoseHooverFlag(false);
-    integrator2->setSimulationContext(ctx2);
-    // auto integrator2 =
-    //     std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    // integrator2->setFriction(0.0);
-    // integrator2->setSimulationContext(ctx2);
+  // Topology, parameters, PSF, and coordinates
+  auto prm2 = std::make_shared<CharmmParameters>(prmFiles);
+  auto psf2 = std::make_shared<CharmmPSF>(dataPath + "waterbox.psf");
+  auto crd2 = std::make_shared<CharmmCrd>(dataPath + "waterbox.crd");
 
-    integrator2->propagate(nsteps);
-    auto xyzq2 = ctx2->getCoordinatesCharges();
-    xyzq2.transferFromDevice();
-    CHECK(
-        CompareVectors1(xyzq1.getHostArray(), xyzq2.getHostArray(), 0.0, true));
+  // Setup force manager
+  auto fm2 = std::make_shared<ForceManager>(psf2, prm2);
+  fm2->setBoxDimensions(boxDim);
 
-    // Setup third integrator and run dynamics using the restart file
-    auto prm3 = std::make_shared<CharmmParameters>(prmFiles);
-    auto psf3 = std::make_shared<CharmmPSF>(dataPath + "waterbox.psf");
+  // Setup CHARMM context
+  auto ctx2 = std::make_shared<CharmmContext>(fm2);
+  ctx2->setCoordinates(crd2);
+  ctx2->assignVelocitiesAtTemperature(300.0);
 
-    auto fm3 = std::make_shared<ForceManager>(psf3, prm3);
-    fm3->setBoxDimensions(boxDim);
+  // Setup integrator
+  auto integrator2 = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
+  integrator2->setCrystalType(CRYSTAL::CUBIC);
+  // integrator2->setPistonFriction(12.0);
+  integrator2->setPistonFriction(0.0);
+  integrator2->setSeedForPistonFriction(rdmSeed);
+  integrator2->setNoseHooverFlag(false);
+  integrator2->setSimulationContext(ctx2);
 
-    auto ctx3 = std::make_shared<CharmmContext>(fm3);
-    auto crd3 = std::make_shared<CharmmCrd>(dataPath + "waterbox.crd");
-    ctx3->setCoordinates(crd3);
+  // Propagate second simulation
+  integrator2->propagate(nsteps);
 
-    auto integrator3 = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
-    integrator3->setCrystalType(CRYSTAL::CUBIC);
-    // integrator3->setPistonFriction(12.0);
-    integrator3->setPistonFriction(0.0);
-    integrator3->setSeedForPistonFriction(rdmSeed);
-    integrator3->setNoseHooverFlag(false);
-    integrator3->setSimulationContext(ctx3);
-    // auto integrator3 =
-    //     std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    // integrator3->setFriction(0.0);
-    // integrator3->setSimulationContext(ctx2);
+  // Create a triplicate system that uses the restart file from the first
+  // simulation to ensure that using a restart file to start a new simulation
+  // results in the same trajectories
 
-    auto restartsub3 = std::make_shared<RestartSubscriber>("idprop.res");
-    integrator3->subscribe(restartsub3);
-    restartsub3->readRestart();
+  // Topology, parameters, PSF, and coordinates
+  auto prm3 = std::make_shared<CharmmParameters>(prmFiles);
+  auto psf3 = std::make_shared<CharmmPSF>(dataPath + "waterbox.psf");
+  auto crd3 = std::make_shared<CharmmCrd>(dataPath + "waterbox.crd");
 
-    auto xyzq3 = ctx3->getCoordinatesCharges();
-    xyzq3.transferFromDevice();
+  // Setup force manager
+  auto fm3 = std::make_shared<ForceManager>(psf3, prm3);
+  fm3->setBoxDimensions(boxDim);
 
-    // Ensure that after reading the restart file coordinates match
-    CHECK(CompareVectorsPBC1(xyzq1.getHostArray(), xyzq2.getHostArray(),
-                             {boxDim[0], boxDim[1], boxDim[2], 0.0}, 0.0,
-                             true));
-    CHECK(CompareVectorsPBC1(xyzq1.getHostArray(), xyzq3.getHostArray(),
-                             {boxDim[0], boxDim[1], boxDim[2], 0.0}, 1.0e-6,
-                             true));
-    CHECK(CompareVectorsPBC1(xyzq2.getHostArray(), xyzq3.getHostArray(),
-                             {boxDim[0], boxDim[1], boxDim[2], 0.0}, 1.0e-6,
-                             true));
+  // Setup CHARMM context
+  auto ctx3 = std::make_shared<CharmmContext>(fm3);
+  ctx3->setCoordinates(crd3);
 
-    {
-      auto tmp1 = integrator1->getCoordsDelta();
-      auto tmp2 = integrator2->getCoordsDelta();
-      auto tmp3 = integrator3->getCoordsDelta();
-      tmp1.transferFromDevice();
-      tmp2.transferFromDevice();
-      tmp3.transferFromDevice();
-      CHECK(CompareVectorsPBC1(tmp1.getHostArray(), tmp2.getHostArray(),
-                               {boxDim[0], boxDim[1], boxDim[2], 0.0}, 0.0,
-                               true));
-      CHECK(CompareVectorsPBC1(tmp1.getHostArray(), tmp3.getHostArray(),
-                               {boxDim[0], boxDim[1], boxDim[2], 0.0}, 0.0,
-                               true));
-      CHECK(CompareVectorsPBC1(tmp2.getHostArray(), tmp3.getHostArray(),
-                               {boxDim[0], boxDim[1], boxDim[2], 0.0}, 0.0,
-                               true));
-    }
+  auto integrator3 = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
+  integrator3->setCrystalType(CRYSTAL::CUBIC);
+  // integrator3->setPistonFriction(12.0);
+  integrator3->setPistonFriction(0.0);
+  integrator3->setSeedForPistonFriction(rdmSeed);
+  integrator3->setNoseHooverFlag(false);
+  integrator3->setSimulationContext(ctx3);
 
-    // Ensure that Nose-Hoover variables are the same
-    CHECK(integrator1->getNoseHooverPistonMass() ==
-          integrator2->getNoseHooverPistonMass());
-    CHECK(integrator1->getNoseHooverPistonMass() ==
-          integrator3->getNoseHooverPistonMass());
-    CHECK(integrator2->getNoseHooverPistonMass() ==
-          integrator3->getNoseHooverPistonMass());
+  auto restartsub3 = std::make_shared<RestartSubscriber>(fileName);
+  integrator3->subscribe(restartsub3);
+  restartsub3->readRestart();
+  integrator3->unsubscribe(restartsub3);
 
-    CHECK(integrator1->getPistonNoseHooverPosition() ==
-          integrator2->getPistonNoseHooverPosition());
-    CHECK(integrator1->getPistonNoseHooverPosition() ==
-          integrator3->getPistonNoseHooverPosition());
-    CHECK(integrator2->getPistonNoseHooverPosition() ==
-          integrator3->getPistonNoseHooverPosition());
+  // All three systems should match at this point
 
-    CHECK(integrator1->getPistonNoseHooverVelocity() ==
-          integrator2->getPistonNoseHooverVelocity());
-    CHECK(integrator1->getPistonNoseHooverVelocity() ==
-          integrator3->getPistonNoseHooverVelocity());
-    CHECK(integrator2->getPistonNoseHooverVelocity() ==
-          integrator3->getPistonNoseHooverVelocity());
+  // Check that coordinates matche
+  auto coordinatesCharges1 = ctx1->getCoordinatesCharges();
+  auto coordinatesCharges2 = ctx2->getCoordinatesCharges();
+  auto coordinatesCharges3 = ctx3->getCoordinatesCharges();
+  coordinatesCharges1.transferFromDevice();
+  coordinatesCharges2.transferFromDevice();
+  coordinatesCharges3.transferFromDevice();
+  // Use PBC compare here because when we set the coordinates for the CHARMM
+  // context, it rebuilds the neighbor list, which performs image centering
+  CHECK(CompareVectorsPBC1(coordinatesCharges1.getHostArray(),
+                           coordinatesCharges2.getHostArray(),
+                           {boxDim[0], boxDim[1], boxDim[2], 0.0}, 0.0, true));
+  CHECK(CompareVectorsPBC1(coordinatesCharges1.getHostArray(),
+                           coordinatesCharges3.getHostArray(),
+                           {boxDim[0], boxDim[1], boxDim[2], 0.0}, 0.0, true));
+  CHECK(CompareVectorsPBC1(coordinatesCharges2.getHostArray(),
+                           coordinatesCharges3.getHostArray(),
+                           {boxDim[0], boxDim[1], boxDim[2], 0.0}, 0.0, true));
 
-    CHECK(integrator1->getPistonNoseHooverForce() ==
-          integrator2->getPistonNoseHooverForce());
-    CHECK(integrator1->getPistonNoseHooverForce() ==
-          integrator3->getPistonNoseHooverForce());
-    CHECK(integrator2->getPistonNoseHooverForce() ==
-          integrator3->getPistonNoseHooverForce());
+  // Check that velocities match
+  auto velocityMass1 = ctx1->getVelocityMass();
+  auto velocityMass2 = ctx2->getVelocityMass();
+  auto velocityMass3 = ctx3->getVelocityMass();
+  velocityMass1.transferFromDevice();
+  velocityMass2.transferFromDevice();
+  velocityMass3.transferFromDevice();
+  CHECK(CompareVectors1(velocityMass1.getHostArray(),
+                        velocityMass2.getHostArray(), 0.0, true));
+  CHECK(CompareVectors1(velocityMass1.getHostArray(),
+                        velocityMass3.getHostArray(), 0.0, true));
+  CHECK(CompareVectors1(velocityMass2.getHostArray(),
+                        velocityMass3.getHostArray(), 0.0, true));
 
-    // integrator1->setSeedForPistonFriction(rdmSeed + 1);
-    // integrator2->setSeedForPistonFriction(rdmSeed + 1);
-    // integrator3->setSeedForPistonFriction(rdmSeed + 1);
+  auto coordsDeltaPrevious1 = integrator1->getCoordsDeltaPrevious();
+  auto coordsDeltaPrevious2 = integrator2->getCoordsDeltaPrevious();
+  auto coordsDeltaPrevious3 = integrator3->getCoordsDeltaPrevious();
+  coordsDeltaPrevious1.transferFromDevice();
+  coordsDeltaPrevious2.transferFromDevice();
+  coordsDeltaPrevious3.transferFromDevice();
+  CHECK(CompareVectors1(coordsDeltaPrevious1.getHostArray(),
+                        coordsDeltaPrevious2.getHostArray(), 0.0, true));
+  CHECK(CompareVectors1(coordsDeltaPrevious1.getHostArray(),
+                        coordsDeltaPrevious3.getHostArray(), 0.0, true));
+  CHECK(CompareVectors1(coordsDeltaPrevious2.getHostArray(),
+                        coordsDeltaPrevious3.getHostArray(), 0.0, true));
 
-    integrator1->propagate(nsteps);
-    integrator2->propagate(nsteps);
-    integrator3->propagate(nsteps);
+  // Ensure that Nose-Hoover variables are the same
+  CHECK(integrator1->getNoseHooverPistonMass() ==
+        integrator2->getNoseHooverPistonMass());
+  CHECK(integrator1->getNoseHooverPistonMass() ==
+        integrator3->getNoseHooverPistonMass());
+  CHECK(integrator2->getNoseHooverPistonMass() ==
+        integrator3->getNoseHooverPistonMass());
 
-    xyzq1 = ctx->getCoordinatesCharges();
-    xyzq1.transferFromDevice();
-    xyzq2 = ctx2->getCoordinatesCharges();
-    xyzq2.transferFromDevice();
-    xyzq3 = ctx3->getCoordinatesCharges();
-    xyzq3.transferFromDevice();
+  CHECK(integrator1->getNoseHooverPistonPosition() ==
+        integrator2->getNoseHooverPistonPosition());
+  CHECK(integrator1->getNoseHooverPistonPosition() ==
+        integrator3->getNoseHooverPistonPosition());
+  CHECK(integrator2->getNoseHooverPistonPosition() ==
+        integrator3->getNoseHooverPistonPosition());
 
-    // Ensure that after propagating more steps the coordinates match
-    CHECK(
-        CompareVectors1(xyzq1.getHostArray(), xyzq2.getHostArray(), 0.0, true));
-    CHECK(
-        CompareVectors1(xyzq1.getHostArray(), xyzq3.getHostArray(), 0.0, true));
-    CHECK(
-        CompareVectors1(xyzq2.getHostArray(), xyzq3.getHostArray(), 0.0, true));
+  CHECK(integrator1->getNoseHooverPistonVelocity() ==
+        integrator2->getNoseHooverPistonVelocity());
+  CHECK(integrator1->getNoseHooverPistonVelocity() ==
+        integrator3->getNoseHooverPistonVelocity());
+  CHECK(integrator2->getNoseHooverPistonVelocity() ==
+        integrator3->getNoseHooverPistonVelocity());
 
-    // // Using an independent sim with same seed, initialize from restart file,
-    // // run for nsteps, and finally compare ctx1 and ctx2 variables
-    // auto prm2 = std::make_shared<CharmmParameters>(prmFiles);
-    // auto psf2 = std::make_shared<CharmmPSF>(dataPath + "waterbox.psf");
-    // auto fm2 = std::make_shared<ForceManager>(psf2, prm2);
-    // fm2->setBoxDimensions(boxDim);
+  CHECK(integrator1->getNoseHooverPistonVelocityPrevious() ==
+        integrator2->getNoseHooverPistonVelocityPrevious());
+  CHECK(integrator1->getNoseHooverPistonVelocityPrevious() ==
+        integrator3->getNoseHooverPistonVelocityPrevious());
+  CHECK(integrator2->getNoseHooverPistonVelocityPrevious() ==
+        integrator3->getNoseHooverPistonVelocityPrevious());
 
-    // auto ctx2 = std::make_shared<CharmmContext>(fm2);
-    // auto crd2 = std::make_shared<CharmmCrd>(dataPath + "waterbox.crd");
-    // ctx2->setCoordinates(crd2);
+  CHECK(integrator1->getNoseHooverPistonForce() ==
+        integrator2->getNoseHooverPistonForce());
+  CHECK(integrator1->getNoseHooverPistonForce() ==
+        integrator3->getNoseHooverPistonForce());
+  CHECK(integrator2->getNoseHooverPistonForce() ==
+        integrator3->getNoseHooverPistonForce());
 
-    // auto integrator2 = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
-    // integrator2->setCrystalType(CRYSTAL::CUBIC);
-    // integrator2->setPistonFriction(0.0);
-    // integrator2->setSimulationContext(ctx2);
-    // integrator2->setSeedForPistonFriction(rdmSeed);
-    // auto restartsub2 =
-    //     std::make_shared<RestartSubscriber>("idprop.res", 4 * nsteps);
-    // integrator2->subscribe(restartsub2);
-    // // restartsub2->readRestart();
+  CHECK(integrator1->getNoseHooverPistonForcePrevious() ==
+        integrator2->getNoseHooverPistonForcePrevious());
+  CHECK(integrator1->getNoseHooverPistonForcePrevious() ==
+        integrator3->getNoseHooverPistonForcePrevious());
+  CHECK(integrator2->getNoseHooverPistonForcePrevious() ==
+        integrator3->getNoseHooverPistonForcePrevious());
 
-    // auto xyzq2 = ctx2->getCoordinatesCharges();
-    // xyzq2.transferFromDevice();
-    // std::cout
-    //     << "!X, Y, Z (atom 0): " << xyzq2.getHostArray()[0].x << " "
-    //     << xyzq2.getHostArray()[0].y << " " << xyzq2.getHostArray()[0].z
-    //     << " > ctx2, after   0 steps (compare with idprop.res, first entry)"
-    //     << std::endl;
+  integrator1->propagate(20 * nsteps);
+  integrator2->propagate(20 * nsteps);
+  integrator3->propagate(20 * nsteps);
 
-    // integrator2->propagate(nsteps);
-    // integrator2->propagate(nsteps);
+  coordinatesCharges1 = ctx1->getCoordinatesCharges();
+  coordinatesCharges2 = ctx2->getCoordinatesCharges();
+  coordinatesCharges3 = ctx3->getCoordinatesCharges();
+  coordinatesCharges1.transferFromDevice();
+  coordinatesCharges2.transferFromDevice();
+  coordinatesCharges3.transferFromDevice();
 
-    // xyzq2 = ctx2->getCoordinatesCharges();
-    // xyzq2.transferFromDevice();
-    // std::cout << "!X, Y, Z (atom 0): " << xyzq2.getHostArray()[0].x << " "
-    //           << xyzq2.getHostArray()[0].y << " " <<
-    //           xyzq2.getHostArray()[0].z
-    //           << " > ctx2, after 100 steps (should be identical to ctx1 after
-    //           "
-    //              "200 steps)"
-    //           << std::endl;
+  // Ensure that after propagating more steps the coordinates match
+  CHECK(CompareVectors1(coordinatesCharges1.getHostArray(),
+                        coordinatesCharges2.getHostArray(), 0.0, true));
+  CHECK(CompareVectors1(coordinatesCharges1.getHostArray(),
+                        coordinatesCharges3.getHostArray(), 0.0, true));
+  CHECK(CompareVectors1(coordinatesCharges2.getHostArray(),
+                        coordinatesCharges3.getHostArray(), 0.0, true));
+  coordsDeltaPrevious1 = integrator1->getCoordsDeltaPrevious();
+  coordsDeltaPrevious2 = integrator2->getCoordsDeltaPrevious();
+  coordsDeltaPrevious3 = integrator3->getCoordsDeltaPrevious();
+  coordsDeltaPrevious1.transferFromDevice();
+  coordsDeltaPrevious2.transferFromDevice();
+  coordsDeltaPrevious3.transferFromDevice();
+  CHECK(CompareVectors1(coordsDeltaPrevious1.getHostArray(),
+                        coordsDeltaPrevious2.getHostArray(), 0.0, true));
+  CHECK(CompareVectors1(coordsDeltaPrevious1.getHostArray(),
+                        coordsDeltaPrevious3.getHostArray(), 0.0, true));
+  CHECK(CompareVectors1(coordsDeltaPrevious2.getHostArray(),
+                        coordsDeltaPrevious3.getHostArray(), 0.0, true));
 
-    // CHECK(xyzq1.getHostArray()[0].x == xyzq2.getHostArray()[0].x);
-    // CHECK(xyzq1.getHostArray()[0].y == xyzq2.getHostArray()[0].y);
-    // CHECK(xyzq1.getHostArray()[0].z == xyzq2.getHostArray()[0].z);
-  }
-  * */
+  // Ensure that Nose-Hoover variables are the same
+  CHECK(integrator1->getNoseHooverPistonMass() ==
+        integrator2->getNoseHooverPistonMass());
+  CHECK(integrator1->getNoseHooverPistonMass() ==
+        integrator3->getNoseHooverPistonMass());
+  CHECK(integrator2->getNoseHooverPistonMass() ==
+        integrator3->getNoseHooverPistonMass());
+
+  CHECK(integrator1->getNoseHooverPistonPosition() ==
+        integrator2->getNoseHooverPistonPosition());
+  CHECK(integrator1->getNoseHooverPistonPosition() ==
+        integrator3->getNoseHooverPistonPosition());
+  CHECK(integrator2->getNoseHooverPistonPosition() ==
+        integrator3->getNoseHooverPistonPosition());
+
+  CHECK(integrator1->getNoseHooverPistonVelocity() ==
+        integrator2->getNoseHooverPistonVelocity());
+  CHECK(integrator1->getNoseHooverPistonVelocity() ==
+        integrator3->getNoseHooverPistonVelocity());
+  CHECK(integrator2->getNoseHooverPistonVelocity() ==
+        integrator3->getNoseHooverPistonVelocity());
+
+  CHECK(integrator1->getNoseHooverPistonVelocityPrevious() ==
+        integrator2->getNoseHooverPistonVelocityPrevious());
+  CHECK(integrator1->getNoseHooverPistonVelocityPrevious() ==
+        integrator3->getNoseHooverPistonVelocityPrevious());
+  CHECK(integrator2->getNoseHooverPistonVelocityPrevious() ==
+        integrator3->getNoseHooverPistonVelocityPrevious());
+
+  CHECK(integrator1->getNoseHooverPistonForce() ==
+        integrator2->getNoseHooverPistonForce());
+  CHECK(integrator1->getNoseHooverPistonForce() ==
+        integrator3->getNoseHooverPistonForce());
+  CHECK(integrator2->getNoseHooverPistonForce() ==
+        integrator3->getNoseHooverPistonForce());
+
+  CHECK(integrator1->getNoseHooverPistonForcePrevious() ==
+        integrator2->getNoseHooverPistonForcePrevious());
+  CHECK(integrator1->getNoseHooverPistonForcePrevious() ==
+        integrator3->getNoseHooverPistonForcePrevious());
+  CHECK(integrator2->getNoseHooverPistonForcePrevious() ==
+        integrator3->getNoseHooverPistonForcePrevious());
 }
 
 // This test_case should be a SECTION in the "restart" test_case, but for some
 // reason (i/o ?) it fails when run along the other sections.
 TEST_CASE("restartRead") {
   std::string dataPath = getDataPath();
-  std::string fileName = "restartWater.res";
+  std::string fileName = "restartWater.rst";
   std::vector<std::string> prmFiles{dataPath + "toppar_water_ions.str"};
   auto prm = std::make_shared<CharmmParameters>(prmFiles);
   // auto psf = std::make_shared<CharmmPSF>(dataPath + "waterbox.psf");
@@ -702,14 +750,14 @@ TEST_CASE("restartRead") {
     double pistonNHvelocityRead =
         readRestartSub->readNoseHooverPistonVelocity();
     double pistonNHforceRead = readRestartSub->readNoseHooverPistonForce();
-    integrator->setPistonNoseHooverPosition(pistonNHpositionRead);
-    integrator->setPistonNoseHooverVelocityPrevious(pistonNHvelocityRead);
-    integrator->setPistonNoseHooverForcePrevious(pistonNHforceRead);
-    CHECK(integrator->getPistonNoseHooverPosition() ==
+    integrator->setNoseHooverPistonPosition(pistonNHpositionRead);
+    integrator->setNoseHooverPistonVelocityPrevious(pistonNHvelocityRead);
+    integrator->setNoseHooverPistonForcePrevious(pistonNHforceRead);
+    CHECK(integrator->getNoseHooverPistonPosition() ==
           Approx(pistonNHpositionRead));
-    CHECK(integrator->getPistonNoseHooverVelocityPrevious() ==
+    CHECK(integrator->getNoseHooverPistonVelocityPrevious() ==
           Approx(pistonNHvelocityRead));
-    CHECK(integrator->getPistonNoseHooverForcePrevious() ==
+    CHECK(integrator->getNoseHooverPistonForcePrevious() ==
           Approx(pistonNHforceRead));
 
     // Check if the integrator can run after this

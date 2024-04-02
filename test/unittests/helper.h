@@ -188,14 +188,14 @@ bool compareTriples(Type4 inpA, Type4 inpB, double tol = 0.00001) {
 // Write some little desciption in there
 bool compareP21Forces(int numAtoms, int stride,
                       const std::vector<double> forces,
-                      std::vector<float4> trueForces) {
+                      std::vector<std::vector<double>> trueForces) {
 
   float tol = 0.005;
 
   for (int i = 0; i < numAtoms; ++i) {
-    CHECK(forces[i] == Approx(trueForces[i].x).margin(tol));
-    CHECK(forces[stride + i] == Approx(trueForces[i].y).margin(tol));
-    CHECK(forces[2 * stride + i] == Approx(trueForces[i].z).margin(tol));
+    CHECK(forces[i] == Approx(trueForces[i][0]).margin(tol));
+    CHECK(forces[stride + i] == Approx(trueForces[i][1]).margin(tol));
+    CHECK(forces[2 * stride + i] == Approx(trueForces[i][2]).margin(tol));
   }
   return true;
 }

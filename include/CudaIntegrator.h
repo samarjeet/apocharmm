@@ -183,6 +183,16 @@ public:
     exit(1);
   }
   virtual void
+  setHalfStepPistonVelocity(CudaContainer<double> _halfStepPistonVelocity) {
+    std::cerr << "CudaIntegrator::setHalfStepPistonVelocity() : override me!\n";
+    exit(1);
+  }
+  virtual void
+  setHalfStepPistonVelocity(const std::vector<double> _halfStepPistonVelocity) {
+    std::cerr << "CudaIntegrator::setHalfStepPistonVelocity() : override me!\n";
+    exit(1);
+  }
+  virtual void
   setOnStepPistonPosition(CudaContainer<double> _onStepPistonPosition) {
     std::cerr << "CudaIntegrator::setOnStepPistonPosition() : override me!\n";
     exit(1);

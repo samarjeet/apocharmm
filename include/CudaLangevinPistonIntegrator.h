@@ -101,15 +101,15 @@ private:
   /** @brief Mass of the Nose-Hoover degree of freedom. Default: 2\% of the
    * system mass
    */
-  double pistonNoseHooverMass;
+  double noseHooverPistonMass;
 
   /** @brief Following CHARMM-GUI heuristics, set the Nose-Hoover dof mass as
    * 2\% of the mass of the system */
   double computeNoseHooverPistonMass();
 
-  double pistonNoseHooverPosition, pistonNoseHooverVelocity,
-      pistonNoseHooverVelocityPrevious, pistonNoseHooverForce,
-      pistonNoseHooverForcePrevious;
+  double noseHooverPistonPosition, noseHooverPistonVelocity,
+      noseHooverPistonVelocityPrevious, noseHooverPistonForce,
+      noseHooverPistonForcePrevious;
 
   /** @brief Friction constant for the piston degree of freedom. Default: 0.0 */
   double pgamma;
@@ -226,6 +226,8 @@ public:
 
   void setCrystalType(CRYSTAL _crystalType);
 
+  CRYSTAL getCrystalType(void) const;
+
   /**
    * @brief Constant surface tension. Units should be dyne/cm. Since we only
    * have orthorombic box, only Z perpendicular to X-Y are apt. When called,
@@ -276,15 +278,15 @@ public:
 
   void propagateOneStep() override;
 
-  double getNoseHooverPistonMass() { return pistonNoseHooverMass; }
+  double getNoseHooverPistonMass() { return noseHooverPistonMass; }
 
   void setNoseHooverFlag(bool _noseHooverFlag) {
     noseHooverFlag = _noseHooverFlag;
   }
 
-  double getPistonNoseHooverPosition() { return pistonNoseHooverPosition; }
-  double getPistonNoseHooverVelocity() { return pistonNoseHooverVelocity; }
-  double getPistonNoseHooverForce() { return pistonNoseHooverForce; }
+  double getNoseHooverPistonPosition() { return noseHooverPistonPosition; }
+  double getNoseHooverPistonVelocity() { return noseHooverPistonVelocity; }
+  double getNoseHooverPistonForce() { return noseHooverPistonForce; }
 
   CudaContainer<double4> getCoordsDelta() override;
   CudaContainer<double4> getCoordsDeltaPrevious() override;
@@ -302,11 +304,23 @@ public:
 
   void setOnStepPistonVelocity(
       CudaContainer<double> _onStepPistonVelocity) override {
-    onStepPistonVelocity = _onStepPistonVelocity;
+    onStepPistonVelocity.set(_onStepPistonVelocity.getHostArray());
   }
 
   void setOnStepPistonVelocity(
-      const std::vector<double> _onStepPistonVelocity) override;
+      const std::vector<double> _onStepPistonVelocity) override {
+    onStepPistonVelocity.set(_onStepPistonVelocity);
+  }
+
+  void setHalfStepPistonVelocity(
+      CudaContainer<double> _halfStepPistonVelocity) override {
+    halfStepPistonVelocity.set(_halfStepPistonVelocity.getHostArray());
+  }
+
+  void setHalfStepPistonVelocity(
+      const std::vector<double> _halfStepPistonVelocity) override {
+    halfStepPistonVelocity.set(_halfStepPistonVelocity);
+  }
 
   CudaContainer<double> getHalfStepPistonVelocity() {
     return halfStepPistonVelocity;
@@ -318,11 +332,13 @@ public:
 
   void setOnStepPistonPosition(
       CudaContainer<double> _onStepPistonPosition) override {
-    onStepPistonPosition = _onStepPistonPosition;
+    onStepPistonPosition.set(_onStepPistonPosition.getHostArray());
   }
 
   void setOnStepPistonPosition(
-      const std::vector<double> _onStepPistonPosition) override;
+      const std::vector<double> _onStepPistonPosition) override {
+    onStepPistonPosition.set(_onStepPistonPosition);
+  }
 
   CudaContainer<double> getHalfStepPistonPosition() {
     return halfStepPistonPosition;
@@ -330,34 +346,43 @@ public:
 
   void setHalfStepPistonPosition(
       CudaContainer<double> _halfStepPistonPosition) override {
-    halfStepPistonPosition = _halfStepPistonPosition;
+    halfStepPistonPosition.set(_halfStepPistonPosition.getHostArray());
   }
 
   void setHalfStepPistonPosition(
-      const std::vector<double> _halfStepPistonPosition) override;
+      const std::vector<double> _halfStepPistonPosition) override {
+    halfStepPistonPosition.set(_halfStepPistonPosition);
+  }
 
   /** @brief Sets coordsDeltaPrevious container, notably used by
    * RestartSubscriber to restart a simulation */
   void setCoordsDeltaPrevious(
       std::vector<std::vector<double>> _coordsDelta) override;
 
-  double getPistonNoseHooverVelocityPrevious() const {
-    return pistonNoseHooverVelocityPrevious;
+  double getNoseHooverPistonVelocityPrevious() const {
+    return noseHooverPistonVelocityPrevious;
   }
-  double getPistonNoseHooverForcePrevious() const {
-    return pistonNoseHooverForcePrevious;
+  double getNoseHooverPistonForcePrevious() const {
+    return noseHooverPistonForcePrevious;
   }
-  double getPistonNoseHooverPosition() const {
-    return pistonNoseHooverPosition;
+  double getNoseHooverPistonPosition() const {
+    return noseHooverPistonPosition;
   }
-  void setPistonNoseHooverVelocityPrevious(double _pistonNoseHooverVelocity) {
-    pistonNoseHooverVelocityPrevious = _pistonNoseHooverVelocity;
+  void setNoseHooverPistonVelocity(double _noseHooverPistonVelocity) {
+    noseHooverPistonVelocity = _noseHooverPistonVelocity;
   }
-  void setPistonNoseHooverForcePrevious(double _pistonNoseHooverForce) {
-    pistonNoseHooverForcePrevious = _pistonNoseHooverForce;
+  void setNoseHooverPistonVelocityPrevious(
+      double _noseHooverPistonVelocityPrevious) {
+    noseHooverPistonVelocityPrevious = _noseHooverPistonVelocityPrevious;
   }
-  void setPistonNoseHooverPosition(double _pistonNoseHooverPosition) {
-    pistonNoseHooverPosition = _pistonNoseHooverPosition;
+  void setNoseHooverPistonForce(double _noseHooverPistonForce) {
+    noseHooverPistonForce = _noseHooverPistonForce;
+  }
+  void setNoseHooverPistonForcePrevious(double _noseHooverPistonForcePrevious) {
+    noseHooverPistonForcePrevious = _noseHooverPistonForcePrevious;
+  }
+  void setNoseHooverPistonPosition(double _noseHooverPistonPosition) {
+    noseHooverPistonPosition = _noseHooverPistonPosition;
   }
 
   /** @brief Set the number of predictor-corrector steps for the LP integrator.
