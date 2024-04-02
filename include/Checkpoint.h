@@ -16,14 +16,15 @@
 #include "CudaLangevinThermostatIntegrator.h"
 #include <map>
 #include <string>
-#include <vector>
+// #include <vector>
 
 class Checkpoint {
 public:
   Checkpoint(const std::string &fileName);
 
-  void writeCheckpoint(std::shared_ptr<CharmmContext> ctx);
   void writeCheckpoint(std::shared_ptr<CudaIntegrator> integrator);
+
+  template <typename T> T get(const std::string &field);
 
 private:
   void writeHeader(std::ofstream &fout, const int numAtoms,
@@ -33,5 +34,5 @@ private:
 
 private:
   std::string m_FileName;
-  std::map<std::string, int> m_HeaderFields;
+  std::map<std::string, std::size_t> m_HeaderFields;
 };

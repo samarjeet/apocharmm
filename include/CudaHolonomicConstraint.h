@@ -29,7 +29,7 @@ public:
    */
   CudaHolonomicConstraint();
   // CudaHolonomicConstraint(CharmmContext &ctx);
-  void setSimulationContext(std::shared_ptr<CharmmContext> context);
+  void setCharmmContext(std::shared_ptr<CharmmContext> context);
   void setup(double timeStep);
 
   // Fix this : don't pass raw pointers
@@ -56,7 +56,7 @@ private:
   double mO, mH, mH2O, mO_div_mH2O, mH_div_mH2O, rHHsq, rOHsq, ra, ra_inv, rb,
       rc, rc2;
 
-  //XYZQ xyzq_stored;
+  // XYZQ xyzq_stored;
   CudaContainer<double4> coords_stored;
   double timeStep;
   void constrainWaterMolecules(const double4 *ref);

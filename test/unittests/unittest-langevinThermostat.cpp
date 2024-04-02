@@ -49,7 +49,7 @@ TEST_CASE("waterbox", "[dynamics]") {
     integrator->setFriction(friction);
     integrator->setBathTemperature(tempFinal);
 
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
 
     REQUIRE(integrator->getFriction() == friction);
 
@@ -80,7 +80,7 @@ TEST_CASE("waterbox", "[dynamics]") {
       std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
   integrator->setFriction(12.0);
   integrator->setBathTemperature(300.0);
-  integrator->setSimulationContext(ctx);
+  integrator->setCharmmContext(ctx);
 
   std::cout << "DOF:" << ctx->getDegreesOfFreedom() << "\n";
   // auto subscriber =
@@ -133,10 +133,10 @@ TEST_CASE("waterbox", "[dynamics]") {
   auto integrator = CudaLangevinThermostatIntegrator(timeStep);
   integrator.setFriction(5.0);
   integrator.setBathTemperature(298.17);
-  integrator.setSimulationContext(ctx);
+  integrator.setCharmmContext(ctx);
 
   auto integrator2 = CudaVelocityVerletIntegrator(timeStep);
-  integrator2.setSimulationContext(ctx);
+  integrator2.setCharmmContext(ctx);
 
   // auto subscriber = std::make_shared<DcdSubscriber>("lang_cpz_bcd.dcd",
   // ctx);
@@ -185,7 +185,7 @@ SECTION("5dfr") {
   CudaLangevinThermostatIntegrator integrator(0.002);
   integrator.setFriction(5.0);
   integrator.setBathTemperature(300.0);
-  integrator.setSimulationContext(ctx);
+  integrator.setCharmmContext(ctx);
 
   std::cout << "DOF:" << ctx->getDegreesOfFreedom() << "\n";
   integrator.propagate(1000);
@@ -223,7 +223,7 @@ SECTION("jac") {
   CudaLangevinThermostatIntegrator integrator(0.002);
   integrator.setFriction(5.0);
   integrator.setBathTemperature(300.0);
-  integrator.setSimulationContext(ctx);
+  integrator.setCharmmContext(ctx);
 
   std::cout << "DOF:" << ctx->getDegreesOfFreedom() << "\n";
   integrator.propagate(1000);

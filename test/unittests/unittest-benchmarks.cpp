@@ -59,7 +59,7 @@ TEST_CASE("pore", "[dynamics]") {
     pe.transferFromDevice();
 
     CudaMinimizer minimizer;
-    minimizer.setSimulationContext(ctx);
+    minimizer.setCharmmContext(ctx);
     // minimizer.minimize(100);
 
     ctx->calculatePotentialEnergy(true, true);
@@ -74,7 +74,7 @@ TEST_CASE("pore", "[dynamics]") {
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
     langevinThermostat->setFriction(5.0);
     langevinThermostat->setBathTemperature(300.0);
-    langevinThermostat->setSimulationContext(ctx);
+    langevinThermostat->setCharmmContext(ctx);
     langevinThermostat->setDebugPrintFrequency(100);
 
     /*auto nvtdcdSubscriber =
@@ -86,7 +86,7 @@ TEST_CASE("pore", "[dynamics]") {
 
     auto equilibrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
     equilibrator->setPistonFriction(12.0);
-    equilibrator->setSimulationContext(ctx);
+    equilibrator->setCharmmContext(ctx);
     equilibrator->setNoseHooverPistonMass(1000.0);
     equilibrator->setCrystalType(CRYSTAL::TETRAGONAL);
     equilibrator->setPistonMass({1000.0, 1000.0});
@@ -97,7 +97,7 @@ TEST_CASE("pore", "[dynamics]") {
 
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.001);
     integrator->setPistonFriction(0.0);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
     // integrator->setNoseHooverPistonMass(1000.0);
     integrator->setCrystalType(CRYSTAL::TETRAGONAL);
     // integrator->setPistonMass({std::numeric_limits<double>::max(), 1000.0});
@@ -182,7 +182,7 @@ TEST_CASE("blade_benchmark", "[dynamics]") {
 
     langevinThermostat->setFriction(0.0);
     langevinThermostat->setBathTemperature(300.0);
-    langevinThermostat->setSimulationContext(ctx);
+    langevinThermostat->setCharmmContext(ctx);
 
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -237,7 +237,7 @@ TEST_CASE("blade_benchmark", "[dynamics]") {
     // CudaVelocityVerletIntegrator langevinThermostat(0.002);
     langevinThermostat->setFriction(0.0);
     langevinThermostat->setBathTemperature(300.0);
-    langevinThermostat->setSimulationContext(ctx);
+    langevinThermostat->setCharmmContext(ctx);
 
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -291,7 +291,7 @@ TEST_CASE("microtubule", "[dyna]") {
     auto integrator = std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
     integrator->setFriction(5.0);
     integrator->setBathTemperature(300.0);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
 
     // auto subscriber = std::make_shared<DcdSubscriber>("3ryfi.dcd");
     //  integrator.subscribe(subscriber);
@@ -333,8 +333,8 @@ TEST_CASE("namd_benchmark", "[dynamics]") {
     ctx->calculatePotentialEnergy(true, true);
     ctx->assignVelocitiesAtTemperature(300);
 
-    CudaMinimizer minimizer;
-    minimizer.setSimulationContext(ctx);
+    /*CudaMinimizer minimizer;
+    minimizer.setCharmmContext(ctx);
     // minimizer.minimize();
 
     auto langevinThermostat =
@@ -342,9 +342,32 @@ TEST_CASE("namd_benchmark", "[dynamics]") {
     // CudaVelocityVerletIntegrator langevinThermostat(0.002);
     langevinThermostat->setFriction(0.0);
     langevinThermostat->setBathTemperature(300.0);
-    langevinThermostat->setSimulationContext(ctx);
+    langevinThermostat->setCharmmContext(ctx);
 
     langevinThermostat->propagate(21000);
+    */
+    double timeStep = 0.002;
+    double numSteps = 10000;
+
+    auto langevinThermostat =
+        std::make_shared<CudaLangevinThermostatIntegrator>(timeStep);
+    // CudaVelocityVerletIntegrator langevinThermostat(0.002);
+    langevinThermostat->setFriction(0.0);
+    langevinThermostat->setBathTemperature(300.0);
+    langevinThermostat->setCharmmContext(ctx);
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    langevinThermostat->propagate(numSteps);
+    auto end = std::chrono::high_resolution_clock::now();
+
+    // time in seconds
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    std::cout << "Elapsed time: " << elapsed_seconds.count() << "s\n";
+
+    std::cout << "speed in nd/day : "
+              << (numSteps * timeStep) / (elapsed_seconds.count() * 1e3) * 86400
+              << "\n";
   }
 
   SECTION("apoa1") {
@@ -353,12 +376,13 @@ TEST_CASE("namd_benchmark", "[dynamics]") {
     std::string dataPath1 = getDataPath();
 
     std::vector<std::string> prmFiles{
-        dataPath1 + "par_all36_lipid.prm", dataPath1 + "par_all22_prot.prm"
-        // dataPath + "par_all22_popc.xplor" //, dataPath +
-        //"par_all22_prot_lipid.xplor"
+        dataPath1 + "par_all36_lipid.prm", dataPath1 + "par_all22_prot.prm",
+        dataPath + "par_all22_popc.xplor"
+        // dataPath + "par_all22_prot_lipid.xplor"
     };
+
     auto prm = std::make_shared<CharmmParameters>(prmFiles);
-    auto psf = std::make_shared<CharmmPSF>(dataPath + "apoa1.psf");
+    auto psf = std::make_shared<CharmmPSF>(dataPath + "../apoa11.psf");
 
     auto fm = std::make_shared<ForceManager>(psf, prm);
     fm->setBoxDimensions({108.8612, 108.8612, 77.758});
@@ -369,23 +393,33 @@ TEST_CASE("namd_benchmark", "[dynamics]") {
     fm->setCtofnb(7.5);
 
     auto ctx = std::make_shared<CharmmContext>(fm);
-    auto crd = std::make_shared<PDB>(dataPath + "apoa1.pdb");
+    auto crd = std::make_shared<PDB>(dataPath + "../apoa11.pdb");
     ctx->setCoordinates(crd);
     ctx->calculatePotentialEnergy(true, true);
     ctx->assignVelocitiesAtTemperature(300);
 
-    CudaMinimizer minimizer;
-    minimizer.setSimulationContext(ctx);
-    // minimizer.minimize();
+    double timeStep = 0.002;
+    double numSteps = 10000;
 
     auto langevinThermostat =
-        std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
+        std::make_shared<CudaLangevinThermostatIntegrator>(timeStep);
     // CudaVelocityVerletIntegrator langevinThermostat(0.002);
     langevinThermostat->setFriction(0.0);
     langevinThermostat->setBathTemperature(300.0);
-    langevinThermostat->setSimulationContext(ctx);
+    langevinThermostat->setCharmmContext(ctx);
 
-    langevinThermostat->propagate(21000);
+    auto start = std::chrono::high_resolution_clock::now();
+
+    langevinThermostat->propagate(numSteps);
+    auto end = std::chrono::high_resolution_clock::now();
+
+    // time in seconds
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    std::cout << "Elapsed time: " << elapsed_seconds.count() << "s\n";
+
+    std::cout << "speed in nd/day : "
+              << (numSteps * timeStep) / (elapsed_seconds.count() * 1e3) * 86400
+              << "\n";
   }
 }
 
@@ -430,7 +464,7 @@ TEST_CASE("benchmark", "[dynamics]") {
     // int inp;
     // std::cin >> inp;
     CudaMinimizer minimizer;
-    minimizer.setSimulationContext(ctx);
+    minimizer.setCharmmContext(ctx);
     // minimizer.minimize(100);
 
     auto langevinThermostat =
@@ -438,7 +472,7 @@ TEST_CASE("benchmark", "[dynamics]") {
     // CudaVelocityVerletIntegrator langevinThermostat(0.002);
     langevinThermostat->setFriction(5.0);
     langevinThermostat->setBathTemperature(310.0);
-    langevinThermostat->setSimulationContext(ctx);
+    langevinThermostat->setCharmmContext(ctx);
 
     langevinThermostat->propagate(5000);
 

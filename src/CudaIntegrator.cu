@@ -67,7 +67,7 @@ void CudaIntegrator::setTimeStep(const ts_t dt) {
   }
 }
 
-std::shared_ptr<CharmmContext> CudaIntegrator::getSimulationContext(void) {
+std::shared_ptr<CharmmContext> CudaIntegrator::getCharmmContext(void) {
   return context;
 }
 
@@ -75,7 +75,7 @@ void CudaIntegrator::initialize() {
   std::cout << "Should not have been called!!\n";
 }
 
-void CudaIntegrator::setSimulationContext(std::shared_ptr<CharmmContext> ctx) {
+void CudaIntegrator::setCharmmContext(std::shared_ptr<CharmmContext> ctx) {
   if (isCharmmContextSet) {
     throw std::invalid_argument(
         "A CharmmContext object was already set for this CudaIntegrator.\n");
@@ -95,7 +95,7 @@ void CudaIntegrator::setSimulationContext(std::shared_ptr<CharmmContext> ctx) {
   usingHolonomicConstraints = context->isUsingHolonomicConstraints();
   if (usingHolonomicConstraints) {
     holonomicConstraint = std::make_shared<CudaHolonomicConstraint>();
-    holonomicConstraint->setSimulationContext(ctx);
+    holonomicConstraint->setCharmmContext(ctx);
     holonomicConstraint->setup(timeStep);
     holonomicConstraint->setStream(integratorStream);
     holonomicConstraint->setMemcpyStream(integratorMemcpyStream);

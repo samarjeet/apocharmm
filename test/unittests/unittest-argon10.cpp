@@ -59,7 +59,7 @@ TEST_CASE("argon10", "[energy]") {
 
     auto integrator = CudaVelocityVerletIntegrator(0.001);
     //auto integrator = CudaVerletIntegrator(0.001);
-    integrator.setSimulationContext(ctx);
+    integrator.setCharmmContext(ctx);
     //integrator.initialize();
     
     //auto dcdSubscriber = std::make_shared<DcdSubscriber>("vv_argon10.dcd", ctx);

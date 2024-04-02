@@ -51,7 +51,7 @@ TEST_CASE("waterbox", "[minimize]") {
 
     CudaMinimizer minimizer;
     minimizer.setVerboseFlag(true);
-    minimizer.setSimulationContext(ctx);
+    minimizer.setCharmmContext(ctx);
     minimizer.minimize(10);
 
     ctx->calculatePotentialEnergy(true);
@@ -71,7 +71,7 @@ TEST_CASE("waterbox", "[minimize]") {
     CHECK(pottmp > potf);
 
     auto integrator = std::make_shared<CudaVelocityVerletIntegrator>(0.002);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
 
     integrator->propagate(50);
   }

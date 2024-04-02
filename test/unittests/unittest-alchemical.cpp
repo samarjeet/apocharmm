@@ -81,12 +81,12 @@ TEST_CASE("TI-PI") {
     CudaLangevinThermostatIntegrator equilIntegrator(0.002);
     equilIntegrator.setFriction(5.0);
     equilIntegrator.setBathTemperature(300.0);
-    equilIntegrator.setSimulationContext(ctx);
+    equilIntegrator.setCharmmContext(ctx);
 
     CudaLangevinThermostatIntegrator integrator(0.002);
     integrator.setFriction(5.0);
     integrator.setBathTemperature(300.0);
-    integrator.setSimulationContext(ctx);
+    integrator.setCharmmContext(ctx);
 
     auto fepSub = std::make_shared<FEPSubscriber>("dbexp_fepEI_vdw.out");
     fepSub->setReportFreq(1000);

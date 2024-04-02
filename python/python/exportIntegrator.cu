@@ -19,14 +19,14 @@ void exportIntegrator(py::module &module) {
          Integrator. 
          
          Takes timestep size (in ps) as arg
-         Requires a CharmmContext object as mediator (see setSimulationContext() )
+         Requires a CharmmContext object as mediator (see setCharmmContext() )
 
          :param timeStep: integrator timestep, in ps
          :type timeStep: float
          
          )samaristhebest")
-      /*.def("setSimulationContext",
-           &CudaVelocityVerletIntegrator::setSimulationContext,
+      /*.def("setCharmmContext",
+           &CudaVelocityVerletIntegrator::setCharmmContext,
            "set the charmm context ")
       */
       /*.def("setReportSteps", &CudaVelocityVerletIntegrator::setReportSteps,
@@ -92,8 +92,7 @@ void exportIntegrator(py::module &module) {
       module, "VelocityVerletIntegrator")
       .def(py::init<float>(),
            "Velocity Verlet Integrator. Takes timestep (in ps) as arg")
-      .def("setSimulationContext",
-           &CudaVelocityVerletIntegrator::setSimulationContext,
+      .def("setCharmmContext", &CudaVelocityVerletIntegrator::setCharmmContext,
            "set the charmm context ")
       //.def("setReportSteps", &CudaVelocityVerletIntegrator::setReportSteps,
       //"Report every <arg> steps") .def("propagate",
@@ -104,8 +103,8 @@ void exportIntegrator(py::module &module) {
       module, "VMMSVelocityVerletIntegrator")
       .def(py::init<float>(),
            "VMMS velocity Verlet Integrator. Takes timestep (in ps) as arg")
-      .def("setSimulationContexts",
-           &CudaVMMSVelocityVerletIntegrator::setSimulationContexts,
+      .def("setCharmmContexts",
+           &CudaVMMSVelocityVerletIntegrator::setCharmmContexts,
            "set the charmm context ")
       .def("setSoluteAtoms", &CudaVMMSVelocityVerletIntegrator::setSoluteAtoms,
            "set the solute atoms ")
@@ -137,8 +136,8 @@ void exportIntegrator(py::module &module) {
                :param friction: friction coefficient, in units /ps
                :type friction: float
                )sitb")
-      .def("setSimulationContext",
-           &CudaLangevinThermostatIntegrator::setSimulationContext,
+      .def("setCharmmContext",
+           &CudaLangevinThermostatIntegrator::setCharmmContext,
            "set the charmm context ")
       .def("setBathTemperature",
            &CudaLangevinThermostatIntegrator::setBathTemperature,
@@ -165,8 +164,7 @@ void exportIntegrator(py::module &module) {
           )sitb")
       .def(py::init<float>(),
            "Langevin piston integrator. Takes timestep (in ps) as arg")
-      .def("setSimulationContext",
-           &CudaLangevinPistonIntegrator::setSimulationContext,
+      .def("setCharmmContext", &CudaLangevinPistonIntegrator::setCharmmContext,
            "set the CharmmContext ")
       //      .def("setPistonMass",
       //           py::overload_cast<double>(
@@ -202,7 +200,7 @@ void exportIntegrator(py::module &module) {
            &CudaLangevinPistonIntegrator::setNoseHooverFlag,
            "set the Nose-Hoover flag. Set it to False to run NPH rather than "
            "NPT. Default: true")
-     .def("initialize", &CudaLangevinPistonIntegrator::initialize,
+      .def("initialize", &CudaLangevinPistonIntegrator::initialize,
            "initialize the integrator variables. Should be used when starting a"
            " simulation of another system using the same integrator. ");
   //      .def("setDebugPrintFrequency",
@@ -218,7 +216,7 @@ void exportMinimizer(py::module &module) {
          LBFGS Minimizer. 
 
          )samaristhebest")
-      .def("setSimulationContext", &CudaMinimizer::setSimulationContext,
+      .def("setCharmmContext", &CudaMinimizer::setCharmmContext,
            R"sitb(
             set the charmm context 
 

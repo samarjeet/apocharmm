@@ -30,7 +30,7 @@ public:
   // Put these in the base class
   // void setContext();
   void initialize();
-  void setSimulationContexts(std::vector<CharmmContext> ctxs);
+  void setCharmmContexts(std::vector<CharmmContext> ctxs);
   void setSoluteAtoms(std::vector<int> atoms);
   void propagateOneStep() override;
 };

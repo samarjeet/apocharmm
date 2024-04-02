@@ -54,7 +54,7 @@ TEST_CASE("Pressure", "[unit]") {
   integrator->setCrystalType(CRYSTAL::CUBIC);
   integrator->setPistonFriction(12.0);
   integrator->setPistonMass({500.0});
-  integrator->setSimulationContext(ctx);
+  integrator->setCharmmContext(ctx);
 
   // Heat from 30 -> 300 K
   float temp = 28.0f;
@@ -158,7 +158,7 @@ TEST_CASE("unittest", "[basic]") {
 
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
     integrator->setPistonFriction(12.0);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
 
     double nhpm = integrator->getNoseHooverPistonMass();
     // waterbox = 3916 waters
@@ -208,7 +208,7 @@ TEST_CASE("waterbox", "[dynamics]") {
 
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
     integrator->setPistonFriction(12.);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
     integrator->setCrystalType(CRYSTAL::CUBIC);
 
     auto densitySub =
@@ -298,8 +298,8 @@ TEST_CASE("waterbox", "[dynamics]") {
         integrator1->getSeedForPistonFriction());
     integrator1->setPistonFriction(00.);
     integrator2->setPistonFriction(00.);
-    integrator1->setSimulationContext(context1);
-    integrator2->setSimulationContext(context2);
+    integrator1->setCharmmContext(context1);
+    integrator2->setCharmmContext(context2);
     integrator1->setCrystalType(CRYSTAL::CUBIC);
     integrator2->setCrystalType(CRYSTAL::CUBIC);
 
@@ -355,8 +355,8 @@ TEST_CASE("waterbox", "[dynamics]") {
         integrator1->getSeedForPistonFriction());
     integrator1->setPistonFriction(00.);
     integrator2->setPistonFriction(00.);
-    integrator1->setSimulationContext(context1);
-    integrator2->setSimulationContext(context2);
+    integrator1->setCharmmContext(context1);
+    integrator2->setCharmmContext(context2);
     integrator1->setCrystalType(CRYSTAL::CUBIC);
     integrator2->setCrystalType(CRYSTAL::CUBIC);
 
@@ -416,7 +416,7 @@ TEST_CASE("nve", "[dynamics]") {
 
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
     integrator->setPistonFriction(0.0);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
     integrator->setCrystalType(CRYSTAL::TETRAGONAL);
     integrator->setPistonMass({0.0, 0.0});
     integrator->setNoseHooverFlag(false);
@@ -455,7 +455,7 @@ TEST_CASE("argon") {
 
   auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
   integrator->setPistonFriction(0.0);
-  integrator->setSimulationContext(ctx);
+  integrator->setCharmmContext(ctx);
   integrator->setNoseHooverFlag(false);
 
   SECTION("orthorhombic") { integrator->setCrystalType(CRYSTAL::ORTHORHOMBIC); }
@@ -494,7 +494,7 @@ TEST_CASE("p1crystalTypes_nph") {
 
   auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.001);
   integrator->setPistonFriction(0.0);
-  integrator->setSimulationContext(ctx);
+  integrator->setCharmmContext(ctx);
   integrator->setNoseHooverFlag(false);
 
   integrator->setMaxPredictorCorrectorSteps(10);
@@ -534,7 +534,7 @@ TEST_CASE("p1crystalTypes_12") {
 
   auto preIntegrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
   preIntegrator->setPistonFriction(12.0);
-  preIntegrator->setSimulationContext(ctx);
+  preIntegrator->setCharmmContext(ctx);
   preIntegrator->setBathTemperature(300.0);
   preIntegrator->setCrystalType(CRYSTAL::CUBIC);
 
@@ -543,7 +543,7 @@ TEST_CASE("p1crystalTypes_12") {
 
   auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
   integrator->setPistonFriction(12.0);
-  integrator->setSimulationContext(ctx);
+  integrator->setCharmmContext(ctx);
   integrator->setBathTemperature(300.0);
 
   SECTION("orthorhombic") { integrator->setCrystalType(CRYSTAL::ORTHORHOMBIC); }
@@ -591,18 +591,18 @@ TEST_CASE("p21crystalTypes_nph") {
   ctx->assignVelocitiesAtTemperature(300);
 
   CudaMinimizer minimizer;
-  minimizer.setSimulationContext(ctx);
+  minimizer.setCharmmContext(ctx);
   minimizer.minimize();
 
   CudaLangevinThermostatIntegrator langevinThermostat(0.002);
   langevinThermostat.setFriction(5.0);
   langevinThermostat.setBathTemperature(300.0);
-  langevinThermostat.setSimulationContext(ctx);
+  langevinThermostat.setCharmmContext(ctx);
   langevinThermostat.propagate(5e3);
 
   auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
   integrator->setPistonFriction(5.0);
-  integrator->setSimulationContext(ctx);
+  integrator->setCharmmContext(ctx);
   // integrator->setNoseHooverFlag(false);
 
   SECTION("orthorhombic") { integrator->setCrystalType(CRYSTAL::ORTHORHOMBIC); }
@@ -637,7 +637,7 @@ TEST_CASE("lipidBilayer") {
 
   auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
   integrator->setPistonFriction(20.0);
-  integrator->setSimulationContext(ctx);
+  integrator->setCharmmContext(ctx);
   integrator->setCrystalType(CRYSTAL::TETRAGONAL);
   CHECK_NOTHROW(integrator->propagate(1000));
 }
@@ -690,7 +690,7 @@ TEST_CASE("zack") {
     }
 
     CudaMinimizer minimizer;
-    minimizer.setSimulationContext(ctx);
+    minimizer.setCharmmContext(ctx);
     // minimizer.minimize();
 
     pe = ctx->getPotentialEnergy();
@@ -702,7 +702,7 @@ TEST_CASE("zack") {
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
     langevinThermostat->setFriction(5.0);
     langevinThermostat->setBathTemperature(310.0);
-    langevinThermostat->setSimulationContext(ctx);
+    langevinThermostat->setCharmmContext(ctx);
     langevinThermostat->propagate(5e3);
 
     std::cout << "Setting up NPT integrator" << std::endl;
@@ -714,7 +714,7 @@ TEST_CASE("zack") {
     integrator->setPistonMass({500.0, 500.0});
     integrator->setSurfaceTension(20.0);
     integrator->setPistonFriction(12.0);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
 
     // integrator->setNoseHooverFlag(false);
 

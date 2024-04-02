@@ -10,6 +10,7 @@
 
 #include "CharmmContext.h"
 #include "CharmmCrd.h"
+#include "Checkpoint.h"
 #include "Constants.h"
 #include "PBC.h"
 #include "gpu_utils.h"
@@ -54,6 +55,14 @@ CharmmContext::CharmmContext(const CharmmContext &ctxIn)
       numDegreesOfFreedom(ctxIn.numDegreesOfFreedom),
       usingHolonomicConstraints(ctxIn.usingHolonomicConstraints),
       hasLogger(ctxIn.hasLogger), seed(ctxIn.seed) {}
+
+void CharmmContext::setupFromCheckpoint(
+    std::shared_ptr<Checkpoint> checkpoint) {
+  numAtoms = checkpoint->get<int>("numAtoms");
+  // coordsCharge = checkpoint->get<CudaContainer<double4>>("coordsCharge");
+
+  return;
+}
 
 void CharmmContext::setMasses(const std::vector<double> &masses) {
   if (masses.size() != numAtoms) {

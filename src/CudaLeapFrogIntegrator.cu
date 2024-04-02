@@ -18,9 +18,9 @@ CudaLeapFrogIntegrator::CudaLeapFrogIntegrator(double timeStep)
 
 void CudaLeapFrogIntegrator::initialize() {}
 
-void CudaLeapFrogIntegrator::setSimulationContext(
+void CudaLeapFrogIntegrator::setCharmmContext(
     std::shared_ptr<CharmmContext> ctx) {
-  CudaIntegrator::setSimulationContext(ctx);
+  CudaIntegrator::setCharmmContext(ctx);
 }
 
 __global__ static void leapFrogKernel(const int numAtoms, const int stride,

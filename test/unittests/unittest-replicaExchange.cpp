@@ -70,22 +70,20 @@ TEST_CASE("rex", "[energy]") {
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
     integrator0->setFriction(5.0);
     integrator0->setBathTemperature(300.0);
-    integrator0->setSimulationContext(ctx0);
+    integrator0->setCharmmContext(ctx0);
 
     auto integrator1 =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
     integrator1->setFriction(5.0);
     integrator1->setBathTemperature(300.0);
-    integrator1->setSimulationContext(ctx1);
+    integrator1->setCharmmContext(ctx1);
 
     for (int i = 0; i < 100; i++) {
 
       integrator0->propagate(1000);
       integrator1->propagate(1000);
 
-      // ctx0->calculateForces(false, true, true);
       ctx0->calculatePotentialEnergy(true, true);
-      // ctx1->calculateForces(false, true, true);
       ctx1->calculatePotentialEnergy(true, true);
 
       auto pe00 = ctx0->getPotentialEnergy();

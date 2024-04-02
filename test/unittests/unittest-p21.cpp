@@ -68,7 +68,7 @@ TEST_CASE("waterbox", "[all]") {
     auto langevinThermostat =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
     langevinThermostat->setFriction(0.0);
-    langevinThermostat->setSimulationContext(ctx);
+    langevinThermostat->setCharmmContext(ctx);
     langevinThermostat->propagate(nSteps);
   }
 
@@ -77,7 +77,7 @@ TEST_CASE("waterbox", "[all]") {
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
     langevinThermostat->setFriction(12.0);
     langevinThermostat->setBathTemperature(300.0);
-    langevinThermostat->setSimulationContext(ctx);
+    langevinThermostat->setCharmmContext(ctx);
     langevinThermostat->propagate(nSteps);
   }
 
@@ -94,7 +94,7 @@ TEST_CASE("waterbox", "[all]") {
 
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
     integrator->setPistonFriction(5.0);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
     integrator->setCrystalType(CRYSTAL::CUBIC);
     integrator->setPistonMass({500.0});
 
@@ -147,7 +147,7 @@ TEST_CASE("bilayer", "[all]") {
       std::make_shared<CudaLangevinThermostatIntegrator>(0.001);
 
   langevinThermostat->setBathTemperature(300.0);
-  langevinThermostat->setSimulationContext(ctx);
+  langevinThermostat->setCharmmContext(ctx);
 
   SECTION("nve") {
     langevinThermostat->setFriction(0.0);
@@ -163,7 +163,7 @@ TEST_CASE("bilayer", "[all]") {
 
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
     integrator->setPistonFriction(0.0);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
     integrator->setPistonMass({500.0});
     integrator->setCrystalType(CRYSTAL::TETRAGONAL);
     integrator->setNoseHooverFlag(false);
@@ -172,7 +172,7 @@ TEST_CASE("bilayer", "[all]") {
     std::string subfile = "p21_bilayer_npt.dcd";
     // auto subscriber = std::make_shared<DcdSubscriber>(subfile, 1000, ctx);
     auto subscriber = std::make_shared<DcdSubscriber>(subfile, 1000);
-    // subscriber->setSimulationContext(ctx);
+    // subscriber->setCharmmContext(ctx);
     integrator->subscribe(subscriber);
     // fm->setPrintEnergyDecomposition(true);
 
@@ -188,7 +188,7 @@ TEST_CASE("bilayer", "[all]") {
 
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
     integrator->setPistonFriction(20.0);
-    integrator->setSimulationContext(ctx);
+    integrator->setCharmmContext(ctx);
     integrator->setCrystalType(CRYSTAL::TETRAGONAL);
     integrator->setPistonMass({5000.0});
     integrator->setBathTemperature(300.0);
@@ -311,7 +311,7 @@ TEST_CASE("dimer_bilayer", "[all]") {
   }
   /*
   CudaMinimizer minimizer;
-  minimizer.setSimulationContext(ctx);
+  minimizer.setCharmmContext(ctx);
   std::cout << "Minimizing...\n";
   minimizer.minimize(100);
   */
@@ -319,11 +319,11 @@ TEST_CASE("dimer_bilayer", "[all]") {
   CudaLangevinThermostatIntegrator langevinThermostat(0.001);
 
   langevinThermostat.setBathTemperature(310.0);
-  langevinThermostat.setSimulationContext(ctx);
+  langevinThermostat.setCharmmContext(ctx);
 
   SECTION("nve") {
     CudaMinimizer minimizer;
-    minimizer.setSimulationContext(ctx);
+    minimizer.setCharmmContext(ctx);
     std::cout << "Minimizing...\n";
     minimizer.minimize(100);
 
@@ -346,7 +346,7 @@ TEST_CASE("dimer_bilayer", "[all]") {
 
     auto integrator = CudaLangevinPistonIntegrator(0.002);
     integrator.setPistonFriction(0.0);
-    integrator.setSimulationContext(ctx);
+    integrator.setCharmmContext(ctx);
     integrator.setPistonMass({500.0});
     integrator.setCrystalType(CRYSTAL::TETRAGONAL);
     integrator.setNoseHooverFlag(false);
@@ -357,7 +357,7 @@ TEST_CASE("dimer_bilayer", "[all]") {
     std::string subfile = "p21_bilayer_npt.dcd";
     // auto subscriber = std::make_shared<DcdSubscriber>(subfile, 1000, ctx);
     auto subscriber = std::make_shared<DcdSubscriber>(subfile, 1000);
-    // subscriber->setSimulationContext(ctx);
+    // subscriber->setCharmmContext(ctx);
     integrator.subscribe(subscriber);
     // fm->setPrintEnergyDecomposition(true);
 
@@ -371,7 +371,7 @@ TEST_CASE("dimer_bilayer", "[all]") {
 
     auto integrator = CudaLangevinPistonIntegrator(0.002);
     integrator.setPistonFriction(0.0);
-    integrator.setSimulationContext(ctx);
+    integrator.setCharmmContext(ctx);
     integrator.setCrystalType(CRYSTAL::TETRAGONAL);
     integrator.setPistonMass({500.0});
     integrator.setBathTemperature(300.0);
