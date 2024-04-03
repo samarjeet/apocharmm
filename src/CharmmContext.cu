@@ -437,7 +437,7 @@ void CharmmContext::assignVelocitiesAtTemperature(float temp) {
   kineticEnergy *= 0.5;
   int ndegf = getDegreesOfFreedom();
 
-  std::cout << "Velocities assigned at temperature " << temp << "\n";
+  // std::cout << "Velocities assigned at temperature " << temp << "\n";
 
   // std::cout << "dof : " << ndegf << "\n";
   float backTemp =
@@ -445,7 +445,7 @@ void CharmmContext::assignVelocitiesAtTemperature(float temp) {
   // std::cout << "calculated temp from ke (host) : " << backTemp << "\n";
 
   velocityMass.transferToDevice();
-  std::cout << "calculated temp from ke : " << computeTemperature() << "\n";
+  // std::cout << "calculated temp from ke : " << computeTemperature() << "\n";
 }
 
 static std::vector<std::string> split(std::string line) {

@@ -1,6 +1,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include "BEDSSubscriber.h"
 #include "CharmmContext.h"
 #include "CompositeSubscriber.h"
 #include "DcdSubscriber.h"
@@ -136,9 +137,11 @@ void exportSubscriber(py::module &mod) {
   // DualTopologySubscriber
   //========================
   py::class_<DualTopologySubscriber, std::shared_ptr<DualTopologySubscriber>>(
-      mod, "DualTopologySubscriber", pySubscriber,
-      "Dual Topology Subscriber")
+      mod, "DualTopologySubscriber", pySubscriber, "Dual Topology Subscriber")
       .def(py::init<const std::string &>(),
+           "PE0, PE1, (1-lambda)PE0 + (lambda)PE1 reporter. Takes .txt file "
+           "name and the CHARMM context as args")
+      .def(py::init<const std::string &, int>(),
            "PE0, PE1, (1-lambda)PE0 + (lambda)PE1 reporter. Takes .txt file "
            "name and the CHARMM context as args");
 
@@ -200,6 +203,22 @@ void exportSubscriber(py::module &mod) {
                 :param reportFreq: interval between two reports
                 :type reportFreq: int 
             )sitb");
+
+  // BEDSSubsriber
+  //===============
+  py::class_<BEDSSubscriber, std::shared_ptr<BEDSSubscriber>>(
+      mod, "BEDSSubscriber", pySubscriber, "BEDS Subscriber")
+      .def(py::init<const std::string &>(),
+           "BEDS Subscriber constructor. Takes output file name as argument")
+      .def(py::init<const std::string &, int>(),
+           R"sitb(
+                    BEDSSubscriber constructor, using a file name and a report frequency.
+     
+                    :param reportFileName: output file name
+                    :type reportFileName: str
+                    :param reportFreq: interval between two reports
+                    :type reportFreq: int 
+               )sitb");
 
   // FEPSubscriber
   //==============

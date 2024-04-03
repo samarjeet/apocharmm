@@ -13,13 +13,13 @@
 #include <fstream>
 #include <iostream>
 
-DualTopologySubscriber::DualTopologySubscriber(
-    const std::string &fileName)
+DualTopologySubscriber::DualTopologySubscriber(const std::string &fileName)
     : Subscriber(fileName) {
   numFramesWritten = 0;
 }
 DualTopologySubscriber::DualTopologySubscriber(
-    const std::string &fileName, int reportFreq)//, std::shared_ptr<CharmmContext> ctx)
+    const std::string &fileName,
+    int reportFreq) //, std::shared_ptr<CharmmContext> ctx)
     : Subscriber(fileName, reportFreq) {
   numFramesWritten = 0;
 }
@@ -28,7 +28,6 @@ DualTopologySubscriber::~DualTopologySubscriber() {
   std::cout << "Trying to close the dual topology subscriber\n";
   fout.close();
 }
-
 
 void DualTopologySubscriber::update() {
 

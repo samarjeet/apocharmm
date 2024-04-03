@@ -13,8 +13,7 @@ namespace py = pybind11;
 
 void exportIntegrator(py::module &mod) {
 
-  py::class_<CudaIntegrator, std::shared_ptr<CudaIntegrator>>(mod,
-                                                              "Integrator")
+  py::class_<CudaIntegrator, std::shared_ptr<CudaIntegrator>>(mod, "Integrator")
       .def(py::init<float>(), R"samaristhebest(
          Integrator. 
          
@@ -92,7 +91,9 @@ void exportIntegrator(py::module &mod) {
       mod, "VelocityVerletIntegrator")
       .def(py::init<float>(),
            "Velocity Verlet Integrator. Takes timestep (in ps) as arg")
-      .def("setCharmmContext",
+      .def("setCharmmContext", &CudaVelocityVerletIntegrator::setCharmmContext,
+           "set the charmm context ")
+      .def("setSimulationContext",
            &CudaVelocityVerletIntegrator::setCharmmContext,
            "set the charmm context ")
       //.def("setReportSteps", &CudaVelocityVerletIntegrator::setReportSteps,
@@ -140,6 +141,9 @@ void exportIntegrator(py::module &mod) {
       .def("setCharmmContext",
            &CudaLangevinThermostatIntegrator::setCharmmContext,
            "set the charmm context ")
+      .def("setSimulationContext",
+           &CudaLangevinThermostatIntegrator::setCharmmContext,
+           "set the charmm context ")
       .def("setBathTemperature",
            &CudaLangevinThermostatIntegrator::setBathTemperature,
            "set the bath temperature")
@@ -165,9 +169,11 @@ void exportIntegrator(py::module &mod) {
           )sitb")
       .def(py::init<float>(),
            "Langevin piston integrator. Takes timestep (in ps) as arg")
-      .def("setCharmmContext",
-           &CudaLangevinPistonIntegrator::setCharmmContext,
+      .def("setCharmmContext", &CudaLangevinPistonIntegrator::setCharmmContext,
            "set the CharmmContext ")
+      .def("setSimulationContext",
+           &CudaLangevinPistonIntegrator::setCharmmContext,
+           "set the charmm context ")
       //      .def("setPistonMass",
       //           py::overload_cast<double>(
       //               &CudaLangevinPistonIntegrator::setPistonMass),
@@ -202,7 +208,7 @@ void exportIntegrator(py::module &mod) {
            &CudaLangevinPistonIntegrator::setNoseHooverFlag,
            "set the Nose-Hoover flag. Set it to False to run NPH rather than "
            "NPT. Default: true")
-     .def("initialize", &CudaLangevinPistonIntegrator::initialize,
+      .def("initialize", &CudaLangevinPistonIntegrator::initialize,
            "initialize the integrator variables. Should be used when starting a"
            " simulation of another system using the same integrator. ");
   //      .def("setDebugPrintFrequency",
@@ -226,6 +232,8 @@ void exportMinimizer(py::module &mod) {
             :type csc: CharmmContext
 
             )sitb")
+      .def("setSimulationContext", &CudaMinimizer::setCharmmContext,
+           "set the charmm context ")
       .def("minimize", py::overload_cast<int>(&CudaMinimizer::minimize),
            R"sitb(
            Takes numSteps minimization steps [default 100]
