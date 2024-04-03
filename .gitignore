@@ -55,6 +55,7 @@ test/pytest/__pycache__
 test/pytest/out/*
 test/pytest/*res
 *.out
+*.rst
 
 compile.sh
 clean.sh

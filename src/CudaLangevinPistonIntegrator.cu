@@ -125,16 +125,21 @@ CudaLangevinPistonIntegrator::CudaLangevinPistonIntegrator(ts_t timeStep,
 }
 
 void CudaLangevinPistonIntegrator::allocatePistonVariables() {
+  std::vector<double> tempZero(pistonDegreesOfFreedom, 0.0);
+
   onStepPistonVelocity.allocate(pistonDegreesOfFreedom);
+  onStepPistonVelocity.set(tempZero);
   halfStepPistonVelocity.allocate(pistonDegreesOfFreedom);
+  halfStepPistonVelocity.set(tempZero);
   onStepPistonPosition.allocate(pistonDegreesOfFreedom);
+  onStepPistonPosition.set(tempZero);
   halfStepPistonPosition.allocate(pistonDegreesOfFreedom);
+  halfStepPistonPosition.set(tempZero);
 
   pistonMass.resize(pistonDegreesOfFreedom);
   inversePistonMass.allocate(pistonDegreesOfFreedom);
   pistonDeltaPressure.allocate(pistonDegreesOfFreedom);
   pressurePistonPositionDelta.allocate(pistonDegreesOfFreedom);
-  std::vector<double> tempZero(pistonDegreesOfFreedom, 0.0);
   pressurePistonPositionDelta.set(tempZero);
   pressurePistonPositionDeltaPrevious.allocate(pistonDegreesOfFreedom);
   pressurePistonPositionDeltaStored.allocate(pistonDegreesOfFreedom);
@@ -244,6 +249,11 @@ void CudaLangevinPistonIntegrator::setPistonFriction(double _friction) {
   double kbt = charmm::constants::kBoltz * bathTemperature;
   assert(pistonDegreesOfFreedom != 0);
   for (int i = 0; i < pistonDegreesOfFreedom; i++) {
+    // std::cout << "inversePistonMass[" << i << "] = " << inversePistonMass[i]
+    //           << std::endl;
+    // std::cout << "pgam = " << pgam << std::endl;
+    // std::cout << "kbt = " << kbt << std::endl;
+    // std::cout << "timeStep = " << timeStep << std::endl;
     prfwd.push_back(sqrt(2 * inversePistonMass[i] * pgam * kbt) / timeStep);
   }
 
@@ -1336,6 +1346,32 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
 
     for (int i = 0; i < pistonDegreesOfFreedom; ++i) {
       pressurePistonPositionDeltaPrevious[i] = pressurePistonPositionDelta[i];
+      // double randVal = dist(rng);
+      // double rdum = pbfact * prfwd[i] * randVal;
+      // std::cout << "=============================================" <<
+      // std::endl; std::cout << "                    iter, i = " << iter << ",
+      // " << i
+      //           << std::endl;
+      // std::cout << "                     palpha = " << palpha << std::endl;
+      // std::cout << "pressurePistonPositionDelta = "
+      //           << pressurePistonPositionDelta[i] << std::endl;
+      // std::cout << "          inversePistonMass = " << inversePistonMass[i]
+      //           << std::endl;
+      // std::cout << "        pistonDeltaPressure = " << pistonDeltaPressure[i]
+      //           << std::endl;
+      // std::cout << "                       fact = " << fact << std::endl;
+      // // std::cout << "palpha * pressurePistonPositionDelta = "
+      // //           << palpha * pressurePistonPositionDelta[i] << std::endl;
+      // // std::cout << "inversePistonMass * pistonDeltaPressure * fact = "
+      // //           << inversePistonMass[i] * pistonDeltaPressure[i] * fact
+      // //           << std::endl;
+      // std::cout << "                    randVal = " << randVal << std::endl;
+      // std::cout << "                     pbfact = " << pbfact << std::endl;
+      // std::cout << "                      prfwd = " << prfwd[i] << std::endl;
+      // std::cout << "                       rdum = " << rdum << std::endl;
+      // pressurePistonPositionDelta[i] =
+      //     palpha * pressurePistonPositionDelta[i] +
+      // inversePistonMass[i] * pistonDeltaPressure[i] * fact + rdum;
       pressurePistonPositionDelta[i] =
           palpha * pressurePistonPositionDelta[i] +
           inversePistonMass[i] * pistonDeltaPressure[i] * fact +
