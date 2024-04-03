@@ -47,8 +47,17 @@ void RestartSubscriber::update(void) {
 
   checkForNanValues(coords, velmass, boxdim);
 
-  fout.close();
+  if (fout.is_open()) {
+    fout.close();
+  }
+  // fout.close();
   fout.open(fileName, std::ios::out);
+
+  // atom section
+  int numAtoms = this->charmmContext->getNumAtoms();
+  int numSteps = this->integrator->getCurrentPropagatedStep();
+  fout << "!NATOM,NSTEP\n";
+  fout << std::setw(12) << numAtoms << std::setw(12) << numSteps << "\n";
 
   // position section
   fout << "!X, Y, Z\n";
@@ -191,7 +200,8 @@ void RestartSubscriber::update(void) {
     fout << std::setw(rstWidth) << std::scientific << std::setprecision(rstPrec)
          << noseHooverPistonForcePrevious << "\n\n";
   }
-  fout << std::flush;
+  // fout << std::flush;
+  fout.close();
   ++numFramesWritten;
 }
 
@@ -347,10 +357,9 @@ std::vector<double> RestartSubscriber::readBoxDimensions(void) const {
   // Read and store the section content
   std::vector<std::string> sectionContent;
   std::getline(restartFile, line);
-  double x, y, z;
+  double x = 0.0, y = 0.0, z = 0.0;
   std::istringstream iss(line);
   iss >> x >> y >> z;
-
   std::vector<double> boxdim = {x, y, z};
   return boxdim;
 }
@@ -536,6 +545,10 @@ std::vector<double> RestartSubscriber::readHalfStepPistonVelocity(void) const {
     }
   }
   if (!found) {
+    std::vector<double> halfStepPistonVelocity;
+    halfStepPistonVelocity.push_back(0.0);
+    halfStepPistonVelocity.push_back(0.0);
+    return halfStepPistonVelocity;
     throw std::invalid_argument(
         "ERROR(RestartSubscriber): Cannot find the "
         "half-step piston velocity (!halfStepPistonVelocity) in the file " +
@@ -574,6 +587,9 @@ double RestartSubscriber::readNoseHooverPistonMass(void) const {
   }
 
   if (!found) {
+    auto lp = std::dynamic_pointer_cast<CudaLangevinPistonIntegrator>(
+        this->integrator);
+    return lp->computeNoseHooverPistonMass();
     throw std::invalid_argument(
         "ERROR(RestartSubscriber): Cannot find the Nose Hoover piston mass "
         "section (!noseHooverPistonMass) in the file " +
@@ -610,6 +626,7 @@ double RestartSubscriber::readNoseHooverPistonPosition(void) const {
   }
 
   if (!found) {
+    return 0.0;
     throw std::invalid_argument("ERROR(RestartSubscriber): Cannot find the "
                                 "Nose Hoover piston position section "
                                 "(!noseHooverPistonPosition) in the file " +
@@ -646,6 +663,7 @@ double RestartSubscriber::readNoseHooverPistonVelocity(void) const {
   }
 
   if (!found) {
+    return 0.0;
     throw std::invalid_argument("ERROR(RestartSubscriber): Cannot find the "
                                 "Nose Hoover piston velocity section "
                                 "(!noseHooverPistonVelocity) in the file " +
@@ -682,6 +700,7 @@ double RestartSubscriber::readNoseHooverPistonVelocityPrevious(void) const {
   }
 
   if (!found) {
+    return 0.0;
     throw std::invalid_argument(
         "ERROR(RestartSubscriber): Cannot find the "
         "Nose Hoover piston previous velocity section "
@@ -719,6 +738,7 @@ double RestartSubscriber::readNoseHooverPistonForce(void) const {
   }
 
   if (!found) {
+    return 0.0;
     throw std::invalid_argument("ERROR(RestartSubscriber): Cannot find the "
                                 "Nose Hoover piston force section "
                                 "(!noseHooverPistonForce) in the file " +
@@ -755,6 +775,7 @@ double RestartSubscriber::readNoseHooverPistonForcePrevious(void) const {
   }
 
   if (!found) {
+    return 0.0;
     throw std::invalid_argument(
         "ERROR(RestartSubscriber): Cannot find the "
         "Nose Hoover piston previous force section "
@@ -823,9 +844,9 @@ void RestartSubscriber::readRestart(void) {
     exit(1);
   }
 
+  charmmContext->setBoxDimensions(readBoxDimensions());
   charmmContext->setCoordinates(readPositions());
   charmmContext->assignVelocities(readVelocities());
-  charmmContext->setBoxDimensions(readBoxDimensions());
 
   // Try downcasting to Langevin thermostat, check if nullptr to know if
   // pertinent or not

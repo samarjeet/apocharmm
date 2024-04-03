@@ -61,6 +61,7 @@ void MBARForceManager::setSelectorVec(std::vector<float> lambdaIn) {
             "should be 1.");
       }
   }
+
   ForceManagerComposite::setSelectorVec(lambdaIn);
 
   // Testing this design

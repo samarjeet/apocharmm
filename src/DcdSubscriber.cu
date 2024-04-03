@@ -65,8 +65,9 @@ void DcdSubscriber::initialize() {
   numAtoms = charmmContext->getNumAtoms();
   // Writing the headers
   int firstStep = 0; // TODO : get the firstStep from integrator
-  int interval = reportFreq;
+  // int interval = reportFreq;
   float timeStep = integrator->getTimeStep();
+  int ndegf = charmmContext->getDegreesOfFreedom();
   // int boxFlag = 0;
   int boxFlag = 1; // adding unit cell dimensions
 
@@ -77,27 +78,27 @@ void DcdSubscriber::initialize() {
   header.cord[2] = 'R';
   header.cord[3] = 'D';
 
-  header.ints1[0] = 0;
+  header.ints1[0] = 0; // number of frames written
   header.ints1[1] = firstStep;
-  header.ints1[2] = interval;
-  header.ints1[3] = 0;
-  header.ints1[4] = 0;
-  header.ints1[5] = 0;
-  header.ints1[6] = 0;
-  header.ints1[7] = 0;
-  header.ints1[8] = 0; // Number of fixed atoms
+  header.ints1[2] = reportFreq;
+  header.ints1[3] = 0;     // reportFreq * number of frame written
+  header.ints1[4] = 0;     // velocity saving frequency
+  header.ints1[5] = 0;     // unused
+  header.ints1[6] = 0;     // unused
+  header.ints1[7] = ndegf; // ndegf
+  header.ints1[8] = 0;     // Number of fixed atoms
 
   header.timeStep = timeStep;
 
   header.ints2[0] = boxFlag;
-  header.ints2[1] = 0;
-  header.ints2[2] = 0;
-  header.ints2[3] = 0;
-  header.ints2[4] = 0;
-  header.ints2[5] = 0;
-  header.ints2[6] = 0;
-  header.ints2[7] = 0;
-  header.ints2[8] = 0;
+  header.ints2[1] = 0;  // 4d data
+  header.ints2[2] = 0;  // cheq charge data
+  header.ints2[3] = 0;  // non-contiguous data
+  header.ints2[4] = 0;  // unused
+  header.ints2[5] = 0;  // unused
+  header.ints2[6] = 0;  // unused
+  header.ints2[7] = 0;  // unused
+  header.ints2[8] = 0;  // unused
   header.ints2[9] = 35; // CHARMM version, should be >= 22
   header.ints2[10] = 84;
 
@@ -126,7 +127,7 @@ void DcdSubscriber::update() {
   // std::cout << "In DCD update\n";
 
   auto boxDimensions = charmmContext->getBoxDimensions();
-  
+
   // write 6 double
   float zero;
   int boxSize = 6 * sizeof(double);

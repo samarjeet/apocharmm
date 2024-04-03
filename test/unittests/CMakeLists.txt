@@ -2,7 +2,7 @@
 set( SOURCES_UNITTESTS_TESTS
     # Base tests
     unittest-CharmmContext.cpp
-    unittest-ForceManager.cpp
+    unittest-forceManager.cpp
     unittest-subscribers.cpp
     unittest-readCoordinates.cpp
     unittest-integrators.cpp

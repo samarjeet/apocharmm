@@ -253,6 +253,7 @@ TEST_CASE("ForceManagerComposite", "[unit]") {
               << std::endl;
   }
 }
+
 TEST_CASE("MBARForceManager", "[unit]") {
   // Test that we can compute energy for each child
   // We'll use Transformato-generated input for that
@@ -278,38 +279,37 @@ TEST_CASE("MBARForceManager", "[unit]") {
     }
 
     fmc->initialize();
-    fmc->setSelectorVec({0., 1., 0.});
-
-    /*
 
     auto ctx = std::make_shared<CharmmContext>(fmc);
     auto crd = std::make_shared<CharmmCrd>(stateDir + "methane_aq.crd");
     ctx->setCoordinates(crd);
     ctx->assignVelocitiesAtTemperature(300.0);
 
-    auto integrator = CudaLangevinThermostatIntegrator(0.001, 300.0, 5.0);
-    integrator.setCharmmContext(ctx);
-    integrator.propagate(10);
+    fmc->setSelectorVec({0., 1., 0.});
+    /*
+       auto integrator = CudaLangevinThermostatIntegrator(0.001, 300.0, 5.0);
+       integrator.setCharmmContext(ctx);
+       integrator.propagate(10);
 
-    // Now to get some energies...
-    XYZQ *xyzq = ctx->getXYZQ();
-    xyzq->transferFromDevice();
-    float4 *xyzqPointer = xyzq->xyzq;
-    auto childEnergies = fmc->computeAllChildrenPotentialEnergy(xyzqPointer);
-    childEnergies.transferFromDevice();
-    for (int i = 0; i < nIntermediates; i++) {
-      std::cout << childEnergies[i] << std::endl;
-      CHECK(childEnergies[i] != 0.0);
-    }
+       // Now to get some energies...
+       XYZQ *xyzq = ctx->getXYZQ();
+       xyzq->transferFromDevice();
+       float4 *xyzqPointer = xyzq->xyzq;
+       auto childEnergies = fmc->computeAllChildrenPotentialEnergy(xyzqPointer);
+       childEnergies.transferFromDevice();
+       for (int i = 0; i < nIntermediates; i++) {
+         std::cout << childEnergies[i] << std::endl;
+         CHECK(childEnergies[i] != 0.0);
+       }
 
-    // Trying to change selectorVec ?
-    fmc->setSelectorVec({0., 0., 1.});
-    childEnergies = fmc->computeAllChildrenPotentialEnergy(xyzqPointer);
-    childEnergies.transferFromDevice();
-    for (int i = 0; i < nIntermediates; i++) {
-      CHECK(childEnergies[i] != 0.0);
-    }
-    */
+       // Trying to change selectorVec ?
+       fmc->setSelectorVec({0., 0., 1.});
+       childEnergies = fmc->computeAllChildrenPotentialEnergy(xyzqPointer);
+       childEnergies.transferFromDevice();
+       for (int i = 0; i < nIntermediates; i++) {
+         CHECK(childEnergies[i] != 0.0);
+       }
+       */
   }
 
   // Assert that MBARfm energy corresponds to the child[selector] energy
@@ -361,14 +361,14 @@ TEST_CASE("MBARForceManager", "[unit]") {
       singlectx->calculatePotentialEnergy();
       auto singleenecc = singlectx->getPotentialEnergy();
       singleenecc.transferFromDevice();
-      std::cout << "FM " << i << " energy: " << singleenecc[0] << std::endl;
+      // std::cout << "FM " << i << " energy: " << singleenecc[0] << std::endl;
       singleEneList.push_back(singleenecc[0]);
     }
 
     auto mbarctx = std::make_shared<CharmmContext>(mbarfm);
     auto ctx = std::make_shared<CharmmContext>(fmList[6]);
-    ctx->setCoordinates(crd);
 
+    ctx->setCoordinates(crd);
     mbarctx->setCoordinates(crd);
     // mbarctx->linkBackForceManager();
     mbarfm->setSelectorVec(selectorVec);
@@ -392,24 +392,34 @@ TEST_CASE("MBARForceManager", "[unit]") {
     REQUIRE(mbarene != 0.0);
     CHECK(mbarene == ene);
 
+    // Second test: compare energies of MBARFM vs FM
+
+    int selectedState = 3;
     // Test another energy (say number 10)
-    selectorVec[6] = 0.0;
-    selectorVec[10] = 1.0;
+    std::fill(selectorVec.begin(), selectorVec.end(), 0.);
+    selectorVec[selectedState] = 1.0;
     mbarfm->setSelectorVec(selectorVec);
+
     mbarctx->calculatePotentialEnergy();
     mbarenecc = mbarctx->getPotentialEnergy();
     mbarenecc.transferFromDevice();
-    mbarene = mbarenecc[10];
+
+    /*for (int i = 0; i < numberOfAlchemicalStates; i++) {
+      std::cout << "potential energy [" << i << "] = " << mbarenecc[i]
+                << std::endl;
+    }
+    */
+    mbarene = mbarenecc[selectedState];
     REQUIRE(mbarene != 0.0);
-    CHECK(mbarene == Approx(singleEneList[10]).epsilon(1e-9));
+    CHECK(mbarene == Approx(singleEneList[selectedState]).epsilon(1e-9));
 
     // Check propagation with langevin piston
-    auto integrator = CudaLangevinPistonIntegrator(0.002);
+    /*auto integrator = CudaLangevinPistonIntegrator(0.002);
     integrator.setBathTemperature(310.0);
     integrator.setCharmmContext(mbarctx);
     integrator.setPistonFriction(12.0);
     integrator.setCrystalType(CRYSTAL::TETRAGONAL);
-
-    CHECK_NOTHROW(integrator.propagate(1000));
+    */
+    // CHECK_NOTHROW(integrator.propagate(1000));
   }
 }

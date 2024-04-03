@@ -103,10 +103,6 @@ private:
    */
   double noseHooverPistonMass;
 
-  /** @brief Following CHARMM-GUI heuristics, set the Nose-Hoover dof mass as
-   * 2\% of the mass of the system */
-  double computeNoseHooverPistonMass();
-
   double noseHooverPistonPosition, noseHooverPistonVelocity,
       noseHooverPistonVelocityPrevious, noseHooverPistonForce,
       noseHooverPistonForcePrevious;
@@ -401,4 +397,8 @@ public:
     rng.seed(_seed);
   }
   uint64_t getSeedForPistonFriction() { return seed; }
+
+  /** @brief Following CHARMM-GUI heuristics, set the Nose-Hoover dof mass as
+   * 2\% of the mass of the system */
+  double computeNoseHooverPistonMass();
 };
