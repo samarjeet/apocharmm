@@ -13,15 +13,15 @@ enum NonBondedType {
   VDW_DBEXP_c = 6,
 };
 
-void exportForceManager(py::module &module) {
+void exportForceManager(py::module &mod) {
 
-  py::enum_<NonBondedType>(module, "NonBondedType")
+  py::enum_<NonBondedType>(mod, "NonBondedType")
       .value("VDW_VFSW", NonBondedType::VDW_VFSW_c)
       .value("VDW_DBEXP", NonBondedType::VDW_DBEXP_c)
       .export_values();
 
   py::class_<ForceManager, std::shared_ptr<ForceManager>>(
-      module, "ForceManager", R"sitb(
+      mod, "ForceManager", R"sitb(
      ForceManager object.
      
      Creates a ForceManager, assembling topology and force-field parameters. 
@@ -100,7 +100,7 @@ void exportForceManager(py::module &module) {
              )sitb");
 
   py::class_<ForceManagerComposite, std::shared_ptr<ForceManagerComposite>,
-             ForceManager>(module, "ForceManagerComposite")
+             ForceManager>(mod, "ForceManagerComposite")
       .def(py::init<>(), "ForceManagerComposite constructor")
       .def(py::init<std::vector<std::shared_ptr<ForceManager>> &>(), R"sitb(
             Constructor based on a list of ForceManager. Each will be added to
@@ -130,7 +130,7 @@ void exportForceManager(py::module &module) {
            "set the lambda value");
 
   py::class_<EDSForceManager, std::shared_ptr<EDSForceManager>,
-             ForceManagerComposite>(module, "EDSForceManager")
+             ForceManagerComposite>(mod, "EDSForceManager")
       .def(py::init<>(), "EDSForceManager constructor")
       .def(py::init<std::shared_ptr<ForceManager>,
                     std::shared_ptr<ForceManager>>(),
@@ -144,7 +144,7 @@ void exportForceManager(py::module &module) {
            "set the energy offsets for EDS");
 
   py::class_<MBARForceManager, std::shared_ptr<MBARForceManager>,
-             ForceManagerComposite>(module, "MBARForceManager",
+             ForceManagerComposite>(mod, "MBARForceManager",
                                     R"sitb(
                 MBARForceManager object.
                 Currently, initialization must be done following a specific order. 
@@ -160,7 +160,7 @@ void exportForceManager(py::module &module) {
          )sitb");
 
   py::class_<FEPEIForceManager, std::shared_ptr<FEPEIForceManager>,
-             ForceManagerComposite>(module, "FEPEIForceManager")
+             ForceManagerComposite>(mod, "FEPEIForceManager")
       .def(py::init<>(), "FEPEIForceManager constructor")
       .def("setLambda", &FEPEIForceManager::setLambda, "Set the driving state")
       .def("setLambdas", &FEPEIForceManager::setLambdas,

@@ -171,30 +171,30 @@ void Checkpoint::writeCheckpoint(std::shared_ptr<CudaIntegrator> integrator) {
                pistonDegreesOfFreedom * sizeof(double));
 
     // Write pistonNoseHooverPosition
-    double pistonNoseHooverPosition = lp->getPistonNoseHooverPosition();
+    double pistonNoseHooverPosition = lp->getNoseHooverPistonPosition();
     fout.write(reinterpret_cast<const char *>(&pistonNoseHooverPosition),
                sizeof(double));
 
     // Write pistonNoseHooverVelocity
-    double pistonNoseHooverVelocity = lp->getPistonNoseHooverVelocity();
+    double pistonNoseHooverVelocity = lp->getNoseHooverPistonVelocity();
     fout.write(reinterpret_cast<const char *>(&pistonNoseHooverVelocity),
                sizeof(double));
 
     // Write pistonNoseHooverVelocityPrevious
     double pistonNoseHooverVelocityPrevious =
-        lp->getPistonNoseHooverVelocityPrevious();
+        lp->getNoseHooverPistonVelocityPrevious();
     fout.write(
         reinterpret_cast<const char *>(&pistonNoseHooverVelocityPrevious),
         sizeof(double));
 
     // Write pistonNoseHooverForce
-    double pistonNoseHooverForce = lp->getPistonNoseHooverForce();
+    double pistonNoseHooverForce = lp->getNoseHooverPistonForce();
     fout.write(reinterpret_cast<const char *>(&pistonNoseHooverForce),
                sizeof(double));
 
     // Write pistonNoseHooverForcePrevious
     double pistonNoseHooverForcePrevious =
-        lp->getPistonNoseHooverForcePrevious();
+        lp->getNoseHooverPistonForcePrevious();
     fout.write(reinterpret_cast<const char *>(&pistonNoseHooverForcePrevious),
                sizeof(double));
   }

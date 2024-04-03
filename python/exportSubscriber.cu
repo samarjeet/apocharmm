@@ -15,10 +15,10 @@
 
 namespace py = pybind11;
 
-void exportSubscriber(py::module &module) {
+void exportSubscriber(py::module &mod) {
 
   py::class_<Subscriber, std::shared_ptr<Subscriber>> pySubscriber(
-      module, "Subscriber");
+      mod, "Subscriber");
   pySubscriber
       //.def(py::init<const std::string &, std::shared_ptr<CharmmContext>>())
       .def("setFileName", &Subscriber::setFileName, R"sitb(
@@ -36,14 +36,14 @@ void exportSubscriber(py::module &module) {
   // NetCDFSubscriber
   //=================
   py::class_<NetCDFSubscriber, std::shared_ptr<NetCDFSubscriber>>(
-      module, "NetCDFSubscriber", pySubscriber, "NetCDF subscriber")
+      mod, "NetCDFSubscriber", pySubscriber, "NetCDF subscriber")
       .def(py::init<const std::string &>(),
            "NetCDF output. Takes .nc file name and the CHARMM context as args");
 
   // DcdSubscriber
   //==============
   py::class_<DcdSubscriber, std::shared_ptr<DcdSubscriber>>(
-      module, "DcdSubscriber", pySubscriber,
+      mod, "DcdSubscriber", pySubscriber,
       R"sitb(
             DCD output. Takes .dcd file name and possibly a report frequency
             (default: every 1000 steps) as arguments
@@ -62,7 +62,7 @@ void exportSubscriber(py::module &module) {
   // XYZSubscriber
   //==============
   py::class_<XYZSubscriber, std::shared_ptr<XYZSubscriber>>(
-      module, "XYZSubscriber", pySubscriber,
+      mod, "XYZSubscriber", pySubscriber,
       R"sitb(
             XYZ subscriber. Writes out .xyz files at a given frequency (default: every 1000 steps)
         )sitb")
@@ -86,7 +86,7 @@ void exportSubscriber(py::module &module) {
   // StateSubscriber
   //================
   py::class_<StateSubscriber, std::shared_ptr<StateSubscriber>>(
-      module, "StateSubscriber", pySubscriber, R"sitb(
+      mod, "StateSubscriber", pySubscriber, R"sitb(
          Reports, at a specified frequency, quantities of interest. 
          Choosing the quantities to be reported can be done through setReportFlags. 
          Available quantities (and their corresponding flags) are:
@@ -136,7 +136,7 @@ void exportSubscriber(py::module &module) {
   // DualTopologySubscriber
   //========================
   py::class_<DualTopologySubscriber, std::shared_ptr<DualTopologySubscriber>>(
-      module, "DualTopologySubscriber", pySubscriber,
+      mod, "DualTopologySubscriber", pySubscriber,
       "Dual Topology Subscriber")
       .def(py::init<const std::string &>(),
            "PE0, PE1, (1-lambda)PE0 + (lambda)PE1 reporter. Takes .txt file "
@@ -145,7 +145,7 @@ void exportSubscriber(py::module &module) {
   // CompositeSubscriber
   //====================
   py::class_<CompositeSubscriber, std::shared_ptr<CompositeSubscriber>>(
-      module, "CompositeSubscriber", pySubscriber, "Composite Subscriber")
+      mod, "CompositeSubscriber", pySubscriber, "Composite Subscriber")
       .def(py::init<const std::string &>(),
            "lambda potential energies reporter. Takes .txt file name and the "
            "CHARMM context as args")
@@ -161,7 +161,7 @@ void exportSubscriber(py::module &module) {
   // RestartSubscriber
   //==================
   py::class_<RestartSubscriber, std::shared_ptr<RestartSubscriber>>(
-      module, "RestartSubscriber", pySubscriber,
+      mod, "RestartSubscriber", pySubscriber,
       R"sitb(
           Restart Subscriber.
           Writes data required to restart simulations every "
@@ -188,7 +188,7 @@ void exportSubscriber(py::module &module) {
   // MBARSubscriber
   //===============
   py::class_<MBARSubscriber, std::shared_ptr<MBARSubscriber>>(
-      module, "MBARSubscriber", pySubscriber, "MBAR Subscriber")
+      mod, "MBARSubscriber", pySubscriber, "MBAR Subscriber")
       .def(py::init<const std::string &>(),
            "MBAR Subscriber constructor. Takes output file name as argument")
       .def(py::init<const std::string &, int>(),
@@ -204,7 +204,7 @@ void exportSubscriber(py::module &module) {
   // FEPSubscriber
   //==============
   py::class_<FEPSubscriber, std::shared_ptr<FEPSubscriber>>(
-      module, "FEPSubscriber", pySubscriber, "FEP Subscriber")
+      mod, "FEPSubscriber", pySubscriber, "FEP Subscriber")
       .def(py::init<const std::string &>(),
            "FEP Subscriber constructor. Takes output file name as argument")
       .def(py::init<const std::string &, int>(),

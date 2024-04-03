@@ -26,7 +26,7 @@ find_package (Python COMPONENTS Interpreter Development)
 
 add_library(chcudalib STATIC ${src_files})
 target_include_directories(chcudalib PUBLIC include)
-set_property(TARGET chcudalib PROPERTY CUDA_ARCHITECTURES 60 70 80)
+set_property(TARGET chcudalib PROPERTY CUDA_ARCHITECTURES 70 80)
 target_compile_definitions(chcudalib PUBLIC USE_TEXTURE_OBJECTS)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -46,6 +46,7 @@ target_compile_options(chcudalib PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:
   #                       --generate-line-info
   #                     -lineinfo 
                        --expt-relaxed-constexpr
+                       -O3
                       >)
 target_compile_features(chcudalib PUBLIC cxx_std_20)
 
@@ -56,12 +57,13 @@ target_include_directories(chcudadynlib PUBLIC external/LBFGSpp/include external
 #target_include_directories(chcudadynlib PUBLIC ${netCDF_INCLUDE_DIR})
 target_include_directories(chcudadynlib PUBLIC ${NETCDF_INCLUDES})
 target_compile_features(chcudadynlib PUBLIC cxx_std_20)
-set_property(TARGET chcudadynlib PROPERTY CUDA_ARCHITECTURES 60 70)
+set_property(TARGET chcudadynlib PROPERTY CUDA_ARCHITECTURES 70 80)
 
 target_compile_options(chcudadynlib PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:
   #                    --generate-line-info
   #                     -lineinfo
                        --expt-relaxed-constexpr
+                       -O3
                       >)
 set_target_properties(chcudadynlib PROPERTIES LINKER_LANGUAGE CUDA)
 target_compile_definitions(chcudadynlib PUBLIC USE_TEXTURE_OBJECTS)

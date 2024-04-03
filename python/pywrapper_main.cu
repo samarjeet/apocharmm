@@ -7,25 +7,25 @@
 
 namespace py = pybind11;
 
-void exportCharmmContext(py::module &module);
-void exportCoordinates(py::module &module);
-void exportCharmmCrd(py::module &module);
-void exportCharmmParameters(py::module &module);
-void exportCharmmPSF(py::module &module);
-void exportIntegrator(py::module &module);
-void exportForceManager(py::module &module);
-void exportPDB(py::module &module);
-void exportSubscriber(py::module &module);
-void exportForceManagerGenerator(py::module &module);
-void exportMinimizer(py::module &module);
-void exportPBC(py::module &module);
+void exportCharmmContext(py::module &mod);
+void exportCoordinates(py::module &mod);
+void exportCharmmCrd(py::module &mod);
+void exportCharmmParameters(py::module &mod);
+void exportCharmmPSF(py::module &mod);
+void exportIntegrator(py::module &mod);
+void exportForceManager(py::module &mod);
+void exportPDB(py::module &mod);
+void exportSubscriber(py::module &mod);
+void exportForceManagerGenerator(py::module &mod);
+void exportMinimizer(py::module &mod);
+void exportPBC(py::module &mod);
 
-PYBIND11_MODULE(apocharmm, module) {
-  module.doc() = R"pbdoc(
+PYBIND11_MODULE(apocharmm, mod) {
+  mod.doc() = R"pbdoc(
      python interface for apocharmm
      ------------------------------
      
-     This module contains all the cuda/C++ objects made available to the python
+     This mod contains all the cuda/C++ objects made available to the python
      API by pybind11.
 
   )pbdoc";
@@ -33,16 +33,16 @@ PYBIND11_MODULE(apocharmm, module) {
   std::vector<int> devices = {0, 1, 2, 3};
   start_gpu(1, 1, 0, devices);
 
-  exportCharmmContext(module);
-  exportCoordinates(module);
-  exportCharmmCrd(module);
-  exportCharmmPSF(module);
-  exportCharmmParameters(module);
-  exportForceManager(module);
-  exportIntegrator(module);
-  exportPDB(module);
-  exportSubscriber(module);
-  exportForceManagerGenerator(module);
-  exportMinimizer(module);
-  exportPBC(module);
+  exportCharmmContext(mod);
+  exportCoordinates(mod);
+  exportCharmmCrd(mod);
+  exportCharmmPSF(mod);
+  exportCharmmParameters(mod);
+  exportForceManager(mod);
+  exportIntegrator(mod);
+  exportPDB(mod);
+  exportSubscriber(mod);
+  exportForceManagerGenerator(mod);
+  exportMinimizer(mod);
+  exportPBC(mod);
 }

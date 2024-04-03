@@ -174,7 +174,7 @@ TEST_CASE("blade_benchmark", "[dynamics]") {
     ctx->assignVelocitiesAtTemperature(300);
 
     double timeStep = 0.002;
-    double numSteps = 10000;
+    double numSteps = 100;
 
     auto langevinThermostat =
         std::make_shared<CudaLangevinThermostatIntegrator>(timeStep);
@@ -198,13 +198,14 @@ TEST_CASE("blade_benchmark", "[dynamics]") {
               << "\n";
 
     // time for 10,000 energy calls
-    start = std::chrono::high_resolution_clock::now();
+    /*start = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < 10000; i++) {
       ctx->calculatePotentialEnergy(false, false);
     }
     end = std::chrono::high_resolution_clock::now();
     elapsed_seconds = end - start;
     std::cout << "Elapsed time: " << elapsed_seconds.count() << "s\n";
+    */
   }
 
   SECTION("dmpg") {
@@ -230,7 +231,7 @@ TEST_CASE("blade_benchmark", "[dynamics]") {
     ctx->assignVelocitiesAtTemperature(300);
 
     double timeStep = 0.002;
-    double numSteps = 10000;
+    double numSteps = 100;
 
     auto langevinThermostat =
         std::make_shared<CudaLangevinThermostatIntegrator>(timeStep);
@@ -288,26 +289,28 @@ TEST_CASE("microtubule", "[dyna]") {
     ctx->calculatePotentialEnergy(true, true);
     ctx->assignVelocitiesAtTemperature(300);
 
-    auto integrator = std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    integrator->setFriction(5.0);
-    integrator->setBathTemperature(300.0);
-    integrator->setCharmmContext(ctx);
+    double timeStep = 0.002;
+    double numSteps = 10000;
 
-    // auto subscriber = std::make_shared<DcdSubscriber>("3ryfi.dcd");
-    //  integrator.subscribe(subscriber);
-    //   auto mbarSub = std::make_shared<MBARSubscriber>("mbar.out");
-    //   mbarSub->setReportFreq(1000);
-    //   integrator.subscribe(mbarSub);
-    //  integrator.propagate(31000);
+    auto langevinThermostat =
+        std::make_shared<CudaLangevinThermostatIntegrator>(timeStep);
+    // CudaVelocityVerletIntegrator langevinThermostat(0.002);
+    langevinThermostat->setFriction(0.0);
+    langevinThermostat->setBathTemperature(300.0);
+    langevinThermostat->setCharmmContext(ctx);
 
     auto start = std::chrono::high_resolution_clock::now();
-    integrator->propagate(1000);
 
+    langevinThermostat->propagate(numSteps);
     auto end = std::chrono::high_resolution_clock::now();
 
     // time in seconds
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::cout << "Elapsed time: " << elapsed_seconds.count() << "s\n";
+
+    std::cout << "speed in nd/day : "
+              << (numSteps * timeStep) / (elapsed_seconds.count() * 1e3) * 86400
+              << "\n";
   }
 }
 

@@ -7,13 +7,13 @@
 
 namespace py = pybind11;
 
-void exportCharmmContext(py::module &module) {
-  py::enum_<PBC>(module, "PBC")
+void exportCharmmContext(py::module &mod) {
+  py::enum_<PBC>(mod, "PBC")
       .value("P1", PBC::P1)
       .value("P21", PBC::P21)
       .export_values();
 
-  py::class_<CharmmContext, std::shared_ptr<CharmmContext>>(module,
+  py::class_<CharmmContext, std::shared_ptr<CharmmContext>>(mod,
                                                             "CharmmContext")
       .def(py::init<std::shared_ptr<ForceManager>>(),
            R"sitb(

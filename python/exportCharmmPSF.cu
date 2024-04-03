@@ -4,8 +4,8 @@
 
 namespace py = pybind11;
 
-void exportCharmmPSF(py::module &module) {
-  py::class_<CharmmPSF, std::shared_ptr<CharmmPSF>>(module, "CharmmPSF")
+void exportCharmmPSF(py::module &mod) {
+  py::class_<CharmmPSF, std::shared_ptr<CharmmPSF>>(mod, "CharmmPSF")
       .def(py::init<const std::string &>(), "Handle for charmm .psf file")
       .def("getNumAtoms", &CharmmPSF::getNumAtoms, "number of atoms.")
       .def("getNumBonds", &CharmmPSF::getNumBonds, "number of bonds")

@@ -5,16 +5,16 @@
 
 namespace py = pybind11;
 
-void exportForceManagerGenerator(py::module &module) {
+void exportForceManagerGenerator(py::module &mod) {
    py::class_<ForceManagerGenerator, std::shared_ptr<ForceManagerGenerator>>(
-         module, "ForceManagerGenerator")
+         mod, "ForceManagerGenerator")
       .def(py::init<std::shared_ptr<ForceManager> &>(), "thedoc")
       .def("generateForceManager", &ForceManagerGenerator::generateForceManager, "");
 
    py::class_<AlchemicalForceManagerGenerator,                       // 
               std::shared_ptr<AlchemicalForceManagerGenerator>,      // 
               ForceManagerGenerator>(                                // Parent class (fac)
-                    module,                                          // ?
+                    mod,                                          // ?
                     "AlchemicalForceManagerGenerator",               // Name of the created class ?
                     R"sitb(                                          
                         AlchemicalForceManagerGenerator 

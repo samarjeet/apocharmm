@@ -11,9 +11,9 @@
 
 namespace py = pybind11;
 
-void exportIntegrator(py::module &module) {
+void exportIntegrator(py::module &mod) {
 
-  py::class_<CudaIntegrator, std::shared_ptr<CudaIntegrator>>(module,
+  py::class_<CudaIntegrator, std::shared_ptr<CudaIntegrator>>(mod,
                                                               "Integrator")
       .def(py::init<float>(), R"samaristhebest(
          Integrator. 
@@ -89,7 +89,7 @@ void exportIntegrator(py::module &module) {
   //================
   py::class_<CudaVelocityVerletIntegrator,
              std::shared_ptr<CudaVelocityVerletIntegrator>, CudaIntegrator>(
-      module, "VelocityVerletIntegrator")
+      mod, "VelocityVerletIntegrator")
       .def(py::init<float>(),
            "Velocity Verlet Integrator. Takes timestep (in ps) as arg")
       .def("setCharmmContext",
@@ -101,7 +101,7 @@ void exportIntegrator(py::module &module) {
       ;
   py::class_<CudaVMMSVelocityVerletIntegrator,
              std::shared_ptr<CudaVMMSVelocityVerletIntegrator>, CudaIntegrator>(
-      module, "VMMSVelocityVerletIntegrator")
+      mod, "VMMSVelocityVerletIntegrator")
       .def(py::init<float>(),
            "VMMS velocity Verlet Integrator. Takes timestep (in ps) as arg")
       .def("setCharmmContexts",
@@ -119,7 +119,7 @@ void exportIntegrator(py::module &module) {
   //=====================
   py::class_<CudaLangevinThermostatIntegrator,
              std::shared_ptr<CudaLangevinThermostatIntegrator>, CudaIntegrator>(
-      module, "LangevinThermostatIntegrator")
+      mod, "LangevinThermostatIntegrator")
       .def(py::init<float>(),
            R"sitb(
                Langevin Thermostat Integrator. Takes timestep (in ps) as arg. If
@@ -150,7 +150,7 @@ void exportIntegrator(py::module &module) {
   //=====================
   py::class_<CudaNoseHooverThermostatIntegrator,
              std::shared_ptr<CudaNoseHooverThermostatIntegrator>,
-             CudaIntegrator>(module, "NoseHooverThermostatIntegrator")
+             CudaIntegrator>(mod, "NoseHooverThermostatIntegrator")
       .def(py::init<float>(),
            "Nose-Hoover Thermostat Integrator. Takes timestep (in ps) as arg");
 
@@ -158,7 +158,7 @@ void exportIntegrator(py::module &module) {
   //================
   py::class_<CudaLangevinPistonIntegrator,
              std::shared_ptr<CudaLangevinPistonIntegrator>, CudaIntegrator>(
-      module, "LangevinPistonIntegrator", R"sitb(
+      mod, "LangevinPistonIntegrator", R"sitb(
           Langevin Piston integrator. 
           Default bath temperature value: 300K. 
           Default piston mass value: 500 AU.
@@ -210,10 +210,10 @@ void exportIntegrator(py::module &module) {
   //           "set the debug frequency. Default: 0");
 }
 
-void exportMinimizer(py::module &module) {
+void exportMinimizer(py::module &mod) {
   // Minimizers ?
   //================
-  py::class_<CudaMinimizer, std::shared_ptr<CudaMinimizer>>(module, "Minimizer")
+  py::class_<CudaMinimizer, std::shared_ptr<CudaMinimizer>>(mod, "Minimizer")
       .def(py::init(), R"samaristhebest(
          LBFGS Minimizer. 
 

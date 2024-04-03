@@ -7,8 +7,8 @@
 
 namespace py = pybind11;
 
-void exportCoordinates(py::module & module){
-  py::class_<Coordinates, std::shared_ptr<Coordinates>>(module, "Coordinates")
+void exportCoordinates(py::module & mod){
+  py::class_<Coordinates, std::shared_ptr<Coordinates>>(mod, "Coordinates")
     //.def(py::init<const std::string &>(), "Handle for charmm .crd file")
     .def("getNumAtoms", &CharmmCrd::getNumAtoms, R"pbdoc(
       :return: The number of atoms
@@ -20,16 +20,16 @@ void exportCoordinates(py::module & module){
       )sitb");
 
 }
-void exportCharmmCrd(py::module & module){
-  py::class_<CharmmCrd, std::shared_ptr<CharmmCrd>, Coordinates>(module, "CharmmCrd")
+void exportCharmmCrd(py::module & mod){
+  py::class_<CharmmCrd, std::shared_ptr<CharmmCrd>, Coordinates>(mod, "CharmmCrd")
     .def(py::init<const std::string &>(), "Handle for charmm .crd file")
     //.def("getNumAtoms", &CharmmCrd::getNumAtoms, "number of atoms")
     //.def("getCoordinates", &CharmmCrd::getCoordinates, "coordinates of all atoms");
     ;
 }
 
-void exportPDB(py::module & module){
-  py::class_<PDB, std::shared_ptr<PDB>, Coordinates>(module, "PDB", R"sitb(
+void exportPDB(py::module & mod){
+  py::class_<PDB, std::shared_ptr<PDB>, Coordinates>(mod, "PDB", R"sitb(
      
      PDB file content
 

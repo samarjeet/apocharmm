@@ -5,8 +5,8 @@
 
 namespace py = pybind11;
 
-void exportPBC(py::module &module) {
-  py::enum_<CRYSTAL>(module, "CRYSTAL")
+void exportPBC(py::module &mod) {
+  py::enum_<CRYSTAL>(mod, "CRYSTAL")
       .value("CUBIC", CRYSTAL::CUBIC)
       .value("ORTHORHOMBIC", CRYSTAL::ORTHORHOMBIC)
       .value("TETRAGONAL", CRYSTAL::TETRAGONAL);

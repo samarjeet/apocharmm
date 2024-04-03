@@ -421,18 +421,6 @@ TEST_CASE("identicalPropagation") {
   auto prm1 = std::make_shared<CharmmParameters>(prmFiles);
   auto psf1 = std::make_shared<CharmmPSF>(dataPath + "waterbox.psf");
   auto crd1 = std::make_shared<CharmmCrd>(dataPath + "waterbox.crd");
-  // Setup integrator
-  auto integrator1 = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
-  integrator1->setCrystalType(CRYSTAL::CUBIC);
-  // integrator1->setPistonFriction(12.0);
-  integrator1->setPistonFriction(0.0);
-  integrator1->setSeedForPistonFriction(rdmSeed);
-  integrator1->setNoseHooverFlag(false);
-  integrator1->setCharmmContext(ctx);
-  // auto integrator1 =
-  //     std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-  // integrator1->setFriction(0.0);
-  // integrator1->setCharmmContext(ctx);
 
   // Setup force manager
   auto fm1 = std::make_shared<ForceManager>(psf1, prm1);
@@ -450,7 +438,7 @@ TEST_CASE("identicalPropagation") {
   integrator1->setPistonFriction(0.0);
   integrator1->setSeedForPistonFriction(rdmSeed);
   integrator1->setNoseHooverFlag(false);
-  integrator1->setSimulationContext(ctx1);
+  integrator1->setCharmmContext(ctx1);
 
   // Create a restart file
   auto restartsub = std::make_shared<RestartSubscriber>(fileName, nsteps);
@@ -467,19 +455,6 @@ TEST_CASE("identicalPropagation") {
   auto prm2 = std::make_shared<CharmmParameters>(prmFiles);
   auto psf2 = std::make_shared<CharmmPSF>(dataPath + "waterbox.psf");
   auto crd2 = std::make_shared<CharmmCrd>(dataPath + "waterbox.crd");
-  // Setup second integrator and run dynamics to ensure that trajectories are
-  // deterministic
-  auto integrator2 = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
-  integrator2->setCrystalType(CRYSTAL::CUBIC);
-  // integrator2->setPistonFriction(12.0);
-  integrator2->setPistonFriction(0.0);
-  integrator2->setSeedForPistonFriction(rdmSeed);
-  integrator2->setNoseHooverFlag(false);
-  integrator2->setCharmmContext(ctx2);
-  // auto integrator2 =
-  //     std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-  // integrator2->setFriction(0.0);
-  // integrator2->setCharmmContext(ctx2);
 
   // Setup force manager
   auto fm2 = std::make_shared<ForceManager>(psf2, prm2);
@@ -497,7 +472,7 @@ TEST_CASE("identicalPropagation") {
   integrator2->setPistonFriction(0.0);
   integrator2->setSeedForPistonFriction(rdmSeed);
   integrator2->setNoseHooverFlag(false);
-  integrator2->setSimulationContext(ctx2);
+  integrator2->setCharmmContext(ctx2);
 
   // Propagate second simulation
   integrator2->propagate(nsteps);
@@ -505,17 +480,6 @@ TEST_CASE("identicalPropagation") {
   // Create a triplicate system that uses the restart file from the first
   // simulation to ensure that using a restart file to start a new simulation
   // results in the same trajectories
-  auto integrator3 = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
-  integrator3->setCrystalType(CRYSTAL::CUBIC);
-  // integrator3->setPistonFriction(12.0);
-  integrator3->setPistonFriction(0.0);
-  integrator3->setSeedForPistonFriction(rdmSeed);
-  integrator3->setNoseHooverFlag(false);
-  integrator3->setCharmmContext(ctx3);
-  // auto integrator3 =
-  //     std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-  // integrator3->setFriction(0.0);
-  // integrator3->setCharmmContext(ctx2);
 
   // Topology, parameters, PSF, and coordinates
   auto prm3 = std::make_shared<CharmmParameters>(prmFiles);
@@ -536,7 +500,7 @@ TEST_CASE("identicalPropagation") {
   integrator3->setPistonFriction(0.0);
   integrator3->setSeedForPistonFriction(rdmSeed);
   integrator3->setNoseHooverFlag(false);
-  integrator3->setSimulationContext(ctx3);
+  integrator3->setCharmmContext(ctx3);
 
   auto restartsub3 = std::make_shared<RestartSubscriber>(fileName);
   integrator3->subscribe(restartsub3);
