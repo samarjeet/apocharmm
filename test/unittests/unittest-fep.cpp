@@ -157,25 +157,29 @@ TEST_CASE("FEP-EI") {
     // int a ;
     // std::cin >>  a;
 
-    CudaLangevinThermostatIntegrator equilIntegrator(0.002);
-    equilIntegrator.setFriction(5.0);
-    equilIntegrator.setBathTemperature(300.0);
-    equilIntegrator.setCharmmContext(ctx);
+    auto equilIntegrator =
+        std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
+    equilIntegrator->setFriction(5.0);
+    equilIntegrator->setBathTemperature(300.0);
+    equilIntegrator->setCharmmContext(ctx);
 
-    CudaLangevinThermostatIntegrator integrator(0.002);
-    integrator.setFriction(5.0);
-    integrator.setBathTemperature(300.0);
-    integrator.setCharmmContext(ctx);
+    auto integrator = std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
+    integrator->setFriction(5.0);
+    integrator->setBathTemperature(300.0);
+    integrator->setCharmmContext(ctx);
 
     auto fepSub = std::make_shared<FEPSubscriber>("dbexp_fepEI_vdw.out");
     fepSub->setReportFreq(1000);
-    integrator.subscribe(fepSub);
+    integrator->subscribe(fepSub);
+
+    int numEquilibrationSteps = 100;
+    int numProductionSteps = 1000;
 
     for (auto &lambda : lambdas) {
       std::cout << "Lambda : " << lambda << "\n";
       fmFEP->setLambda(lambda);
-      equilIntegrator.propagate(100000);
-      integrator.propagate(250000);
+      equilIntegrator->propagate(numEquilibrationSteps);
+      integrator->propagate(numProductionSteps);
     }
   }
 }

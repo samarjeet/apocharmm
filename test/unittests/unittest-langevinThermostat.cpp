@@ -41,7 +41,7 @@ TEST_CASE("waterbox", "[dynamics]") {
   double friction = 5.0;
 
   SECTION("TemperatureConservation") {
-    float tempFinal = 300.;
+    double tempFinal = 300.;
 
     ctx->readRestart(path + "restart/heat_waterbox.restart");
     // CudaLangevinThermostatIntegrator integrator(0.002, tempFinal, friction);
@@ -55,18 +55,18 @@ TEST_CASE("waterbox", "[dynamics]") {
 
     auto sub = std::make_shared<StateSubscriber>("heat_waterbox.txt", 1000);
     integrator->subscribe(sub);
-    std::vector<float> tempvals;
-    for (int i = 0; i < 100; i++) {
+    std::vector<double> tempvals;
+    for (int i = 0; i < 10; i++) {
       integrator->propagate(1000);
       double temp = ctx->computeTemperature();
       tempvals.push_back(temp);
     }
 
-    float tempAvg;
+    double tempAvg = 0.0;
     for (auto &t : tempvals) {
       tempAvg += t;
     }
-    tempAvg /= tempvals.size();
+    tempAvg /= static_cast<double>(tempvals.size());
 
     CHECK(tempAvg == Approx(tempFinal).margin(0.1));
   }

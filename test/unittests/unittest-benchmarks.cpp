@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 
+/*
 TEST_CASE("pore", "[dynamics]") {
   std::string dataPath = "/u/samar/toppar/";
   std::string filePath = "/u/samar/Documents/git/test_gpu/jmin_pore/";
@@ -44,7 +45,7 @@ TEST_CASE("pore", "[dynamics]") {
     fm->setCtonnb(8.0);
     fm->setCtofnb(8.5);
 
-    fm->setPrintEnergyDecomposition(true);
+    // fm->setPrintEnergyDecomposition(true);
 
     auto ctx = std::make_shared<CharmmContext>(fm);
     // auto crd = std::make_shared<CharmmCrd>(filePath + "equil.cor");
@@ -75,12 +76,12 @@ TEST_CASE("pore", "[dynamics]") {
     langevinThermostat->setFriction(5.0);
     langevinThermostat->setBathTemperature(300.0);
     langevinThermostat->setCharmmContext(ctx);
-    langevinThermostat->setDebugPrintFrequency(100);
+    // langevinThermostat->setDebugPrintFrequency(100);
 
-    /*auto nvtdcdSubscriber =
-        std::make_shared<DcdSubscriber>("jmin_nvt_pore.dcd", 1000);
-    langevinThermostat.subscribe(nvtdcdSubscriber);
-    */
+    //auto nvtdcdSubscriber =
+    //    std::make_shared<DcdSubscriber>("jmin_nvt_pore.dcd", 1000);
+    //langevinThermostat.subscribe(nvtdcdSubscriber);
+
     langevinThermostat->propagate(
         1e5); // You can propagate longer when you assert something !
 
@@ -90,8 +91,8 @@ TEST_CASE("pore", "[dynamics]") {
     equilibrator->setNoseHooverPistonMass(1000.0);
     equilibrator->setCrystalType(CRYSTAL::TETRAGONAL);
     equilibrator->setPistonMass({1000.0, 1000.0});
-    equilibrator->setDebugPrintFrequency(100);
-    // equilibrator.propagate(1e4);
+    // equilibrator->setDebugPrintFrequency(100);
+    //  equilibrator.propagate(1e4);
 
     ctx->useHolonomicConstraints(false);
 
@@ -104,15 +105,15 @@ TEST_CASE("pore", "[dynamics]") {
     integrator->setPistonMass({0.0, 0.0});
     integrator->setNoseHooverFlag(false);
 
-    integrator->setDebugPrintFrequency(1000);
+    // integrator->setDebugPrintFrequency(1000);
 
     // auto dcdSubscriber =
     //     std::make_shared<DcdSubscriber>("jmin_npat_pore.dcd", 1000);
 
-    /*auto restartSubscriber =
-        std::make_shared<RestartSubscriber>("jmin_npat_pore.restart", 10000);
-    integrator.subscribe({dcdSubscriber, restartSubscriber});
-    */
+    //auto restartSubscriber =
+    //    std::make_shared<RestartSubscriber>("jmin_npat_pore.restart", 10000);
+    //integrator.subscribe({dcdSubscriber, restartSubscriber});
+
     // auto stateSubscriber =
     //    std::make_shared<StateSubscriber>("jmin_npat_pore.txt", 1000);
     // std::vector<Subscriber> subscribers{dcdSubscriber, stateSubscriber};
@@ -122,11 +123,11 @@ TEST_CASE("pore", "[dynamics]") {
     // integrator.propagate(1e7);
   }
 }
+*/
 
 TEST_CASE("amber_benchmark", "[dynamics]") {
-
   std::string dataPath = getDataPath();
-  SECTION("JAC") {
+  /*SECTION("JAC") {
     std::vector<std::string> prmFiles{dataPath + "par_all36m_prot.prm",
                                       dataPath + "toppar_water_ions.str"};
     auto prm = std::make_shared<CharmmParameters>(prmFiles);
@@ -148,10 +149,10 @@ TEST_CASE("amber_benchmark", "[dynamics]") {
     ctx->calculatePotentialEnergy(true, true);
     ctx->assignVelocitiesAtTemperature(300);
   }
+  */
 }
 
 TEST_CASE("blade_benchmark", "[dynamics]") {
-
   SECTION("dhfr") {
     std::string dataPath = "/u/samar/Documents/git/BLaDE/test/dhfr/";
     std::vector<std::string> prmFiles{dataPath + "par_all22_prot.inp"};
@@ -270,7 +271,6 @@ TEST_CASE("microtubule", "[dyna]") {
 
     double boxLengthX = 365.313493;
     double boxLengthYZ = 142.975477;
-    // int fftDim = ;
     fm0->setBoxDimensions({boxLengthX, boxLengthYZ, boxLengthYZ});
     fm0->setFFTGrid(384, 144, 144);
     fm0->setPmeSplineOrder(4);
@@ -290,7 +290,7 @@ TEST_CASE("microtubule", "[dyna]") {
     ctx->assignVelocitiesAtTemperature(300);
 
     double timeStep = 0.002;
-    double numSteps = 10000;
+    double numSteps = 1000;
 
     auto langevinThermostat =
         std::make_shared<CudaLangevinThermostatIntegrator>(timeStep);
@@ -315,7 +315,6 @@ TEST_CASE("microtubule", "[dyna]") {
 }
 
 TEST_CASE("namd_benchmark", "[dynamics]") {
-
   SECTION("stmv") {
     std::string dataPath = "/u/samar/projects/benchmark/stmv/";
     std::vector<std::string> prmFiles{dataPath + "par_all27_prot_na.inp"};
@@ -350,7 +349,7 @@ TEST_CASE("namd_benchmark", "[dynamics]") {
     langevinThermostat->propagate(21000);
     */
     double timeStep = 0.002;
-    double numSteps = 10000;
+    double numSteps = 1000;
 
     auto langevinThermostat =
         std::make_shared<CudaLangevinThermostatIntegrator>(timeStep);
@@ -374,7 +373,6 @@ TEST_CASE("namd_benchmark", "[dynamics]") {
   }
 
   SECTION("apoa1") {
-
     std::string dataPath = "/u/samar/projects/benchmark/apoa1/";
     std::string dataPath1 = getDataPath();
 
@@ -402,7 +400,7 @@ TEST_CASE("namd_benchmark", "[dynamics]") {
     ctx->assignVelocitiesAtTemperature(300);
 
     double timeStep = 0.002;
-    double numSteps = 10000;
+    double numSteps = 1000;
 
     auto langevinThermostat =
         std::make_shared<CudaLangevinThermostatIntegrator>(timeStep);

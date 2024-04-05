@@ -243,16 +243,50 @@ void CharmmParameters::readCharmmParameterFile(std::string fileName) {
         } else {
           line = removeComments(line);
           tokens = split(line);
-          // std::cout << line << " " << tokens.size() << "\n";
+          // if (tokens[0] == "HGA2")
+          //   std::cout << line << " " << tokens.size() << "\n";
+          //  std::cout << line << " " << tokens.size() << "\n";
           if (tokens.size() == 4) {
-            vdwParams.insert({tokens[0], VdwParameters(std::stod(tokens[2]),
-                                                       std::stod(tokens[3]))});
+            if (vdwParams.find(tokens[0]) == vdwParams.end()) {
+              vdwParams.insert(
+                  {tokens[0],
+                   VdwParameters(std::stod(tokens[2]), std::stod(tokens[3]))});
+            } else {
+              std::cerr << "Duplicate entry for " << tokens[0] << "\n";
+              vdwParams[tokens[0]] =
+                  VdwParameters(std::stod(tokens[2]), std::stod(tokens[3]));
+              // throw std::invalid_argument("Duplicate entry for " + tokens[0]
+              // +
+              //                             "\n");
+              // exit(0);
+            }
+            /*vdwParams.insert({tokens[0], VdwParameters(std::stod(tokens[2]),
+                                                       std::stod(tokens[3]))});*/
           } else if (tokens.size() == 7) {
-            vdwParams.insert({tokens[0], VdwParameters(std::stod(tokens[2]),
+            if (vdwParams.find(tokens[0]) == vdwParams.end()) {
+              vdwParams.insert(
+                  {tokens[0],
+                   VdwParameters(std::stod(tokens[2]), std::stod(tokens[3]))});
+              vdw14Params.insert(
+                  {tokens[0],
+                   VdwParameters(std::stod(tokens[5]), std::stod(tokens[6]))});
+            } else {
+              std::cerr << "Duplicate entry for " << tokens[0] << "\n";
+              vdwParams[tokens[0]] =
+                  VdwParameters(std::stod(tokens[2]), std::stod(tokens[3]));
+              vdw14Params[tokens[0]] =
+                  VdwParameters(std::stod(tokens[5]), std::stod(tokens[6]));
+              // throw std::invalid_argument("Duplicate entry for " + tokens[0]
+              // +
+              //                             "\n");
+              // exit(0);
+            }
+            /*vdwParams.insert({tokens[0], VdwParameters(std::stod(tokens[2]),
                                                        std::stod(tokens[3]))});
             vdw14Params.insert(
                 {tokens[0],
                  VdwParameters(std::stod(tokens[5]), std::stod(tokens[6]))});
+            */
 
           } else {
             // std::cerr << "Extra tokens in line " << line << "\n";

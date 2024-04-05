@@ -59,7 +59,7 @@ TEST_CASE("basic", "[unit]") {
 TEST_CASE("consph", "[unit]") {
   std::string dataPath =
       "/v/gscratch/cbs/adachen/EDS_1CVO_apoCHARMM/1CVO/02_test_eds/";
-  std::string paramPath = "../test/data/";
+  std::string paramPath = getDataPath();
   SECTION("base") {
     auto psf_111 = std::make_shared<CharmmPSF>(dataPath + "1CVO_111.psf");
     auto psf_011 = std::make_shared<CharmmPSF>(dataPath + "1CVO_011.psf");
@@ -151,7 +151,8 @@ TEST_CASE("consph", "[unit]") {
     integrator->subscribe(compositeSub);
     integrator->setDebugPrintFrequency(1000);
 
-    integrator->propagate(100000);
+    int numSteps = 1e4;
+    integrator->propagate(numSteps);
   }
   SECTION("repd") {
     // s value replica exchange
@@ -421,7 +422,7 @@ TEST_CASE("eds", "[energy]") {
     std::cout << "isinit " << fmEDS->isInitialized()
               << ctx->getForceManager()->isInitialized() << std::endl;
 
-    auto crd = std::make_shared<CharmmCrd>("../test/data/nvt_equil.25k.cor");
+    auto crd = std::make_shared<CharmmCrd>(dataPath + "nvt_equil.25k.cor");
     ctx->setCoordinates(crd);
     std::cout << "isinit " << fmEDS->isInitialized()
               << ctx->getForceManager()->isInitialized() << std::endl;
@@ -449,69 +450,13 @@ TEST_CASE("eds", "[energy]") {
     auto compositeSub = std::make_shared<CompositeSubscriber>("mbar.out");
     compositeSub->setReportFreq(100);
     integrator->subscribe(compositeSub);
-    integrator->propagate(100000);
+
+    int numSteps = 1e4;
+    integrator->propagate(numSteps);
 
     // check the content of the BAR header !!!
   }
 
-  /*
-    SECTION("2cle"){
-      std::cout << "\n\nBegin\n========\n";
-
-      auto psf1 = std::make_shared<CharmmPSF>("../test/data/l0.2cle.psf");
-      auto psf2 = std::make_shared<CharmmPSF>("../test/data/l1.2cle.psf");
-
-      //std::vector<std::string>
-    prmFiles{"../test/data/toppar_water_ions.str",
-    "../test/data/par_all36_cgenff.prm", "../test/data/em.str"};
-      std::vector<std::string> prmFiles{"../test/data/toppar_water_ions.str",
-    "../test/data/par_all36_cgenff.prm", "../test/data/2cle.str"}; auto prm =
-    std::make_shared<CharmmParameters>(prmFiles);
-      //auto prm =
-    std::make_shared<CharmmParameters>("../test/data/par_all36_cgenff.prm");
-      auto fm1 = std::make_shared<ForceManager>(psf1, prm);
-      auto fm2 = std::make_shared<ForceManager>(psf2, prm);
-
-      //std::shared_ptr<ForceManager> fmEDS =
-    std::make_shared<ForceManagerComposite>();
-
-      auto fmEDS = std::make_shared<ForceManagerComposite>();
-
-      fmEDS->addForceManager(fm1);
-      fmEDS->addForceManager(fm2);
-
-      //auto fmEDS = fm1;
-      float boxLength = 30.9120;
-      fmEDS->setBoxDimensions({boxLength, boxLength, boxLength});
-      fmEDS->setFFTGrid(32, 32, 32);
-      fmEDS->setPmeSplineOrder(6);
-      fmEDS->setKappa(0.34);
-      fmEDS->setCutoff(16.0);
-      fmEDS->setCtonnb(10.0);
-      fmEDS->setCtofnb(12.0);
-      fmEDS->initialize();
-
-      //fmEDS->setLambda(0.0);
-
-      auto ctx = std::make_shared<CharmmContext>(fmEDS);
-
-      auto crd = std::make_shared<CharmmCrd>("../test/data/solv2.2cle.cor");
-      ctx->setCoordinates(crd);
-      std::cout << ctx->calculateForces(false, true, true);
-      ctx->assignVelocitiesAtTemperature(300);
-
-      CudaVelocityVerletIntegrator integrator(0.001);
-      integrator.setCharmmContext(ctx);
-
-      auto subscriber = std::make_shared<NetCDFSubscriber>("vv_eds_2cle.nc",
-    ctx); ctx->subscribe(subscriber); auto dualTopologySubscriber =
-    std::make_shared<DualTopologySubscriber>("vv_eds_2cle.txt", ctx);
-      ctx->subscribe(dualTopologySubscriber);
-
-      integrator.setReportSteps(10);
-      //integrator.propagate(1000);
-    }
-  */
   /*
   SECTION("etha_meoh"){
     std::cout << "\n\nBegin\n========\n";

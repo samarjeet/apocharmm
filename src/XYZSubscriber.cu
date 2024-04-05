@@ -25,15 +25,16 @@ XYZSubscriber::~XYZSubscriber() { fout.close(); }
 
 void XYZSubscriber::initialize() {
   if (!hasCharmmContext) {
-    throw std::invalid_argument("XYZSubscriber: Can't initialize without a CharmmContext.\n");
+    throw std::invalid_argument(
+        "XYZSubscriber: Can't initialize without a CharmmContext.\n");
   }
-  numAtoms = charmmContext->getNumAtoms();
 }
 
 void XYZSubscriber::update() {
   if (!isInitialized) {
-      initialize();
+    initialize();
   }
+  int numAtoms = charmmContext->getNumAtoms();
 
   // vector in the shared ptr
   auto xyzq = *(this->charmmContext->getXYZQ()->getHostXYZQ());

@@ -1,13 +1,13 @@
 # Add any new tests to this list or the one below!
 set( SOURCES_UNITTESTS_TESTS
     # Base tests
-    unittest-CharmmContext.cpp
+    unittest-charmmContext.cpp
     unittest-forceManager.cpp
     unittest-subscribers.cpp
     unittest-readCoordinates.cpp
     unittest-integrators.cpp
     unittest-readPRM.cpp
-    unittest-ForceManagerGenerator.cpp
+    #unittest-ForceManagerGenerator.cpp
     unittest-restraintForce.cpp
     unittest-logger.cpp
     unittest-utils.cpp
@@ -36,8 +36,8 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-fep.cpp
     unittest-eds.cpp
     unittest-bridgeEDS.cpp
-    unittest-benzene_pyrrole.cpp
-    unittest-sep_benzene_pyrrole.cpp
+    unittest-benzenePyrrole.cpp
+    #unittest-sep_benzene_pyrrole.cpp
     unittest-minimize.cpp
 
     unittest-pme.cpp

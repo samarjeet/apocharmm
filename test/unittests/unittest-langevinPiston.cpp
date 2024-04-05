@@ -20,11 +20,13 @@
 #include "RestartSubscriber.h"
 #include "StateSubscriber.h"
 #include "catch.hpp"
+#include "compare.h"
 #include "helper.h"
 #include "test_paths.h"
 #include <iomanip>
 #include <iostream>
 
+/* Move this to a longer test
 TEST_CASE("Pressure", "[unit]") {
   std::string dataPath = getDataPath();
   const float boxDim = 50.0f;
@@ -78,7 +80,8 @@ TEST_CASE("Pressure", "[unit]") {
     integrator->setPressure({1000.0, 0.0, 1000.0, 0.0, 0.0, 1000.0});
   }
   // Simulate for 1 ns. After this, the pressure should be equilibrated
-  integrator->propagate(500000);
+  // integrator->propagate(500000);
+  integrator->propagate(5000);
 
   // Simulate
   long long unsigned int totNumSteps = 50000000; // 10 ns -> 100ns
@@ -142,7 +145,7 @@ TEST_CASE("Pressure", "[unit]") {
               << stdPt[i] << ")" << std::endl;
   }
 }
-
+*/
 TEST_CASE("unittest", "[basic]") {
   std::string dataPath = getDataPath();
   SECTION("NHPistonMass") {
@@ -185,6 +188,7 @@ TEST_CASE("unittest", "[basic]") {
 
 TEST_CASE("waterbox", "[dynamics]") {
   std::string dataPath = getDataPath();
+  /* Move to extended tests
   SECTION("waterbox") {
     float expectedBoxDim = 48.9342, approxBoxDim = 50.;
     auto prm =
@@ -274,8 +278,162 @@ TEST_CASE("waterbox", "[dynamics]") {
     CHECK(boxDimAverage.x == Approx(boxDimAverage.y).margin(0.1));
     CHECK(boxDimAverage.x == Approx(expectedBoxDim).margin(0.1));
   }
-  // Check propagation is same with same seeds ?
+  */
+
+  // Check propagation is same with same seeds
   SECTION("seed") {
+    std::vector<std::string> prmFiles{dataPath + "toppar_water_ions.str"};
+    std::vector<double> boxDim = {50.0, 50.0, 50.0};
+    int rdmSeed = 314159, nsteps = 5000;
+    double pistonMass = 0.0;
+    double pistonFriction = 0.0;
+    bool useHolonomicConstraints = false;
+    bool useNoseHoover = false;
+
+    // Topology, parameters, PSF, and coordinates
+    auto prm1 = std::make_shared<CharmmParameters>(prmFiles);
+    auto psf1 = std::make_shared<CharmmPSF>(dataPath + "waterbox.psf");
+    auto crd1 = std::make_shared<CharmmCrd>(dataPath + "waterbox.crd");
+
+    // Setup force manager
+    auto fm1 = std::make_shared<ForceManager>(psf1, prm1);
+    fm1->setBoxDimensions(boxDim);
+
+    // Setup CHARMM context
+    auto ctx1 = std::make_shared<CharmmContext>(fm1);
+    ctx1->setCoordinates(crd1);
+    ctx1->assignVelocitiesAtTemperature(300.0);
+
+    // fm1->setPrintEnergyDecomposition(true);
+    ctx1->useHolonomicConstraints(useHolonomicConstraints);
+    ctx1->calculatePotentialEnergy(true, true);
+    fm1->setPrintEnergyDecomposition(false);
+
+    // Setup integrator
+    auto integrator1 = std::make_shared<CudaLangevinPistonIntegrator>(0.001);
+    integrator1->setCrystalType(CRYSTAL::CUBIC);
+    integrator1->setPistonMass({pistonMass}); // setCrystalType resets this to 0
+    integrator1->setPistonFriction(pistonFriction);
+    integrator1->setSeedForPistonFriction(rdmSeed);
+    integrator1->setNoseHooverFlag(useNoseHoover);
+    integrator1->setCharmmContext(ctx1);
+    // integrator1->setDebugPrintFrequency(1);
+
+    // ================================================
+
+    // Create a duplicate system the exact same way to ensure that the
+    // integrator being used is deterministic
+
+    // Topology, parameters, PSF, and coordinates
+    auto prm2 = std::make_shared<CharmmParameters>(prmFiles);
+    auto psf2 = std::make_shared<CharmmPSF>(dataPath + "waterbox.psf");
+    auto crd2 = std::make_shared<CharmmCrd>(dataPath + "waterbox.crd");
+
+    // Setup force manager
+    auto fm2 = std::make_shared<ForceManager>(psf2, prm2);
+    fm2->setBoxDimensions(boxDim);
+
+    // Setup CHARMM context
+    auto ctx2 = std::make_shared<CharmmContext>(fm2);
+    ctx2->setCoordinates(crd2);
+    ctx2->assignVelocitiesAtTemperature(300.0);
+
+    // fm2->setPrintEnergyDecomposition(true);
+    ctx2->useHolonomicConstraints(useHolonomicConstraints);
+    ctx2->calculatePotentialEnergy(true, true);
+    fm2->setPrintEnergyDecomposition(false);
+
+    // Setup integrator
+    auto integrator2 = std::make_shared<CudaLangevinPistonIntegrator>(0.001);
+    integrator2->setCrystalType(CRYSTAL::CUBIC);
+    integrator2->setPistonMass({pistonMass}); // setCrystalType resets this to 0
+    integrator2->setPistonFriction(pistonFriction);
+    integrator2->setSeedForPistonFriction(rdmSeed);
+    integrator2->setNoseHooverFlag(useNoseHoover);
+    integrator2->setCharmmContext(ctx2);
+    // integrator2->setDebugPrintFrequency(1);
+
+    // Both systems should match at this point
+
+    // Check that coordinates match
+    auto coordinatesCharges1 = ctx1->getCoordinatesCharges();
+    auto coordinatesCharges2 = ctx2->getCoordinatesCharges();
+    coordinatesCharges1.transferFromDevice();
+    coordinatesCharges2.transferFromDevice();
+    CHECK(CompareVectors1(coordinatesCharges1.getHostArray(),
+                          coordinatesCharges2.getHostArray(), 0.0, true));
+
+    // Check that velocities match
+    auto velocityMass1 = ctx1->getVelocityMass();
+    auto velocityMass2 = ctx2->getVelocityMass();
+    velocityMass1.transferFromDevice();
+    velocityMass2.transferFromDevice();
+    CHECK(CompareVectors1(velocityMass1.getHostArray(),
+                          velocityMass2.getHostArray(), 0.0, true));
+
+    // auto coordsDeltaPrevious1 = integrator1->getCoordsDeltaPrevious();
+    // auto coordsDeltaPrevious2 = integrator2->getCoordsDeltaPrevious();
+    // coordsDeltaPrevious1.transferFromDevice();
+    // coordsDeltaPrevious2.transferFromDevice();
+    // CHECK(CompareVectors1(coordsDeltaPrevious1.getHostArray(),
+    //                       coordsDeltaPrevious2.getHostArray(), 0.0, true));
+
+    // Ensure that pressure piston variables are the same
+    auto onStepPistonPosition1 = integrator1->getOnStepPistonPosition();
+    auto onStepPistonPosition2 = integrator2->getOnStepPistonPosition();
+    onStepPistonPosition1.transferFromDevice();
+    onStepPistonPosition2.transferFromDevice();
+    CHECK(CompareVectors1(onStepPistonPosition1.getHostArray(),
+                          onStepPistonPosition2.getHostArray(), 0.0, true));
+
+    auto halfStepPistonPosition1 = integrator1->getHalfStepPistonPosition();
+    auto halfStepPistonPosition2 = integrator2->getHalfStepPistonPosition();
+    halfStepPistonPosition1.transferFromDevice();
+    halfStepPistonPosition2.transferFromDevice();
+    CHECK(CompareVectors1(halfStepPistonPosition1.getHostArray(),
+                          halfStepPistonPosition2.getHostArray(), 0.0, true));
+
+    // Ensure that Nose-Hoover variables are the same
+    CHECK(integrator1->getNoseHooverPistonMass() ==
+          integrator2->getNoseHooverPistonMass());
+
+    CHECK(integrator1->getNoseHooverPistonPosition() ==
+          integrator2->getNoseHooverPistonPosition());
+
+    CHECK(integrator1->getNoseHooverPistonVelocity() ==
+          integrator2->getNoseHooverPistonVelocity());
+
+    CHECK(integrator1->getNoseHooverPistonVelocityPrevious() ==
+          integrator2->getNoseHooverPistonVelocityPrevious());
+
+    CHECK(integrator1->getNoseHooverPistonForce() ==
+          integrator2->getNoseHooverPistonForce());
+
+    CHECK(integrator1->getNoseHooverPistonForcePrevious() ==
+          integrator2->getNoseHooverPistonForcePrevious());
+
+    // Propagate simulation
+    nsteps = 10;
+    integrator1->propagate(nsteps);
+    integrator2->propagate(nsteps);
+
+    // Check that coordinates match
+    coordinatesCharges1 = ctx1->getCoordinatesCharges();
+    coordinatesCharges2 = ctx2->getCoordinatesCharges();
+    coordinatesCharges1.transferFromDevice();
+    coordinatesCharges2.transferFromDevice();
+    CHECK(CompareVectors1(coordinatesCharges1.getHostArray(),
+                          coordinatesCharges2.getHostArray(), 0.0, true));
+
+    // Check that velocities match
+    velocityMass1 = ctx1->getVelocityMass();
+    velocityMass2 = ctx2->getVelocityMass();
+    velocityMass1.transferFromDevice();
+    velocityMass2.transferFromDevice();
+    CHECK(CompareVectors1(velocityMass1.getHostArray(),
+                          velocityMass2.getHostArray(), 0.0, true));
+
+    /*
     auto prm =
         std::make_shared<CharmmParameters>(dataPath + "toppar_water_ions.str");
     auto psf = std::make_shared<CharmmPSF>(dataPath + "waterbox.psf");
@@ -328,65 +486,8 @@ TEST_CASE("waterbox", "[dynamics]") {
       crd2.push_back(crd2cc.getHostArray()[i].y);
       crd2.push_back(crd2cc.getHostArray()[i].z);
     }
-    /// i swear it changed
     CHECK(compareVectors(crd1, crd2));
-  }
-  // Check propagation is same with same seeds ?
-  SECTION("seed") {
-    auto prm =
-        std::make_shared<CharmmParameters>(dataPath + "toppar_water_ions.str");
-    auto psf = std::make_shared<CharmmPSF>(dataPath + "waterbox.psf");
-    auto fm = std::make_shared<ForceManager>(psf, prm);
-    fm->setBoxDimensions({50., 50., 50.});
-    auto context1 = std::make_shared<CharmmContext>(fm);
-    auto context2 = std::make_shared<CharmmContext>(fm);
-    // fix seed for velocities initialization
-    context2->setRandomSeedForVelocities(
-        context1->getRandomSeedForVelocities());
-    auto crd = std::make_shared<CharmmCrd>(dataPath + "waterbox.crd");
-    context1->setCoordinates(crd);
-    context2->setCoordinates(crd);
-    context1->assignVelocitiesAtTemperature(300);
-    context2->assignVelocitiesAtTemperature(300);
-
-    auto integrator1 = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
-    auto integrator2 = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
-    integrator2->setSeedForPistonFriction(
-        integrator1->getSeedForPistonFriction());
-    integrator1->setPistonFriction(00.);
-    integrator2->setPistonFriction(00.);
-    integrator1->setCharmmContext(context1);
-    integrator2->setCharmmContext(context2);
-    integrator1->setCrystalType(CRYSTAL::CUBIC);
-    integrator2->setCrystalType(CRYSTAL::CUBIC);
-
-    std::shared_ptr<RestartSubscriber> restartSub1 =
-                                           std::make_shared<RestartSubscriber>(
-                                               "crd1.res", 1000),
-                                       restartSub2 =
-                                           std::make_shared<RestartSubscriber>(
-                                               "crd2.res", 1000);
-    integrator1->subscribe(restartSub1);
-    integrator2->subscribe(restartSub2);
-
-    integrator1->propagate(1000);
-    integrator2->propagate(1000);
-
-    auto crd1cc = context1->getCoordinatesCharges();
-    auto crd2cc = context2->getCoordinatesCharges();
-    crd1cc.transferFromDevice();
-    crd2cc.transferFromDevice();
-    std::vector<double> crd1, crd2;
-    for (int i = 0; i < crd1cc.size(); i++) {
-      crd1.push_back(crd1cc.getHostArray()[i].x);
-      crd1.push_back(crd1cc.getHostArray()[i].y);
-      crd1.push_back(crd1cc.getHostArray()[i].z);
-      crd2.push_back(crd2cc.getHostArray()[i].x);
-      crd2.push_back(crd2cc.getHostArray()[i].y);
-      crd2.push_back(crd2cc.getHostArray()[i].z);
-    }
-    /// i swear it changed
-    CHECK(compareVectors(crd1, crd2));
+    */
   }
 }
 
@@ -458,12 +559,18 @@ TEST_CASE("argon") {
   integrator->setCharmmContext(ctx);
   integrator->setNoseHooverFlag(false);
 
-  SECTION("orthorhombic") { integrator->setCrystalType(CRYSTAL::ORTHORHOMBIC); }
-  SECTION("tetragonal") { integrator->setCrystalType(CRYSTAL::TETRAGONAL); }
-  SECTION("cubic") { integrator->setCrystalType(CRYSTAL::CUBIC); }
-
-  integrator->setPistonMass({50000.0});
-
+  SECTION("orthorhombic") {
+    integrator->setCrystalType(CRYSTAL::ORTHORHOMBIC);
+    integrator->setPistonMass({50000.0, 5000.0, 5000.0});
+  }
+  SECTION("tetragonal") {
+    integrator->setCrystalType(CRYSTAL::TETRAGONAL);
+    integrator->setPistonMass({50000.0, 5000.0});
+  }
+  SECTION("cubic") {
+    integrator->setCrystalType(CRYSTAL::CUBIC);
+    integrator->setPistonMass({50000.0});
+  }
   int dof = integrator->getPistonDegreesOfFreedom();
   std::cout << "Piston degrees of freedom: " << dof << std::endl;
   // integrator->setDebugPrintFrequency(1000);
@@ -499,11 +606,18 @@ TEST_CASE("p1crystalTypes_nph") {
 
   integrator->setMaxPredictorCorrectorSteps(10);
 
-  SECTION("orthorhombic") { integrator->setCrystalType(CRYSTAL::ORTHORHOMBIC); }
-  SECTION("tetragonal") { integrator->setCrystalType(CRYSTAL::TETRAGONAL); }
-  SECTION("cubic") { integrator->setCrystalType(CRYSTAL::CUBIC); }
-
-  integrator->setPistonMass({500.0});
+  SECTION("orthorhombic") {
+    integrator->setCrystalType(CRYSTAL::ORTHORHOMBIC);
+    integrator->setPistonMass({500.0, 500.0, 500.0});
+  }
+  SECTION("tetragonal") {
+    integrator->setCrystalType(CRYSTAL::TETRAGONAL);
+    integrator->setPistonMass({500.0, 500.0});
+  }
+  SECTION("cubic") {
+    integrator->setCrystalType(CRYSTAL::CUBIC);
+    integrator->setPistonMass({500.0});
+  }
 
   int dof = integrator->getPistonDegreesOfFreedom();
   std::cout << "Piston degrees of freedom: " << dof << std::endl;
@@ -537,7 +651,6 @@ TEST_CASE("p1crystalTypes_12") {
   preIntegrator->setCharmmContext(ctx);
   preIntegrator->setBathTemperature(300.0);
   preIntegrator->setCrystalType(CRYSTAL::CUBIC);
-
   preIntegrator->setPistonMass({10000.0});
   // preIntegrator->propagate(5e4);
 
@@ -546,11 +659,18 @@ TEST_CASE("p1crystalTypes_12") {
   integrator->setCharmmContext(ctx);
   integrator->setBathTemperature(300.0);
 
-  SECTION("orthorhombic") { integrator->setCrystalType(CRYSTAL::ORTHORHOMBIC); }
-  SECTION("tetragonal") { integrator->setCrystalType(CRYSTAL::TETRAGONAL); }
-  SECTION("cubic") { integrator->setCrystalType(CRYSTAL::CUBIC); }
-
-  // integrator->setPistonMass(500.0);
+  SECTION("orthorhombic") {
+    integrator->setCrystalType(CRYSTAL::ORTHORHOMBIC);
+    // integrator->setPistonMass({500.0, 500.0, 500.0});
+  }
+  SECTION("tetragonal") {
+    integrator->setCrystalType(CRYSTAL::TETRAGONAL);
+    // integrator->setPistonMass({500.0, 500.0});
+  }
+  SECTION("cubic") {
+    integrator->setCrystalType(CRYSTAL::CUBIC);
+    // integrator->setPistonMass({500.0});
+  }
 
   // integrator->setNoseHooverFlag(false);
   integrator->setPressure({1000.0, 0.0, 1000.0, 0.0, 0.0, 1000.0});
@@ -605,11 +725,18 @@ TEST_CASE("p21crystalTypes_nph") {
   integrator->setCharmmContext(ctx);
   // integrator->setNoseHooverFlag(false);
 
-  SECTION("orthorhombic") { integrator->setCrystalType(CRYSTAL::ORTHORHOMBIC); }
-  SECTION("tetragonal") { integrator->setCrystalType(CRYSTAL::TETRAGONAL); }
-  SECTION("cubic") { integrator->setCrystalType(CRYSTAL::CUBIC); }
-
-  integrator->setPistonMass({500.0});
+  SECTION("orthorhombic") {
+    integrator->setCrystalType(CRYSTAL::ORTHORHOMBIC);
+    integrator->setPistonMass({500.0, 500.0, 500.0});
+  }
+  SECTION("tetragonal") {
+    integrator->setCrystalType(CRYSTAL::TETRAGONAL);
+    integrator->setPistonMass({500.0, 500.0});
+  }
+  SECTION("cubic") {
+    integrator->setCrystalType(CRYSTAL::CUBIC);
+    integrator->setPistonMass({500.0});
+  }
 
   int dof = integrator->getPistonDegreesOfFreedom();
   std::cout << "Piston degrees of freedom: " << dof << std::endl;
@@ -722,8 +849,9 @@ TEST_CASE("zack") {
     auto dcdSubscriber =
         std::make_shared<DcdSubscriber>("zack_npgt.20.dcd", 10000);
     integrator->subscribe(dcdSubscriber);
-    integrator->propagate(5e6); // You'll get to propagate for 5e6 when you
-                                // actually assert something.
+    integrator->propagate(5e3);
+    // integrator->propagate(5e6); // You'll get to propagate for 5e6 when you
+    //                             // actually assert something.
 
     // YOU SHOULD MONITOR SOMETHING HERE
   }

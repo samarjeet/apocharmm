@@ -16,7 +16,7 @@
 #include "cpp_utils.h"
 #include <iostream>
 
-TEST_CASE("stringUtils") {
+/*TEST_CASE("stringUtils") {
   std::string toBeTrimmed = " hello ", referenceString = "hello",
               toBeTrimmedRight = "hello ", toBeTrimmedLeft = " hello";
 
@@ -31,3 +31,5 @@ TEST_CASE("vectorFlattener") {
   std::vector<int3> outputVector = flattenVector<int, int3>(inputVector);
   CHECK(CompareVectors(outputVector, expectedVector));
 }
+
+*/

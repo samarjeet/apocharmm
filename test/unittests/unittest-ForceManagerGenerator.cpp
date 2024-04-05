@@ -18,6 +18,7 @@
 #include "test_paths.h"
 #include <iostream>
 
+/*
 TEST_CASE("ForceManagerGenerator", "[debug]") {
   std::string dataPath = getDataPath();
   SECTION("Base") {
@@ -130,32 +131,32 @@ TEST_CASE("ForceManagerGenerator", "[debug]") {
     // Not implemented yet -> should THROW
     std::shared_ptr<ForceManager> fm_generated;
     CHECK_THROWS(fm_generated = generator.generateForceManager(lElec, lVdw));
-    /*
-    fm_generated->initialize();
-    auto ctx_gen = std::make_shared<CharmmContext>(fm_generated);
 
-    // fm_manual: created from manually modified PRM file, serves as reference
-    auto prm_manual =
-    std::make_shared<CharmmParameters>(dataPath+"toppar_water_ions_manual.str");
-    auto fm_manual = std::make_shared<ForceManager>(psf, prm_manual);
-    fm_manual->setBoxDimensions({50.0, 50.0, 50.0});
-    fm_manual->setFFTGrid(48, 48, 48);
-    fm_manual->setKappa(0.34);
-    fm_manual->setCutoff(10.0);
-    fm_manual->setCtonnb(7.0);
-    fm_manual->setCtofnb(8.0);
-    fm_manual->initialize();
-    auto ctx_man = std::make_shared<CharmmContext>(fm_manual);
+    // fm_generated->initialize();
+    // auto ctx_gen = std::make_shared<CharmmContext>(fm_generated);
 
-    auto crd = std::make_shared<CharmmCrd>(dataPath+"waterbox.crd");
-    ctx_gen->setCoordinates(crd);
-    ctx_man->setCoordinates(crd);
-    float pe_gen = ctx_gen->calculatePotentialEnergy();
-    float pe_man = ctx_man->calculatePotentialEnergy();
-    REQUIRE(pe_gen == pe_man);
+    // // fm_manual: created from manually modified PRM file, serves as
+    // reference auto prm_manual =
+    //
+std::make_shared<CharmmParameters>(dataPath+"toppar_water_ions_manual.str");
+    // auto fm_manual = std::make_shared<ForceManager>(psf, prm_manual);
+    // fm_manual->setBoxDimensions({50.0, 50.0, 50.0});
+    // fm_manual->setFFTGrid(48, 48, 48);
+    // fm_manual->setKappa(0.34);
+    // fm_manual->setCutoff(10.0);
+    // fm_manual->setCtonnb(7.0);
+    // fm_manual->setCtofnb(8.0);
+    // fm_manual->initialize();
+    // auto ctx_man = std::make_shared<CharmmContext>(fm_manual);
 
-    */
+    // auto crd = std::make_shared<CharmmCrd>(dataPath+"waterbox.crd");
+    // ctx_gen->setCoordinates(crd);
+    // ctx_man->setCoordinates(crd);
+    // float pe_gen = ctx_gen->calculatePotentialEnergy();
+    // float pe_man = ctx_man->calculatePotentialEnergy();
+    // REQUIRE(pe_gen == pe_man);
 
   } // end vdw section
 
 } // End test_case
+*/

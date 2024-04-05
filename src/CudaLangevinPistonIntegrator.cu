@@ -127,14 +127,14 @@ CudaLangevinPistonIntegrator::CudaLangevinPistonIntegrator(ts_t timeStep,
 void CudaLangevinPistonIntegrator::allocatePistonVariables() {
   std::vector<double> tempZero(pistonDegreesOfFreedom, 0.0);
 
-  onStepPistonVelocity.allocate(pistonDegreesOfFreedom);
-  onStepPistonVelocity.set(tempZero);
-  halfStepPistonVelocity.allocate(pistonDegreesOfFreedom);
-  halfStepPistonVelocity.set(tempZero);
   onStepPistonPosition.allocate(pistonDegreesOfFreedom);
   onStepPistonPosition.set(tempZero);
   halfStepPistonPosition.allocate(pistonDegreesOfFreedom);
   halfStepPistonPosition.set(tempZero);
+  onStepPistonVelocity.allocate(pistonDegreesOfFreedom);
+  onStepPistonVelocity.set(tempZero);
+  halfStepPistonVelocity.allocate(pistonDegreesOfFreedom);
+  halfStepPistonVelocity.set(tempZero);
 
   pistonMass.resize(pistonDegreesOfFreedom);
   inversePistonMass.allocate(pistonDegreesOfFreedom);
@@ -395,18 +395,18 @@ void CudaLangevinPistonIntegrator::initialize() {
   auto velMass = context->getVelocityMass().getDeviceArray().data();
 
   if (usingHolonomicConstraints) {
-
     copy_DtoD_async<double4>(coords, coordsRefDevice, numAtoms,
                              *integratorStream);
-    cudaCheck(cudaDeviceSynchronize());
+    cudaCheck(cudaStreamSynchronize(*integratorStream));
+    // cudaCheck(cudaDeviceSynchronize());
 
     holonomicConstraint->handleHolonomicConstraints(coordsRefDevice);
     updateSPKernel<<<numBlocks, numThreads, 0, *integratorStream>>>(
         numAtoms, xyzq, coords);
     copy_DtoD_async<double4>(coords, coordsRefDevice, numAtoms,
                              *integratorStream);
-
-    cudaCheck(cudaDeviceSynchronize());
+    cudaCheck(cudaStreamSynchronize(*integratorStream));
+    // cudaCheck(cudaDeviceSynchronize());
   }
 
   context->calculateForces();
@@ -418,8 +418,8 @@ void CudaLangevinPistonIntegrator::initialize() {
   init<<<numBlocks, numThreads, 0, *integratorStream>>>(
       kbt, numAtoms, stride, timeStep, // coords,
       coordsDeltaDevice, coordsDeltaPreviousDevice, velMass, force->xyz());
-
-  cudaCheck(cudaDeviceSynchronize());
+  cudaCheck(cudaStreamSynchronize(*integratorStream));
+  // cudaCheck(cudaDeviceSynchronize());
 
   if (usingHolonomicConstraints) {
     backStepInitializationKernel<<<numBlocks, numThreads, 0,
@@ -432,7 +432,8 @@ void CudaLangevinPistonIntegrator::initialize() {
                                     *integratorStream>>>(
         numAtoms, coords, coordsRefDevice, coordsDeltaPreviousDevice);
   }
-  cudaCheck(cudaDeviceSynchronize());
+  cudaCheck(cudaStreamSynchronize(*integratorStream));
+  // cudaCheck(cudaDeviceSynchronize());
 }
 
 /* Integrate the forces NOT TAKING THE BAROSTAT INTO ACCOUNT, to compute
@@ -1629,7 +1630,6 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
       (pressureTensor[0] + pressureTensor[2] + pressureTensor[5]) / 3.0;
   pressureScalar.transferToDevice();
 
-  // debugTotalPressure += pressureScalar[0];
   averagePressureScalar[0] =
       (stepId / (stepId + 1.0)) * averagePressureScalar[0] +
       (1.0 / (stepId + 1.0)) * pressureScalar[0];

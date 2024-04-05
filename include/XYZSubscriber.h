@@ -34,7 +34,7 @@ private:
   void initialize();
 
   int numFramesWritten;
-  int numAtoms;
+  //int numAtoms;
 
   /** @brief Tracks if subscriber has been initialized (=numAtoms has been set) */
   bool isInitialized;

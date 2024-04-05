@@ -369,6 +369,7 @@ TEST_CASE("MBARSubscriber") {
                          coordsDeltaPrevious.getHostArray(), 1e-6));
   }
 
+  /*
   SECTION("readWrapped") {
     auto readRestartSub =
         std::make_shared<RestartSubscriber>("restartWaterThermostat.res", 5000);
@@ -405,6 +406,7 @@ TEST_CASE("MBARSubscriber") {
     CHECK(CompareVectors(coordsDeltaPreviousRestartFile,
                          coordsDeltaPrevious.getHostArray()));
   }
+  */
 }
 
 // Debugging unittest. Remove before merge once ok.

@@ -162,11 +162,11 @@ TEST_CASE("bilayer", "[all]") {
   SECTION("npt") {
 
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
+    integrator->setCrystalType(CRYSTAL::TETRAGONAL);
+    integrator->setPistonMass({500.0, 500.0});
+    integrator->setNoseHooverFlag(false);
     integrator->setPistonFriction(0.0);
     integrator->setCharmmContext(ctx);
-    integrator->setPistonMass({500.0});
-    integrator->setCrystalType(CRYSTAL::TETRAGONAL);
-    integrator->setNoseHooverFlag(false);
 
     integrator->propagate(nSteps);
     std::string subfile = "p21_bilayer_npt.dcd";
@@ -187,12 +187,12 @@ TEST_CASE("bilayer", "[all]") {
     std::cout << "nvt_npt: nvt done\n";
 
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
-    integrator->setPistonFriction(20.0);
-    integrator->setCharmmContext(ctx);
     integrator->setCrystalType(CRYSTAL::TETRAGONAL);
-    integrator->setPistonMass({5000.0});
+    integrator->setPistonMass({5000.0, 5000.0});
     integrator->setBathTemperature(300.0);
     // integrator.setNoseHooverFlag(false);
+    integrator->setPistonFriction(20.0);
+    integrator->setCharmmContext(ctx);
 
     integrator->propagate(nSteps);
 
@@ -273,6 +273,8 @@ TEST_CASE("virial") {
   }
 }
 
+/*
+
 TEST_CASE("dimer_bilayer", "[all]") {
   std::string dataPath = "/u/arice/Projects/fusion_peptide_influenza/dimer_PMF/"
                          "POPC/P21_test/";
@@ -309,12 +311,12 @@ TEST_CASE("dimer_bilayer", "[all]") {
   for (auto energyComponent : energyComponents) {
     std::cout << energyComponent.first << " " << energyComponent.second << "\n";
   }
-  /*
-  CudaMinimizer minimizer;
-  minimizer.setCharmmContext(ctx);
-  std::cout << "Minimizing...\n";
-  minimizer.minimize(100);
-  */
+  //
+  //CudaMinimizer minimizer;
+  //minimizer.setCharmmContext(ctx);
+  //std::cout << "Minimizing...\n";
+  //minimizer.minimize(100);
+  //
 
   CudaLangevinThermostatIntegrator langevinThermostat(0.001);
 
@@ -325,7 +327,7 @@ TEST_CASE("dimer_bilayer", "[all]") {
     CudaMinimizer minimizer;
     minimizer.setCharmmContext(ctx);
     std::cout << "Minimizing...\n";
-    minimizer.minimize(100);
+    // minimizer.minimize(100);
 
     langevinThermostat.setFriction(0.0);
     langevinThermostat.propagate(2e5);
@@ -345,13 +347,13 @@ TEST_CASE("dimer_bilayer", "[all]") {
   SECTION("npt") {
 
     auto integrator = CudaLangevinPistonIntegrator(0.002);
-    integrator.setPistonFriction(0.0);
-    integrator.setCharmmContext(ctx);
-    integrator.setPistonMass({500.0});
     integrator.setCrystalType(CRYSTAL::TETRAGONAL);
     integrator.setNoseHooverFlag(false);
     // integrator.setNoseHooverPistonMass(1000.0);
     // integrator.setDebugPrintFrequency(1);
+    integrator.setPistonFriction(0.0);
+    integrator.setCharmmContext(ctx);
+    integrator.setPistonMass({500.0, 500.0});
 
     integrator.propagate(1e4);
     std::string subfile = "p21_bilayer_npt.dcd";
@@ -370,13 +372,13 @@ TEST_CASE("dimer_bilayer", "[all]") {
     langevinThermostat.propagate(5e4);
 
     auto integrator = CudaLangevinPistonIntegrator(0.002);
-    integrator.setPistonFriction(0.0);
-    integrator.setCharmmContext(ctx);
     integrator.setCrystalType(CRYSTAL::TETRAGONAL);
-    integrator.setPistonMass({500.0});
+    integrator.setPistonMass({500.0, 500.0});
     integrator.setBathTemperature(300.0);
     integrator.setRemoveCenterOfMassFrequency(1000);
     integrator.setNoseHooverFlag(false);
+    integrator.setPistonFriction(0.0);
+    integrator.setCharmmContext(ctx);
 
     integrator.propagate(1e4);
 
@@ -388,3 +390,4 @@ TEST_CASE("dimer_bilayer", "[all]") {
     integrator.propagate(1e7);
   }
 }
+*/

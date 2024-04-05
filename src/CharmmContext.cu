@@ -412,6 +412,7 @@ void CharmmContext::assignVelocitiesAtTemperature(float temp) {
 
   // std::random_device rd{};
   //  std::mt19937 gen{rd()};
+  std::cout << "seed = " << seed << std::endl;
   std::mt19937 gen{seed};
 
   for (int i = 0; i < numAtoms; i++) {
@@ -424,6 +425,8 @@ void CharmmContext::assignVelocitiesAtTemperature(float temp) {
     velocityMass[i].y = d(gen);
     velocityMass[i].z = d(gen);
   }
+  std::cout << "first vel : " << velocityMass[0].x << " " << velocityMass[0].y
+            << " " << velocityMass[0].z << std::endl;
 
   velocityMass.transferToDevice();
   removeCenterOfMassMotion();

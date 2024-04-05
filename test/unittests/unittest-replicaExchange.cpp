@@ -57,8 +57,8 @@ TEST_CASE("rex", "[energy]") {
     auto ctx0 = std::make_shared<CharmmContext>(fm0);
     auto ctx1 = std::make_shared<CharmmContext>(fm1);
 
-    auto crd0 = std::make_shared<CharmmCrd>("../test/data/nvt_equil.25k.cor");
-    auto crd1 = std::make_shared<CharmmCrd>("../test/data/nvt_equil.25k_1.cor");
+    auto crd0 = std::make_shared<CharmmCrd>(dataPath + "nvt_equil.25k.cor");
+    auto crd1 = std::make_shared<CharmmCrd>(dataPath + "nvt_equil.25k_1.cor");
 
     ctx0->setCoordinates(crd0);
     ctx1->setCoordinates(crd1);

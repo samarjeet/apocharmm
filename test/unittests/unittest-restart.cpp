@@ -414,7 +414,7 @@ TEST_CASE("identicalPropagation") {
   std::string dataPath = getDataPath();
   std::vector<std::string> prmFiles{dataPath + "toppar_water_ions.str"};
   std::vector<double> boxDim = {50.0, 50.0, 50.0};
-  int rdmSeed = 314159, nsteps = 1; // 5000;
+  int rdmSeed = 314159, nsteps = 5000;
   std::string fileName = "idprop.rst";
 
   // Topology, parameters, PSF, and coordinates
@@ -440,7 +440,7 @@ TEST_CASE("identicalPropagation") {
   integrator1->setSeedForPistonFriction(rdmSeed);
   integrator1->setNoseHooverFlag(false);
   integrator1->setCharmmContext(ctx1);
-  integrator1->setDebugPrintFrequency(1);
+  integrator1->setDebugPrintFrequency(1000);
 
   // Create a restart file
   auto restartsub = std::make_shared<RestartSubscriber>(fileName, nsteps);
@@ -678,7 +678,6 @@ TEST_CASE("identicalPropagation") {
         integrator3->getNoseHooverPistonForce());
   CHECK(integrator2->getNoseHooverPistonForce() ==
         integrator3->getNoseHooverPistonForce());
-
   CHECK(integrator1->getNoseHooverPistonForcePrevious() ==
         integrator2->getNoseHooverPistonForcePrevious());
   CHECK(integrator1->getNoseHooverPistonForcePrevious() ==

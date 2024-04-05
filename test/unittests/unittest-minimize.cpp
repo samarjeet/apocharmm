@@ -14,16 +14,18 @@
 #include "CudaVelocityVerletIntegrator.h"
 #include "DcdSubscriber.h"
 #include "catch.hpp"
+#include "test_paths.h"
 #include <iostream>
 
 TEST_CASE("waterbox", "[minimize]") {
   SECTION("waterbox") {
-    std::vector<std::string> prmFiles{"../test/data/par_all22_prot.prm",
-                                      "../test/data/toppar_water_ions.str"};
+    std::string dataPath = getDataPath();
+    std::vector<std::string> prmFiles{dataPath + "par_all22_prot.prm",
+                                      dataPath + "toppar_water_ions.str"};
     std::shared_ptr<CharmmParameters> prm =
         std::make_shared<CharmmParameters>(prmFiles);
     std::shared_ptr<CharmmPSF> psf =
-        std::make_shared<CharmmPSF>("../test/data/jac_5dhfr.psf");
+        std::make_shared<CharmmPSF>(dataPath + "jac_5dhfr.psf");
 
     auto fm = std::make_shared<ForceManager>(psf, prm);
 
@@ -36,7 +38,7 @@ TEST_CASE("waterbox", "[minimize]") {
     fm->initialize();
 
     auto ctx = std::make_shared<CharmmContext>(fm);
-    auto crd = std::make_shared<CharmmCrd>("../test/data/jac_5dhfr.crd");
+    auto crd = std::make_shared<CharmmCrd>(dataPath + "jac_5dhfr.crd");
     ctx->setCoordinates(crd);
 
     ctx->assignVelocitiesAtTemperature(300);

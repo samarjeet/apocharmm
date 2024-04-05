@@ -8,14 +8,14 @@
 //
 // ENDLICENSE
 
-#include "CharmmContext.h"
-#include "CharmmCrd.h"
-#include "CudaVelocityVerletIntegrator.h"
 #include <iostream>
 
+#include "CharmmContext.h"
+#include "CharmmCrd.h"
 #include "CudaLangevinPistonIntegrator.h"
 #include "CudaLangevinThermostatIntegrator.h"
 #include "CudaLeapFrogIntegrator.h"
+#include "CudaVelocityVerletIntegrator.h"
 #include "StateSubscriber.h"
 #include "catch.hpp"
 
@@ -41,8 +41,7 @@ std::vector<std::vector<float>> readTableFromFile(std::string fileName) {
 TEST_CASE("argon1000", "[energy conservation]") {
   float integratorMargin;
   std::string dataPath = getDataPath();
-  int nFrames = 1000, nStepsPerFrame = 100, nStepsEquilibration = 2000,
-      averageOver = nFrames / 4;
+  int nFrames = 500, nStepsPerFrame = 100, averageOver = nFrames / 4;
   CudaContainer<double> epotCC;
   double ekin;
   std::vector<double> etotVals;
@@ -57,12 +56,13 @@ TEST_CASE("argon1000", "[energy conservation]") {
   std::cout << "restart read." << std::endl;
   ctx->assignVelocitiesAtTemperature(300.0);
 
-  SECTION("velocity Verlet") {
+  SECTION("velocityVerlet") {
     integratorMargin = .01;
     auto integrator = std::make_shared<CudaVelocityVerletIntegrator>(0.001);
     integrator->setCharmmContext(ctx);
     for (int i = 0; i < nFrames; i++) {
       integrator->propagate(nStepsPerFrame);
+      ctx->calculateForces(true, true);
       epotCC = ctx->getPotentialEnergy();
       epotCC.transferToHost();
       double epot = epotCC[0];
@@ -72,13 +72,14 @@ TEST_CASE("argon1000", "[energy conservation]") {
   }
 
   // Use no friction to test energy conservation
-  SECTION("Langevin thermostat") {
+  SECTION("LangevinThermostat") {
     integratorMargin = .1;
     auto integrator =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.001, 300., 0.0);
     integrator->setCharmmContext(ctx);
     for (int i = 0; i < nFrames; i++) {
       integrator->propagate(nStepsPerFrame);
+      ctx->calculateForces(true, true);
       epotCC = ctx->getPotentialEnergy();
       epotCC.transferToHost();
       double epot = epotCC[0];
@@ -87,7 +88,7 @@ TEST_CASE("argon1000", "[energy conservation]") {
     }
   }
 
-  // CHeck energy conservation
+  // Check energy conservation
   double eAverageInitial = 0, etotAverageFinal = 0, etotAverage = 0;
   for (int i = 0; i < averageOver; i++) {
     eAverageInitial += etotVals[averageOver + i];
