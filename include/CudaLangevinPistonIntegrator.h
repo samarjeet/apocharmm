@@ -38,7 +38,8 @@ private:
   std::vector<double> boxDimensions;
 
   curandStatePhilox4_32_10_t *devPHILOXStates;
-  CudaContainer<double4> coordsDeltaPrevious, coordsDeltaPredicted;
+  // CudaContainer<double4> coordsDeltaPrevious;
+  CudaContainer<double4> coordsDeltaPredicted;
 
   CudaContainer<double4> holonomicConstraintForces;
 

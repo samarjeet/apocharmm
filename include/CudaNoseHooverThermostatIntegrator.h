@@ -19,19 +19,33 @@
  * @attention Should not be used yet
  */
 class CudaNoseHooverThermostatIntegrator : public CudaIntegrator {
-private:
-  double bathTemperature;
-  int chainLength;
-  CudaContainer<double4> chainPositions;
-  CudaContainer<double4> chainVelocities;
-
-  std::string integratorTypeName = "LangevinThermostat";
 
 public:
   CudaNoseHooverThermostatIntegrator(ts_t timeStep);
+
+  void setNoseHooverPistonMass(double _nhMass);
+  double getNoseHooverPistonMass() { return noseHooverPistonMass; }
+
+  void setBathTemperature(double temp) { bathTemperature = temp; }
 
   // Put these in the base class
   // void setContext();
   void initialize();
   void propagateOneStep() override;
+
+private:
+  int chainLength;
+
+  int stepId;
+
+  double noseHooverPistonMass;
+  double noseHooverPistonPosition, noseHooverPistonVelocity,
+      noseHooverPistonVelocityPrevious, noseHooverPistonForce,
+      noseHooverPistonForcePrevious;
+  double bathTemperature;
+
+  // CudaContainer<double4> chainPositions;
+  // CudaContainer<double4> chainVelocities;
+
+  std::string integratorTypeName = "LangevinThermostat";
 };

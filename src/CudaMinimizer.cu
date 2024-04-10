@@ -4,11 +4,11 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author: Antti-Pekka Hynninen, Samarjeet Prasad
+// Author: Samarjeet Prasad
 //
 // ENDLICENSE
 
-#include "CharmmContext.h"
+// #include "CharmmContext.h"
 #include "CudaMinimizer.h"
 #include <Eigen/Core>
 #include <cmath>
@@ -16,24 +16,23 @@
 
 // #include <LBFGS.h>
 
-CudaMinimizer::CudaMinimizer() {
+CudaMinimizer::CudaMinimizer() : CudaIntegrator(0.0) {
   nsteps = 100; // default number of steps
   method = "sd";
   verboseFlag = false;
 }
 
-void CudaMinimizer::setCharmmContext(std::shared_ptr<CharmmContext> csc) {
-  context = csc;
-}
+// void CudaMinimizer::setCharmmContext(std::shared_ptr<CharmmContext> csc) {
+//   context = csc;
+// }
 
-static __global__ void
-updateSPKernel(int numAtoms, float4 *__restrict__ xyzq,
-               const double4 *__restrict__ coordsCharge) {
+static __global__ void updateSPKernel(int numAtoms, float4 *__restrict__ xyzq,
+                                      const double4 *__restrict__ coords) {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
   if (index < numAtoms) {
-    xyzq[index].x = (float)coordsCharge[index].x;
-    xyzq[index].y = (float)coordsCharge[index].y;
-    xyzq[index].z = (float)coordsCharge[index].z;
+    xyzq[index].x = (float)coords[index].x;
+    xyzq[index].y = (float)coords[index].y;
+    xyzq[index].z = (float)coords[index].z;
   }
 }
 
@@ -91,10 +90,10 @@ public:
     std::cout << "x[0] : " << x[0] << " " << x[1] << " " << x[2] << "\n";
 
     coordsContainer.transferToDevice();
-    auto coordsCharge = coordsContainer.getDeviceArray().data();
+    auto coords = coordsContainer.getDeviceArray().data();
     int numThreads = 256;
     int numBlocks = (numAtoms - 1) / numThreads + 1;
-    updateSPKernel<<<numBlocks, numThreads>>>(numAtoms, xyzq, coordsCharge);
+    updateSPKernel<<<numBlocks, numThreads>>>(numAtoms, xyzq, coords);
     cudaCheck(cudaDeviceSynchronize());
 
     // context->calculatePotentialEnergy();
@@ -120,9 +119,32 @@ public:
   }
 };
 
+// TODO : move this code to CudaHolonomicConstraint
+__global__ static void removeHolonomicConstraintForces(
+    int numAtoms, double timeStep, const double4 *__restrict__ velMass,
+    const double4 *__restrict__ coordsRef, const double4 *__restrict__ coords,
+    const double4 *__restrict__ coordsDelta,
+    double4 *__restrict__ holonomicConstraintForces) {
+
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+  double timeStepSquared = timeStep * timeStep;
+
+  if (index < numAtoms) {
+    double factor = 1.0 / (velMass[index].w * timeStepSquared);
+
+    double3 delta = make_double3(
+        (coords[index].x - coordsRef[index].x - coordsDelta[index].x) * factor,
+        (coords[index].y - coordsRef[index].y - coordsDelta[index].y) * factor,
+        (coords[index].z - coordsRef[index].z - coordsDelta[index].z) * factor);
+
+    holonomicConstraintForces[index].x = delta.x;
+    holonomicConstraintForces[index].y = delta.y;
+    holonomicConstraintForces[index].z = delta.z;
+  }
+}
 __global__ void steepestDescentKernel(int numAtoms, double stepSize, int stride,
                                       double4 *__restrict__ velMass,
-                                      double4 *__restrict__ coordsCharge,
+                                      double4 *__restrict__ coords,
                                       const double *__restrict__ force) {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
   if (index < numAtoms) {
@@ -130,9 +152,9 @@ __global__ void steepestDescentKernel(int numAtoms, double stepSize, int stride,
     double fy = -force[index + stride];
     double fz = -force[index + 2 * stride];
 
-    coordsCharge[index].x += stepSize * fx; //* velMass[index].w;
-    coordsCharge[index].y += stepSize * fy; //* velMass[index].w;
-    coordsCharge[index].z += stepSize * fz; //* velMass[index].w;
+    coords[index].x += stepSize * fx; //* velMass[index].w;
+    coords[index].y += stepSize * fy; //* velMass[index].w;
+    coords[index].z += stepSize * fz; //* velMass[index].w;
   }
 }
 
@@ -167,7 +189,13 @@ __global__ void norm(int numAtoms, int stride, const double *__restrict__ force,
   }
 }
 
+void CudaMinimizer::initialize() {}
+
 void CudaMinimizer::minimize(int numSteps) {
+  // exit with messgae that it's still building
+  std::cout << "Minimize not implemented yet. Exiting.\n";
+  exit(1);
+
   // numSteps = 1000;
   double tol = 0.00001 / 1000000;
   bool toleranceReached = false;
@@ -196,14 +224,33 @@ void CudaMinimizer::minimize(int numSteps) {
       if (verboseFlag) {
         std::cout << "Iter : " << iter << " stepSize : " << stepSize << " ";
       }
+
       auto xyzq = context->getXYZQ()->getDeviceXYZQ();
 
-      auto coordsCharge =
-          context->getCoordinatesCharges().getDeviceArray().data();
+      auto coords = context->getCoordinatesCharges().getDeviceArray().data();
       auto velMass = context->getVelocityMass().getDeviceArray().data();
+
+      int numAtoms = context->getNumAtoms();
+      int stride = context->getForceStride();
+      cudaCheck(cudaStreamSynchronize(*integratorMemcpyStream));
+      cudaCheck(cudaDeviceSynchronize());
+      if (usingHolonomicConstraints) {
+        copy_DtoD_async<double4>(coords, coordsRef.getDeviceArray().data(),
+                                 numAtoms, *integratorMemcpyStream);
+      }
+      cudaCheck(cudaStreamSynchronize(*integratorMemcpyStream));
+      cudaCheck(cudaDeviceSynchronize());
+      if (usingHolonomicConstraints) {
+        holonomicConstraint->handleHolonomicConstraints(
+            coordsRef.getDeviceArray().data());
+      }
+      cudaCheck(cudaStreamSynchronize(*integratorMemcpyStream));
+      cudaCheck(cudaDeviceSynchronize());
+
       context->resetNeighborList();
       // context->calculateForces();
       context->calculateForces(true, true, true);
+
       pe = context->getPotentialEnergy();
       pe.transferFromDevice();
 
@@ -213,12 +260,16 @@ void CudaMinimizer::minimize(int numSteps) {
       }
       auto force = context->getForces();
 
+      if (usingHolonomicConstraints) {
+        holonomicConstraint->removeForceAlongHolonomicConstraints(
+            coordsRef.getDeviceArray().data(), stride, force->xyz());
+      }
+
       // calculate the force norm
       // TODO : calculate the force norm sqrt( <f,f>/dim)
       int numThreads = 1024;
       int numReductionBlocks = 256;
-      norm<<<numBlocks, numThreads>>>(context->getNumAtoms(),
-                                      context->getForceStride(), force->xyz(),
+      norm<<<numBlocks, numThreads>>>(numAtoms, stride, force->xyz(),
                                       d_forceNorm);
       cudaDeviceSynchronize();
       double h_forceNorm;
@@ -259,10 +310,12 @@ void CudaMinimizer::minimize(int numSteps) {
 
       // cudaCheck(cudaDeviceSynchronize());
       steepestDescentKernel<<<numBlocks, numThreads>>>(
-          numAtoms, s, stride, velMass, coordsCharge, force->xyz());
+          numAtoms, s, stride, velMass, coords, force->xyz());
 
       // cudaCheck(cudaDeviceSynchronize());
-      updateSPKernel<<<numBlocks, numThreads>>>(numAtoms, xyzq, coordsCharge);
+      updateSPKernel<<<numBlocks, numThreads, 0, *integratorStream>>>(
+          numAtoms, xyzq, coords);
+      cudaCheck(cudaStreamSynchronize(*integratorStream));
       cudaCheck(cudaDeviceSynchronize());
 
       prevEnergy = energy;
@@ -303,13 +356,13 @@ void CudaMinimizer::minimize(int numSteps) {
     // } catch (...) {
     //   std::cout << "LBFGS Error: " << std::endl;
     // }
-    // auto coordsCharges = context->getCoordinatesCharges().getHostArray();
+    // auto coordss = context->getCoordinatesCharges().getHostArray();
     // for (int i = 0; i < context->getNumAtoms(); i++) {
-    //   coordsCharges[i].x = coords[3 * i];
-    //   coordsCharges[i].y = coords[3 * i + 1];
-    //   coordsCharges[i].z = coords[3 * i + 2];
+    //   coordss[i].x = coords[3 * i];
+    //   coordss[i].y = coords[3 * i + 1];
+    //   coordss[i].z = coords[3 * i + 2];
     // }
-    // context->getCoordinatesCharges().set(coordsCharges);
+    // context->getCoordinatesCharges().set(coordss);
     throw std::invalid_argument("LBFGS method DEPRECATED. Stopping.\n");
   }
 

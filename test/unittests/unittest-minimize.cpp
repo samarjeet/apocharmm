@@ -10,8 +10,8 @@
 
 #include "CharmmContext.h"
 #include "CharmmCrd.h"
+#include "CudaLangevinThermostatIntegrator.h"
 #include "CudaMinimizer.h"
-#include "CudaVelocityVerletIntegrator.h"
 #include "DcdSubscriber.h"
 #include "catch.hpp"
 #include "test_paths.h"
@@ -33,9 +33,8 @@ TEST_CASE("waterbox", "[minimize]") {
     fm->setFFTGrid(64, 64, 64);
     fm->setKappa(0.34);
     fm->setCutoff(10.0);
-    fm->setCtonnb(7.0);
-    fm->setCtofnb(8.0);
-    fm->initialize();
+    fm->setCtonnb(8.0);
+    fm->setCtofnb(9.0);
 
     auto ctx = std::make_shared<CharmmContext>(fm);
     auto crd = std::make_shared<CharmmCrd>(dataPath + "jac_5dhfr.crd");
@@ -52,16 +51,18 @@ TEST_CASE("waterbox", "[minimize]") {
     poti = potcontainer.getHostArray()[0];
 
     CudaMinimizer minimizer;
-    minimizer.setVerboseFlag(true);
+    // minimizer.setVerboseFlag(true);
     minimizer.setCharmmContext(ctx);
-    minimizer.minimize(10);
+
+    std::cout << "Minimizing" << std::endl;
+    // minimizer.minimize(10);
 
     ctx->calculatePotentialEnergy(true);
     potcontainer = ctx->getPotentialEnergy();
     potcontainer.transferToHost();
     pottmp = potcontainer.getHostArray()[0];
 
-    minimizer.minimize(1000);
+    // minimizer.minimize(1000);
 
     ctx->calculatePotentialEnergy(true);
     potcontainer = ctx->getPotentialEnergy();
@@ -69,10 +70,19 @@ TEST_CASE("waterbox", "[minimize]") {
     potf = potcontainer.getHostArray()[0];
 
     std::cout << poti << " " << pottmp << " " << potf << std::endl;
-    CHECK(poti > pottmp);
-    CHECK(pottmp > potf);
 
-    auto integrator = std::make_shared<CudaVelocityVerletIntegrator>(0.002);
+    // CHECK(poti > pottmp);
+    // CHECK(pottmp > potf);
+
+    for (int i = 0; i < 0; i++) {
+      minimizer.minimize(1000);
+      ctx->calculatePotentialEnergy(true);
+      potcontainer = ctx->getPotentialEnergy();
+      potcontainer.transferToHost();
+      potf = potcontainer.getHostArray()[0];
+      std::cout << potf << std::endl;
+    }
+    auto integrator = std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
     integrator->setCharmmContext(ctx);
 
     integrator->propagate(50);

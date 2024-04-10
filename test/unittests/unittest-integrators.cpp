@@ -96,6 +96,7 @@ TEST_CASE("Basic functions", "[unittest]") {
     fm->setCtonnb(7.0);
     fm->setCtofnb(8.0);
     fm->initialize();
+
     auto ctx = std::make_shared<CharmmContext>(fm);
     auto crd = std::make_shared<CharmmCrd>(dataPath + "argon_10.crd");
     ctx->setCoordinates(crd);
@@ -513,4 +514,33 @@ TEST_CASE("casting") {
   auto lttolpintegrator =
       std::dynamic_pointer_cast<CudaLangevinPistonIntegrator>(ltintegrator);
   CHECK(lttolpintegrator == nullptr);
+}
+
+TEST_CASE("noseHoover", "[]") {
+  std::string dataPath = getDataPath();
+  auto prm =
+      std::make_shared<CharmmParameters>(dataPath + "toppar_water_ions.str");
+  auto psf = std::make_shared<CharmmPSF>(dataPath + "waterbox.psf");
+  auto crd = std::make_shared<CharmmCrd>(dataPath + "waterbox.crd");
+  auto fm = std::make_shared<ForceManager>(psf, prm);
+
+  fm->setBoxDimensions({50.0, 50.0, 50.0});
+  fm->setFFTGrid(48, 48, 48);
+  fm->setKappa(0.34);
+  fm->setCutoff(10.0);
+  fm->setCtonnb(7.0);
+  fm->setCtofnb(8.0);
+
+  auto ctx = std::make_shared<CharmmContext>(fm);
+  ctx->setCoordinates(crd);
+  ctx->assignVelocitiesAtTemperature(300);
+
+  SECTION("NoseHoover") {
+    auto integrator =
+        std::make_shared<CudaNoseHooverThermostatIntegrator>(0.001);
+    integrator->setCharmmContext(ctx);
+
+    integrator->setDebugPrintFrequency(500);
+    //CHECK_NOTHROW(integrator->propagate(100000));
+  }
 }

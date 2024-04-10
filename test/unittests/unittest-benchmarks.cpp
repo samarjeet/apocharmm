@@ -422,6 +422,63 @@ TEST_CASE("namd_benchmark", "[dynamics]") {
               << (numSteps * timeStep) / (elapsed_seconds.count() * 1e3) * 86400
               << "\n";
   }
+  SECTION("apoa1_new") {
+    std::string dataPath = "/u/samar/projects/benchmark/apoa1_new/";
+    std::string dataPath1 = getDataPath();
+
+    std::vector<std::string> prmFiles{
+        dataPath + "toppar/par_all36_lipid.prm",
+        dataPath + "toppar/par_all36m_prot.prm",
+        dataPath + "toppar/toppar_water_ions.str"
+        // dataPath + "par_all22_prot_lipid.xplor"
+    };
+
+    auto prm = std::make_shared<CharmmParameters>(prmFiles);
+    auto psf = std::make_shared<CharmmPSF>(dataPath + "apoa1_new.psf");
+
+    auto fm = std::make_shared<ForceManager>(psf, prm);
+    fm->setBoxDimensions({108.8612, 108.8612, 77.758});
+    fm->setFFTGrid(96, 96, 96);
+    fm->setKappa(0.34);
+    fm->setCutoff(8.0);
+    fm->setCtonnb(7.0);
+    fm->setCtofnb(7.5);
+
+    // fm->setPrintEnergyDecomposition(true);
+
+    auto ctx = std::make_shared<CharmmContext>(fm);
+    auto crd = std::make_shared<CharmmCrd>(dataPath + "apoa1.crd");
+    // auto crd = std::make_shared<PDB>(dataPath + "apoa1_new.pdb");
+    ctx->setCoordinates(crd);
+    ctx->calculatePotentialEnergy(true, true);
+    ctx->assignVelocitiesAtTemperature(300);
+    auto coords = ctx->getCoordinates();
+    // std::cout << coords[0][0] << "  " << coords[0][1] << "  " << coords[0][2]
+    //           << "\n";
+
+    double timeStep = 0.002;
+    double numSteps = 1000;
+
+    auto langevinThermostat =
+        std::make_shared<CudaLangevinThermostatIntegrator>(timeStep);
+    // CudaVelocityVerletIntegrator langevinThermostat(0.002);
+    langevinThermostat->setFriction(0.0);
+    langevinThermostat->setBathTemperature(300.0);
+    langevinThermostat->setCharmmContext(ctx);
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    langevinThermostat->propagate(numSteps);
+    auto end = std::chrono::high_resolution_clock::now();
+
+    // time in seconds
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    std::cout << "Elapsed time: " << elapsed_seconds.count() << "s\n";
+
+    std::cout << "speed in nd/day : "
+              << (numSteps * timeStep) / (elapsed_seconds.count() * 1e3) * 86400
+              << "\n";
+  }
 }
 
 /*

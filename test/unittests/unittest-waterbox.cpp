@@ -13,6 +13,7 @@
 #include "CudaLangevinPistonIntegrator.h"
 #include "CudaLangevinThermostatIntegrator.h"
 #include "CudaLeapFrogIntegrator.h"
+#include "CudaMinimizer.h"
 #include "CudaVelocityVerletIntegrator.h"
 #include "CudaVerletIntegrator.h"
 #include "DcdSubscriber.h"

@@ -20,7 +20,7 @@
 #include "Coordinates.h"
 #include "CudaContainer.h"
 // #include "CudaHolonomicConstraint.h"
-#include "CudaMinimizer.h"
+// #include "CudaMinimizer.h"
 #include "Force.h"
 #include "ForceManager.h"
 #include "Logger.h"

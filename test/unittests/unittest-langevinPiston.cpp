@@ -572,8 +572,8 @@ TEST_CASE("argon") {
     integrator->setPistonMass({50000.0});
   }
   int dof = integrator->getPistonDegreesOfFreedom();
-  std::cout << "Piston degrees of freedom: " << dof << std::endl;
-  // integrator->setDebugPrintFrequency(1000);
+  // std::cout << "Piston degrees of freedom: " << dof << std::endl;
+  //  integrator->setDebugPrintFrequency(1000);
   integrator->propagate(1e3); // You'll get to propagate for 1e7 steps when
                               // you're actually asserting something
 }
@@ -620,8 +620,8 @@ TEST_CASE("p1crystalTypes_nph") {
   }
 
   int dof = integrator->getPistonDegreesOfFreedom();
-  std::cout << "Piston degrees of freedom: " << dof << std::endl;
-  // integrator->setDebugPrintFrequency(100);
+  // std::cout << "Piston degrees of freedom: " << dof << std::endl;
+  //  integrator->setDebugPrintFrequency(100);
   integrator->propagate(1e3);
 }
 
@@ -677,8 +677,8 @@ TEST_CASE("p1crystalTypes_12") {
   integrator->setPistonFriction(2.0);
 
   int dof = integrator->getPistonDegreesOfFreedom();
-  std::cout << "Piston degrees of freedom: " << dof << std::endl;
-  // integrator->setDebugPrintFrequency(100);
+  // std::cout << "Piston degrees of freedom: " << dof << std::endl;
+  //  integrator->setDebugPrintFrequency(100);
   integrator->propagate(1e3);
 }
 
@@ -739,8 +739,8 @@ TEST_CASE("p21crystalTypes_nph") {
   }
 
   int dof = integrator->getPistonDegreesOfFreedom();
-  std::cout << "Piston degrees of freedom: " << dof << std::endl;
-  // integrator->setDebugPrintFrequency(100);
+  // std::cout << "Piston degrees of freedom: " << dof << std::endl;
+  //  integrator->setDebugPrintFrequency(100);
   integrator->propagate(1e3);
 }
 

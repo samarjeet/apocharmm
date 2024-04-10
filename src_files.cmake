@@ -18,7 +18,6 @@ list(APPEND src_files
   src/CudaPMEReciprocalForce.cu
   src/CudaPMEReciprocalGeneralForce.cu
   src/CudaHolonomicConstraint.cu
-  src/CudaMinimizer.cu
   src/CudaNeighborListBuild.cu
   src/CudaNeighborListSort.cu
   src/CudaNeighborList.cu
@@ -56,6 +55,7 @@ list(APPEND src_files
   src/MBARSubscriber.cu
   src/FEPEIForceManager.cu
   src/MBARForceManager.cu
+  src/CudaMinimizer.cu
   src/NetCDFSubscriber.cu
   src/PDB.cu
   src/PertForceManager.cu

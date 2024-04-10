@@ -72,7 +72,8 @@ std::shared_ptr<CharmmContext> CudaIntegrator::getCharmmContext(void) {
 }
 
 void CudaIntegrator::initialize() {
-  std::cout << "Should not have been called!!\n";
+  std::cout << "CudaIntegrator::initialize() : override me!\n";
+  //"Should not have been called!!\n";
 }
 
 void CudaIntegrator::setCharmmContext(std::shared_ptr<CharmmContext> ctx) {

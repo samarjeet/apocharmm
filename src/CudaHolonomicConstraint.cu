@@ -666,3 +666,53 @@ void CudaHolonomicConstraint::handleHolonomicConstraints(const double4 *ref) {
 
   // xx updateVelocities(ref, current);
 }
+
+__device__ static void removeOneForce(int i, int j, int stride,
+                                      const double4 *__restrict__ ref,
+                                      double *__restrict__ force) {
+  double xpij = force[i] - force[j];
+  double ypij = force[i + stride] - force[j + stride];
+  double zpij = force[i + 2 * stride] - force[j + 2 * stride];
+
+  double acor = xpij * xpij + ypij * ypij + zpij * zpij;
+
+  double xrij = ref[i].x - ref[j].x;
+  double yrij = ref[i].y - ref[j].y;
+  double zrij = ref[i].z - ref[j].z;
+
+  double rrijsq = xrij * xrij + yrij * yrij + zrij * zrij;
+  double rijrijp = xrij * xpij + yrij * ypij + zrij * zpij;
+
+  acor = -0.5 * rijrijp / rrijsq; // 0.5 as per CHARMM
+
+  atomicAdd(&force[i], acor * xrij);
+  atomicAdd(&force[i + stride], acor * yrij);
+  atomicAdd(&force[i + 2 * stride], acor * zrij);
+  atomicAdd(&force[j], -acor * xrij);
+  atomicAdd(&force[j + stride], -acor * yrij);
+  atomicAdd(&force[j + 2 * stride], -acor * zrij);
+}
+
+__global__ static void removeForceAlongHolonomicConstraintsKernel(
+    const int4 *shakeAtomsIndex, int numConstraints, int stride,
+    const double4 *__restrict__ ref, double *__restrict__ force) {
+  int index = blockDim.x * blockIdx.x + threadIdx.x;
+
+  if (index < numConstraints) {
+    int4 shakeAtoms = shakeAtomsIndex[index];
+    removeOneForce(shakeAtoms.x, shakeAtoms.y, stride, ref, force);
+    if (shakeAtoms.z == -1)
+      removeOneForce(shakeAtoms.x, shakeAtoms.z, stride, ref, force);
+    if (shakeAtoms.w == -1)
+      removeOneForce(shakeAtoms.x, shakeAtoms.w, stride, ref, force);
+    // float4 params = shakeParams[index];
+  }
+}
+
+void CudaHolonomicConstraint::removeForceAlongHolonomicConstraints(
+    const double4 *ref, int stride, double *force) {
+  if (shakeAtoms.size()) {
+    int numThreads = 128;
+    int numBlocks = (shakeAtoms.size() - 1) / numThreads + 1;
+  }
+}

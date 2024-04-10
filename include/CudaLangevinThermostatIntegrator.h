@@ -22,16 +22,6 @@
  *
  */
 class CudaLangevinThermostatIntegrator : public CudaIntegrator {
-private:
-  double friction;
-  curandStatePhilox4_32_10_t *devPHILOXStates;
-
-  CudaContainer<double4> coordsDeltaPrevious;
-
-  int stepsSinceLastReport;
-  double bathTemperature;
-
-  std::string integratorTypeName = "LangevinThermostat";
 
 public:
   /** @brief Base constructor. Uses timeStep (in ps) as input.
@@ -82,4 +72,15 @@ public:
 
   void setCoordsDeltaPrevious(
       std::vector<std::vector<double>> _coordsDeltaPreviousIn) override;
+
+private:
+  double friction;
+  curandStatePhilox4_32_10_t *devPHILOXStates;
+
+  // CudaContainer<double4> coordsDeltaPrevious;
+
+  int stepsSinceLastReport;
+  double bathTemperature;
+
+  std::string integratorTypeName = "LangevinThermostat";
 };

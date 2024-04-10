@@ -35,6 +35,9 @@ public:
   // Fix this : don't pass raw pointers
   void handleHolonomicConstraints(const double4 *ref);
 
+  void removeForceAlongHolonomicConstraints(const double4 *ref, int stride,
+                                            double *force);
+
   void setStream(std::shared_ptr<cudaStream_t> _stream) { stream = _stream; }
 
   void setMemcpyStream(std::shared_ptr<cudaStream_t> _stream) {

@@ -46,6 +46,8 @@ public:
    * print integrator infos
    */
   CudaIntegrator(ts_t timeStep, int debugPrintFrequency);
+
+  CudaIntegrator() = default;
   /** @brief Returns integrator timestep (in ps)
    */
   ts_t getTimeStep() const;
@@ -252,6 +254,7 @@ protected:
    * @todo  document this
    */
   CudaContainer<double4> coordsRef, coordsDelta;
+  CudaContainer<double4> coordsDeltaPrevious;
 
   std::shared_ptr<cudaStream_t> integratorStream, integratorMemcpyStream;
   bool usingHolonomicConstraints;
