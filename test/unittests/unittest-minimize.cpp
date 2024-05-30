@@ -55,7 +55,7 @@ TEST_CASE("waterbox", "[minimize]") {
     minimizer.setCharmmContext(ctx);
 
     std::cout << "Minimizing" << std::endl;
-    // minimizer.minimize(10);
+    minimizer.minimize(1000);
 
     ctx->calculatePotentialEnergy(true);
     potcontainer = ctx->getPotentialEnergy();

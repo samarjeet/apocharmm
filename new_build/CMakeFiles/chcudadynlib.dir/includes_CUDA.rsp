@@ -1,0 +1,1 @@
+-I/u/samar/Documents/git/apocharmm/include -I/u/samar/Documents/git/apocharmm/external/LBFGSpp/include -I/u/samar/Documents/git/apocharmm/external/pybind11/include -I/u/samar/miniconda3/envs/py312/include/python3.12 -I/u/samar/miniconda3/envs/py312/include -I"/v/apps/cuda/11.7.0/targets/x86_64-linux/include" -isystem "/u/samar/Documents/git/apocharmm/external/eigen-3.3.7"

@@ -154,7 +154,7 @@ TEST_CASE("amber_benchmark", "[dynamics]") {
 
 TEST_CASE("blade_benchmark", "[dynamics]") {
   SECTION("dhfr") {
-    std::string dataPath = "/u/samar/Documents/git/BLaDE/test/dhfr/";
+    std::string dataPath = "/u/samar/packages/BLaDE/test/dhfr/";
     std::vector<std::string> prmFiles{dataPath + "par_all22_prot.inp"};
 
     auto prm = std::make_shared<CharmmParameters>(prmFiles);
@@ -194,7 +194,7 @@ TEST_CASE("blade_benchmark", "[dynamics]") {
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::cout << "Elapsed time: " << elapsed_seconds.count() << "s\n";
 
-    std::cout << "speed in nd/day : "
+    std::cout << "speed in ns/day : "
               << (numSteps * timeStep) / (elapsed_seconds.count() * 1e3) * 86400
               << "\n";
 
@@ -210,7 +210,7 @@ TEST_CASE("blade_benchmark", "[dynamics]") {
   }
 
   SECTION("dmpg") {
-    std::string dataPath = "/u/samar/Documents/git/BLaDE/test/dmpg/";
+    std::string dataPath = "/u/samar/packages/BLaDE/test/dmpg/";
     std::vector<std::string> prmFiles{
         dataPath + "toppar/par_all36_lipid.prm",
         dataPath + "toppar/ions-noskov+roux-X=Onbfix.prm"};
@@ -221,9 +221,9 @@ TEST_CASE("blade_benchmark", "[dynamics]") {
     fm->setBoxDimensions({140.1228, 186.8304, 114.109});
     fm->setFFTGrid(144, 192, 108);
     fm->setKappa(0.34);
-    fm->setCutoff(9.0);
-    fm->setCtonnb(7.0);
-    fm->setCtofnb(8.0);
+    fm->setCutoff(9.5);
+    fm->setCtonnb(7.5);
+    fm->setCtofnb(9.0);
 
     auto ctx = std::make_shared<CharmmContext>(fm);
     auto crd = std::make_shared<CharmmCrd>(dataPath + "dmpg290k.crd");
@@ -232,7 +232,7 @@ TEST_CASE("blade_benchmark", "[dynamics]") {
     ctx->assignVelocitiesAtTemperature(300);
 
     double timeStep = 0.002;
-    double numSteps = 100;
+    double numSteps = 1000;
 
     auto langevinThermostat =
         std::make_shared<CudaLangevinThermostatIntegrator>(timeStep);
@@ -440,9 +440,9 @@ TEST_CASE("namd_benchmark", "[dynamics]") {
     fm->setBoxDimensions({108.8612, 108.8612, 77.758});
     fm->setFFTGrid(96, 96, 96);
     fm->setKappa(0.34);
-    fm->setCutoff(8.0);
-    fm->setCtonnb(7.0);
-    fm->setCtofnb(7.5);
+    fm->setCutoff(9.5);
+    fm->setCtonnb(7.5);
+    fm->setCtofnb(9.0);
 
     // fm->setPrintEnergyDecomposition(true);
 
@@ -457,7 +457,7 @@ TEST_CASE("namd_benchmark", "[dynamics]") {
     //           << "\n";
 
     double timeStep = 0.002;
-    double numSteps = 1000;
+    double numSteps = 10000;
 
     auto langevinThermostat =
         std::make_shared<CudaLangevinThermostatIntegrator>(timeStep);
@@ -475,7 +475,7 @@ TEST_CASE("namd_benchmark", "[dynamics]") {
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::cout << "Elapsed time: " << elapsed_seconds.count() << "s\n";
 
-    std::cout << "speed in nd/day : "
+    std::cout << "speed in ns/day : "
               << (numSteps * timeStep) / (elapsed_seconds.count() * 1e3) * 86400
               << "\n";
   }

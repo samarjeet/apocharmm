@@ -32,6 +32,12 @@ public:
   int atom1, atom2, atom3, atom4;
 };
 
+class CrossTerm {
+public:
+  int atomi1, atomj1, atomk1, atoml1;
+  int atomi2, atomj2, atomk2, atoml2;
+};
+
 struct InclusionExclusion {
   std::vector<int> sizes;
   std::vector<int> in14_ex14;
@@ -74,7 +80,8 @@ public:
   /**
    * @brief Increase the mass of the hydrogen atoms to a given amount
    * Note that function is not 'repartitioning' hydrogen mass to the neighbor
-   * atoms, but rather increasing the mass of the hydrogen atoms to a given mass
+   * atoms, but rather increasing the mass of the hydrogen atoms to a given
+   * mass
    * @param _newHyrogenMass (in a.m.u.)
    */
   void setHydrogenMass(double _newHyrogenMass);
@@ -84,6 +91,7 @@ public:
   int getNumAngles() { return numAngles; }
   int getNumDihedrals() { return numDihedrals; }
   int getNumImpropers() { return numImpropers; }
+  int getNumCrossTerms() { return numCrossTerms; }
 
   /** @brief Returns a vector containing all Bond objects */
   std::vector<Bond> getBonds() { return bonds; }
@@ -94,12 +102,14 @@ public:
   /** @brief Returns a vector containing all improper dihedral objects */
   std::vector<Dihedral> getImpropers() { return impropers; }
 
+  std::vector<CrossTerm> getCrossTerms() { return crossTerms; }
+
   /** @brief Returns a N-sized vector containing all atomic masses */
   std::vector<double> getAtomMasses() { return masses; }
   /** @brief Returns a N-sized vector containing all atomic charges */
   std::vector<double> getAtomCharges() { return charges; }
 
-    /** @brief Returns a N-sized string-vector containing all atomic names */
+  /** @brief Returns a N-sized string-vector containing all atomic names */
   std::vector<std::string> getAtomNames() { return atomNames; }
   /** @brief Returns a N-sized string-vector containing all atomic types */
   std::vector<std::string> getAtomTypes() { return atomTypes; }
@@ -120,10 +130,13 @@ public:
 
   /** @brief Computes number of degrees of freedom (3N-6)
    *
-   * Handling constraints is not done here. Should be done by the ForceManager.
+   * Handling constraints is not done here. Should be done by the
+   * ForceManager.
    */
 
   int getDegreesOfFreedom();
+
+  int getMass();
 
   InclusionExclusion getInclusionExclusionLists();
 
@@ -140,15 +153,15 @@ public:
                 const std::vector<std::string> &sequence, std::string segmnet);
 
   /**
-   * @brief Appends the sequence of residues to the PSF structure using the RTF
-   * object
+   * @brief Appends the sequence of residues to the PSF structure using the
+   * RTF object
    * @param same as generate
-   * If @param segment is same already present in the psf, the residues will be
-   * appeneded to it. Otherwise, a segment in the psf will be created
+   * If @param segment is same already present in the psf, the residues will
+   * be appeneded to it. Otherwise, a segment in the psf will be created
    */
   void append(const CharmmResidueTopology &rtf,
               const std::vector<std::string> &sequence, std::string segmnet);
-  
+
   std::string getOriginalPSFFileName() { return originalPSFFileName; }
 
 private:
@@ -157,6 +170,7 @@ private:
   int numAngles;
   int numDihedrals;
   int numImpropers;
+  int numCrossTerms;
   /** @brief N-sized vector containing the atomic masses */
   std::vector<double> masses;
 
@@ -173,6 +187,7 @@ private:
   std::vector<Angle> angles;
   std::vector<Dihedral> dihedrals;
   std::vector<Dihedral> impropers;
+  std::vector<CrossTerm> crossTerms;
 
   CudaContainer<int4> waterMolecules;
   CudaContainer<int2> residues;

@@ -101,7 +101,9 @@ TEST_CASE("waterDimer") {
   std::string dataPath = getDataPath();
   auto prm =
       std::make_shared<CharmmParameters>(dataPath + "toppar_water_ions.str");
+
   auto psf = std::make_shared<CharmmPSF>(dataPath + "waterDimer.psf");
+  // std::cout << "Samar2" << std::endl;
   auto fm = std::make_shared<ForceManager>(psf, prm);
 
   double dim = 520;
@@ -114,6 +116,7 @@ TEST_CASE("waterDimer") {
   fm->setKappa(0.00000001);
 
   auto ctx = std::make_shared<CharmmContext>(fm);
+  // std::cout << "Samar" << std::endl;
   auto crd = std::make_shared<CharmmCrd>(dataPath + "waterDimer.crd");
   ctx->setCoordinates(crd);
 
@@ -355,6 +358,12 @@ TEST_CASE("protein") {
   auto prm = std::make_shared<CharmmParameters>(prmlist);
   auto psf = std::make_shared<CharmmPSF>(
       dataPath + "dhfr_30k.psf"); //"dhfr.charmm_gui.psf");
+
+  std::cout << "cmap terms : " << psf->getNumCrossTerms() << std::endl;
+  auto crossTerms = psf->getCrossTerms();
+  for (auto term : crossTerms) {
+    // std::cout << term.atomi1 << std::endl;
+  }
   auto fm = std::make_shared<ForceManager>(psf, prm);
 
   double boxdim = 69.0;
@@ -381,14 +390,14 @@ TEST_CASE("protein") {
     ENER EXTERN:        VDWaals         ELEC       HBONds          ASP USER ENER
     EWALD:          EWKSum       EWSElf       EWEXcl       EWQCor       EWUTil
      ----------       ---------    ---------    ---------    --------- ---------
-    ENER>        0-120502.02161      0.00000      0.92869
+    ENER>        0-120495.38651      0.00000      0.92869
     ENER INTERN>     4368.33733   2891.80976     29.95231
-    1545.61401     22.57524 ENER EXTERN>    17390.92101-127504.18018 0.00000
+    1545.61401     22.57524 ENER EXTERN>    17397.55611-127504.18018 0.00000
     0.00000      0.00000 ENER EWALD>      1029.61007-635156.01213 614879.35097
     0.00000      0.00000
      ----------       ---------    ---------    ---------    ---------
     ---------*/
-    double ePotRef = -120502.02161;
+    double ePotRef = -120495.38651; //-120502.02161;
     std::map<std::string, double> refEneDecompositionMap;
 
     refEneDecompositionMap["bond"] = 4368.33733;
@@ -400,7 +409,7 @@ TEST_CASE("protein") {
     refEneDecompositionMap["ewse"] = -635156.01213;
     refEneDecompositionMap["ewex"] = 614879.35097;
     refEneDecompositionMap["elec"] = -127504.18018;
-    refEneDecompositionMap["vdw"] = 17390.92101;
+    refEneDecompositionMap["vdw"] = 17397.55611;
 
     auto eneDecompositionMap = fm->getEnergyComponents();
     for (auto ene : eneDecompositionMap) {

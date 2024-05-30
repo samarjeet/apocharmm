@@ -260,6 +260,193 @@ void CharmmPSF::readCharmmPSFFile(std::string fileName) {
 
   // read blank line
   std::getline(psfFile, line);
+  while (line.size() == 0)
+    std::getline(psfFile, line);
+  pos = line.find_first_of("!NDON");
+
+  if (pos == std::string::npos) {
+    // std::cerr << line << "\n";
+    // std::cerr << "Wrong format :  NDON missing!\n";
+    throw std::invalid_argument(line + "\n\nWrong format : NDON missing!\n");
+    exit(0);
+  }
+
+  int nDon = std::stoul(line.substr(0, pos));
+
+  // std::cout << "Number of donors is " << nDon << std::endl;
+  if (nDon > 0) {
+    // one donor from one line - 2 atoms
+    for (int i = 0; i < (nDon - 1) / 4 + 1; ++i) {
+      // read donor information
+      std::getline(psfFile, line);
+      // std::stringstream ss(line);
+      // int atom1, atom2;
+      // for (int j = 0; j < 2 && donors.size() < nDon; ++j) {
+      //   ss >> atom1 >> atom2;
+      //   donors.emplace_back(Donor{atom1 - 1, atom2 - 1});
+      // }
+    }
+  }
+  // read blank line
+  std::getline(psfFile, line);
+  while (line.size() == 0)
+    std::getline(psfFile, line);
+  pos = line.find_first_of("!NACC");
+
+  if (pos == std::string::npos) {
+    // std::cerr << line << "\n";
+    // std::cerr << "Wrong format :  NDON missing!\n";
+    throw std::invalid_argument(line + "\n\nWrong format : NACC missing!\n");
+    exit(0);
+  }
+
+  int nAcc = std::stoul(line.substr(0, pos));
+
+  // std::cout << "Number of acceptors is " << nAcc << std::endl;
+  if (nAcc > 0) {
+    // one donor from one line - 2 atoms
+    for (int i = 0; i < (nAcc - 1) / 4 + 1; ++i) {
+      // read donor information
+      std::getline(psfFile, line);
+      // std::stringstream ss(line);
+      // int atom1, atom2;
+      // for (int j = 0; j < 2 && donors.size() < nDon; ++j) {
+      //   ss >> atom1 >> atom2;
+      //   donors.emplace_back(Donor{atom1 - 1, atom2 - 1});
+      // }
+    }
+  }
+
+  // read blank line
+  std::getline(psfFile, line);
+  while (line.size() == 0)
+    std::getline(psfFile, line);
+  pos = line.find_first_of("!NNB");
+
+  if (pos == std::string::npos) {
+    // std::cerr << line << "\n";
+    // std::cerr << "Wrong format :  NDON missing!\n";
+    throw std::invalid_argument(line + "\n\nWrong format : NNNB missing!\n");
+    exit(0);
+  }
+
+  int nNb = std::stoul(line.substr(0, pos));
+  // std::cout << line << " ";
+
+  // std::cout << "Number of nnb is " << nNb << std::endl;
+  if (nNb > 0) {
+    // one donor from one line - 2 atoms
+    for (int i = 0; i < (nDon - 1) / 4 + 1; ++i) {
+      // read donor information
+      // std::getline(psfFile, line);
+      // std::stringstream ss(line);
+      // int atom1, atom2;
+      // for (int j = 0; j < 2 && donors.size() < nDon; ++j) {
+      //   ss >> atom1 >> atom2;
+      //   donors.emplace_back(Donor{atom1 - 1, atom2 - 1});
+      // }
+    }
+  }
+
+  // skipping the nnb entries for now
+  std::getline(psfFile, line);
+  std::getline(psfFile, line);
+  // std::cout << line << std::endl;
+  while (line.size() != 0) {
+    std::getline(psfFile, line);
+    // std::cout << "skipping nnb :\n" << line << std::endl;
+  }
+  //
+  // read blank line
+  std::getline(psfFile, line); // already read above
+
+  while (line.size() == 0)
+    std::getline(psfFile, line);
+  // std::cout << "Samar : " << line << std::endl;
+  pos = line.find_first_of("!NGRP");
+
+  if (pos == std::string::npos) {
+    // std::cerr << line << "\n";
+    // std::cerr << "Wrong format :  NGRP missing!\n";
+    throw std::invalid_argument(line + "\n\nWrong format : NGRP missing!\n");
+    exit(0);
+  }
+
+  int nGrp = std::stoul(line.substr(0, pos));
+
+  // std::cout << "Number of groups is " << nGrp << std::endl;
+  if (nGrp > 0) {
+    // one donor from one line - 2 atoms
+    for (int i = 0; i < (nGrp - 1) / 4 + 1; ++i) {
+      // read donor information
+      // std::getline(psfFile, line);
+      // std::stringstream ss(line);
+      // int atom1, atom2;
+      // for (int j = 0; j < 2 && donors.size() < nDon; ++j) {
+      //   ss >> atom1 >> atom2;
+      //   donors.emplace_back(Donor{atom1 - 1, atom2 - 1});
+      // }
+    }
+  }
+
+  // skipping the ngrp entries for now
+  std::getline(psfFile, line);
+  std::getline(psfFile, line);
+  // std::cout << line << std::endl;
+  while (line.size() != 0) {
+    std::getline(psfFile, line);
+    // std::cout << "skipping nnb :\n" << line << std::endl;
+  }
+  // std::cout << "after skipping ngrp :\n" << line << std::endl;
+
+  // skipping the nnb entries for now
+  std::getline(psfFile, line);
+  std::getline(psfFile, line);
+  // std::cout << line << std::endl;
+  while (line.size() != 0) {
+    std::getline(psfFile, line);
+    // std::cout << "skipping nnb :\n" << line << std::endl;
+  }
+  // std::cout << "after skipping nlp :\n" << line << std::endl;
+
+  // read blank line
+  std::getline(psfFile, line);
+  while (line.size() == 0)
+    std::getline(psfFile, line);
+
+  // std::cout << line << std::endl;
+  pos = line.find_first_of("!NCRTERM");
+  if (pos == std::string::npos) {
+    // std::cerr << line << "\n";
+    // std::cerr << "Wrong format :  NCRTERM missing!\n";
+
+    throw std::invalid_argument(line + "\n\nWrong format : NCRTERM missing!\n");
+
+    exit(0);
+  }
+
+  int nCrossTerm = std::stoul(line.substr(0, pos));
+  numCrossTerms = nCrossTerm;
+  // std::cout << "Number of cross terms is " << nCrossTerm << std::endl;
+
+  if (numCrossTerms > 0) {
+    // one cross term from one line - 8 atoms
+    for (int i = 0; i < numCrossTerms; ++i) {
+      // read cross term information
+      std::getline(psfFile, line);
+      std::stringstream ss(line);
+      int atom1, atom2, atom3, atom4, atom5, atom6, atom7, atom8;
+      // std::cout << line << std::endl;
+      ss >> atom1 >> atom2 >> atom3 >> atom4 >> atom5 >> atom6 >> atom7 >>
+          atom8;
+      crossTerms.emplace_back(CrossTerm{atom1 - 1, atom2 - 1, atom3 - 1,
+                                        atom4 - 1, atom5 - 1, atom6 - 1,
+                                        atom7 - 1, atom8 - 1});
+    }
+  }
+
+  // read blank line
+  std::getline(psfFile, line);
 
   while (psfFile) {
     std::getline(psfFile, line);
@@ -402,6 +589,14 @@ int CharmmPSF::getDegreesOfFreedom() {
 
   ndegf = 3 * numAtoms - 6;
   return ndegf;
+}
+
+int CharmmPSF::getMass() {
+  int mass = 0;
+  for (int i = 0; i < numAtoms; ++i) {
+    mass += masses[i];
+  }
+  return mass;
 }
 
 CudaContainer<int2> CharmmPSF::getGroups() { return groups; }

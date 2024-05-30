@@ -12,16 +12,701 @@
 #include "CharmmCrd.h"
 #include "CompositeSubscriber.h"
 #include "Constants.h"
+#include "CudaLangevinPistonIntegrator.h"
 #include "CudaLangevinThermostatIntegrator.h"
 #include "EDSForceManager.h"
+#include "EDSSubscriber.h"
 #include "ForceManagerGenerator.h"
 #include "NetCDFSubscriber.h"
+#include "RestartSubscriber.h"
 #include "StateSubscriber.h"
 #include "catch.hpp"
 #include "test_paths.h"
 
 #include <iostream>
 #include <vector>
+
+TEST_CASE("glu", "[unit]") {
+
+  std::string dataPath =
+      "/v/gscratch/cbs/adachen/EDS_1CVO_apoCHARMM/GLU/02_eds_rightSign/";
+  std::string paramPath = getDataPath();
+  SECTION("repd") {
+
+    auto psf_0 = std::make_shared<CharmmPSF>(dataPath + "glu_depr.psf");
+    auto psf_1 = std::make_shared<CharmmPSF>(dataPath + "glu_prot.psf");
+
+    std::vector<std::shared_ptr<CharmmPSF>> psfs{
+        psf_0, psf_1}; // deprotonated , protonated
+
+    std::vector<std::string> prmFiles{paramPath + "toppar_water_ions.str",
+                                      paramPath + "par_all36m_prot.prm"};
+
+    auto prm = std::make_shared<CharmmParameters>(prmFiles);
+    // auto fm_1 = std::make_shared<ForceManager>(psf_1, prm);
+    // auto fm_0 = std::make_shared<ForceManager>(psf_0, prm);
+
+    // auto fmEDS = std::make_shared<EDSForceManager>();
+
+    std::vector<std::shared_ptr<ForceManager>> fms_0, fms_1;
+    for (auto psf : psfs) {
+      auto fm_0 = std::make_shared<ForceManager>(psf, prm);
+      fms_0.push_back(fm_0);
+      auto fm_1 = std::make_shared<ForceManager>(psf, prm);
+      fms_1.push_back(fm_1);
+    }
+
+    auto fmEDS_0 = std::make_shared<EDSForceManager>(); // for s= 0.005
+    for (auto fm : fms_0) {
+      fmEDS_0->addForceManager(fm);
+    }
+    auto fmEDS_1 = std::make_shared<EDSForceManager>(); // for s= 300
+    for (auto fm : fms_1) {
+      fmEDS_1->addForceManager(fm);
+    }
+
+    double boxLength = 30.0;
+
+    int fftDim = 30;
+    fmEDS_0->setBoxDimensions({boxLength, boxLength, boxLength});
+    fmEDS_0->setFFTGrid(fftDim, fftDim, fftDim);
+    fmEDS_0->setPmeSplineOrder(4);
+    fmEDS_0->setKappa(0.34);
+    fmEDS_0->setCutoff(12.0);
+    fmEDS_0->setCtonnb(9.0);
+    fmEDS_0->setCtofnb(10.0);
+    fmEDS_0->initialize();
+
+    fmEDS_1->setBoxDimensions({boxLength, boxLength, boxLength});
+    fmEDS_1->setFFTGrid(fftDim, fftDim, fftDim);
+    fmEDS_1->setPmeSplineOrder(4);
+    fmEDS_1->setKappa(0.34);
+    fmEDS_1->setCutoff(12.0);
+    fmEDS_1->setCtonnb(9.0);
+    fmEDS_1->setCtofnb(10.0);
+    fmEDS_1->initialize();
+
+    double pH = 7.0;
+    double T = 300.0;
+    double ln10 = std::log(10.0);
+    double kT = charmm::constants::kBoltz * T;
+
+    double offset = -138.0 + kT * ln10 * (pH - 4.40);
+
+    double offset_0 = offset;
+    double offset_1 = 0.0;
+
+    fmEDS_0->setEnergyOffsets({offset_0, offset_1});
+    fmEDS_1->setEnergyOffsets({offset_0, offset_1});
+    // double s = 0.005;
+    // double s = 0.5;
+
+    fmEDS_0->setSValue(0.005);
+    fmEDS_1->setSValue(300.0);
+
+    double s = 0.5;
+    std::ostringstream strs;
+    strs << s;
+    std::string str = strs.str();
+
+    auto ctx_0 = std::make_shared<CharmmContext>(fmEDS_0);
+    auto crd = std::make_shared<CharmmCrd>(dataPath + "glu.crd");
+    ctx_0->setCoordinates(crd);
+    ctx_0->assignVelocitiesAtTemperature(T);
+    ctx_0->calculatePotentialEnergy(true, true);
+
+    auto potentialEnergy = ctx_0->getPotentialEnergy();
+    potentialEnergy.transferFromDevice();
+    for (int i = 0; i < potentialEnergy.size(); i++) {
+      std::cout << "Potential Energy: " << potentialEnergy[i] << std::endl;
+    }
+
+    auto ctx_1 = std::make_shared<CharmmContext>(fmEDS_1);
+    ctx_1->setCoordinates(crd);
+    ctx_1->assignVelocitiesAtTemperature(T);
+    ctx_1->calculatePotentialEnergy(true, true);
+
+    std::cout << "-----\n";
+    potentialEnergy = ctx_1->getPotentialEnergy();
+    potentialEnergy.transferFromDevice();
+    for (int i = 0; i < potentialEnergy.size(); i++) {
+      std::cout << "Potential Energy: " << potentialEnergy[i] << std::endl;
+    }
+
+    auto integrator_0 =
+        std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
+    integrator_0->setFriction(5.0);
+    integrator_0->setBathTemperature(T);
+    integrator_0->setCharmmContext(ctx_0);
+
+    auto integrator_1 =
+        std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
+    integrator_1->setFriction(5.0);
+    integrator_1->setBathTemperature(T);
+    integrator_1->setCharmmContext(ctx_1);
+
+    // auto compositeSub_0 =
+    // std::make_shared<CompositeSubscriber>("mbar_0.out");
+    // compositeSub_0->setReportFreq(100);
+    // integrator_0->subscribe(compositeSub_0);
+    integrator_0->setDebugPrintFrequency(1000);
+
+    // auto compositeSub_1 =
+    // std::make_shared<CompositeSubscriber>("mbar_1.out");
+
+    auto compositeSub_1 =
+        std::make_shared<EDSSubscriber>("eds_" + str + ".out");
+    compositeSub_1->setReportFreq(100);
+    integrator_1->subscribe(compositeSub_1);
+    integrator_1->setDebugPrintFrequency(10000);
+
+    auto restartSub_0 = std::make_shared<RestartSubscriber>(
+        dataPath + "shared_first_run/eds_1_eds.res");
+    auto restartSub_1 = std::make_shared<RestartSubscriber>(
+        dataPath + "shared_first_run/eds_1_eds.res");
+    integrator_0->subscribe(restartSub_0);
+    integrator_1->subscribe(restartSub_1);
+
+    restartSub_0->readRestart();
+    restartSub_1->readRestart();
+
+    for (int i = 0; i < 10000; i++) {
+
+      integrator_0->propagate(100);
+      integrator_1->propagate(100);
+
+      ctx_0->calculatePotentialEnergy(true, true);
+      ctx_1->calculatePotentialEnergy(true, true);
+
+      auto pe00 = ctx_0->getPotentialEnergy();
+      pe00.transferFromDevice();
+      std::cout << "Potential energy 0:" << pe00[0] << std::endl;
+
+      auto pe11 = ctx_1->getPotentialEnergy();
+      pe11.transferFromDevice();
+      std::cout << "Potential energy 1:" << pe11[0] << std::endl;
+
+      auto temp_crd0 = ctx_0->getCoordinates();
+      auto temp_crd1 = ctx_1->getCoordinates();
+
+      ctx_0->setCoordinates(temp_crd1);
+      ctx_1->setCoordinates(temp_crd0);
+      // std::cout << "\n\nSwapped" << std::endl;
+
+      // Now calculate the energies
+      ctx_0->calculatePotentialEnergy(true, true);
+      ctx_1->calculatePotentialEnergy(true, true);
+
+      auto pe01 = ctx_0->getPotentialEnergy(); // psf 0 and coords 1
+      pe01.transferFromDevice();
+      std::cout << "Potential energy 0:" << pe01[0] << std::endl;
+
+      auto pe10 = ctx_1->getPotentialEnergy(); // psf 1 and coords 0
+      pe10.transferFromDevice();
+      std::cout << "Potential energy 1:" << pe10[0] << std::endl;
+
+      // double T = 300;
+      // double kT = charmm::constants::kBoltz * T;
+      double beta = 1 / kT;
+      auto delta = beta * (pe01[0] + pe10[0] - pe00[0] - pe11[0]);
+      std::cout << "Delta: " << delta << std::endl;
+
+      double prob = delta <= 0 ? 1 : exp(-delta);
+      std::cout << "Probability: " << prob << std::endl;
+
+      std::random_device rd;
+      std::mt19937 gen(rd());
+      std::uniform_real_distribution<> dis(0, 1);
+
+      double r = dis(gen);
+      std::cout << "Random number: " << r << std::endl;
+
+      if (r < prob) {
+        std::cout << "Accepted" << std::endl;
+      } else {
+        std::cout << "Rejected" << std::endl;
+        ctx_0->setCoordinates(temp_crd0);
+        ctx_1->setCoordinates(temp_crd1);
+      }
+    }
+  }
+}
+
+TEST_CASE("1p5f", "[unit]") {
+  std::string dataPath = "/u/pamsma/1p5f/vanilla_md/";
+  std::string paramPath = getDataPath();
+  SECTION("base") {
+    auto psf_1 = std::make_shared<CharmmPSF>(dataPath + "cys_prot.psf");
+    auto psf_0 = std::make_shared<CharmmPSF>(dataPath + "cys_depr.psf");
+
+    std::vector<std::string> prmFiles{paramPath + "toppar_water_ions.str",
+                                      paramPath + "par_all36m_prot.prm"};
+
+    auto prm = std::make_shared<CharmmParameters>(prmFiles);
+    auto fm_1 = std::make_shared<ForceManager>(psf_1, prm);
+    auto fm_0 = std::make_shared<ForceManager>(psf_0, prm);
+
+    auto fmEDS = std::make_shared<EDSForceManager>();
+    fmEDS->addForceManager(fm_1);
+    fmEDS->addForceManager(fm_0);
+
+    double boxLength = 65.0;
+    int fftDim = 72;
+    fmEDS->setBoxDimensions({boxLength, boxLength, boxLength});
+    fmEDS->setFFTGrid(fftDim, fftDim, fftDim);
+    fmEDS->setPmeSplineOrder(4);
+    fmEDS->setKappa(0.34);
+    fmEDS->setCutoff(12.0);
+    fmEDS->setCtonnb(9.0);
+    fmEDS->setCtofnb(10.0);
+    fmEDS->initialize();
+
+    // fm_1->setPrintEnergyDecomposition(true);
+    // fm_0->setPrintEnergyDecomposition(true);
+
+    double pH = 7.0;
+    double T = 300.0;
+    double ln10 = std::log(10.0);
+    double kT = charmm::constants::kBoltz * T;
+
+    double offsetCYS = 43.0 + kT * ln10 * (pH - 8.37);
+    // offsetCYS = 210.0;
+
+    // double offset_1 = 0.0;
+    // double offset_0 = offsetCYS;
+    double offset_1 = offsetCYS;
+    double offset_0 = 0.0;
+
+    fmEDS->setEnergyOffsets({offset_1, offset_0});
+    double s = 0.005;
+    // double s = 0.5;
+
+    fmEDS->setSValue(s);
+
+    auto ctx = std::make_shared<CharmmContext>(fmEDS);
+    auto crd = std::make_shared<CharmmCrd>(dataPath + "equi.crd");
+    ctx->setCoordinates(crd);
+
+    ctx->assignVelocitiesAtTemperature(T);
+
+    ctx->calculatePotentialEnergy(true, true);
+    auto potentialEnergy = ctx->getPotentialEnergy();
+    potentialEnergy.transferFromDevice();
+    for (int i = 0; i < potentialEnergy.size(); i++) {
+      std::cout << "Potential Energy: " << potentialEnergy[i] << std::endl;
+    }
+
+    auto langevinPiston = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
+    langevinPiston->setPistonFriction(5.0);
+    langevinPiston->setCharmmContext(ctx);
+    langevinPiston->setCrystalType(CRYSTAL::CUBIC);
+    langevinPiston->setPistonMass({500.0});
+    langevinPiston->propagate(10000);
+
+    auto integrator = std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
+    integrator->setFriction(5.0);
+    integrator->setBathTemperature(T);
+    integrator->setCharmmContext(ctx);
+    std::ostringstream strs;
+    strs << s;
+    std::string str = strs.str();
+
+    auto compositeSub = std::make_shared<EDSSubscriber>("eds_" + str + ".out");
+    compositeSub->setReportFreq(1000);
+    integrator->subscribe(compositeSub);
+    integrator->setDebugPrintFrequency(1000);
+
+    int numSteps = 5e5;
+    integrator->propagate(numSteps);
+  }
+  SECTION("repd") {
+
+    auto psf_1 = std::make_shared<CharmmPSF>(dataPath + "cys_prot.psf");
+    auto psf_0 = std::make_shared<CharmmPSF>(dataPath + "cys_depr.psf");
+    std::vector<std::shared_ptr<CharmmPSF>> psfs{psf_1, psf_0};
+
+    std::vector<std::string> prmFiles{paramPath + "toppar_water_ions.str",
+                                      paramPath + "par_all36m_prot.prm"};
+
+    auto prm = std::make_shared<CharmmParameters>(prmFiles);
+    // auto fm_1 = std::make_shared<ForceManager>(psf_1, prm);
+    // auto fm_0 = std::make_shared<ForceManager>(psf_0, prm);
+
+    auto fmEDS = std::make_shared<EDSForceManager>();
+
+    std::vector<std::shared_ptr<ForceManager>> fms_0, fms_1;
+    for (auto psf : psfs) {
+      auto fm_0 = std::make_shared<ForceManager>(psf, prm);
+      fms_0.push_back(fm_0);
+      auto fm_1 = std::make_shared<ForceManager>(psf, prm);
+      fms_1.push_back(fm_1);
+    }
+
+    auto fmEDS_0 = std::make_shared<EDSForceManager>();
+    for (auto fm : fms_0) {
+      fmEDS_0->addForceManager(fm);
+    }
+    auto fmEDS_1 = std::make_shared<EDSForceManager>();
+    for (auto fm : fms_1) {
+      fmEDS_1->addForceManager(fm);
+    }
+
+    double boxLength = 65.0;
+
+    int fftDim = 72;
+    fmEDS_0->setBoxDimensions({boxLength, boxLength, boxLength});
+    fmEDS_0->setFFTGrid(fftDim, fftDim, fftDim);
+    fmEDS_0->setPmeSplineOrder(4);
+    fmEDS_0->setKappa(0.34);
+    fmEDS_0->setCutoff(10.0);
+    fmEDS_0->setCtonnb(8.0);
+    fmEDS_0->setCtofnb(9.0);
+    fmEDS_0->initialize();
+
+    fmEDS_1->setBoxDimensions({boxLength, boxLength, boxLength});
+    fmEDS_1->setFFTGrid(fftDim, fftDim, fftDim);
+    fmEDS_1->setPmeSplineOrder(4);
+    fmEDS_1->setKappa(0.34);
+    fmEDS_1->setCutoff(10.0);
+    fmEDS_1->setCtonnb(8.0);
+    fmEDS_1->setCtofnb(9.0);
+    fmEDS_1->initialize();
+
+    double pH = 7.0;
+    double T = 300.0;
+    double ln10 = std::log(10.0);
+    double kT = charmm::constants::kBoltz * T;
+
+    double offsetCYS = 43.0 + kT * ln10 * (pH - 8.37);
+
+    double offset_1 = 0.0;
+    double offset_0 = offsetCYS;
+
+    fmEDS_0->setEnergyOffsets({offset_1, offset_0});
+    fmEDS_1->setEnergyOffsets({offset_1, offset_0});
+    // double s = 0.005;
+    // double s = 0.5;
+
+    fmEDS_0->setSValue(0.01);
+    fmEDS_1->setSValue(0.5);
+
+    double s = 0.5;
+    std::ostringstream strs;
+    strs << s;
+    std::string str = strs.str();
+
+    auto ctx_0 = std::make_shared<CharmmContext>(fmEDS_0);
+    auto crd = std::make_shared<CharmmCrd>(dataPath + "equi.crd");
+    ctx_0->setCoordinates(crd);
+    ctx_0->assignVelocitiesAtTemperature(T);
+    ctx_0->calculatePotentialEnergy(true, true);
+
+    auto potentialEnergy = ctx_0->getPotentialEnergy();
+    potentialEnergy.transferFromDevice();
+    for (int i = 0; i < potentialEnergy.size(); i++) {
+      std::cout << "Potential Energy: " << potentialEnergy[i] << std::endl;
+    }
+
+    auto ctx_1 = std::make_shared<CharmmContext>(fmEDS_1);
+    ctx_1->setCoordinates(crd);
+    ctx_1->assignVelocitiesAtTemperature(T);
+    ctx_1->calculatePotentialEnergy(true, true);
+
+    std::cout << "-----\n";
+    potentialEnergy = ctx_1->getPotentialEnergy();
+    potentialEnergy.transferFromDevice();
+    for (int i = 0; i < potentialEnergy.size(); i++) {
+      std::cout << "Potential Energy: " << potentialEnergy[i] << std::endl;
+    }
+
+    auto integrator_0 =
+        std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
+    integrator_0->setFriction(5.0);
+    integrator_0->setBathTemperature(T);
+    integrator_0->setCharmmContext(ctx_0);
+
+    auto integrator_1 =
+        std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
+    integrator_1->setFriction(5.0);
+    integrator_1->setBathTemperature(T);
+    integrator_1->setCharmmContext(ctx_1);
+
+    // auto compositeSub_0 =
+    // std::make_shared<CompositeSubscriber>("mbar_0.out");
+    // compositeSub_0->setReportFreq(100);
+    // integrator_0->subscribe(compositeSub_0);
+    integrator_0->setDebugPrintFrequency(1000);
+
+    // auto compositeSub_1 =
+    // std::make_shared<CompositeSubscriber>("mbar_1.out");
+
+    auto compositeSub_1 =
+        std::make_shared<EDSSubscriber>("eds_" + str + ".out");
+    compositeSub_1->setReportFreq(100);
+    integrator_1->subscribe(compositeSub_1);
+    integrator_1->setDebugPrintFrequency(10000);
+
+    for (int i = 0; i < 10000; i++) {
+
+      integrator_0->propagate(100);
+      integrator_1->propagate(100);
+
+      ctx_0->calculatePotentialEnergy(true, true);
+      ctx_1->calculatePotentialEnergy(true, true);
+
+      auto pe00 = ctx_0->getPotentialEnergy();
+      pe00.transferFromDevice();
+      std::cout << "Potential energy 0:" << pe00[0] << std::endl;
+
+      auto pe11 = ctx_1->getPotentialEnergy();
+      pe11.transferFromDevice();
+      std::cout << "Potential energy 1:" << pe11[0] << std::endl;
+
+      auto temp_crd0 = ctx_0->getCoordinates();
+      auto temp_crd1 = ctx_1->getCoordinates();
+
+      ctx_0->setCoordinates(temp_crd1);
+      ctx_1->setCoordinates(temp_crd0);
+      // std::cout << "\n\nSwapped" << std::endl;
+
+      // Now calculate the energies
+      ctx_0->calculatePotentialEnergy(true, true);
+      ctx_1->calculatePotentialEnergy(true, true);
+
+      auto pe01 = ctx_0->getPotentialEnergy(); // psf 0 and coords 1
+      pe01.transferFromDevice();
+      std::cout << "Potential energy 0:" << pe01[0] << std::endl;
+
+      auto pe10 = ctx_1->getPotentialEnergy(); // psf 1 and coords 0
+      pe10.transferFromDevice();
+      std::cout << "Potential energy 1:" << pe10[0] << std::endl;
+
+      // double T = 300;
+      // double kT = charmm::constants::kBoltz * T;
+      double beta = 1 / kT;
+      auto delta = beta * (pe01[0] + pe10[0] - pe00[0] - pe11[0]);
+      std::cout << "Delta: " << delta << std::endl;
+
+      double prob = delta <= 0 ? 1 : exp(-delta);
+      std::cout << "Probability: " << prob << std::endl;
+
+      std::random_device rd;
+      std::mt19937 gen(rd());
+      std::uniform_real_distribution<> dis(0, 1);
+
+      double r = dis(gen);
+      std::cout << "Random number: " << r << std::endl;
+
+      if (r < prob) {
+        std::cout << "Accepted" << std::endl;
+      } else {
+        std::cout << "Rejected" << std::endl;
+        ctx_0->setCoordinates(temp_crd0);
+        ctx_1->setCoordinates(temp_crd1);
+      }
+    }
+  }
+
+  SECTION("repd_cvo") {
+    // s value replica exchange
+
+    auto psf_111 = std::make_shared<CharmmPSF>(dataPath + "1CVO_111.psf");
+    auto psf_011 = std::make_shared<CharmmPSF>(dataPath + "1CVO_011.psf");
+    auto psf_101 = std::make_shared<CharmmPSF>(dataPath + "1CVO_101.psf");
+    auto psf_110 = std::make_shared<CharmmPSF>(dataPath + "1CVO_110.psf");
+    auto psf_100 = std::make_shared<CharmmPSF>(dataPath + "1CVO_100.psf");
+    auto psf_010 = std::make_shared<CharmmPSF>(dataPath + "1CVO_010.psf");
+    auto psf_001 = std::make_shared<CharmmPSF>(dataPath + "1CVO_001.psf");
+    auto psf_000 = std::make_shared<CharmmPSF>(dataPath + "1CVO_000.psf");
+
+    std::vector<std::shared_ptr<CharmmPSF>> psfs{
+        psf_111, psf_011, psf_101, psf_110, psf_100, psf_010, psf_001, psf_000};
+
+    std::vector<std::string> prmFiles{paramPath + "toppar_water_ions.str",
+                                      paramPath + "par_all36m_prot.prm"};
+
+    auto prm = std::make_shared<CharmmParameters>(prmFiles);
+
+    std::vector<std::shared_ptr<ForceManager>> fms_0, fms_1;
+    for (auto psf : psfs) {
+      auto fm_0 = std::make_shared<ForceManager>(psf, prm);
+      fms_0.push_back(fm_0);
+      auto fm_1 = std::make_shared<ForceManager>(psf, prm);
+      fms_1.push_back(fm_1);
+    }
+
+    auto fmEDS_0 = std::make_shared<EDSForceManager>();
+    for (auto fm : fms_0) {
+      fmEDS_0->addForceManager(fm);
+    }
+    auto fmEDS_1 = std::make_shared<EDSForceManager>();
+    for (auto fm : fms_1) {
+      fmEDS_1->addForceManager(fm);
+    }
+
+    double boxLength = 60.0;
+    int fftDim = 72;
+    fmEDS_0->setBoxDimensions({boxLength, boxLength, boxLength});
+    fmEDS_0->setFFTGrid(fftDim, fftDim, fftDim);
+    fmEDS_0->setPmeSplineOrder(4);
+    fmEDS_0->setKappa(0.34);
+    fmEDS_0->setCutoff(10.0);
+    fmEDS_0->setCtonnb(8.0);
+    fmEDS_0->setCtofnb(9.0);
+    fmEDS_0->initialize();
+
+    fmEDS_1->setBoxDimensions({boxLength, boxLength, boxLength});
+    fmEDS_1->setFFTGrid(fftDim, fftDim, fftDim);
+    fmEDS_1->setPmeSplineOrder(4);
+    fmEDS_1->setKappa(0.34);
+    fmEDS_1->setCutoff(10.0);
+    fmEDS_1->setCtonnb(8.0);
+    fmEDS_1->setCtofnb(9.0);
+    fmEDS_1->initialize();
+
+    double pH = 7.0;
+    double T = 300.0;
+    double ln10 = std::log(10.0);
+    double kT = charmm::constants::kBoltz * T;
+
+    double offsetASP = 43.60 + kT * ln10 * (pH - 4.0);
+    double offsetGLU = 46.15 + kT * ln10 * (pH - 4.4);
+
+    double offset_111 = 0.0;
+    double offset_011 = offsetGLU;
+    double offset_101 = offsetASP;
+    double offset_110 = offsetASP;
+    double offset_100 = offsetASP * 2.0;
+    double offset_010 = offsetGLU + offsetASP;
+    double offset_001 = offsetGLU + offsetASP;
+    double offset_000 = offsetGLU + offsetASP * 2.0;
+
+    double baseOffset = 0.0;
+    fmEDS_0->setEnergyOffsets({baseOffset + offset_111, baseOffset + offset_011,
+                               baseOffset + offset_101, baseOffset + offset_110,
+                               baseOffset + offset_100, baseOffset + offset_010,
+                               baseOffset + offset_001,
+                               baseOffset + offset_000});
+    fmEDS_1->setEnergyOffsets({baseOffset + offset_111, baseOffset + offset_011,
+                               baseOffset + offset_101, baseOffset + offset_110,
+                               baseOffset + offset_100, baseOffset + offset_010,
+                               baseOffset + offset_001,
+                               baseOffset + offset_000});
+    fmEDS_0->setSValue(0.007);
+    fmEDS_1->setSValue(0.01);
+
+    auto ctx_0 = std::make_shared<CharmmContext>(fmEDS_0);
+    auto crd = std::make_shared<CharmmCrd>(dataPath + "1CVO.crd");
+    ctx_0->setCoordinates(crd);
+    ctx_0->assignVelocitiesAtTemperature(T);
+    ctx_0->calculatePotentialEnergy(true, true);
+
+    auto potentialEnergy = ctx_0->getPotentialEnergy();
+    potentialEnergy.transferFromDevice();
+    for (int i = 0; i < potentialEnergy.size(); i++) {
+      std::cout << "Potential Energy: " << potentialEnergy[i] << std::endl;
+    }
+
+    auto ctx_1 = std::make_shared<CharmmContext>(fmEDS_1);
+    ctx_1->setCoordinates(crd);
+    ctx_1->assignVelocitiesAtTemperature(T);
+    ctx_1->calculatePotentialEnergy(true, true);
+
+    std::cout << "-----\n";
+    potentialEnergy = ctx_1->getPotentialEnergy();
+    potentialEnergy.transferFromDevice();
+    for (int i = 0; i < potentialEnergy.size(); i++) {
+      std::cout << "Potential Energy: " << potentialEnergy[i] << std::endl;
+    }
+
+    std::vector<std::shared_ptr<CudaLangevinThermostatIntegrator>> integrators;
+
+    auto integrator_0 =
+        std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
+    integrator_0->setFriction(5.0);
+    integrator_0->setBathTemperature(T);
+    integrator_0->setCharmmContext(ctx_0);
+
+    auto integrator_1 =
+        std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
+    integrator_1->setFriction(5.0);
+    integrator_1->setBathTemperature(T);
+    integrator_1->setCharmmContext(ctx_1);
+
+    integrators.push_back(integrator_0);
+    integrators.push_back(integrator_1);
+
+    auto compositeSub_0 = std::make_shared<CompositeSubscriber>("mbar_0.out");
+    compositeSub_0->setReportFreq(100);
+    integrator_0->subscribe(compositeSub_0);
+    integrator_0->setDebugPrintFrequency(1000);
+
+    auto compositeSub_1 = std::make_shared<CompositeSubscriber>("mbar_1.out");
+    compositeSub_1->setReportFreq(100);
+    integrator_1->subscribe(compositeSub_1);
+    integrator_1->setDebugPrintFrequency(1000);
+
+    for (int i = 0; i < 100; i++) {
+
+      integrator_0->propagate(100);
+      integrator_1->propagate(100);
+
+      ctx_0->calculatePotentialEnergy(true, true);
+      ctx_1->calculatePotentialEnergy(true, true);
+
+      auto pe00 = ctx_0->getPotentialEnergy();
+      pe00.transferFromDevice();
+      std::cout << "Potential energy 0:" << pe00[0] << std::endl;
+
+      auto pe11 = ctx_1->getPotentialEnergy();
+      pe11.transferFromDevice();
+      std::cout << "Potential energy 1:" << pe11[0] << std::endl;
+
+      auto temp_crd0 = ctx_0->getCoordinates();
+      auto temp_crd1 = ctx_1->getCoordinates();
+
+      ctx_0->setCoordinates(temp_crd1);
+      ctx_1->setCoordinates(temp_crd0);
+      std::cout << "\n\nSwapped" << std::endl;
+
+      // Now calculate the energies
+      ctx_0->calculatePotentialEnergy(true, true);
+      ctx_1->calculatePotentialEnergy(true, true);
+
+      auto pe01 = ctx_0->getPotentialEnergy(); // psf 0 and coords 1
+      pe01.transferFromDevice();
+      std::cout << "Potential energy 0:" << pe01[0] << std::endl;
+
+      auto pe10 = ctx_1->getPotentialEnergy(); // psf 1 and coords 0
+      pe10.transferFromDevice();
+      std::cout << "Potential energy 1:" << pe10[0] << std::endl;
+
+      // double T = 300;
+      // double kT = charmm::constants::kBoltz * T;
+      double beta = 1 / kT;
+      auto delta = beta * (pe01[0] + pe10[0] - pe00[0] - pe11[0]);
+      std::cout << "Delta: " << delta << std::endl;
+
+      double prob = delta <= 0 ? 1 : exp(-delta);
+      std::cout << "Probability: " << prob << std::endl;
+
+      std::random_device rd;
+      std::mt19937 gen(rd());
+      std::uniform_real_distribution<> dis(0, 1);
+
+      double r = dis(gen);
+      std::cout << "Random number: " << r << std::endl;
+
+      if (r < prob) {
+        std::cout << "Accepted" << std::endl;
+      } else {
+        std::cout << "Rejected" << std::endl;
+        ctx_0->setCoordinates(temp_crd0);
+        ctx_1->setCoordinates(temp_crd1);
+      }
+    }
+  }
+}
 
 TEST_CASE("basic", "[unit]") {
   std::string dataPath = getDataPath();

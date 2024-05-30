@@ -1,0 +1,1 @@
+ -Wl,-rpath,/u/samar/miniconda3/envs/py39/lib:/u/samar/miniconda3/envs/py312/lib /v/apps/cuda/11.7.0/lib64/libnvToolsExt.so /v/apps/cuda/11.7.0/lib64/libcufft.so /u/samar/miniconda3/envs/py39/lib/libnetcdf.so /u/samar/miniconda3/envs/py312/lib/libpython3.12.so -lcudadevrt -lcudart_static -lrt -lpthread -ldl 

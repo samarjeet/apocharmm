@@ -13,5 +13,6 @@ void exportCharmmPSF(py::module &mod) {
       .def("getNumDihedrals", &CharmmPSF::getNumDihedrals,
            "number of dihedrals")
       .def("getNumImpropers", &CharmmPSF::getNumImpropers,
-           "number of impropers");
+           "number of impropers")
+      .def("getMass", &CharmmPSF::getMass, "get total system mass");
 }

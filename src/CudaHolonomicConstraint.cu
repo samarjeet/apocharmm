@@ -244,7 +244,7 @@ void CudaHolonomicConstraint::constrainWaterMolecules(const double4 *ref) {
         mH_div_mH2O, mO_div_mH2O, ra_inv, ra, rb, rc, rc2, numWaterMolecules,
         settleWaterIndex.getDeviceArray().data(), ref, current);
 
-    // cudaCheck(cudaStreamSynchronize(*stream));
+    cudaCheck(cudaStreamSynchronize(*stream));
   }
   // std::cout << "[Holo]Constraining water molecules done.\n";
 }
@@ -654,14 +654,16 @@ void CudaHolonomicConstraint::handleHolonomicConstraints(const double4 *ref) {
   */
 
   auto current = context->getCoordinatesCharges().getDeviceArray().data();
-
-  constrainWaterMolecules(ref);
   copy_DtoD_async<double4>(current, coords_stored.getDeviceArray().data(),
                            context->getNumAtoms(), *memcpyStream);
+  cudaStreamSynchronize(*memcpyStream);
 
+  constrainWaterMolecules(ref);
   constrainShakeAtoms(ref);
 
-  cudaStreamSynchronize(*memcpyStream);
+  // cudaStreamSynchronize(*stream);
+  // constrainShakeAtoms(ref);
+
   updateVelocities();
 
   // xx updateVelocities(ref, current);

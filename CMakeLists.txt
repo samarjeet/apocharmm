@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.14)
 project(chcuda VERSION 0.1.0
   LANGUAGES CXX  CUDA)
 
-find_package(CUDA REQUIRED)
+#find_package(CUDA REQUIRED)
 
 add_subdirectory(external/pybind11)
 #find_package(Torch REQUIRED)
@@ -46,7 +46,7 @@ target_compile_options(chcudalib PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:
   #                       --generate-line-info
   #                     -lineinfo 
                        --expt-relaxed-constexpr
-                       -O3
+  #                     -O3
                       >)
 target_compile_features(chcudalib PUBLIC cxx_std_20)
 
@@ -63,7 +63,7 @@ target_compile_options(chcudadynlib PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:
   #                    --generate-line-info
   #                     -lineinfo
                        --expt-relaxed-constexpr
-                       -O3
+  #                     -O3
                       >)
 set_target_properties(chcudadynlib PROPERTIES LINKER_LANGUAGE CUDA)
 target_compile_definitions(chcudadynlib PUBLIC USE_TEXTURE_OBJECTS)
@@ -72,6 +72,9 @@ target_compile_definitions(chcudadynlib PUBLIC USE_TEXTURE_OBJECTS)
 find_library( NVTX_LIBRARY
         nvToolsExt
         PATHS ENV LD_LIBRARY_PATH )
+find_library( CUDA_CUFFT_LIBRARIES
+        cufft
+        PATHS ENV LD_LIBRARY_PATH )        
 target_link_libraries(chcudalib ${NVTX_LIBRARY}  ${CUDA_CUFFT_LIBRARIES} ${NETCDF_LIBRARIES})
 target_link_libraries(chcudalib ${_Python_LIBRARY_RELEASE})
 target_link_libraries(chcudadynlib ${NVTX_LIBRARY}  ${CUDA_CUFFT_LIBRARIES} ${NETCDF_LIBRARIES})
@@ -79,7 +82,9 @@ target_link_libraries(chcudadynlib ${_Python_LIBRARY_RELEASE})
 #target_link_libraries(chcudalib external/tinyxml2)
 #target_link_libraries(chcudadynlib external/tinyxml2)
 
-include_directories("${CUDA_INCLUDE_DIRS}")
+include_directories("${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
+#message(STATUS "CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES: ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
+#message(STATUS  " {NVTX_LIBRARY}  {CUDA_CUFFT_LIBRARIES} " ${NVTX_LIBRARY}  ${CUDA_CUFFT_LIBRARIES})
 
 #add_subdirectory(fortran_api)
 

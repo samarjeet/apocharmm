@@ -41,6 +41,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-minimize.cpp
 
     unittest-pme.cpp
+    unittest-direct.cpp
 
     unittest-replicaExchange.cpp
 

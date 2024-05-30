@@ -138,11 +138,15 @@ void CudaLangevinPistonIntegrator::allocatePistonVariables() {
 
   pistonMass.resize(pistonDegreesOfFreedom);
   inversePistonMass.allocate(pistonDegreesOfFreedom);
+  inversePistonMass.set(tempZero);
   pistonDeltaPressure.allocate(pistonDegreesOfFreedom);
+  pistonDeltaPressure.set(tempZero);
   pressurePistonPositionDelta.allocate(pistonDegreesOfFreedom);
   pressurePistonPositionDelta.set(tempZero);
   pressurePistonPositionDeltaPrevious.allocate(pistonDegreesOfFreedom);
+  pressurePistonPositionDeltaPrevious.set(tempZero);
   pressurePistonPositionDeltaStored.allocate(pistonDegreesOfFreedom);
+  pressurePistonPositionDeltaStored.set(tempZero);
 }
 
 CudaLangevinPistonIntegrator::~CudaLangevinPistonIntegrator() {
@@ -1694,7 +1698,6 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
   }
 
   // *********************
-
   if (noseHooverFlag) {
     noseHooverPistonPosition += noseHooverPistonVelocity * timeStep +
                                 0.5 * noseHooverPistonForce * timeStep;

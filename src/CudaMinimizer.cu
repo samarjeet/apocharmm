@@ -193,8 +193,8 @@ void CudaMinimizer::initialize() {}
 
 void CudaMinimizer::minimize(int numSteps) {
   // exit with messgae that it's still building
-  std::cout << "Minimize not implemented yet. Exiting.\n";
-  exit(1);
+  // std::cout << "Minimize not implemented yet. Exiting.\n";
+  // exit(1);
 
   // numSteps = 1000;
   double tol = 0.00001 / 1000000;

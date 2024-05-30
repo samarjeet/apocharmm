@@ -1264,6 +1264,7 @@ void CudaPMEDirectForce<AT, CT>::calc_force(
   } else {
     nwarp = 4;
   }
+  nwarp = 8;
   int nthread = warpsize * nwarp;
   int nblock_tot = (nlist.get_n_ientry() - 1) / (nthread / warpsize) + 1;
 

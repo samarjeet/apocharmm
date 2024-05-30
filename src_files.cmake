@@ -26,6 +26,7 @@ list(APPEND src_files
   src/CudaPMERecip.cu
   src/DcdSubscriber.cu
   src/EDSForceManager.cu
+  src/EDSSubscriber.cu
   src/Matrix3d.cu
   src/reduce.cu
   src/FEPSubscriber.cu
@@ -61,6 +62,7 @@ list(APPEND src_files
   src/PertForceManager.cu
   src/PrintEnergiesGraph.cu
   src/RestartSubscriber.cu
+  src/ReplicaExchange.cu
   src/CudaIntegratorGraph.cu
   src/NeighborListSort.cu
   src/NonEquilibriumForceManager.cu

@@ -6,6 +6,7 @@
 #include "CompositeSubscriber.h"
 #include "DcdSubscriber.h"
 #include "DualTopologySubscriber.h"
+#include "EDSSubscriber.h"
 #include "FEPSubscriber.h"
 #include "MBARSubscriber.h"
 #include "NetCDFSubscriber.h"
@@ -154,6 +155,22 @@ void exportSubscriber(py::module &mod) {
            "CHARMM context as args")
       .def(py::init<const std::string &, int>(), R"sitb(
                 CompositeSubscriber constructor, using a file name and a report frequency.
+
+                :param reportFileName: output file name
+                :type reportFileName: str
+                :param reportFreq: interval between two reports
+                :type reportFreq: int 
+            )sitb");
+
+  // EDSSubscriber
+  //====================
+  py::class_<EDSSubscriber, std::shared_ptr<EDSSubscriber>>(
+      mod, "EDSSubscriber", pySubscriber, "EDS Subscriber")
+      .def(py::init<const std::string &>(),
+           "Reports the children energies and the reference energy (last "
+           "column). Takes .txt file name and the CHARMM context as args")
+      .def(py::init<const std::string &, int>(), R"sitb(
+                EDSSubscriber constructor, using a file name and a report frequency.
 
                 :param reportFileName: output file name
                 :type reportFileName: str

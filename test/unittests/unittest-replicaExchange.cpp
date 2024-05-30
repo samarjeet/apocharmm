@@ -10,12 +10,9 @@
 
 #include "CharmmContext.h"
 #include "CharmmCrd.h"
-#include "CompositeSubscriber.h"
 #include "Constants.h"
 #include "CudaLangevinThermostatIntegrator.h"
-#include "EDSForceManager.h"
-#include "ForceManagerGenerator.h"
-#include "NetCDFSubscriber.h"
+#include "ReplicaExchange.h"
 #include "StateSubscriber.h"
 #include "catch.hpp"
 #include "test_paths.h"
@@ -25,6 +22,68 @@
 
 TEST_CASE("rex", "[energy]") {
   std::string dataPath = getDataPath();
+
+  SECTION("class") {
+    auto psf0 = std::make_shared<CharmmPSF>(dataPath + "l0.pert.25k.psf");
+    auto psf1 = std::make_shared<CharmmPSF>(dataPath + "l1.pert.25k.psf");
+
+    std::vector<std::string> prmFiles{dataPath + "toppar_water_ions.str",
+                                      dataPath + "par_all36_cgenff.prm"};
+    auto prm = std::make_shared<CharmmParameters>(prmFiles);
+    auto fm0 = std::make_shared<ForceManager>(psf0, prm);
+    auto fm1 = std::make_shared<ForceManager>(psf1, prm);
+
+    double boxLength = 62.79503;
+    int fftDim = 64;
+    fm0->setBoxDimensions({boxLength, boxLength, boxLength});
+    fm0->setFFTGrid(fftDim, fftDim, fftDim);
+    fm0->setPmeSplineOrder(4);
+    fm0->setKappa(0.34);
+    fm0->setCutoff(10.0);
+    fm0->setCtonnb(8.0);
+    fm0->setCtofnb(9.0);
+
+    fm1->setBoxDimensions({boxLength, boxLength, boxLength});
+    fm1->setFFTGrid(fftDim, fftDim, fftDim);
+    fm1->setPmeSplineOrder(4);
+    fm1->setKappa(0.34);
+    fm1->setCutoff(10.0);
+    fm1->setCtonnb(8.0);
+    fm1->setCtofnb(9.0);
+
+    auto ctx0 = std::make_shared<CharmmContext>(fm0);
+    auto ctx1 = std::make_shared<CharmmContext>(fm1);
+
+    auto crd0 = std::make_shared<CharmmCrd>(dataPath + "nvt_equil.25k.cor");
+    auto crd1 = std::make_shared<CharmmCrd>(dataPath + "nvt_equil.25k_1.cor");
+
+    ctx0->setCoordinates(crd0);
+    ctx1->setCoordinates(crd1);
+
+    ctx0->assignVelocitiesAtTemperature(300);
+    ctx1->assignVelocitiesAtTemperature(300);
+
+    auto integrator0 =
+        std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
+    integrator0->setFriction(5.0);
+    integrator0->setBathTemperature(300.0);
+    integrator0->setCharmmContext(ctx0);
+
+    auto integrator1 =
+        std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
+    integrator1->setFriction(5.0);
+    integrator1->setBathTemperature(300.0);
+    integrator1->setCharmmContext(ctx1);
+
+    std::vector<std::shared_ptr<CudaIntegrator>> integrators;
+    integrators.push_back(integrator0);
+    integrators.push_back(integrator1);
+
+    std::shared_ptr<ReplicaExchange> rex =
+        std::make_shared<ReplicaExchange>(integrators, 100, 100, "rex.log");
+
+    rex->propagate();
+  }
 
   SECTION("25k") {
     auto psf0 = std::make_shared<CharmmPSF>(dataPath + "l0.pert.25k.psf");

@@ -39,6 +39,7 @@ void EDSForceManager::initialize() {
   // children[1]->computeDirectSpaceForces = false;
 }
 
+/*
 static __global__ void
 updateWeightsKernel(int numChildren, double beta_s,
                     const double *__restrict__ childrenPEs,
@@ -55,6 +56,45 @@ updateWeightsKernel(int numChildren, double beta_s,
     weights[i] /= sum;
   }
 }
+*/
+static __global__ void
+updateWeightsKernel(int numChildren, double beta_s,
+                    const double *__restrict__ childrenPEs,
+                    const double *__restrict__ energyOffsets,
+                    double *referenceHamiltonian, double *weights) {
+  double sum = 0.0;
+  double maxAbs = 0.0;
+  for (int i = 0; i < numChildren; ++i) {
+    if (std::abs(childrenPEs[i] - energyOffsets[i]) > maxAbs) {
+      maxAbs = std::abs(childrenPEs[i] - energyOffsets[i]);
+    }
+  }
+
+  for (int i = 0; i < numChildren; ++i) {
+    double weightDenominator = 0.0;
+    for (int j = 0; j < numChildren; ++j) {
+      if (i != j) {
+        double deltaE = childrenPEs[j] - childrenPEs[i];
+        double deltaOffset = energyOffsets[j] - energyOffsets[i];
+        weightDenominator += std::exp(-beta_s * (deltaE - deltaOffset));
+      } else {
+        weightDenominator += 1.0;
+      }
+    }
+    weights[i] = 1.0 / weightDenominator;
+
+    // weights[i] = std::exp(-beta_s * (childrenPEs[i] - energyOffsets[i]));
+    sum += std::exp(-beta_s * (childrenPEs[i] - energyOffsets[i] + maxAbs));
+  }
+  referenceHamiltonian[0] = -std::log(sum) / (beta_s)-maxAbs;
+
+  /*
+  for (int i = 0; i < numChildren; ++i) {
+    weights[i] /= sum;
+  }
+  */
+}
+
 void EDSForceManager::updateWeights() {
   // TODO : Get the right temperature
   double temperature = 298.17;
@@ -67,7 +107,7 @@ void EDSForceManager::updateWeights() {
       energyOffsets.getDeviceArray().data(),
       totalPotentialEnergy.getDeviceArray().data(),
       weights.getDeviceArray().data());
-  // cudaStreamSynchronize(*compositeStream);
+  cudaCheck(cudaStreamSynchronize(*compositeStream));
 
   /*weights.transferFromDevice();
 
@@ -94,7 +134,6 @@ static __global__ void weighForcesKernel(int numAtoms, int stride, int childId,
         (weights[childId] * childForce[i + 2 * stride]);
   }
 }
-
 
 void EDSForceManager::weighForces() {
 
@@ -139,6 +178,6 @@ void EDSForceManager::setEnergyOffsets(std::vector<double> _energyOffsets) {
 
 float EDSForceManager::getSValue() { return sValue; }
 
-CudaContainer<double> EDSForceManager::getEnergyOffsets() { 
+CudaContainer<double> EDSForceManager::getEnergyOffsets() {
   return energyOffsets;
 }

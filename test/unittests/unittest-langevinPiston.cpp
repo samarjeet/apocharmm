@@ -286,9 +286,9 @@ TEST_CASE("waterbox", "[dynamics]") {
     std::vector<double> boxDim = {50.0, 50.0, 50.0};
     int rdmSeed = 314159, nsteps = 5000;
     double pistonMass = 0.0;
-    double pistonFriction = 0.0;
-    bool useHolonomicConstraints = false;
-    bool useNoseHoover = false;
+    double pistonFriction = 12.0;
+    bool useHolonomicConstraints = true;
+    bool useNoseHoover = true;
 
     // Topology, parameters, PSF, and coordinates
     auto prm1 = std::make_shared<CharmmParameters>(prmFiles);
@@ -413,7 +413,7 @@ TEST_CASE("waterbox", "[dynamics]") {
           integrator2->getNoseHooverPistonForcePrevious());
 
     // Propagate simulation
-    nsteps = 10;
+    // nsteps = 10;
     integrator1->propagate(nsteps);
     integrator2->propagate(nsteps);
 

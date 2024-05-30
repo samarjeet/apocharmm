@@ -296,6 +296,35 @@ void CharmmParameters::readCharmmParameterFile(std::string fileName) {
         }
 
       } // state : NONBONDED
+
+      if (state == CMAP) {
+        // std::cout << line << std::endl;
+      }
+
+      if (state == NBFIX) {
+        // std::cout << "NBFIX : " << line << "\t";
+        tokens = split(line);
+        if (tokens.size() >= 4) {
+          if (tokens[0] > tokens[1])
+            std::swap(tokens[0], tokens[1]);
+          double emin = std::abs(std::stod(tokens[2]));
+          double rmin = std::stod(tokens[3]);
+          double emin14 = emin;
+          double rmin14 = rmin;
+          if (tokens.size() >= 5) {
+            emin14 = std::stod(tokens[4]);
+            rmin14 = std::stod(tokens[5]);
+          }
+
+          // std::cout << emin << " " << rmin << " " << emin14 << " " << rmin14
+          //           << std::endl;
+          NBFixParameters nbf{tokens[0], tokens[1], emin, rmin, emin14, rmin14};
+          std::tuple<std::string, std::string> key{tokens[0], tokens[1]};
+          // BondKey key{tokens[0], tokens[1]};
+          //  nbfixParams[key] = nbf;
+          nbfixParams.insert({key, nbf});
+        }
+      }
     }
   }
 }
@@ -335,6 +364,7 @@ BondedParamsAndLists CharmmParameters::getBondedParamsAndLists(
   auto angles = psf->getAngles();
   auto dihedrals = psf->getDihedrals();
   auto impropers = psf->getImpropers();
+  auto cmaps = psf->getCrossTerms();
 
   std::vector<BondKey> bondKeysPresent;
   std::vector<AngleKey> ureybKeysPresent;
@@ -621,9 +651,59 @@ BondedParamsAndLists CharmmParameters::getBondedParamsAndLists(
       }
     }
   }
+
   paramsSize.push_back(improperKeysPresent.size());
   listsSize.push_back(listVal.size() - listsSize[0] - listsSize[1] -
                       listsSize[2] - listsSize[3]);
+
+  for (int i = 0; i < psf->getNumCrossTerms(); ++i) {
+    auto cmap = cmaps[i];
+    // std::cout << cmap.atomi1 << " " << cmap.atomj1 << " " << cmap.atomk1 <<
+    // "
+    // "
+    //           << cmap.atoml1 << " " << cmap.atomi2 << " " << cmap.atomj2 <<
+    //           "
+    //           "
+    //           << cmap.atomk2 << " " << cmap.atoml2 << "\n";
+    // std::cout << atomTypes[cmap.atomi1] << " " << atomTypes[cmap.atomj1] <<
+    // "
+    // "
+    //           << atomTypes[cmap.atomk1] << " " << atomTypes[cmap.atoml1] <<
+    //           "
+    //           "
+    //           << atomTypes[cmap.atomi2] << " " << atomTypes[cmap.atomj2] <<
+    //           "
+    //           "
+    //           << atomTypes[cmap.atomk2] << " " << atomTypes[cmap.atoml2]
+    //           << "\n";
+    auto dihe1 = DihedralKey(atomTypes[cmap.atomi1], atomTypes[cmap.atomj1],
+                             atomTypes[cmap.atomk1], atomTypes[cmap.atoml1]);
+    auto dihe2 = DihedralKey(atomTypes[cmap.atomi2], atomTypes[cmap.atomj2],
+                             atomTypes[cmap.atomk2], atomTypes[cmap.atoml2]);
+    // std::cout << dihe1 << " " << dihe2 << "\n";
+    auto key = CmapKey(dihe1, dihe2);
+    // auto key = CmapKey(atomTypes[cmap.atom1], atomTypes[cmap.atom2],
+    //                    atomTypes[cmap.atom3], atomTypes[cmap.atom4],
+    //                    atomTypes[cmap.atom5]);
+    // if (cmapParams.count(key)) {
+    //   auto findResult =
+    //       std::find(cmapKeysPresent.begin(), cmapKeysPresent.end(), key);
+    //   if (findResult == cmapKeysPresent.end()) {
+    //     cmapKeysPresent.push_back(key);
+    //     auto value = cmapParams[key];
+    //     paramsVal.push_back(value);
+    //   }
+    //   findResult =
+    //       std::find(cmapKeysPresent.begin(), cmapKeysPresent.end(), key);
+    //   int cmapType = findResult - cmapKeysPresent.begin();
+    //   listVal.push_back({cmap.atom1, cmap.atom2, cmap.atom3, cmap.atom4,
+    //                      cmap.atom5, cmapType, 13, 13, 13, 13});
+    // } else {
+    //   std::stringstream tmpexc;
+    //   tmpexc << "cmap not found " << i << " " << key << "\n";
+    //   throw std::invalid_argument(tmpexc.str());
+    // }
+  }
 
   // CMAP are currently not being used
   paramsSize.push_back(0);
@@ -659,14 +739,28 @@ CharmmParameters::getVdwParamsAndTypes(std::shared_ptr<CharmmPSF> &psf) {
       std::string iType = vdwAtomTypes[i];
       std::string jType = vdwAtomTypes[j];
 
-      double epsilonI = vdwParams[iType].epsilon;
-      double epsilonJ = vdwParams[jType].epsilon;
+      double epsilon, rmin;
 
-      double rmin_2I = vdwParams[iType].rmin_2;
-      double rmin_2J = vdwParams[jType].rmin_2;
+      std::tuple<std::string, std::string> nbfixKey{jType, iType};
+      // BondKey nbfixKey{jType, iType};
+      if (nbfixParams.find(nbfixKey) != nbfixParams.end()) {
+        // std::cout << "NBFIX : " << iType << " " << jType << "\n";
 
-      double epsilon = std::sqrt(epsilonI * epsilonJ);
-      double rmin = rmin_2I + rmin_2J;
+        NBFixParameters nbf{nbfixParams[nbfixKey]};
+
+        epsilon = nbfixParams[nbfixKey].emin;
+        rmin = nbfixParams[nbfixKey].rmin;
+      } else {
+
+        double epsilonI = vdwParams[iType].epsilon;
+        double epsilonJ = vdwParams[jType].epsilon;
+
+        double rmin_2I = vdwParams[iType].rmin_2;
+        double rmin_2J = vdwParams[jType].rmin_2;
+
+        epsilon = std::sqrt(epsilonI * epsilonJ);
+        rmin = rmin_2I + rmin_2J;
+      }
 
       float c12 = epsilon * std::pow(rmin, 12);
       float c6 = 2 * epsilon * std::pow(rmin, 6);
@@ -674,7 +768,8 @@ CharmmParameters::getVdwParamsAndTypes(std::shared_ptr<CharmmPSF> &psf) {
       psfVdwParams.push_back(c6);
       psfVdwParams.push_back(c12);
 
-      // std::cout << count++ << "(" << i << "," << j << ") : " << 6*c6 << "\t"
+      // std::cout << count++ << "(" << i << "," << j << ") : " << 6*c6 <<
+      // "\t"
       // << 12*c12 << "\n";
     }
   }
@@ -686,26 +781,40 @@ CharmmParameters::getVdwParamsAndTypes(std::shared_ptr<CharmmPSF> &psf) {
       std::string iType = vdwAtomTypes[i];
       std::string jType = vdwAtomTypes[j];
 
-      double epsilonI = vdwParams[iType].epsilon;
-      double epsilonJ = vdwParams[jType].epsilon;
+      double epsilon, rmin;
 
-      double rmin_2I = vdwParams[iType].rmin_2;
-      double rmin_2J = vdwParams[jType].rmin_2;
+      std::tuple<std::string, std::string> nbfixKey{jType, iType};
+      // BondKey nbfixKey{jType, iType};
+      if (nbfixParams.find(nbfixKey) != nbfixParams.end()) {
+        // std::cout << "NBFIX : " << iType << " " << jType << "\n";
 
-      if (std::find(vdw14AtomTypes.begin(), vdw14AtomTypes.end(), iType) !=
-          vdw14AtomTypes.end()) {
-        epsilonI = vdw14Params[iType].epsilon;
-        rmin_2I = vdw14Params[iType].rmin_2;
+        NBFixParameters nbf{nbfixParams[nbfixKey]};
+
+        epsilon = nbfixParams[nbfixKey].emin;
+        rmin = nbfixParams[nbfixKey].rmin;
+      } else {
+
+        double epsilonI = vdwParams[iType].epsilon;
+        double epsilonJ = vdwParams[jType].epsilon;
+
+        double rmin_2I = vdwParams[iType].rmin_2;
+        double rmin_2J = vdwParams[jType].rmin_2;
+
+        if (std::find(vdw14AtomTypes.begin(), vdw14AtomTypes.end(), iType) !=
+            vdw14AtomTypes.end()) {
+          epsilonI = vdw14Params[iType].epsilon;
+          rmin_2I = vdw14Params[iType].rmin_2;
+        }
+
+        if (std::find(vdw14AtomTypes.begin(), vdw14AtomTypes.end(), jType) !=
+            vdw14AtomTypes.end()) {
+          epsilonJ = vdw14Params[jType].epsilon;
+          rmin_2J = vdw14Params[jType].rmin_2;
+        }
+
+        epsilon = std::sqrt(epsilonI * epsilonJ);
+        rmin = rmin_2I + rmin_2J;
       }
-
-      if (std::find(vdw14AtomTypes.begin(), vdw14AtomTypes.end(), jType) !=
-          vdw14AtomTypes.end()) {
-        epsilonJ = vdw14Params[jType].epsilon;
-        rmin_2J = vdw14Params[jType].rmin_2;
-      }
-
-      double epsilon = std::sqrt(epsilonI * epsilonJ);
-      double rmin = rmin_2I + rmin_2J;
 
       float c12 = epsilon * std::pow(rmin, 12);
       float c6 = 2 * epsilon * std::pow(rmin, 6);
@@ -721,7 +830,8 @@ CharmmParameters::getVdwParamsAndTypes(std::shared_ptr<CharmmPSF> &psf) {
     int pos = result - vdwAtomTypes.begin();
     psfVdwTypes.push_back(pos);
     psfVdw14Types.push_back(pos);
-    // std::cout << "index :" << index << " pos : " << pos << " " << atomType <<
+    // std::cout << "index :" << index << " pos : " << pos << " " << atomType
+    // <<
     // "\n";
 
     index++;

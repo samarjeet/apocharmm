@@ -204,6 +204,110 @@ TEST_CASE("bilayer", "[all]") {
     integrator->propagate(nSteps);
   }
 }
+TEST_CASE("sooh", "[all]") {
+  int nSteps = 2000;
+  std::string dataPath = getDataPath();
+  std::vector<std::string> prmFiles{
+      // dataPath + "par_all36_prot.prm",
+      dataPath + "par_all36_lipid.prm",
+      dataPath + "toppar_all36_lipid_cholesterol.str",
+      dataPath + "toppar_water_ions.str"};
+
+  std::string filePath =
+      "/v/gscratch/mbs/spark/induced-order/test_p21_apo_charmm/sq2x2/low/";
+
+  auto prm = std::make_shared<CharmmParameters>(prmFiles);
+  auto psf = std::make_shared<CharmmPSF>(filePath + "init.psf");
+  // psf->setHydrogenMass(4.0320);
+
+  auto fm = std::make_shared<ForceManager>(psf, prm);
+
+  fm->setBoxDimensions({289.92, 144.96, 98.65});
+  fm->setFFTGrid(300, 150, 108);
+  fm->setKappa(0.34);
+  fm->setCutoff(12.5);
+  fm->setCtonnb(9.0);
+  fm->setCtofnb(11.0);
+  fm->setPeriodicBoundaryCondition(PBC::P21);
+
+  auto ctx = std::make_shared<CharmmContext>(fm);
+  auto crd =
+      std::make_shared<CharmmCrd>(filePath + "step6.6_equilibration.crd");
+  ctx->setCoordinates(crd);
+  ctx->assignVelocitiesAtTemperature(296.15);
+
+  // ctx->useHolonomicConstraints(false);
+
+  std::cout << "Potential energy : \n"
+            << ctx->calculatePotentialEnergy(true, true) << "\n";
+
+  /*
+  auto energyComponents = fm->getEnergyComponents();
+  for (auto energyComponent : energyComponents) {
+    std::cout << energyComponent.first << " " << energyComponent.second << "\n";
+    */
+
+  auto langevinThermostat =
+      std::make_shared<CudaLangevinThermostatIntegrator>(0.001);
+
+  langevinThermostat->setBathTemperature(300.0);
+  langevinThermostat->setCharmmContext(ctx);
+
+  SECTION("nve") {
+    langevinThermostat->setFriction(0.0);
+    langevinThermostat->propagate(nSteps);
+  }
+
+  SECTION("nvt") {
+    langevinThermostat->setFriction(12.0);
+    langevinThermostat->propagate(nSteps);
+  }
+
+  SECTION("npt") {
+
+    auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
+    integrator->setCrystalType(CRYSTAL::TETRAGONAL);
+    integrator->setPistonMass({500.0, 500.0});
+    integrator->setNoseHooverFlag(false);
+    integrator->setPistonFriction(0.0);
+    integrator->setCharmmContext(ctx);
+
+    integrator->propagate(nSteps);
+    std::string subfile = "p21_bilayer_npt.dcd";
+    // auto subscriber = std::make_shared<DcdSubscriber>(subfile, 1000, ctx);
+    auto subscriber = std::make_shared<DcdSubscriber>(subfile, 1000);
+    // subscriber->setCharmmContext(ctx);
+    integrator->subscribe(subscriber);
+    // fm->setPrintEnergyDecomposition(true);
+
+    // integrator->setDebugPrintFrequency(100);
+    integrator->propagate(nSteps);
+  }
+  SECTION("nvt_npt") {
+
+    langevinThermostat->setFriction(12.0);
+    langevinThermostat->propagate(nSteps);
+
+    std::cout << "nvt_npt: nvt done\n";
+
+    auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
+    integrator->setCrystalType(CRYSTAL::TETRAGONAL);
+    integrator->setPistonMass({5000.0, 5000.0});
+    integrator->setBathTemperature(300.0);
+    // integrator.setNoseHooverFlag(false);
+    integrator->setPistonFriction(20.0);
+    integrator->setCharmmContext(ctx);
+
+    integrator->propagate(nSteps);
+
+    std::string subfile = "p21_bilayer_npt.dcd";
+    auto subscriber = std::make_shared<DcdSubscriber>(subfile, 1000);
+    integrator->subscribe(subscriber);
+    nSteps = 100000;
+    // integrator->setDebugPrintFrequency(100);
+    integrator->propagate(nSteps);
+  }
+}
 
 TEST_CASE("virial") {
   std::string dataPath = getDataPath();

@@ -300,6 +300,8 @@ public:
    */
   int getDegreesOfFreedom();
 
+  // int getMass();
+
   /** @brief Returns the int numDegreesOfFreedom.  */
   int getNumDegreesOfFreedom();
 

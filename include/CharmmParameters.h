@@ -35,8 +35,7 @@ public:
     return this->atom2 == other.atom2 && this->atom1 == other.atom1;
   }
   friend std::ostream &operator<<(std::ostream &output, const BondKey &key) {
-    output << key.atom1 << " " << key.atom2 << " "
-           << " ";
+    output << key.atom1 << " " << key.atom2 << " " << " ";
     return output;
   }
 };
@@ -136,6 +135,16 @@ public:
   }
 };
 
+struct CmapKey {
+  // CmapKey(std::string a1i, std::string a1j, std::string a1k, std::string a1l,
+  //         std::string a2i, std::string a2j, std::string a2k, std::string a2l)
+  //     : atom1i(a1i), atom1j(a1j), atom1k(a1k), atom1l(a1l), atom2i(a2i),
+  //       atom2j(a2j), atom2k(a2k), atom2l(a2l) {}
+  // std::string atom1i, atom1j, atom1k, atom1l, atom2i, atom2j, atom2k, atom2l;
+  CmapKey(DihedralKey d1, DihedralKey d2) : dih1(d1), dih2(d2) {}
+  DihedralKey dih1, dih2;
+};
+
 class VdwParameters {
 public:
   VdwParameters() = default;
@@ -145,6 +154,39 @@ public:
   friend std::ostream &operator<<(std::ostream &output,
                                   const VdwParameters &vdw) {
     output << "(" << vdw.epsilon << "," << vdw.rmin_2 << ")\n";
+    return output;
+  }
+};
+
+class NBFixParameters {
+public:
+  std::string atom1, atom2;
+  double emin, rmin, emin14, rmin14;
+  // NBFixParameters(std::string a1, std::string a2, double e, double r,
+  //                 double e14, double r14)
+  //     : atom1(a1), atom2(a2), emin(e), rmin(r), emin14(e14), rmin14(r14) {}
+  // // copy constructor
+  // NBFixParameters(const NBFixParameters &nbfix) = default;
+  // NBFixParameters(const NBFixParameters &nbfix)
+  //     : atom1(nbfix.atom1), atom2(nbfix.atom2), emin(nbfix.emin),
+  //       rmin(nbfix.rmin), emin14(nbfix.emin14), rmin14(nbfix.rmin14) {}
+
+  // // assignment operator
+  // NBFixParameters &operator=(const NBFixParameters &nbfix) {
+  //   atom1 = nbfix.atom1;
+  //   atom2 = nbfix.atom2;
+  //   emin = nbfix.emin;
+  //   rmin = nbfix.rmin;
+  //   emin14 = nbfix.emin14;
+  //   rmin14 = nbfix.rmin14;
+  //   return *this;
+  // }
+
+  friend std::ostream &operator<<(std::ostream &output,
+                                  const NBFixParameters &nbfix) {
+    output << "(" << nbfix.atom1 << "," << nbfix.atom2 << "," << nbfix.emin
+           << "," << nbfix.rmin << "," << nbfix.emin14 << "," << nbfix.rmin14
+           << ")\n";
     return output;
   }
 };
@@ -251,6 +293,10 @@ private:
   std::map<AngleKey, AngleValues> angleParams;
   std::map<DihedralKey, std::vector<DihedralValues>> dihedralParams;
   std::map<DihedralKey, ImDihedralValues> improperParams;
+
+  std::map<std::tuple<std::string, std::string>, NBFixParameters>
+      // std::map<BondKey, NBFixParameters>
+      nbfixParams; // will be filled in the  vdw(14)Params
 
   std::map<std::string, VdwParameters> vdwParams;
   std::map<std::string, VdwParameters> vdw14Params;
