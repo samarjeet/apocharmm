@@ -4,13 +4,13 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author: Andrew Simmonett, Samarjeet Prasad
+// Author: Andrew Simmonett, Samarjeet Prasad, James E. Gonzales II
 //
 // ENDLICENSE
 
 #pragma once
-#include "deviceVector.h"
-#include <stdexcept>
+#include "DeviceVector.h"
+
 #include <vector>
 
 /**
@@ -27,20 +27,35 @@
  */
 template <typename T> class CudaContainer {
 public:
-  //  /**
-  //   * @brief Construct a new Cuda Container object
-  //   *
-  //   */
-  //  // CudaContainer();
-  //~CudaContainer();
+  /**
+   * @brief Construct a new Cuda Container object
+   *
+   */
+  CudaContainer(void);
 
   /**
-   * @brief Size of the container
+   * @brief Construct a new Cuda Container object with the same contents as the
+   * vector passed
    *
-   * @return size_t
+   * @param const std::vector<T> &
    */
-  size_t size() const { return hostArray.size(); }
+  CudaContainer(const std::vector<T> &array);
 
+  /**
+   * @brief Copy constructor for new Cuda Container object
+   *
+   * @param const CudaContainer<T> &
+   */
+  CudaContainer(const CudaContainer<T> &other);
+
+  /**
+   * @brief Copy constructor for new Cuda Container object using an rvalue
+   *
+   * @param const CudaContainer<T> &&
+   */
+  CudaContainer(const CudaContainer<T> &&other);
+
+public:
   /**
    * @brief Allocate memory on host and device
    *
@@ -49,9 +64,17 @@ public:
   void allocate(size_t size);
 
   /**
+   * @brief Size of the container
+   *
+   * @return size_t
+   */
+  size_t size(void) const;
+
+public:
+  /**
    * @brief Set the Host Array object
    *
-   * @param array
+   * @param const std::vector<T> &
    */
   void setHostArray(const std::vector<T> &array);
 
@@ -59,23 +82,15 @@ public:
    * @brief Set the deviceArray with the `same` pointer
    * Use with caution!
    *
-   * @param devPtr
+   * @param T*
    */
   void setDeviceArray(T *devPtr);
 
-  // remove this one
-  const std::vector<T> &getHostArray();
-  // const deviceVector<T>& getDeviceArray(){return deviceArray;};
-  deviceVector<T> &getDeviceArray() { return deviceArray; };
+  const std::vector<T> &getHostArray(void) const;
+  const DeviceVector<T> &getDeviceArray(void) const;
 
-  void transferToDevice();
-  void transferFromDevice();
-
-  void transferToHost();
-  void transferFromHost();
-
-  void printDevice();
-  // void printHost();
+  std::vector<T> &getHostArray(void);
+  DeviceVector<T> &getDeviceArray(void);
 
   /**
    * @brief Sets the host array and transfers it to device
@@ -84,30 +99,57 @@ public:
    */
   void set(const std::vector<T> &inpVec);
 
+  /**
+   * @brief Set all values of the host array to the input value, transfer to
+   * device.
+   */
+  void setToValue(const T &inpVal);
+
+  CudaContainer<T> &operator=(const CudaContainer<T> &other);
+  CudaContainer<T> &operator=(const CudaContainer<T> &&other);
+
   // Returns a reference to the element at specified location pos.
   // No bounds checking is performed.
-  T &operator[](size_t pos);
+  const T &operator[](const size_t pos) const;
 
   // Returns a reference to the element at specified location pos, with bounds
   // checking. If pos is not within the range of the container, an exception of
   // type std::out_of_range is thrown.
-  T &at(size_t pos);
+  const T &at(const size_t pos) const;
 
-  /** @brief Set all values of the host array to the input value, transfer to
-   * device. */
-  void setToValue(const T &inpVal);
+  // Returns a reference to the element at specified location pos.
+  // No bounds checking is performed.
+  T &operator[](const size_t pos);
+
+  // Returns a reference to the element at specified location pos, with bounds
+  // checking. If pos is not within the range of the container, an exception of
+  // type std::out_of_range is thrown.
+  T &at(const size_t pos);
+
+  void transferToDevice(void);
+  void transferToHost(void);
+  void transferFromDevice(void);
+  void transferFromHost(void);
+
+public:
+  void printDeviceArray(void) const;
 
   // TODO : enable a range-based iterator
 private:
-  std::vector<T> hostArray;
-  // T* deviceArray;
-  deviceVector<T> deviceArray;
+  std::vector<T> m_HostArray;
+  DeviceVector<T> m_DeviceArray;
 };
 
-template class CudaContainer<float>;
-template class CudaContainer<double>;
-template class CudaContainer<float4>;
-template class CudaContainer<double4>;
 template class CudaContainer<int>;
 template class CudaContainer<int2>;
+template class CudaContainer<int3>;
 template class CudaContainer<int4>;
+template class CudaContainer<unsigned int>;
+template class CudaContainer<float>;
+template class CudaContainer<float2>;
+template class CudaContainer<float3>;
+template class CudaContainer<float4>;
+template class CudaContainer<double>;
+template class CudaContainer<double2>;
+template class CudaContainer<double3>;
+template class CudaContainer<double4>;

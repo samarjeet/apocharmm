@@ -60,3 +60,6 @@ test/pytest/*res
 compile.sh
 clean.sh
 dyn_form.out
+
+new_build*
+new_build/*
