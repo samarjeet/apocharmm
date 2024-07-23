@@ -391,10 +391,12 @@ void ForceManager::calc_force_part2(const float4 *xyzq, bool reset,
 void ForceManager::calc_force_part3(const float4 *xyzq, bool reset,
                                     bool calcEnergy, bool calcVirial) {
 
-  cudaCheck(cudaStreamSynchronize(*bondedStream));
-  cudaCheck(cudaStreamSynchronize(*reciprocalStream));
   totalForceValues->clear(*forceManagerStream);
+
+  cudaCheck(cudaStreamSynchronize(*bondedStream));
   totalForceValues->add<double>(*bondedForceValues, *forceManagerStream);
+
+  cudaCheck(cudaStreamSynchronize(*reciprocalStream));
   totalForceValues->add<double>(*reciprocalForceValues, *forceManagerStream);
 
   cudaCheck(cudaStreamSynchronize(*directStream));
@@ -408,16 +410,13 @@ void ForceManager::calc_force_part3(const float4 *xyzq, bool reset,
     // Are we not computing virial twice ? I thought
     // directForcePtr->calc_force(xyzq, calcEnergy, calcVirial) would already
     // do it
-    directForceValues->convert<double>(*directStream);
     bondedForceValues->convert<double>(*bondedStream);
     reciprocalForceValues->convert<double>(*reciprocalStream);
+    directForceValues->convert<double>(*directStream);
 
     cudaCheck(cudaStreamSynchronize(*bondedStream));
     cudaCheck(cudaStreamSynchronize(*reciprocalStream));
     cudaCheck(cudaStreamSynchronize(*directStream));
-    directEnergyVirial.calcVirial(
-        numAtoms, xyzq, boxDimensions[0], boxDimensions[1], boxDimensions[2],
-        getForceStride(), (double *)directForceValues->xyz(), *directStream);
     bondedEnergyVirial.calcVirial(
         numAtoms, xyzq, boxDimensions[0], boxDimensions[1], boxDimensions[2],
         getForceStride(), (double *)bondedForceValues->xyz(), *bondedStream);
@@ -426,6 +425,9 @@ void ForceManager::calc_force_part3(const float4 *xyzq, bool reset,
     //     numAtoms, xyzq, boxDimensions[0], boxDimensions[1], boxDimensions[2],
     //     getForceStride(), (double *)reciprocalForceValues->xyz(),
     //     *reciprocalStream);
+    directEnergyVirial.calcVirial(
+        numAtoms, xyzq, boxDimensions[0], boxDimensions[1], boxDimensions[2],
+        getForceStride(), (double *)directForceValues->xyz(), *directStream);
 
     cudaCheck(cudaStreamSynchronize(*bondedStream));
     cudaCheck(cudaStreamSynchronize(*reciprocalStream));
@@ -437,9 +439,9 @@ void ForceManager::calc_force_part3(const float4 *xyzq, bool reset,
   float totalNonBondedEnergy = 0.0f;
   if (calcEnergy) {
     // cudaDeviceSynchronize();
-    directEnergyVirial.copyToHost();
     bondedEnergyVirial.copyToHost();
     reciprocalEnergyVirial.copyToHost();
+    directEnergyVirial.copyToHost();
     cudaDeviceSynchronize();
 
     totalBondedEnergy = bondedEnergyVirial.getEnergy("bond") +
@@ -468,10 +470,9 @@ void ForceManager::calc_force_part3(const float4 *xyzq, bool reset,
         totalPotentialEnergy.getDeviceArray().data());
     cudaCheck(cudaStreamSynchronize(*forceManagerStream));
 
-    // printEnergyDecomposition = true;
+    printEnergyDecomposition = true;
 
     if (printEnergyDecomposition) {
-
       std::cout << "Bond energy         : "
                 << bondedEnergyVirial.getEnergy("bond") << "\n";
       std::cout << "angle energy        : "

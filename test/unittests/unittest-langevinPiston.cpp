@@ -284,8 +284,9 @@ TEST_CASE("waterbox", "[dynamics]") {
   SECTION("seed") {
     std::vector<std::string> prmFiles{dataPath + "toppar_water_ions.str"};
     std::vector<double> boxDim = {50.0, 50.0, 50.0};
-    int rdmSeed = 314159, nsteps = 5000;
-    double pistonMass = 0.0;
+    int fftx = 48, ffty = 48, fftz = 48;
+    int rdmSeed = 314159, nsteps = 1;
+    double pistonMass = 500.0;
     double pistonFriction = 12.0;
     bool useHolonomicConstraints = true;
     bool useNoseHoover = true;
@@ -298,6 +299,12 @@ TEST_CASE("waterbox", "[dynamics]") {
     // Setup force manager
     auto fm1 = std::make_shared<ForceManager>(psf1, prm1);
     fm1->setBoxDimensions(boxDim);
+    fm1->setFFTGrid(fftx, ffty, fftz);
+    fm1->setKappa(0.34);
+    fm1->setCutoff(10.0);
+    fm1->setCtonnb(7.0);
+    fm1->setCtofnb(8.0);
+    fm1->initialize();
 
     // Setup CHARMM context
     auto ctx1 = std::make_shared<CharmmContext>(fm1);
@@ -332,6 +339,12 @@ TEST_CASE("waterbox", "[dynamics]") {
     // Setup force manager
     auto fm2 = std::make_shared<ForceManager>(psf2, prm2);
     fm2->setBoxDimensions(boxDim);
+    fm2->setFFTGrid(fftx, ffty, fftz);
+    fm2->setKappa(0.34);
+    fm2->setCutoff(10.0);
+    fm2->setCtonnb(7.0);
+    fm2->setCtofnb(8.0);
+    fm2->initialize();
 
     // Setup CHARMM context
     auto ctx2 = std::make_shared<CharmmContext>(fm2);
@@ -371,12 +384,12 @@ TEST_CASE("waterbox", "[dynamics]") {
     CHECK(CompareVectors1(velocityMass1.getHostArray(),
                           velocityMass2.getHostArray(), 0.0, true));
 
-    // auto coordsDeltaPrevious1 = integrator1->getCoordsDeltaPrevious();
-    // auto coordsDeltaPrevious2 = integrator2->getCoordsDeltaPrevious();
-    // coordsDeltaPrevious1.transferFromDevice();
-    // coordsDeltaPrevious2.transferFromDevice();
-    // CHECK(CompareVectors1(coordsDeltaPrevious1.getHostArray(),
-    //                       coordsDeltaPrevious2.getHostArray(), 0.0, true));
+    auto coordsDeltaPrevious1 = integrator1->getCoordsDeltaPrevious();
+    auto coordsDeltaPrevious2 = integrator2->getCoordsDeltaPrevious();
+    coordsDeltaPrevious1.transferFromDevice();
+    coordsDeltaPrevious2.transferFromDevice();
+    CHECK(CompareVectors1(coordsDeltaPrevious1.getHostArray(),
+                          coordsDeltaPrevious2.getHostArray(), 0.0, true));
 
     // Ensure that pressure piston variables are the same
     auto onStepPistonPosition1 = integrator1->getOnStepPistonPosition();
@@ -413,9 +426,14 @@ TEST_CASE("waterbox", "[dynamics]") {
           integrator2->getNoseHooverPistonForcePrevious());
 
     // Propagate simulation
-    // nsteps = 10;
+    std::cout << "INTEGRATOR 1" << std::endl;
+    std::cout << "=====================================" << std::endl;
     integrator1->propagate(nsteps);
+    std::cout << std::endl;
+    std::cout << "INTEGRATOR 2" << std::endl;
+    std::cout << "=====================================" << std::endl;
     integrator2->propagate(nsteps);
+    std::cout << std::endl;
 
     // Check that coordinates match
     coordinatesCharges1 = ctx1->getCoordinatesCharges();
