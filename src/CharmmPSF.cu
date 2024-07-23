@@ -514,14 +514,12 @@ void CharmmPSF::setHydrogenMass(double _newHyrogenMass) {
 }
 
 CudaContainer<int4> CharmmPSF::getWaterMolecules() {
-
   if (waterMolecules.size() == 0) {
     int pos = 0;
     std::vector<int4> waterMols;
     while (pos < numAtoms - 2) {
       if (atomTypes[pos] == "OT" && atomTypes[pos + 1] == "HT" &&
           atomTypes[pos + 2] == "HT") {
-
         int4 water = {pos, pos + 1, pos + 2, 0};
         waterMols.push_back(water);
         pos += 3;

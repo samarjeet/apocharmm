@@ -71,7 +71,7 @@ list(APPEND src_files
   src/SimpleLeapfrogGraph.cu
   src/StateSubscriber.cu
   src/Subscriber.cu
-  src/deviceVector.cu
+  src/DeviceVector.cu
   src/TestForce.cu
   src/TestSystem.cu
   src/XYZSubscriber.cu

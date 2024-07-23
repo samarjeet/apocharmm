@@ -86,7 +86,7 @@ void CudaVerletIntegrator::initialize() {
   auto force = context->getForces();
   double *forceData = (double *)force->xyz();
   auto velocityMass = context->getVelocityMass();
-  deviceVector<double4> vmDeviceArray = velocityMass.getDeviceArray();
+  DeviceVector<double4> vmDeviceArray = velocityMass.getDeviceArray();
   double4 *d_velMass = vmDeviceArray.data();
   auto xyzq = context->getXYZQ();
   auto coords = xyzq->getDeviceXYZQ();
@@ -185,7 +185,7 @@ void CudaVerletIntegrator::propagate(int numSteps) {
     auto force = context->getForces();
     double *forceData = (double *)force->xyz();
     auto velocityMass = context->getVelocityMass();
-    deviceVector<double4> vmDeviceArray = velocityMass.getDeviceArray();
+    DeviceVector<double4> vmDeviceArray = velocityMass.getDeviceArray();
     double4 *d_velMass = vmDeviceArray.data();
 
     propagateKernel<<<nBlocks, nThreads>>>(
@@ -196,7 +196,8 @@ void CudaVerletIntegrator::propagate(int numSteps) {
     context->calculateKineticEnergy();
     // double *ke = (double *)malloc(sizeof(double));
     // cudaMemcpy(ke, context->getKi , sizeof(double), cudaMemcpyDeviceToHost);
-    //std::cout << i << " " << energy << " " << *ke <<" "<< energy + *ke<< "\n";
+    // std::cout << i << " " << energy << " " << *ke <<" "<< energy + *ke<<
+    // "\n";
     // std::cout << *ke << "\n";
   }
 }

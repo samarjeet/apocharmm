@@ -14,6 +14,6 @@ list(APPEND include_files
   include/VolumePiston.h
   include/CudaIntegratorGraph.h
   include/SimpleLeapfrogGraph.h
-  include/deviceVector.h
+  include/DeviceVector.h
   include/tinyxml2.h
 )

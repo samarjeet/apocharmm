@@ -68,8 +68,7 @@ void CharmmContext::setMasses(const std::vector<double> &masses) {
   if (masses.size() != numAtoms) {
     std::stringstream tmpexc;
     tmpexc << "Masses vector size does not match numAtoms (" << masses.size()
-           << " != " << numAtoms << ")"
-           << "\n";
+           << " != " << numAtoms << ")\n";
     throw std::invalid_argument(tmpexc.str());
   }
   assert(velocityMass.size() == numAtoms);
@@ -216,10 +215,9 @@ imageCenterKernel(PBC pbc, float3 boxSize, int stride, int numGroups,
 
   if (index < numGroups) {
     int2 group = groups[index];
-
-    float gx = 0.0;
-    float gy = 0.0;
-    float gz = 0.0;
+    float gx = 0.0f;
+    float gy = 0.0f;
+    float gz = 0.0f;
 
     for (int i = group.x; i <= group.y; ++i) {
       gx += xyzqf[i].x;
@@ -446,7 +444,8 @@ void CharmmContext::assignVelocitiesAtTemperature(float temp) {
   // std::cout << "calculated temp from ke (host) : " << backTemp << "\n";
 
   velocityMass.transferToDevice();
-  // std::cout << "calculated temp from ke : " << computeTemperature() << "\n";
+  // std::cout << "calculated temp from ke : " << computeTemperature() <<
+  // "\n";
 }
 
 static std::vector<std::string> split(std::string line) {
@@ -721,7 +720,8 @@ void CharmmContext::computePressure() {
   int numThreads = 128;
 
   // TODO : put this a separate stream
-  // TODO: the kinetic component computed here is wrong (accumulates over time.)
+  // TODO: the kinetic component computed here is wrong (accumulates over
+  // time.)
   calculateKineticKernel<<<numBlocks, numThreads>>>(
       numAtoms, velocityMass.getDeviceArray().data(),
       virialKineticEnergyTensor.getDeviceArray().data());
@@ -783,7 +783,6 @@ CudaContainer<double> CharmmContext::getVirial() {
 }
 
 CudaContainer<int4> CharmmContext::getWaterMolecules() {
-
   auto waterMolecules = forceManager->getPSF()->getWaterMolecules();
   return waterMolecules;
 }
@@ -873,8 +872,8 @@ void CharmmContext::readRestart(std::string fileName) {
   // First line SHOULD BE a comment saying !XOLD, YOLD, ZOLD
   std::getline(restartFile, line);
 
-  // Extract the positions to a float3 vector, then create a CharmmCrd file from
-  // it
+  // Extract the positions to a float3 vector, then create a CharmmCrd file
+  // from it
   std::vector<float3> inpCrd;
   float x, y, z;
   float3 crd;
@@ -890,8 +889,8 @@ void CharmmContext::readRestart(std::string fileName) {
     inpCrd.push_back(crd);
   }
   auto charmmCrd = std::make_shared<CharmmCrd>(inpCrd);
-  // use setCoordinates to setup ctx.numAtoms as well as charges (from PSF) and
-  // xyzq
+  // use setCoordinates to setup ctx.numAtoms as well as charges (from PSF)
+  // and xyzq
   setCoordinates(charmmCrd);
 
   // Pass the blank line & the comment-title line
