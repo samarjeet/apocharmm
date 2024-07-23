@@ -40,7 +40,7 @@ template <typename T> void deviceVector<T>::resize(size_t size) {
     T *newArray;
     cudaCheck(cudaMalloc(&newArray, sizeof(T) * size));
     if (size_)
-      cudaCheck(cudaMemcpy(newArray, array_, sizeof(T) * size,
+      cudaCheck(cudaMemcpy(newArray, array_, sizeof(T) * size_,
                            cudaMemcpyDeviceToDevice));
     if (size_ > 0)
       cudaCheck(cudaFree(array_));

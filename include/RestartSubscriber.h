@@ -51,6 +51,7 @@ public:
   std::vector<std::vector<double>> readPositions(void) const;
   std::vector<std::vector<double>> readVelocities(void) const;
   std::vector<double> readBoxDimensions(void) const;
+  std::vector<int> readFFTGridDimensions(void) const;
 
   std::vector<std::vector<double>> readCoordsDeltaPrevious(void) const;
 

@@ -237,7 +237,8 @@ void ForceManager::initialize() {
   reciprocalForcePtr->setParameters(nfftx, nffty, nfftz, pmeSplineOrder, kappa,
                                     *reciprocalStream);
   reciprocalForcePtr->setNumAtoms(numAtoms);
-  reciprocalForcePtr->setBoxDimensions({boxx, boxy, boxz});
+  // reciprocalForcePtr->setBoxDimensions({boxx, boxy, boxz});
+  reciprocalForcePtr->setBoxDimensions(boxDimensions);
 
   reciprocalForcePtr->setForce(reciprocalForceValues);
   reciprocalForcePtr->setStream(reciprocalStream);

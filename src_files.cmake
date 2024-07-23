@@ -6,6 +6,7 @@ list(APPEND src_files
   src/Coordinates.cu
   src/CudaContainer.cu
 #  src/Constraints.cu
+  src/CudaBAOABIntegrator.cu
   src/CudaBondedForce.cu
   src/DynaSubscriber.cu
   src/EnergyVirial.cpp
@@ -13,6 +14,7 @@ list(APPEND src_files
   src/cpp_utils.cu
   src/cpp_utils.cpp
   src/cuda_utils.cu
+  src/CudaEMap.cu
   src/CudaPMEDirectForce.cu
   src/CudaDirectForceKernels.cu
   src/CudaPMEReciprocalForce.cu

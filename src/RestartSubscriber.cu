@@ -364,6 +364,50 @@ std::vector<double> RestartSubscriber::readBoxDimensions(void) const {
   return boxdim;
 }
 
+std::vector<int> RestartSubscriber::readFFTGridDimensions(void) const {
+  std::ifstream restartFile(fileName);
+  if (!restartFile.is_open()) {
+    throw std::invalid_argument(
+        "ERROR(RestartSubscriber): Cannot open the file " + fileName +
+        "\nExiting\n");
+    exit(1);
+  }
+
+  // Find line containing the section title
+  std::string line;
+  std::string sectionName = "!FFTGRID";
+  bool found = false;
+  while (std::getline(restartFile, line)) {
+    if (line.find(sectionName) != std::string::npos) {
+      found = true;
+      break;
+    }
+  }
+  if (!found) {
+    std::vector<int> fftGrid;
+    fftGrid.push_back(0);
+    fftGrid.push_back(0);
+    fftGrid.push_back(0);
+    return fftGrid;
+    throw std::invalid_argument(
+        "ERROR(RestartSubscriber): Cannot find the FFT grid section (!FFTGRID) "
+        "in the file " +
+        fileName + "\nExiting\n");
+    exit(1);
+  }
+  // Read and store the section content
+  std::vector<std::string> sectionContent;
+  std::getline(restartFile, line);
+  std::istringstream iss(line);
+  std::vector<int> fftGrid;
+  int x;
+  while (iss >> x) {
+    fftGrid.push_back(x);
+  }
+  return fftGrid;
+
+}
+
 std::vector<std::vector<double>>
 RestartSubscriber::readCoordsDeltaPrevious(void) const {
   std::ifstream restartFile(fileName);

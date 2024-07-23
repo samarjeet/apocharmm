@@ -784,28 +784,29 @@ TEST_CASE("jiyeon") {
       "/u/jmin/Documents/project_pore/PCPG/run_apo/200_20p_e5e6_makeerror/";
 
   std::string filePath =
-      "/u/jmin/Documents/project_pore/PCPG/run_amber/200_20p/";
+      "/u/jmin/Documents/project_pore/PCPG/last_frames/400_20p_namd_3/run_apo/";
 
   std::string paramPath = "/u/jmin/toppars/toppar_c36_jul22/";
   std::vector<std::string> prmFiles{
-      paramPath + "par_all36_lipid.prm",
+      paramPath + "par_all36m_prot.prm", paramPath + "par_all36_lipid.prm",
       paramPath + "stream/lipid/toppar_all36_lipid_bacterial.str",
       paramPath + "toppar_water_ions.str"};
 
   auto prm = std::make_shared<CharmmParameters>(prmFiles);
 
-  auto psf = std::make_shared<CharmmPSF>(filePath + "charmm.psf");
-  auto crd = std::make_shared<CharmmCrd>(filePath + "charmm.crd");
+  auto psf = std::make_shared<CharmmPSF>(filePath + "04.psf");
+  auto crd = std::make_shared<CharmmCrd>(filePath + "04.crd");
 
   auto fm = std::make_shared<ForceManager>(psf, prm);
 
-  std::vector<double> boxDim = {116.74, 117.62, 85.32};
+  // std::vector<double> boxDim = {50.0, 50.0, 50.0};
+  std::vector<double> boxDim = {170.0, 170.0, 120.0};
   // std::vector<double> boxDim = {112.931997, 112.931997, 93.500177};
   fm->setBoxDimensions(boxDim);
   fm->setCtonnb(8.0);
   fm->setCtofnb(10.0);
   fm->setCutoff(12.0);
-  // fm->setPrintEnergyDecomposition(true);
+  fm->setPrintEnergyDecomposition(true);
 
   auto ctx = std::make_shared<CharmmContext>(fm);
   ctx->setCoordinates(crd);
@@ -817,20 +818,23 @@ TEST_CASE("jiyeon") {
   double pistonNHposition, pistonNHvelocity, pistonNHforce;
   */
   SECTION("read") {
-    std::string fileName = dataPath + "out_run/npat.res";
+    std::string fileName = filePath + "res/npat_1.res";
     auto readRestartSub = std::make_shared<RestartSubscriber>(fileName, 1000);
 
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.001);
-    integrator->setCrystalType(CRYSTAL::TETRAGONAL);
-    integrator->setPistonMass({0.0, 500.0});
+    integrator->setCrystalType(CRYSTAL::ORTHORHOMBIC);
+    integrator->setPistonMass({0.0, 0.0, 500.0});
     integrator->setPistonFriction(12.0);
+    integrator->setBathTemperature(310.15);
     integrator->setCharmmContext(ctx); // this initializes the integrator
 
     integrator->subscribe(readRestartSub);
     readRestartSub->readRestart();
     integrator->unsubscribe(readRestartSub);
 
-    // integrator->setDebugPrintFrequency(1);
-    integrator->propagate(2);
+    ctx->calculatePotentialEnergy();
+
+    integrator->setDebugPrintFrequency(1);
+    integrator->propagate(1);
   }
 }

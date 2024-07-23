@@ -44,6 +44,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-direct.cpp
 
     unittest-replicaExchange.cpp
+    unittest-emap.cpp
 
 #    unittest-addForce.cu
 #    unittest-boltzmannVelocity.cu
