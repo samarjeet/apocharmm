@@ -4,7 +4,7 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author: Samarjeet Prasad
+// Author: Samarjeet Prasad, James E. Gonzales II
 //
 // ENDLICENSE
 

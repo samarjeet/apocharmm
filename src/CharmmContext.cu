@@ -42,8 +42,7 @@ CharmmContext::CharmmContext(std::shared_ptr<ForceManager> fmIn)
 
   hasLogger = false;
   std::random_device rd{};
-  // seed = rd();
-  seed = 24;
+  seed = rd();
 }
 
 // Copy Constructor . Does not copy CharmmContext.

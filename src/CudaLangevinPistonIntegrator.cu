@@ -3,7 +3,7 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author: Antti-Pekka Hynninen, Samarjeet Prasad
+// Author: Antti-Pekka Hynninen, Samarjeet Prasad, James E. Gonzales II
 //
 // ENDLICENSE
 
@@ -70,8 +70,6 @@ CudaLangevinPistonIntegrator::CudaLangevinPistonIntegrator(ts_t timeStep,
   // pbfact = timeStep * timeStep;
   pvfact = 1.0 / timeStep;
 
-  // rng.seed(std::random_device{}());
-  // rng.seed(42);
   std::random_device rd{};
   seed = rd();
   rng.seed(seed);
@@ -188,9 +186,6 @@ void CudaLangevinPistonIntegrator::setPistonMass(
       inversePistonMass[i] = 1.0 / _pistonMass[i];
       pistonMass[i] = _pistonMass[i];
     }
-    // std::cout << "pistonMass[" << i << "] = " << pistonMass[i] << std::endl;
-    // std::cout << "inversePistonMass[" << i << "] = " << inversePistonMass[i]
-    //           << std::endl;
   }
   inversePistonMass.transferToDevice();
 }
@@ -255,17 +250,8 @@ void CudaLangevinPistonIntegrator::setPistonFriction(double _friction) {
 
   double kbt = charmm::constants::kBoltz * bathTemperature;
   assert(pistonDegreesOfFreedom != 0);
-  for (int i = 0; i < pistonDegreesOfFreedom; i++) {
-    // std::cout << "inversePistonMass[" << i << "] = " << inversePistonMass[i]
-    //           << std::endl;
-    // std::cout << "pgam = " << pgam << std::endl;
-    // std::cout << "kbt = " << kbt << std::endl;
-    // std::cout << "timeStep = " << timeStep << std::endl;
-    // std::cout << "sqrt(2 * inversePistonMass[i] * pgam * kbt) / timeStep = "
-    //           << sqrt(2 * inversePistonMass[i] * pgam * kbt) / timeStep
-    //           << std::endl;
+  for (int i = 0; i < pistonDegreesOfFreedom; i++)
     prfwd.push_back(sqrt(2 * inversePistonMass[i] * pgam * kbt) / timeStep);
-  }
 
   pistonFrictionSetFlag = true;
 }
@@ -408,7 +394,6 @@ void CudaLangevinPistonIntegrator::initialize() {
     copy_DtoD_async<double4>(coords, coordsRefDevice, numAtoms,
                              *integratorStream);
     cudaCheck(cudaStreamSynchronize(*integratorStream));
-    // cudaCheck(cudaDeviceSynchronize());
 
     holonomicConstraint->handleHolonomicConstraints(coordsRefDevice);
     updateSPKernel<<<numBlocks, numThreads, 0, *integratorStream>>>(
@@ -416,7 +401,6 @@ void CudaLangevinPistonIntegrator::initialize() {
     copy_DtoD_async<double4>(coords, coordsRefDevice, numAtoms,
                              *integratorStream);
     cudaCheck(cudaStreamSynchronize(*integratorStream));
-    // cudaCheck(cudaDeviceSynchronize());
   }
 
   context->calculateForces();
@@ -429,7 +413,6 @@ void CudaLangevinPistonIntegrator::initialize() {
       kbt, numAtoms, stride, timeStep, // coords,
       coordsDeltaDevice, coordsDeltaPreviousDevice, velMass, force->xyz());
   cudaCheck(cudaStreamSynchronize(*integratorStream));
-  // cudaCheck(cudaDeviceSynchronize());
 
   if (usingHolonomicConstraints) {
     backStepInitializationKernel<<<numBlocks, numThreads, 0,
@@ -443,7 +426,6 @@ void CudaLangevinPistonIntegrator::initialize() {
         numAtoms, coords, coordsRefDevice, coordsDeltaPreviousDevice);
   }
   cudaCheck(cudaStreamSynchronize(*integratorStream));
-  // cudaCheck(cudaDeviceSynchronize());
 }
 
 /* Integrate the forces NOT TAKING THE BAROSTAT INTO ACCOUNT, to compute
@@ -736,14 +718,6 @@ void projectDeltaPressureToPistonDof(
     break;
 
   case CRYSTAL::CUBIC:
-    // // deltaPressure differs
-    //   std::cout << "pistonDeltaPressure[0] = " << pistonDeltaPressure[0]
-    //             << std::endl;
-    //   std::cout << "deltaPressure[0] = " << deltaPressure[0] << std::endl;
-    //   std::cout << "deltaPressure[2] = " << deltaPressure[2] << std::endl;
-    //   std::cout << "deltaPressure[5] = " << deltaPressure[5] << std::endl;
-    //   std::cout << "boxDimensions[0] = " << boxDimensions[0] << std::endl;
-
     pistonDeltaPressure[0] =
         (deltaPressure[0] + deltaPressure[2] + deltaPressure[5]) /
         boxDimensions[0];
@@ -1064,7 +1038,7 @@ void CudaLangevinPistonIntegrator::removeCenterOfMassMotion() {
 
 */
 
-#include <iomanip> // jeg240722: TEMP REMOVE LATER
+#include <iomanip> // JEG240724: TEMP DELETE LATER
 
 void CudaLangevinPistonIntegrator::propagateOneStep() {
   auto coords = context->getCoordinatesCharges().getDeviceArray().data();
@@ -1103,37 +1077,6 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
   int numBlocks = (numAtoms - 1) / numThreads + 1;
   int numBlocksReduction = 64;
 
-  // { // Print out everyone, searching for the nan because cuda-gdb doesnt fail
-  //   std::cout << "-------------------------------------------------------"
-  //             << std::endl;
-  //   std::cout << std::scientific << std::setprecision(8);
-  //   auto coordsPrinter = context->getCoordinatesCharges();
-  //   coordsPrinter.transferFromDevice();
-  //   std::cout << "coords:" << coordsPrinter.getHostArray().data()[0].x
-  //             << std::endl;
-  //   auto xyzqPrinter = context->getXYZQ()->get_xyz();
-  //   std::cout << " xyzq: " << xyzqPrinter[0] << std::endl;
-  //   coordsDelta.transferFromDevice();
-  //   std::cout << "coordsDelta: " << coordsDelta.getHostArray().data()[0].x
-  //             << std::endl;
-  //   coordsDeltaPrevious.transferFromDevice();
-  //   std::cout << "coordsDeltaPrevious: "
-  //             << coordsDeltaPrevious.getHostArray().data()[0].x << std::endl;
-  //   coordsRef.transferFromDevice();
-  //   std::cout << "coordsRef: " << coordsRef.getHostArray().data()[0].x
-  //             << std::endl;
-  //   coordsPrinter = context->getVelocityMass();
-  //   coordsPrinter.transferFromDevice();
-  //   std::cout << "velMass: " << coordsPrinter.getHostArray().data()[0].x
-  //             << std::endl;
-  //   std::cout << "numdof: " << numDegreesOfFreedom << std::endl;
-  //   std::cout << "numAtoms: " << numAtoms << std::endl;
-  //   std::cout << "stride: " << stride << std::endl;
-  //   std::cout << "kbt: " << kbt << std::endl;
-  //   std::cout << "refke: " << referenceKineticEnergy << std::endl;
-  //   std::cout << "volume : " << volume << std::endl;
-  // }
-
   if (stepsSinceNeighborListUpdate % nonbondedListUpdateFrequency == 0) {
     if (context->getForceManager()->getPeriodicBoundaryCondition() ==
         PBC::P21) {
@@ -1163,35 +1106,13 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
   copy_DtoD_async<double4>(coords, coordsRef.getDeviceArray().data(), numAtoms,
                            *integratorStream);
 
-  // { // virialTensor is good here
-  //   auto virialTensor = context->getVirial();
-  //   for (int i = 0; i < 9; i++) {
-  //     std::cout << std::scientific << std::setprecision(8);
-  //     std::cout << "virialTensor[" << i << "] = " << virialTensor[i]
-  //               << std::endl;
-  //   }
-  // }
-  std::cout << std::scientific << std::setprecision(8);
-
   context->calculateForces(false, true, true);
   auto force = context->getForces();
-
-  // { // virialTensor differs here
-  //   auto virialTensor = context->getVirial();
-  //   for (int i = 0; i < 9; i++) {
-  //     std::cout << std::scientific << std::setprecision(8);
-  //     std::cout << "virialTensor[" << i << "] = " << virialTensor[i]
-  //               << std::endl;
-  //   }
-  // }
 
   // if (stepId % removeCenterOfMassFrequency == 0) {
   //  removeCenterOfMassAverageNetForce();
   //}
 
-  //  std::cout << " =initial pistonnosehoovervelocity: "
-  //            << noseHooverPistonVelocity << std::endl;
-  //
   noseHooverPistonVelocityPrevious = noseHooverPistonVelocity;
   noseHooverPistonForcePrevious = noseHooverPistonForce;
 
@@ -1203,16 +1124,9 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
   cudaCheck(cudaStreamSynchronize(*integratorStream));
   auto virialTensor = context->getVirial();
   virialTensor.transferFromDevice();
-  // // virialTensor differs here
-  // for (int i = 0; i < 9; i++) {
-  //   std::cout << std::scientific << std::setprecision(8);
-  //   std::cout << "virialTensor[" << i << "] = " << virialTensor[i] <<
-  //   std::endl;
-  // }
 
   // TODO :  Use profiler to determine where we do this computation
   if (usingHolonomicConstraints) {
-
     holonomicVirial.set(sixZeros);
 
     cudaCheck(cudaDeviceSynchronize());
@@ -1261,28 +1175,6 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
   cudaCheck(cudaStreamSynchronize(*integratorStream));
   kineticEnergyPressureTensor.transferFromDevice();
 
-  // // virialTensor and kineticEnergyPressureTensor differ here
-  // std::cout << std::scientific << std::setprecision(8);
-  // std::cout << "HERE" << std::endl;
-  // std::cout << "virialTensor[0] = " << virialTensor[0] << std::endl;
-  // std::cout << "virialTensor[3] = " << virialTensor[3] << std::endl;
-  // std::cout << "virialTensor[4] = " << virialTensor[4] << std::endl;
-  // std::cout << "virialTensor[6] = " << virialTensor[6] << std::endl;
-  // std::cout << "virialTensor[7] = " << virialTensor[7] << std::endl;
-  // std::cout << "virialTensor[8] = " << virialTensor[8] << std::endl;
-  // std::cout << "kineticEnergyPressureTensor[0] = "
-  //           << kineticEnergyPressureTensor[0] << std::endl;
-  // std::cout << "kineticEnergyPressureTensor[1] = "
-  //           << kineticEnergyPressureTensor[1] << std::endl;
-  // std::cout << "kineticEnergyPressureTensor[2] = "
-  //           << kineticEnergyPressureTensor[2] << std::endl;
-  // std::cout << "kineticEnergyPressureTensor[3] = "
-  //           << kineticEnergyPressureTensor[3] << std::endl;
-  // std::cout << "kineticEnergyPressureTensor[4] = "
-  //           << kineticEnergyPressureTensor[4] << std::endl;
-  // std::cout << "kineticEnergyPressureTensor[5] = "
-  //           << kineticEnergyPressureTensor[5] << std::endl;
-
   double volumeFactor = charmm::constants::patmos / volume;
   pressureTensor[0] =
       (virialTensor[0] + kineticEnergyPressureTensor[0]) * volumeFactor;
@@ -1301,34 +1193,6 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
       (pressureTensor[0] + pressureTensor[2] + pressureTensor[5]) / 3.0;
   pressureScalar.transferToDevice();
 
-  // if (debugPrintFrequency > 0 && stepId % debugPrintFrequency == 0) {
-  //   for (int i = 0; i < 6; ++i) {
-  //     int j;
-  //     switch (i) {
-  //     case 0:
-  //       j = 0;
-  //       break;
-  //     case 1:
-  //       j = 3;
-  //       break;
-  //     case 2:
-  //       j = 4;
-  //       break;
-  //     case 3:
-  //       j = 6;
-  //       break;
-  //     case 4:
-  //       j = 7;
-  //       break;
-  //     case 5:
-  //       j = 8;
-  //       break;
-  //     default:
-  //       break;
-  //     }
-  //   }
-  // }
-
   if (constantSurfaceTensionFlag) {
     referencePressure[0] =
         (referencePressure[5] - surfaceTension *
@@ -1337,16 +1201,6 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
     referencePressure[2] = referencePressure[0];
   }
 
-  // pressureTensor differs here
-  // for (int i = 0; i < 6; i++) {
-  //   std::cout << std::scientific << std::setprecision(8);
-  //   std::cout << "deltaPressure[" << i << "] = " << deltaPressure[i]
-  //             << std::endl;
-  //   std::cout << "pressureTensor[" << i << "] = " << pressureTensor[i]
-  //             << std::endl;
-  //   std::cout << "referencePressure[" << i << "] = " << referencePressure[i]
-  //             << std::endl;
-  // }
   deltaPressure[0] = pressureTensor[0] - referencePressure[0];
   deltaPressure[1] = pressureTensor[1] - referencePressure[1];
   deltaPressure[2] = pressureTensor[2] - referencePressure[2];
@@ -1391,21 +1245,6 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
       (pressureTensor[5] - 0.5 * (pressureTensor[0] + pressureTensor[2])) /
       charmm::constants::surfaceTensionFactor;
 
-  // std::cout << "before predcor" << std::endl;
-  // std::cout << "deltaPressure[0] = " << deltaPressure[0] << std::endl;
-  // coordsPrinter = context->getCoordinatesCharges();
-  // coordsPrinter.transferFromDevice();
-  // std::cout << "coords:" << coordsPrinter.getHostArray().data()[0].x
-  //          << std::endl;
-  // coordsPrinter = context->getVelocityMass();
-  // coordsPrinter.transferFromDevice();
-  // std::cout << "velMass: " << coordsPrinter.getHostArray().data()[0].x
-  //          << std::endl;
-
-  // std::cout << "palpha: " << palpha << std::endl;
-  // std::cout << "pbfact: " << pbfact << std::endl;
-  // std::cout << "prfwd: " << prfwd[0] << std::endl;
-
   // predictor corrector loop
   ///////////////////////////////
 
@@ -1419,20 +1258,9 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
       pressurePistonPositionDelta[i] = pressurePistonPositionDeltaStored[i];
     }
 
-    // for (int i = 0; i < pistonDegreesOfFreedom; i++) {
-    //   std::cout << std::scientific << std::setprecision(8);
-    //   std::cout << "pistonDeltaPressure[" << i
-    //             << "] = " << pistonDeltaPressure[i] << std::endl;
-    // }
     // TODO : move to the device
     projectDeltaPressureToPistonDof(crystalType, boxDimensions, deltaPressure,
                                     pistonDeltaPressure);
-    // // pistonDeltaPressure differs here
-    // for (int i = 0; i < pistonDegreesOfFreedom; i++) {
-    //   std::cout << std::scientific << std::setprecision(8);
-    //   std::cout << "pistonDeltaPressure[" << i
-    //             << "] = " << pistonDeltaPressure[i] << std::endl;
-    // }
 
     double fact = volume * pbfact * charmm::constants::atmosp;
 
@@ -1464,14 +1292,16 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
       // pressurePistonPositionDelta[i] =
       //     palpha * pressurePistonPositionDelta[i] +
       // inversePistonMass[i] * pistonDeltaPressure[i] * fact + rdum;
-      double randVal = dist(rng);
-      // pressurePistonPositionDelta[i] =
-      //     palpha * pressurePistonPositionDelta[i] +
-      //     inversePistonMass[i] * pistonDeltaPressure[i] * fact +
-      //     pbfact * prfwd[i] * dist(rng);
-      std::cout << std::scientific << std::setprecision(8);
+
+      pressurePistonPositionDelta[i] =
+          palpha * pressurePistonPositionDelta[i] +
+          inversePistonMass[i] * pistonDeltaPressure[i] * fact +
+          pbfact * prfwd[i] * dist(rng);
+
+      // std::cout << std::scientific << std::setprecision(8);
       // std::cout << "BEFORE: pressurePistonPositionDelta[" << i
       //           << "] = " << pressurePistonPositionDelta[i] << std::endl;
+      // double randVal = dist(rng);
       // pressurePistonPositionDelta[i] =
       //     palpha * pressurePistonPositionDelta[i] +
       //     inversePistonMass[i] * pistonDeltaPressure[i] * fact +
@@ -1488,9 +1318,11 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
       // std::cout << "randVal = " << randVal << std::endl;
       // std::cout << "AFTER: pressurePistonPositionDelta[" << i
       //           << "] = " << pressurePistonPositionDelta[i] << std::endl;
+
       onStepPistonVelocity[i] = (pressurePistonPositionDelta[i] +
                                  pressurePistonPositionDeltaPrevious[i]) /
                                 (2.0 * timeStep);
+
       // std::cout << "onStepPistonVelocity[" << i
       //           << "] = " << onStepPistonVelocity[i] << std::endl;
     }

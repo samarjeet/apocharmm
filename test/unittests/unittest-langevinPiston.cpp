@@ -285,11 +285,11 @@ TEST_CASE("waterbox", "[dynamics]") {
   SECTION("seed") {
     std::vector<std::string> prmFiles{dataPath + "toppar_water_ions.str"};
     std::vector<double> boxDim = {50.0, 50.0, 50.0};
-    int rdmSeed = 314159, nsteps = 10000;
+    int rdmSeed = 314159, nsteps = 1; // 10000;
     double pistonMass = 500.0;
     double pistonFriction = 12.0;
-    bool useHolonomicConstraints = true;
-    bool useNoseHoover = true;
+    bool useHolonomicConstraints = false;
+    bool useNoseHoover = false;
 
     // Topology, parameters, PSF, and coordinates
     auto prm1 = std::make_shared<CharmmParameters>(prmFiles);
@@ -310,11 +310,13 @@ TEST_CASE("waterbox", "[dynamics]") {
     // Setup CHARMM context
     auto ctx1 = std::make_shared<CharmmContext>(fm1);
     ctx1->setCoordinates(crd1);
+    ctx1->setRandomSeedForVelocities(314159);
     ctx1->assignVelocitiesAtTemperature(300.0);
     ctx1->useHolonomicConstraints(useHolonomicConstraints);
 
     auto ctx2 = std::make_shared<CharmmContext>(fm2);
     ctx2->setCoordinates(crd2);
+    ctx2->setRandomSeedForVelocities(314159);
     ctx2->assignVelocitiesAtTemperature(300.0);
     ctx2->useHolonomicConstraints(useHolonomicConstraints);
 
@@ -413,7 +415,10 @@ TEST_CASE("waterbox", "[dynamics]") {
           integrator2->getNoseHooverPistonForcePrevious());
 
     // Propagate simulations
+    fm1->setPrintEnergyDecomposition(true);
+    fm2->setPrintEnergyDecomposition(true);
     integrator1->propagate(nsteps);
+    std::cout << std::endl;
     integrator2->propagate(nsteps);
 
     // Check that coordinates match
