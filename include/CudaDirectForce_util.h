@@ -48,7 +48,7 @@ __global__ void CUDA_KERNEL_NAME(
   // Shared memory requirements:
   // sh_xi, sh_yi, sh_zi, sh_qi: (blockDim.x/warpsize)*tilesize*sizeof(float)
   // sh_vdwtypei               : (blockDim.x/warpsize)*tilesize*sizeof(int)
-  // sh_blocktypei               : (blockDim.x/warpsize)*tilesize*sizeof(int)
+  // sh_blocktypei             : (blockDim.x/warpsize)*tilesize*sizeof(int)
   // sh_fix, sh_fiy, sh_fiz    : (blockDim.x/warpsize)*warpsize*sizeof(AT)
   // sh_vdwparam               : nvdwparam*sizeof(float)
   //

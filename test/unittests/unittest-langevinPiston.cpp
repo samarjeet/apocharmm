@@ -280,12 +280,12 @@ TEST_CASE("waterbox", "[dynamics]") {
   }
   */
 
-  // Check propagation is same with same seeds
+  // Create two exactly the same systems to ensure that propagation is
+  // deterministic
   SECTION("seed") {
     std::vector<std::string> prmFiles{dataPath + "toppar_water_ions.str"};
     std::vector<double> boxDim = {50.0, 50.0, 50.0};
-    int fftx = 48, ffty = 48, fftz = 48;
-    int rdmSeed = 314159, nsteps = 1;
+    int rdmSeed = 314159, nsteps = 10000;
     double pistonMass = 500.0;
     double pistonFriction = 12.0;
     bool useHolonomicConstraints = true;
@@ -296,85 +296,36 @@ TEST_CASE("waterbox", "[dynamics]") {
     auto psf1 = std::make_shared<CharmmPSF>(dataPath + "waterbox.psf");
     auto crd1 = std::make_shared<CharmmCrd>(dataPath + "waterbox.crd");
 
-    // Setup force manager
+    auto prm2 = std::make_shared<CharmmParameters>(prmFiles);
+    auto psf2 = std::make_shared<CharmmPSF>(dataPath + "waterbox.psf");
+    auto crd2 = std::make_shared<CharmmCrd>(dataPath + "waterbox.crd");
+
+    // Setup force managers
     auto fm1 = std::make_shared<ForceManager>(psf1, prm1);
     fm1->setBoxDimensions(boxDim);
-    fm1->setFFTGrid(fftx, ffty, fftz);
-    fm1->setKappa(0.34);
-    fm1->setCutoff(10.0);
-    fm1->setCtonnb(7.0);
-    fm1->setCtofnb(8.0);
-    fm1->initialize();
+
+    auto fm2 = std::make_shared<ForceManager>(psf2, prm2);
+    fm2->setBoxDimensions(boxDim);
 
     // Setup CHARMM context
     auto ctx1 = std::make_shared<CharmmContext>(fm1);
     ctx1->setCoordinates(crd1);
     ctx1->assignVelocitiesAtTemperature(300.0);
-
-    // fm1->setPrintEnergyDecomposition(true);
     ctx1->useHolonomicConstraints(useHolonomicConstraints);
-    ctx1->calculatePotentialEnergy(true, true);
-    fm1->setPrintEnergyDecomposition(false);
 
-    // Setup integrator
-    auto integrator1 = std::make_shared<CudaLangevinPistonIntegrator>(0.001);
-    integrator1->setCrystalType(CRYSTAL::CUBIC);
-    integrator1->setPistonMass({pistonMass}); // setCrystalType resets this to 0
-    integrator1->setPistonFriction(pistonFriction);
-    integrator1->setSeedForPistonFriction(rdmSeed);
-    integrator1->setNoseHooverFlag(useNoseHoover);
-    integrator1->setCharmmContext(ctx1);
-    // integrator1->setDebugPrintFrequency(1);
-
-    // ================================================
-
-    // Create a duplicate system the exact same way to ensure that the
-    // integrator being used is deterministic
-
-    // Topology, parameters, PSF, and coordinates
-    auto prm2 = std::make_shared<CharmmParameters>(prmFiles);
-    auto psf2 = std::make_shared<CharmmPSF>(dataPath + "waterbox.psf");
-    auto crd2 = std::make_shared<CharmmCrd>(dataPath + "waterbox.crd");
-
-    // Setup force manager
-    auto fm2 = std::make_shared<ForceManager>(psf2, prm2);
-    fm2->setBoxDimensions(boxDim);
-    fm2->setFFTGrid(fftx, ffty, fftz);
-    fm2->setKappa(0.34);
-    fm2->setCutoff(10.0);
-    fm2->setCtonnb(7.0);
-    fm2->setCtofnb(8.0);
-    fm2->initialize();
-
-    // Setup CHARMM context
     auto ctx2 = std::make_shared<CharmmContext>(fm2);
     ctx2->setCoordinates(crd2);
     ctx2->assignVelocitiesAtTemperature(300.0);
-
-    // fm2->setPrintEnergyDecomposition(true);
     ctx2->useHolonomicConstraints(useHolonomicConstraints);
-    ctx2->calculatePotentialEnergy(true, true);
-    fm2->setPrintEnergyDecomposition(false);
-
-    // Setup integrator
-    auto integrator2 = std::make_shared<CudaLangevinPistonIntegrator>(0.001);
-    integrator2->setCrystalType(CRYSTAL::CUBIC);
-    integrator2->setPistonMass({pistonMass}); // setCrystalType resets this to 0
-    integrator2->setPistonFriction(pistonFriction);
-    integrator2->setSeedForPistonFriction(rdmSeed);
-    integrator2->setNoseHooverFlag(useNoseHoover);
-    integrator2->setCharmmContext(ctx2);
-    // integrator2->setDebugPrintFrequency(1);
-
-    // Both systems should match at this point
 
     // Check that coordinates match
-    auto coordinatesCharges1 = ctx1->getCoordinatesCharges();
-    auto coordinatesCharges2 = ctx2->getCoordinatesCharges();
-    coordinatesCharges1.transferFromDevice();
-    coordinatesCharges2.transferFromDevice();
-    CHECK(CompareVectors1(coordinatesCharges1.getHostArray(),
-                          coordinatesCharges2.getHostArray(), 0.0, true));
+    auto initialCoordinatesCharges1 = ctx1->getCoordinatesCharges();
+    auto initialCoordinatesCharges2 = ctx2->getCoordinatesCharges();
+    initialCoordinatesCharges1.transferFromDevice();
+    initialCoordinatesCharges2.transferFromDevice();
+    CHECK(CompareVectors1(initialCoordinatesCharges1.getHostArray(),
+                          initialCoordinatesCharges2.getHostArray(), 0.0,
+                          true));
 
     // Check that velocities match
     auto velocityMass1 = ctx1->getVelocityMass();
@@ -384,6 +335,42 @@ TEST_CASE("waterbox", "[dynamics]") {
     CHECK(CompareVectors1(velocityMass1.getHostArray(),
                           velocityMass2.getHostArray(), 0.0, true));
 
+    // Calculate potential energies and verify they are the same
+    ctx1->calculatePotentialEnergy(true, true);
+    ctx2->calculatePotentialEnergy(true, true);
+
+    std::map<std::string, double> eneComps1 = fm1->getEnergyComponents();
+    std::map<std::string, double> eneComps2 = fm2->getEnergyComponents();
+    double tol = 1e-16;
+    CHECK(eneComps1["bond"] == Approx(eneComps2["bond"]).margin(tol));
+    CHECK(eneComps1["angle"] == Approx(eneComps2["angle"]).margin(tol));
+    CHECK(eneComps1["ureyb"] == Approx(eneComps2["ureyb"]).margin(tol));
+    CHECK(eneComps1["dihe"] == Approx(eneComps2["dihe"]).margin(tol));
+    CHECK(eneComps1["imdihe"] == Approx(eneComps2["imdihe"]).margin(tol));
+    CHECK(eneComps1["ewks"] == Approx(eneComps2["ewks"]).margin(tol));
+    CHECK(eneComps1["ewse"] == Approx(eneComps2["ewse"]).margin(tol));
+    CHECK(eneComps1["ewex"] == Approx(eneComps2["ewex"]).margin(tol));
+    CHECK(eneComps1["elec"] == Approx(eneComps2["elec"]).margin(tol));
+    CHECK(eneComps1["vdw"] == Approx(eneComps2["vdw"]).margin(tol));
+
+    // Setup integrators
+    auto integrator1 = std::make_shared<CudaLangevinPistonIntegrator>(0.001);
+    integrator1->setCrystalType(CRYSTAL::CUBIC);
+    integrator1->setPistonMass({pistonMass}); // setCrystalType resets this to 0
+    integrator1->setPistonFriction(pistonFriction);
+    integrator1->setSeedForPistonFriction(rdmSeed);
+    integrator1->setNoseHooverFlag(useNoseHoover);
+    integrator1->setCharmmContext(ctx1);
+
+    auto integrator2 = std::make_shared<CudaLangevinPistonIntegrator>(0.001);
+    integrator2->setCrystalType(CRYSTAL::CUBIC);
+    integrator2->setPistonMass({pistonMass}); // setCrystalType resets this to 0
+    integrator2->setPistonFriction(pistonFriction);
+    integrator2->setSeedForPistonFriction(rdmSeed);
+    integrator2->setNoseHooverFlag(useNoseHoover);
+    integrator2->setCharmmContext(ctx2);
+
+    // Ensure that internal integrator variables match
     auto coordsDeltaPrevious1 = integrator1->getCoordsDeltaPrevious();
     auto coordsDeltaPrevious2 = integrator2->getCoordsDeltaPrevious();
     coordsDeltaPrevious1.transferFromDevice();
@@ -391,7 +378,7 @@ TEST_CASE("waterbox", "[dynamics]") {
     CHECK(CompareVectors1(coordsDeltaPrevious1.getHostArray(),
                           coordsDeltaPrevious2.getHostArray(), 0.0, true));
 
-    // Ensure that pressure piston variables are the same
+    // Ensure Langevin barostat variables match
     auto onStepPistonPosition1 = integrator1->getOnStepPistonPosition();
     auto onStepPistonPosition2 = integrator2->getOnStepPistonPosition();
     onStepPistonPosition1.transferFromDevice();
@@ -406,7 +393,7 @@ TEST_CASE("waterbox", "[dynamics]") {
     CHECK(CompareVectors1(halfStepPistonPosition1.getHostArray(),
                           halfStepPistonPosition2.getHostArray(), 0.0, true));
 
-    // Ensure that Nose-Hoover variables are the same
+    // Ensure that Nose-Hoover thermostat variables match
     CHECK(integrator1->getNoseHooverPistonMass() ==
           integrator2->getNoseHooverPistonMass());
 
@@ -425,23 +412,25 @@ TEST_CASE("waterbox", "[dynamics]") {
     CHECK(integrator1->getNoseHooverPistonForcePrevious() ==
           integrator2->getNoseHooverPistonForcePrevious());
 
-    // Propagate simulation
-    std::cout << "INTEGRATOR 1" << std::endl;
-    std::cout << "=====================================" << std::endl;
+    // Propagate simulations
     integrator1->propagate(nsteps);
-    std::cout << std::endl;
-    std::cout << "INTEGRATOR 2" << std::endl;
-    std::cout << "=====================================" << std::endl;
     integrator2->propagate(nsteps);
-    std::cout << std::endl;
 
     // Check that coordinates match
-    coordinatesCharges1 = ctx1->getCoordinatesCharges();
-    coordinatesCharges2 = ctx2->getCoordinatesCharges();
+    auto coordinatesCharges1 = ctx1->getCoordinatesCharges();
+    auto coordinatesCharges2 = ctx2->getCoordinatesCharges();
     coordinatesCharges1.transferFromDevice();
     coordinatesCharges2.transferFromDevice();
     CHECK(CompareVectors1(coordinatesCharges1.getHostArray(),
                           coordinatesCharges2.getHostArray(), 0.0, true));
+
+    // Sanity check that the coordinates are actually different
+    CHECK(coordinatesCharges1[0].x != initialCoordinatesCharges1[0].x);
+    CHECK(coordinatesCharges1[0].y != initialCoordinatesCharges1[0].y);
+    CHECK(coordinatesCharges1[0].z != initialCoordinatesCharges1[0].z);
+    CHECK(coordinatesCharges2[0].x != initialCoordinatesCharges2[0].x);
+    CHECK(coordinatesCharges2[0].y != initialCoordinatesCharges2[0].y);
+    CHECK(coordinatesCharges2[0].z != initialCoordinatesCharges2[0].z);
 
     // Check that velocities match
     velocityMass1 = ctx1->getVelocityMass();
@@ -450,62 +439,6 @@ TEST_CASE("waterbox", "[dynamics]") {
     velocityMass2.transferFromDevice();
     CHECK(CompareVectors1(velocityMass1.getHostArray(),
                           velocityMass2.getHostArray(), 0.0, true));
-
-    /*
-    auto prm =
-        std::make_shared<CharmmParameters>(dataPath + "toppar_water_ions.str");
-    auto psf = std::make_shared<CharmmPSF>(dataPath + "waterbox.psf");
-    auto fm = std::make_shared<ForceManager>(psf, prm);
-    fm->setBoxDimensions({50., 50., 50.});
-    auto context1 = std::make_shared<CharmmContext>(fm);
-    auto context2 = std::make_shared<CharmmContext>(fm);
-    // fix seed for velocities initialization
-    context2->setRandomSeedForVelocities(
-        context1->getRandomSeedForVelocities());
-    auto crd = std::make_shared<CharmmCrd>(dataPath + "waterbox.crd");
-    context1->setCoordinates(crd);
-    context2->setCoordinates(crd);
-    context1->assignVelocitiesAtTemperature(300);
-    context2->assignVelocitiesAtTemperature(300);
-
-    auto integrator1 = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
-    auto integrator2 = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
-    integrator2->setSeedForPistonFriction(
-        integrator1->getSeedForPistonFriction());
-    integrator1->setPistonFriction(00.);
-    integrator2->setPistonFriction(00.);
-    integrator1->setCharmmContext(context1);
-    integrator2->setCharmmContext(context2);
-    integrator1->setCrystalType(CRYSTAL::CUBIC);
-    integrator2->setCrystalType(CRYSTAL::CUBIC);
-
-    std::shared_ptr<RestartSubscriber> restartSub1 =
-                                           std::make_shared<RestartSubscriber>(
-                                               "crd1.res", 1000),
-                                       restartSub2 =
-                                           std::make_shared<RestartSubscriber>(
-                                               "crd2.res", 1000);
-    integrator1->subscribe(restartSub1);
-    integrator2->subscribe(restartSub2);
-
-    integrator1->propagate(1000);
-    integrator2->propagate(1000);
-
-    auto crd1cc = context1->getCoordinatesCharges();
-    auto crd2cc = context2->getCoordinatesCharges();
-    crd1cc.transferFromDevice();
-    crd2cc.transferFromDevice();
-    std::vector<double> crd1, crd2;
-    for (int i = 0; i < crd1cc.size(); i++) {
-      crd1.push_back(crd1cc.getHostArray()[i].x);
-      crd1.push_back(crd1cc.getHostArray()[i].y);
-      crd1.push_back(crd1cc.getHostArray()[i].z);
-      crd2.push_back(crd2cc.getHostArray()[i].x);
-      crd2.push_back(crd2cc.getHostArray()[i].y);
-      crd2.push_back(crd2cc.getHostArray()[i].z);
-    }
-    CHECK(compareVectors(crd1, crd2));
-    */
   }
 }
 

@@ -1084,7 +1084,6 @@ void calcForceKernelChoice(const int nblock_tot_in, const int nthread,
     nblock_tot -= nblock;
 
     if (cudaBlock == NULL) {
-
 #ifdef USE_TEXTURE_OBJECTS
       CREATE_KERNELS(EXPAND_ENERGY_VIRIAL, CREATE_KERNEL, calcForceKernel,
                      vdwParamTexObj, base, nlist.get_n_ientry(),
