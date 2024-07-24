@@ -471,8 +471,6 @@ void ForceManager::calc_force_part3(const float4 *xyzq, bool reset,
         totalPotentialEnergy.getDeviceArray().data());
     cudaCheck(cudaStreamSynchronize(*forceManagerStream));
 
-    printEnergyDecomposition = true;
-
     if (printEnergyDecomposition) {
       std::cout << "Bond energy         : "
                 << bondedEnergyVirial.getEnergy("bond") << "\n";

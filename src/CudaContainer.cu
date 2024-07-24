@@ -23,11 +23,25 @@ CudaContainer<T>::CudaContainer(const std::vector<T> &array) : CudaContainer() {
 
 template <typename T>
 CudaContainer<T>::CudaContainer(const CudaContainer<T> &other)
-    : CudaContainer(other.getHostArray()) {}
+    : CudaContainer() {
+  m_HostArray = std::vector<T>(other.getHostArray().cbegin(),
+                               other.getHostArray().cend());
+  m_DeviceArray.resize(other.size());
+  cudaCheck(cudaMemcpy(static_cast<void *>(m_DeviceArray.data()),
+                       static_cast<const void *>(other.getDeviceArray().data()),
+                       this->size() * sizeof(T), cudaMemcpyDeviceToDevice));
+}
 
 template <typename T>
 CudaContainer<T>::CudaContainer(const CudaContainer<T> &&other)
-    : CudaContainer(other.getHostArray()) {}
+    : CudaContainer() {
+  m_HostArray = std::vector<T>(other.getHostArray().cbegin(),
+                               other.getHostArray().cend());
+  m_DeviceArray.resize(other.size());
+  cudaCheck(cudaMemcpy(static_cast<void *>(m_DeviceArray.data()),
+                       static_cast<const void *>(other.getDeviceArray().data()),
+                       this->size() * sizeof(T), cudaMemcpyDeviceToDevice));
+}
 
 template <typename T> void CudaContainer<T>::allocate(const size_t size) {
   m_HostArray = std::vector<T>(size);

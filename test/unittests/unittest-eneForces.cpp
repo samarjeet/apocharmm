@@ -48,6 +48,9 @@ getForcesAsCudaContainer(std::shared_ptr<CharmmContext> ctxIn) {
   fx.allocate(numAtoms);
   fy.allocate(numAtoms);
   fz.allocate(numAtoms);
+  double *tmpx = fx.getDeviceArray().data();
+  double *tmpy = fy.getDeviceArray().data();
+  double *tmpz = fz.getDeviceArray().data();
   fx.setDeviceArray(ctxIn->getForces()->x());
   fy.setDeviceArray(ctxIn->getForces()->y());
   fz.setDeviceArray(ctxIn->getForces()->z());
@@ -63,6 +66,10 @@ getForcesAsCudaContainer(std::shared_ptr<CharmmContext> ctxIn) {
     f.z = fz[i];
     forcesvec.push_back(f);
   }
+  fx.setDeviceArray(tmpx);
+  fy.setDeviceArray(tmpy);
+  fz.setDeviceArray(tmpz);
+
   CudaContainer<double4> forceCC;
   forceCC.allocate(numAtoms);
   forceCC.set(forcesvec);
@@ -124,13 +131,11 @@ TEST_CASE("waterDimer") {
   int numAtoms = ctx->getNumAtoms();
 
   /* c47b1 reference values, obtained with same cutoffs as stated above (box
-  520,
-   * cuts ~250) and same kappa value (10^-8). The energies obtained are the same
-   * as using c47b1 with cutoffs of 999 and no PME.
-  ENER ENR:  Eval#     ENERgy      Delta-E         GRMS
-  ENER INTERN:          BONDs       ANGLes       UREY-b    DIHEdrals IMPRopers
-  ENER EXTERN:        VDWaals         ELEC       HBONds          ASP USER ENER
-  EWALD:          EWKSum       EWSElf       EWEXcl       EWQCor       EWUTil
+  520, cuts ~250) and same kappa value (10^-8). The energies obtained are the
+  same as using c47b1 with cutoffs of 999 and no PME. ENER ENR:  Eval# ENERgy
+  Delta-E         GRMS ENER INTERN:          BONDs       ANGLes       UREY-b
+  DIHEdrals IMPRopers ENER EXTERN:        VDWaals         ELEC       HBONds ASP
+  USER ENER EWALD:          EWKSum       EWSElf       EWEXcl       EWQCor EWUTil
    ----------       ---------    ---------    ---------    --------- ---------
   ENER>        0      0.12057      0.00000      0.03003
   ENER INTERN>        0.00003      0.00002      0.00000      0.00000 0.00000
@@ -160,13 +165,14 @@ TEST_CASE("waterDimer") {
 
     auto eneDecompositionMap = fm->getEnergyComponents();
     for (auto ene : refEneDecompositionMap) {
-      CHECK(ene.second == Approx(eneDecompositionMap[ene.first]).margin(.0001));
+      CHECK(ene.second ==
+            Approx(eneDecompositionMap[ene.first]).margin(0.00001));
     }
     refEneDecompositionMap["epot"] = 0.12057;
     auto ePotContainer = ctx->getPotentialEnergy();
     ePotContainer.transferFromDevice();
-    double ePot = ePotContainer.getHostArray()[0];
-    CHECK(ePot == Approx(refEneDecompositionMap["epot"]).margin(.0001));
+    double ePot = ePotContainer[0];
+    CHECK(ePot == Approx(refEneDecompositionMap["epot"]).margin(0.00001));
   }
 
   SECTION("virial") {
@@ -177,8 +183,8 @@ TEST_CASE("waterDimer") {
 
     auto virContainer = ctx->getVirial();
     std::vector<double> vir = virContainer.getHostArray();
-    // for (int i =0 ; i<9; i++) {
-    //     std::cout << vir[i] << " | " << refVir[i] << std::endl;
+    // for (int i = 0; i < 9; i++) {
+    //   std::cout << vir[i] << " | " << refVir[i] << std::endl;
     // }
     CHECK(compareVectors(vir, refVir, 0.0001));
   }
@@ -189,9 +195,8 @@ TEST_CASE("waterDimer") {
         getForcesFromRefFile(dataPath + refForcesFile);
     auto forcesContainer = getForcesAsCudaContainer(ctx);
     std::vector<double4> forcesCalc = forcesContainer.getHostArray();
-    for (int i = 0; i < numAtoms; i++) {
-      CHECK(compareTriples(forcesRef[i], forcesCalc[i], 0.005));
-    }
+    for (int i = 0; i < numAtoms; i++)
+      CHECK(compareTriples(forcesRef[i], forcesCalc[i], 0.0001));
   }
 }
 
