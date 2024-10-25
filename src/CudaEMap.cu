@@ -11,6 +11,7 @@
 #include "CudaEMap.h"
 #include <iostream>
 
+/*
 __global__ void cuda_mass_spread(const double *__restrict__ masses,
                                  int numAtoms) {
   __shared__ int sh_ix[32];
@@ -22,10 +23,12 @@ __global__ void cuda_mass_spread(const double *__restrict__ masses,
   const unsigned int pos = blockIdx.x * blockDim.x + threadIdx.x,
                      pos_end = min((blockIdx.x + 1) * blockDim.x, numAtoms);
 }
+*/
 
 void CudaEMap::generate() {
   std::cout << "Generating EMap" << std::endl;
 
+  /*
   int numAtoms = context->getNumAtoms();
   // Spread the mass of the particles to the grid
   dim3 nthread, nblock;
@@ -39,10 +42,11 @@ void CudaEMap::generate() {
   nblock.y = 1;
   nblock.z = 1;
 
-  cuda_mass_spread<<<nblock, nthread, 0, stream>>>(
-      atomicMasses.getDeviceArray().data(), numAtoms);
+  // cuda_mass_spread<<<nblock, nthread, 0, stream>>>(
+  //     atomicMasses.getDeviceArray().data(), numAtoms);
 
   cudaCheck(cudaGetLastError());
 
   // reduce the mass of the particles to the grid
+  */
 }

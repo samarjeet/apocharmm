@@ -20,8 +20,8 @@ void exportForceManager(py::module &mod) {
       .value("VDW_DBEXP", NonBondedType::VDW_DBEXP_c)
       .export_values();
 
-  py::class_<ForceManager, std::shared_ptr<ForceManager>>(
-      mod, "ForceManager", R"sitb(
+  py::class_<ForceManager, std::shared_ptr<ForceManager>>(mod, "ForceManager",
+                                                          R"sitb(
      ForceManager object.
      
      Creates a ForceManager, assembling topology and force-field parameters. 
@@ -49,7 +49,21 @@ void exportForceManager(py::module &mod) {
                :type x, y, z: float
 
             )pbdoc")
-      .def("getBoxDimensions", &ForceManager::getBoxDimensions, R"pbdoc(
+      .def(
+          "getBoxDimensions",
+          static_cast<const std::vector<double> &(ForceManager::*)(void) const>(
+              &ForceManager::getBoxDimensions),
+          R"pbdoc(
+               Gets x,y,z dimensions of simulation box
+
+               :return: box dimensions in AA
+               :rtype: tuple of floats
+
+            )pbdoc")
+      .def("getBoxDimensions",
+           static_cast<std::vector<double> &(ForceManager::*)(void)>(
+               &ForceManager::getBoxDimensions),
+           R"pbdoc(
                Gets x,y,z dimensions of simulation box
 
                :return: box dimensions in AA

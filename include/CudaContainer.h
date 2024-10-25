@@ -9,6 +9,7 @@
 // ENDLICENSE
 
 #pragma once
+
 #include "DeviceVector.h"
 
 #include <vector>
@@ -26,12 +27,14 @@
  * using single precision
  */
 template <typename T> class CudaContainer {
-public:
+public: // Member functions
   /**
    * @brief Construct a new Cuda Container object
    *
    */
   CudaContainer(void);
+
+  CudaContainer(const std::size_t count);
 
   /**
    * @brief Construct a new Cuda Container object with the same contents as the
@@ -39,7 +42,15 @@ public:
    *
    * @param const std::vector<T> &
    */
-  CudaContainer(const std::vector<T> &array);
+  CudaContainer(const std::vector<T> &other);
+
+  /**
+   * @brief Construct a new Cuda Container object with the same contents as the
+   * vector passed
+   *
+   * @param const DeviceVector<T> &
+   */
+  CudaContainer(const DeviceVector<T> &other);
 
   /**
    * @brief Copy constructor for new Cuda Container object
@@ -55,76 +66,89 @@ public:
    */
   CudaContainer(const CudaContainer<T> &&other);
 
-public:
-  /**
-   * @brief Allocate memory on host and device
-   *
-   * @param size
-   */
-  void allocate(size_t size);
+  CudaContainer<T> &operator=(const std::vector<T> &other);
+  CudaContainer<T> &operator=(const DeviceVector<T> &other);
+  CudaContainer<T> &operator=(const CudaContainer<T> &other);
+  CudaContainer<T> &operator=(const CudaContainer<T> &&other);
 
+public: // Element access
+  /**
+   * @brief Returns a constant reference to the element at specified location
+   * pos, with bounds checking. If pos is not within the range of the container,
+   * an exception of type std::out_of_range is thrown.
+   *
+   * @param[in] pos
+   */
+  const T &at(const std::size_t pos) const;
+
+  /**
+   * @brief Returns a reference to the element at specified location
+   * pos, with bounds checking. If pos is not within the range of the container,
+   * an exception of type std::out_of_range is thrown.
+   *
+   * @param[in] pos
+   */
+  T &at(const std::size_t pos);
+
+  /**
+   * @brief Returns a constant reference to the element at specified location
+   * pos. No bounds checking is performed.
+   *
+   * @param[in] pos
+   */
+  const T &operator[](const std::size_t pos) const;
+
+  /**
+   * @brief Returns a reference to the element at specified location pos. No
+   * bounds checking is performed.
+   *
+   * @param[in] pos
+   */
+  T &operator[](const std::size_t pos);
+
+  const std::vector<T> &getHostArray(void) const;
+  std::vector<T> &getHostArray(void);
+
+  const DeviceVector<T> &getDeviceArray(void) const;
+  DeviceVector<T> &getDeviceArray(void);
+
+  const T *getHostData(void) const;
+  T *getHostData(void);
+
+  const T *getDeviceData(void) const;
+  T *getDeviceData(void);
+
+public: // Capacity
   /**
    * @brief Size of the container
    *
    * @return size_t
    */
-  size_t size(void) const;
+  std::size_t size(void) const;
 
-public:
-  /**
-   * @brief Set the Host Array object
-   *
-   * @param const std::vector<T> &
-   */
-  void setHostArray(const std::vector<T> &array);
-
-  /**
-   * @brief Set the deviceArray with the `same` pointer
-   * Use with caution!
-   *
-   * @param T*
-   */
-  void setDeviceArray(T *devPtr);
-
-  const std::vector<T> &getHostArray(void) const;
-  const DeviceVector<T> &getDeviceArray(void) const;
-
-  std::vector<T> &getHostArray(void);
-  DeviceVector<T> &getDeviceArray(void);
+public: // Modifiers
+  void clear(void);
+  void resize(const std::size_t count);
 
   /**
    * @brief Sets the host array and transfers it to device
    *
-   * @param[in] inpVec passed as reference
+   * @param[in] values passed as reference
    */
-  void set(const std::vector<T> &inpVec);
+  void set(const std::vector<T> &values);
+
+  /**
+   * @brief Sets the device array and transfers it to host
+   *
+   * @param[in] values passed as reference
+   */
+  void set(const DeviceVector<T> &values);
 
   /**
    * @brief Set all values of the host array to the input value, transfer to
    * device.
    */
-  void setToValue(const T &inpVal);
-
-  CudaContainer<T> &operator=(const CudaContainer<T> &other);
-  CudaContainer<T> &operator=(const CudaContainer<T> &&other);
-
-  // Returns a reference to the element at specified location pos.
-  // No bounds checking is performed.
-  const T &operator[](const size_t pos) const;
-
-  // Returns a reference to the element at specified location pos, with bounds
-  // checking. If pos is not within the range of the container, an exception of
-  // type std::out_of_range is thrown.
-  const T &at(const size_t pos) const;
-
-  // Returns a reference to the element at specified location pos.
-  // No bounds checking is performed.
-  T &operator[](const size_t pos);
-
-  // Returns a reference to the element at specified location pos, with bounds
-  // checking. If pos is not within the range of the container, an exception of
-  // type std::out_of_range is thrown.
-  T &at(const size_t pos);
+  void setToValue(const T value);
 
   void transferToDevice(void);
   void transferToHost(void);
@@ -149,6 +173,11 @@ template class CudaContainer<float>;
 template class CudaContainer<float2>;
 template class CudaContainer<float3>;
 template class CudaContainer<float4>;
+template class CudaContainer<long long int>;
+template class CudaContainer<longlong2>;
+template class CudaContainer<longlong3>;
+template class CudaContainer<longlong4>;
+template class CudaContainer<std::size_t>;
 template class CudaContainer<double>;
 template class CudaContainer<double2>;
 template class CudaContainer<double3>;

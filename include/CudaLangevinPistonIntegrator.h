@@ -27,203 +27,32 @@
  *
  */
 class CudaLangevinPistonIntegrator : public CudaIntegrator {
-private:
-  // double forceScale;
-  // double velScale;
-  // double noiseScale;
-
-  //** @brief Friction used for the crystal dofs */
-  // double friction;
-
-  std::vector<double> boxDimensions;
-
-  curandStatePhilox4_32_10_t *devPHILOXStates;
-  // CudaContainer<double4> coordsDeltaPrevious;
-  CudaContainer<double4> coordsDeltaPredicted;
-
-  CudaContainer<double4> holonomicConstraintForces;
-
-  int stepsSinceLastReport;
-  double bathTemperature;
-
-  void allocatePistonVariables();
-
-  /**
-   * @brief 6 element crystal dimensions.
-   * This should go to CharmmContext
-   */
-  CudaContainer<double> crystalDimensions, inverseCrystalDimensions;
-
-  CudaContainer<double> crystalDimensionsPrevious;
-
-  /** @brief deltaPressure is the difference between the reference pressure and
-   * the (virial + kinetic) pressure. Size 9 (full matrix stored)
-   */
-  CudaContainer<double> deltaPressure;
-  /** @brief deltaPressureNonChanging = deltaPressure - (predicted) next
-   * half-step velocity contribution. Size 9 (full matrix stored).
-   */
-  CudaContainer<double> deltaPressureNonChanging;
-  /** @brief (predicted) next half-step velocity contribution to the pressure.
-   * Size 9 (full matrix stored)
-   */
-  CudaContainer<double> deltaPressureHalfStepKinetic;
-
-  /** @brief Inverse of PistonMass (distributed onto piston dofs)
-   *
-   * @todo Does not have a setter yet ! Only default value now (=50.)
-   */
-  CudaContainer<double> inversePistonMass;
-
-  // CudaContainer<double> deltaPressureVelocity;
-  // CudaContainer<double> randomForceScaleFactor;
-
-  /** @brief Crystal type. Default: Orthorhombic */
-  CRYSTAL crystalType = CRYSTAL::ORTHORHOMBIC;
-
-  /* @brief
-   */
-  int crystalDegreesOfFreedom = 3;
-
-  /** @brief Number of degrees of freedom for the piston.
-   * @todo Initialize depending on the crystal type.
-   */
-  int pistonDegreesOfFreedom;
-
-  /**
-   * @brief deaults to 1 atm along XX, YY, ZZ and 0 otherwise
-   * TODO make a setter for this
-   */
-  CudaContainer<double> referencePressure;
-
-  /** @brief Mass of the piston degree of freedom. Default: 50 AU  */
-  std::vector<double> pistonMass;
-
-  /** @brief Mass of the Nose-Hoover degree of freedom. Default: 2\% of the
-   * system mass
-   */
-  double noseHooverPistonMass;
-
-  double noseHooverPistonPosition, noseHooverPistonVelocity,
-      noseHooverPistonVelocityPrevious, noseHooverPistonForce,
-      noseHooverPistonForcePrevious;
-
-  /** @brief Friction constant for the piston degree of freedom. Default: 0.0 */
-  double pgamma;
-
-  double pbfact, pvfact; // vars to propagate crystal dof
-  /**          1 - .5 * gamma * dt^2
-   * palpha =  --------------------
-   *           1 + .5 * gamma * dt^2
-   */
-  double palpha;
-  std::vector<double> prfwd;
-
-  std::mt19937 rng;
-
-  bool noseHooverFlag;
-
-  /** @brief Flag. If true, the simulation is run at constant surface tension */
-  bool constantSurfaceTensionFlag;
-
-  CudaContainer<double> kineticEnergyPressureTensor, holonomicVirial,
-      pressureTensor;
-
-  /** @brief Distance the piston moves in one step or
-   * equivalently half step piston velocity * timeStep
-   */
-  CudaContainer<double> pressurePistonPositionDelta;
-  /** @brief Distance the piston moved at previous step */
-  CudaContainer<double> pressurePistonPositionDeltaPrevious;
-  /** @brief Saved distance the piston moved at previous step */
-  CudaContainer<double> pressurePistonPositionDeltaStored;
-
-  CudaContainer<double> onStepPistonVelocity, halfStepPistonVelocity,
-      onStepPistonPosition, halfStepPistonPosition;
-
-  CudaContainer<double> halfStepKineticEnergy,
-      halfStepKineticEnergy1StepPrevious, halfStepKineticEnergy2StepsPrevious,
-      potentialEnergyPrevious;
-  CudaContainer<double> hfctenTerm;
-
-  /** @brief crystal_vel / crystal_dim for the onStep and halfStep */
-  CudaContainer<double> onStepCrystalFactor, halfStepCrystalFactor;
-
-  /** @brief deltaPressure projected onto Langevin Piston dof(s) */
-  CudaContainer<double> pistonDeltaPressure;
-
-  /** @brief Number of predictor-corrector steps to predict the LP dof
-   * evolution */
-  int maxPredictorCorrectorSteps = 3;
-
-  /**
-   * @brief Project any quantity from the crystal dimensions  onto the Langevin
-   * piston degree(s) of freedom
-   */
-  // void projectCrystalDimensionsToPistonDof();
-  int stepId;
-
-  /**
-   * @brief targeted surface tension value. Set by user.
-   *
-   */
-  double surfaceTension;
-
-  CudaContainer<double> pressureScalar;
-
-  void removeCenterOfMassMotion();
-
-  bool pistonFrictionSetFlag;
-
-  /** @brief Seed value for the RNG used for the piston friction */
-  uint64_t seed;
-
-  void removeCenterOfMassAverageNetForce();
-
-  ////////////
-  // PUBLIC //
-  ////////////
 public:
-  CudaLangevinPistonIntegrator(ts_t timeStep);
-  CudaLangevinPistonIntegrator(ts_t timeStep, CRYSTAL _crystalType);
-  ~CudaLangevinPistonIntegrator();
+  CudaLangevinPistonIntegrator(const double timeStep);
+  CudaLangevinPistonIntegrator(const double timeStep,
+                               const CRYSTAL crystalType);
+  ~CudaLangevinPistonIntegrator(void);
 
+public: // Setters
   /**
    * @brief Set the pressure along the XX, YY and ZZ axes
    * TODO : modify this to include the full triclinic one
    *
    * @param _referencePressure
    */
-  void setPressure(std::vector<double> _referencePressure);
-
-  double getPressureScalar();
-
-  std::vector<double> getPressureTensor();
-
-  double getInstantaneousPressureScalar();
-
-  std::vector<double> getInstantaneousPressureTensor();
-
-  /**
-   * @brief Set the mass of the piston
-   * I'm forcefully deprecating this.
-   */
-  // void setPistonMass(double _pistonMass);
-
-  double getPistonMass() { return pistonMass[0]; }
+  void setPressure(const std::vector<double> &referencePressure);
 
   /** @brief Sets mass of the Langevin Piston using a vector, allowing for
-   * anisotropic barostat */
-  void setPistonMass(std::vector<double> _pistonMass);
+   * anisotropic barostat
+   */
+  void setPistonMass(const std::vector<double> &pistonMass);
 
   /**
    * @brief Set the mass of the NoseHoover piston
    */
-  void setNoseHooverPistonMass(double _nhMass);
+  void setNoseHooverPistonMass(const double nhMass);
 
-  void setCrystalType(CRYSTAL _crystalType);
-
-  CRYSTAL getCrystalType(void) const;
+  void setCrystalType(const CRYSTAL crystalType);
 
   /**
    * @brief Constant surface tension. Units should be dyne/cm. Since we only
@@ -232,22 +61,9 @@ public:
    *
    * @param st
    */
-  void setSurfaceTension(double st);
+  void setSurfaceTension(const double st);
 
-  /**
-   * @brief Get the value of the refernece pressure set by the user
-   *
-   * @return std::vector<double>
-   */
-  std::vector<double> getReferencePressure();
-
-  int getPistonDegreesOfFreedom() { return pistonDegreesOfFreedom; }
-
-  // Put these in the base class
-  // void setContext();
-  void initialize();
-
-  void setBoxDimensions(std::vector<double> boxDimensionsOriginal);
+  // void setBoxDimensions(const std::vector<double> &boxDimensions);
 
   /**
    * @brief Set the friction coefficient for the piston degree of freedom
@@ -258,148 +74,316 @@ public:
    *
    * @param _friction
    */
-  void setPistonFriction(double _friction);
+  void setPistonFriction(const double friction);
+
   /**
    * @brief Set the Bath Temperature of the thermostat. Default: 300K.
    *
    * @param temp
    */
-  void setBathTemperature(double temp) { bathTemperature = temp; }
+  void setBathTemperature(const double bathTemperature);
+
+  void setNoseHooverFlag(const bool noseHooverFlag);
+
+  void setOnStepPistonVelocity(
+      const CudaContainer<double> &onStepPistonVelocity) override;
+
+  void setOnStepPistonVelocity(
+      const std::vector<double> &onStepPistonVelocity) override;
+
+  void setHalfStepPistonVelocity(
+      const CudaContainer<double> &halfStepPistonVelocity) override;
+
+  void setHalfStepPistonVelocity(
+      const std::vector<double> &halfStepPistonVelocity) override;
+
+  void setOnStepPistonPosition(
+      const CudaContainer<double> &onStepPistonPosition) override;
+
+  void setOnStepPistonPosition(
+      const std::vector<double> &onStepPistonPosition) override;
+
+  void setHalfStepPistonPosition(
+      const CudaContainer<double> &halfStepPistonPosition) override;
+
+  void setHalfStepPistonPosition(
+      const std::vector<double> &halfStepPistonPosition) override;
+
+  /** @brief Sets coordsDeltaPrevious container, notably used by
+   * RestartSubscriber to restart a simulation
+   */
+  void setCoordsDeltaPrevious(
+      const std::vector<std::vector<double>> &coordsDelta) override;
+
+  void setNoseHooverPistonVelocity(const double noseHooverPistonVelocity);
+
+  void setNoseHooverPistonVelocityPrevious(
+      const double noseHooverPistonVelocityPrevious);
+
+  void setNoseHooverPistonForce(const double noseHooverPistonForce);
+
+  void
+  setNoseHooverPistonForcePrevious(const double noseHooverPistonForcePrevious);
+
+  void setNoseHooverPistonPosition(const double noseHooverPistonPosition);
+
+  /** @brief Set the number of predictor-corrector steps for the LP integrator.
+   * Default value is 3
+   */
+  void setMaxPredictorCorrectorSteps(const int maxPredictorCorrectorSteps);
+
+  /** @brief Sets seed value used to generate the friction. Initializes RNG
+   */
+  void setSeedForPistonFriction(const uint64_t seed);
+
+public: // Getters
+  double getPressureScalar(void) const;
+
+  const std::vector<double> &getPressureTensor(void) const;
+  std::vector<double> &getPressureTensor(void);
+
+  double getInstantaneousPressureScalar(void) const;
+
+  const std::vector<double> &getInstantaneousPressureTensor(void) const;
+  std::vector<double> &getInstantaneousPressureTensor(void);
+
+  double getPistonMass(void) const;
+
+  CRYSTAL getCrystalType(void) const;
+
+  /**
+   * @brief Get the value of the refernece pressure set by the user
+   *
+   * @return const CudaContainer<double> &
+   */
+  const CudaContainer<double> &getReferencePressure(void) const;
+
+  /**
+   * @brief Get the value of the refernece pressure set by the user
+   *
+   * @return CudaContainer<double> &
+   */
+  CudaContainer<double> &getReferencePressure(void);
+
+  int getPistonDegreesOfFreedom(void) const;
 
   /**
    * @brief Get the Bath Temperature of the thermostat
    *
    * @return double
    */
-  // double getBathTemperature() const { return bathTemperature; }
+  double getBathTemperature(void) const;
 
-  void propagateOneStep() override;
+  double getNoseHooverPistonMass(void) const;
+  double getNoseHooverPistonPosition(void) const;
+  double getNoseHooverPistonVelocity(void) const;
+  double getNoseHooverPistonVelocityPrevious(void) const;
+  double getNoseHooverPistonForce(void) const;
+  double getNoseHooverPistonForcePrevious(void) const;
 
-  double getNoseHooverPistonMass() { return noseHooverPistonMass; }
+  const CudaContainer<double4> &getCoordsDelta(void) const override;
+  CudaContainer<double4> &getCoordsDelta(void) override;
 
-  void setNoseHooverFlag(bool _noseHooverFlag) {
-    noseHooverFlag = _noseHooverFlag;
-  }
+  const CudaContainer<double4> &getCoordsDeltaPrevious(void) const override;
+  CudaContainer<double4> &getCoordsDeltaPrevious(void) override;
 
-  double getNoseHooverPistonPosition() { return noseHooverPistonPosition; }
-  double getNoseHooverPistonVelocity() { return noseHooverPistonVelocity; }
-  double getNoseHooverPistonForce() { return noseHooverPistonForce; }
+  const CudaContainer<double> &getOnStepPistonVelocity(void) const;
+  CudaContainer<double> &getOnStepPistonVelocity(void);
 
-  CudaContainer<double4> getCoordsDelta() override;
-  CudaContainer<double4> getCoordsDeltaPrevious() override;
-  // std::vector<std::vector<double>> getCoordsDeltaPrevious() override;
+  /** @brief return box dimensions
+   */
+  // const std::vector<double> &
+  // getBoxDimensions(void) const; // { return boxDimensions; }
+  // std::vector<double> &getBoxDimensions(void);
 
-  CudaContainer<double> averagePressureScalar;
-  CudaContainer<double> averagePressureTensor;
+  const CudaContainer<double> &getHalfStepPistonVelocity(void) const;
+  CudaContainer<double> &getHalfStepPistonVelocity(void);
 
-  CudaContainer<double> getOnStepPistonVelocity() {
-    return onStepPistonVelocity;
-  }
+  const CudaContainer<double> &getOnStepPistonPosition(void) const;
+  CudaContainer<double> &getOnStepPistonPosition(void);
 
-  /** @brief return box dimensions */
-  std::vector<double> getBoxDimensions() { return boxDimensions; }
+  const CudaContainer<double> &getHalfStepPistonPosition(void) const;
+  CudaContainer<double> &getHalfStepPistonPosition(void);
 
-  void setOnStepPistonVelocity(
-      CudaContainer<double> _onStepPistonVelocity) override {
-    onStepPistonVelocity.set(_onStepPistonVelocity.getHostArray());
-  }
+  bool hasPistonFrictionSet(void) const;
 
-  void setOnStepPistonVelocity(
-      const std::vector<double> _onStepPistonVelocity) override {
-    onStepPistonVelocity.set(_onStepPistonVelocity);
-  }
+  uint64_t getSeedForPistonFriction(void) const;
 
-  void setHalfStepPistonVelocity(
-      CudaContainer<double> _halfStepPistonVelocity) override {
-    halfStepPistonVelocity.set(_halfStepPistonVelocity.getHostArray());
-  }
+public:
+  void initialize(void);
 
-  void setHalfStepPistonVelocity(
-      const std::vector<double> _halfStepPistonVelocity) override {
-    halfStepPistonVelocity.set(_halfStepPistonVelocity);
-  }
+  void propagateOneStep(void) override;
 
-  CudaContainer<double> getHalfStepPistonVelocity() {
-    return halfStepPistonVelocity;
-  }
-
-  CudaContainer<double> getOnStepPistonPosition() {
-    return onStepPistonPosition;
-  }
-
-  void setOnStepPistonPosition(
-      CudaContainer<double> _onStepPistonPosition) override {
-    onStepPistonPosition.set(_onStepPistonPosition.getHostArray());
-  }
-
-  void setOnStepPistonPosition(
-      const std::vector<double> _onStepPistonPosition) override {
-    onStepPistonPosition.set(_onStepPistonPosition);
-  }
-
-  CudaContainer<double> getHalfStepPistonPosition() {
-    return halfStepPistonPosition;
-  }
-
-  void setHalfStepPistonPosition(
-      CudaContainer<double> _halfStepPistonPosition) override {
-    halfStepPistonPosition.set(_halfStepPistonPosition.getHostArray());
-  }
-
-  void setHalfStepPistonPosition(
-      const std::vector<double> _halfStepPistonPosition) override {
-    halfStepPistonPosition.set(_halfStepPistonPosition);
-  }
-
-  /** @brief Sets coordsDeltaPrevious container, notably used by
-   * RestartSubscriber to restart a simulation */
-  void setCoordsDeltaPrevious(
-      std::vector<std::vector<double>> _coordsDelta) override;
-
-  double getNoseHooverPistonVelocityPrevious() const {
-    return noseHooverPistonVelocityPrevious;
-  }
-  double getNoseHooverPistonForcePrevious() const {
-    return noseHooverPistonForcePrevious;
-  }
-  double getNoseHooverPistonPosition() const {
-    return noseHooverPistonPosition;
-  }
-  void setNoseHooverPistonVelocity(double _noseHooverPistonVelocity) {
-    noseHooverPistonVelocity = _noseHooverPistonVelocity;
-  }
-  void setNoseHooverPistonVelocityPrevious(
-      double _noseHooverPistonVelocityPrevious) {
-    noseHooverPistonVelocityPrevious = _noseHooverPistonVelocityPrevious;
-  }
-  void setNoseHooverPistonForce(double _noseHooverPistonForce) {
-    noseHooverPistonForce = _noseHooverPistonForce;
-  }
-  void setNoseHooverPistonForcePrevious(double _noseHooverPistonForcePrevious) {
-    noseHooverPistonForcePrevious = _noseHooverPistonForcePrevious;
-  }
-  void setNoseHooverPistonPosition(double _noseHooverPistonPosition) {
-    noseHooverPistonPosition = _noseHooverPistonPosition;
-  }
-
-  /** @brief Set the number of predictor-corrector steps for the LP integrator.
-   * Default value is 3 */
-  void setMaxPredictorCorrectorSteps(int _maxPredictorCorrectorSteps) {
-    maxPredictorCorrectorSteps = _maxPredictorCorrectorSteps;
-  }
-
-  std::map<std::string, std::string> getIntegratorDescriptors() override;
-
-  bool hasPistonFrictionSet() { return pistonFrictionSetFlag; }
-
-  /** @brief Sets seed value used to generate the friction. Initializes RNG */
-  void setSeedForPistonFriction(uint64_t _seed) {
-    seed = _seed;
-    rng.seed(_seed);
-  }
-  uint64_t getSeedForPistonFriction() { return seed; }
+  std::map<std::string, std::string> getIntegratorDescriptors(void) override;
 
   /** @brief Following CHARMM-GUI heuristics, set the Nose-Hoover dof mass as
-   * 2\% of the mass of the system */
-  double computeNoseHooverPistonMass();
+   * 2\% of the mass of the system
+   */
+  double computeNoseHooverPistonMass(void);
+
+private:
+  void allocatePistonVariables(void);
+
+  /**
+   * @brief Project any quantity from the crystal dimensions  onto the Langevin
+   * piston degree(s) of freedom
+   */
+  // void projectCrystalDimensionsToPistonDof();
+
+  void removeCenterOfMassMotion(void);
+
+  void removeCenterOfMassAverageNetForce(void);
+
+private:
+  curandStatePhilox4_32_10_t *m_DevPHILOXStates;
+  CudaContainer<double4> m_CoordsDeltaPredicted;
+
+  CudaContainer<double4> m_HolonomicConstraintForces;
+
+  int m_StepsSinceLastReport;
+  double m_BathTemperature;
+
+  /** @brief Mass of the Nose-Hoover degree of freedom. Default: 2\% of the
+   * system mass
+   */
+  bool m_NoseHooverFlag;
+  double m_NoseHooverPistonMass;
+  double m_NoseHooverPistonPosition;
+  double m_NoseHooverPistonVelocity;
+  double m_NoseHooverPistonVelocityPrevious;
+  double m_NoseHooverPistonForce;
+  double m_NoseHooverPistonForcePrevious;
+
+  /** @brief Flag. If true, the simulation is run at constant surface tension
+   */
+  bool m_ConstantSurfaceTensionFlag;
+
+  /**
+   * @brief 6 element crystal dimensions.
+   * This should go to CharmmContext
+   */
+  CudaContainer<double> m_CrystalDimensions;
+  CudaContainer<double> m_InverseCrystalDimensions;
+  CudaContainer<double> m_CrystalDimensionsPrevious;
+
+  /** @brief deltaPressure is the difference between the reference pressure and
+   * the (virial + kinetic) pressure. Size 9 (full matrix stored)
+   */
+  CudaContainer<double> m_DeltaPressure;
+
+  /** @brief deltaPressureNonChanging = deltaPressure - (predicted) next
+   * half-step velocity contribution. Size 9 (full matrix stored).
+   */
+  CudaContainer<double> m_DeltaPressureNonChanging;
+
+  /** @brief (predicted) next half-step velocity contribution to the pressure.
+   * Size 9 (full matrix stored)
+   */
+  CudaContainer<double> m_DeltaPressureHalfStepKinetic;
+
+  /** @brief Mass of the piston degree of freedom. Default: 50 AU
+   */
+  CudaContainer<double> m_PistonMass;
+
+  /** @brief Inverse of PistonMass (distributed onto piston dofs)
+   *
+   * @todo Does not have a setter yet ! Only default value now (=50.)
+   */
+  CudaContainer<double> m_InversePistonMass;
+
+  /** @brief Crystal type. Default: Orthorhombic
+   */
+  CRYSTAL m_CrystalType; // = CRYSTAL::ORTHORHOMBIC;
+
+  /** @brief
+   */
+  int m_CrystalDegreesOfFreedom = 3;
+
+  /** @brief Number of degrees of freedom for the piston.
+   * @todo Initialize depending on the crystal type.
+   */
+  int m_PistonDegreesOfFreedom;
+
+  /**
+   * @brief deaults to 1 atm along XX, YY, ZZ and 0 otherwise
+   * TODO make a setter for this
+   */
+  CudaContainer<double> m_ReferencePressure;
+
+  /** @brief Friction constant for the piston degree of freedom. Default: 0.0
+   */
+  double m_Pgamma;
+
+  double m_Pbfact;
+  double m_Pvfact; // vars to propagate crystal dof
+
+  /**          1 - .5 * gamma * dt^2
+   * palpha =  --------------------
+   *           1 + .5 * gamma * dt^2
+   */
+  double m_Palpha;
+  CudaContainer<double> m_Prfwd;
+
+  std::mt19937 m_Rng;
+
+  int m_StepId;
+
+  CudaContainer<double> m_KineticEnergyPressureTensor;
+  CudaContainer<double> m_HolonomicVirial;
+  CudaContainer<double> m_PressureTensor;
+
+  /** @brief Distance the piston moves in one step or
+   * equivalently half step piston velocity * timeStep
+   */
+  CudaContainer<double> m_PressurePistonPositionDelta;
+
+  /** @brief Distance the piston moved at previous step
+   */
+  CudaContainer<double> m_PressurePistonPositionDeltaPrevious;
+
+  /** @brief Saved distance the piston moved at previous step
+   */
+  CudaContainer<double> m_PressurePistonPositionDeltaStored;
+
+  CudaContainer<double> m_OnStepPistonVelocity;
+  CudaContainer<double> m_HalfStepPistonVelocity;
+  CudaContainer<double> m_OnStepPistonPosition;
+  CudaContainer<double> m_HalfStepPistonPosition;
+
+  CudaContainer<double> m_HalfStepKineticEnergy;
+  CudaContainer<double> m_HalfStepKineticEnergy1StepPrevious;
+  CudaContainer<double> m_HalfStepKineticEnergy2StepsPrevious;
+  CudaContainer<double> m_PotentialEnergyPrevious;
+  CudaContainer<double> m_HfctenTerm;
+
+  /** @brief crystal_vel / crystal_dim for the onStep and halfStep
+   */
+  CudaContainer<double> m_OnStepCrystalFactor;
+  CudaContainer<double> m_HalfStepCrystalFactor;
+
+  /** @brief deltaPressure projected onto Langevin Piston dof(s)
+   */
+  CudaContainer<double> m_PistonDeltaPressure;
+
+  /** @brief Number of predictor-corrector steps to predict the LP dof
+   * evolution
+   */
+  int m_MaxPredictorCorrectorSteps; // = 3;
+
+  /**
+   * @brief targeted surface tension value. Set by user.
+   *
+   */
+  double m_SurfaceTension;
+
+  CudaContainer<double> m_PressureScalar;
+
+  bool m_PistonFrictionSetFlag;
+
+  /** @brief Seed value for the RNG used for the piston friction
+   */
+  uint64_t m_Seed;
+
+  CudaContainer<double> m_AveragePressureScalar;
+  CudaContainer<double> m_AveragePressureTensor;
 };

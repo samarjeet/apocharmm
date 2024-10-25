@@ -30,13 +30,13 @@ CharmmContext::CharmmContext(std::shared_ptr<ForceManager> fmIn)
 
   useHolonomicConstraints(true);
 
-  kineticEnergy.allocate(1);
-  virialKineticEnergyTensor.allocate(9);
+  kineticEnergy.resize(1);
+  virialKineticEnergyTensor.resize(9);
 
   if (!forceManager->isInitialized()) {
     forceManager->initialize();
   }
-  pressure.allocate(9);
+  pressure.resize(9);
 
   // linkBackForceManager();
 
@@ -135,7 +135,7 @@ void CharmmContext::setCoordinates(
   }
   setNumAtoms(coords.size());
 
-  velocityMass.allocate(numAtoms);
+  velocityMass.resize(numAtoms);
   setMasses(forceManager->getPSF()->getAtomMasses());
 
   useHolonomicConstraints(usingHolonomicConstraints);
@@ -157,7 +157,7 @@ void CharmmContext::setCoordinates(
                            crdCharges[i].w);
   xyzq.set_xyzq(coords.size(), fcrds.data(), 0);
 
-  coordsCharge.allocate(coords.size());
+  coordsCharge.resize(coords.size());
   coordsCharge.set(crdCharges);
   resetNeighborList();
 }
@@ -358,14 +358,15 @@ __global__ void
 calculateCenterOfMassMomemtumKernel(int numAtoms,
                                     double4 *__restrict__ velmass) {
 
-  int idx = blockIdx.x * blockDim.x + threadIdx.x;
-  float4 com;
-  for (int i = idx; i < numAtoms; i += blockDim.x * gridDim.x) {
-    auto mass = 1.0 / velmass[i].w;
-    com.x = velmass[i].x * mass;
-    com.y = velmass[i].y * mass;
-    com.z = velmass[i].z * mass;
-  }
+  // int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  // float4 com;
+  // for (int i = idx; i < numAtoms; i += blockDim.x * gridDim.x) {
+  //   auto mass = 1.0 / velmass[i].w;
+  //   com.x = velmass[i].x * mass;
+  //   com.y = velmass[i].y * mass;
+  //   com.z = velmass[i].z * mass;
+  // }
+  return;
 }
 
 void CharmmContext::removeCenterOfMassMotion() {
@@ -629,7 +630,11 @@ PBC CharmmContext::getPeriodicBoundaryCondition() {
   return forceManager->getPeriodicBoundaryCondition();
 }
 
-const std::vector<double> &CharmmContext::getBoxDimensions() {
+const std::vector<double> &CharmmContext::getBoxDimensions(void) const {
+  return forceManager->getBoxDimensions();
+}
+
+std::vector<double> &CharmmContext::getBoxDimensions(void) {
   return forceManager->getBoxDimensions();
 }
 
@@ -644,7 +649,7 @@ int CharmmContext::getDegreesOfFreedom() { return numDegreesOfFreedom; }
 float CharmmContext::calculatePotentialEnergy(bool reset, bool print) {
   return forceManager->calc_force(xyzq.getDeviceXYZQ(), reset, true, true);
 }
-CudaContainer<double> CharmmContext::getPotentialEnergy() {
+CudaContainer<double> &CharmmContext::getPotentialEnergy() {
   return forceManager->getPotentialEnergy();
 }
 

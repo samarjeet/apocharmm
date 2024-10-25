@@ -17,6 +17,7 @@
 #include "DcdSubscriber.h"
 #include "RestartSubscriber.h"
 #include "catch.hpp"
+#include "cuda_utils.h"
 #include "helper.h"
 #include "test_paths.h"
 #include <iomanip>
@@ -57,9 +58,9 @@ TEST_CASE("waterbox", "[all]") {
   int stride = ctx->getForceStride();
   auto force = ctx->getForces()->xyz();
 
-  CudaContainer<double> forcesContainer;
-  forcesContainer.allocate(stride * 3);
-  forcesContainer.setDeviceArray(force);
+  CudaContainer<double> forcesContainer(stride * 3);
+  copy_DtoD<double>(force, forcesContainer.getDeviceData(), stride * 3);
+  // forcesContainer.setDeviceArray(force);
   forcesContainer.transferFromDevice();
   compareP21Forces(ctx->getNumAtoms(), stride, forcesContainer.getHostArray(),
                    charmmForces->getCoordinates());
@@ -348,9 +349,9 @@ TEST_CASE("virial") {
   int stride = ctx->getForceStride();
   auto force = ctx->getForces()->xyz();
 
-  CudaContainer<double> forcesContainer;
-  forcesContainer.allocate(stride * 3);
-  forcesContainer.setDeviceArray(force);
+  CudaContainer<double> forcesContainer(stride * 3);
+  copy_DtoD<double>(force, forcesContainer.getDeviceData(), stride * 3);
+  // forcesContainer.setDeviceArray(force);
   forcesContainer.transferFromDevice();
 
   // std::cout << "Forces :  \n";

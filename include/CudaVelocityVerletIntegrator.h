@@ -4,7 +4,7 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author: Samarjeet Prasad
+// Author: Samarjeet Prasad, James E. Gonzales II
 //
 // ENDLICENSE
 
@@ -14,19 +14,19 @@
 #include "CudaIntegrator.h"
 #include <map>
 #include <memory>
+
 class CudaVelocityVerletIntegrator : public CudaIntegrator {
-private:
-  int stepsSinceLastReport;
-
-  std::string integratorTypeName = "VelocityVerlet";
-
 public:
-  CudaVelocityVerletIntegrator(ts_t timeStep);
+  CudaVelocityVerletIntegrator(const double timeStep);
 
-  // Put these in the base class
-  // void setContext();
-  void setCharmmContext(std::shared_ptr<CharmmContext> charmmContext);
-  void initialize();
-  void propagateOneStep() override;
-  std::map<std::string, std::string> getIntegratorDescriptors() override;
+  void initialize(void);
+
+  void propagateOneStep(void) override;
+
+  std::map<std::string, std::string> getIntegratorDescriptors(void) override;
+
+private:
+  int m_StepsSinceLastReport;
+
+  std::string m_IntegratorTypeName = "VelocityVerlet";
 };

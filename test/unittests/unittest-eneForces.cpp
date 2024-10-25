@@ -18,6 +18,7 @@
 #include "catch.hpp"
 #include "compare.h"
 #include "cpp_utils.h"
+#include "cuda_utils.h"
 #include "helper.h"
 #include "test_paths.h"
 #include <iostream>
@@ -43,17 +44,18 @@ template <typename Type4> void printTriple(Type4 inp) {
 // double4's
 CudaContainer<double4>
 getForcesAsCudaContainer(std::shared_ptr<CharmmContext> ctxIn) {
-  CudaContainer<double> fx, fy, fz;
   int numAtoms = ctxIn->getNumAtoms();
-  fx.allocate(numAtoms);
-  fy.allocate(numAtoms);
-  fz.allocate(numAtoms);
-  double *tmpx = fx.getDeviceArray().data();
-  double *tmpy = fy.getDeviceArray().data();
-  double *tmpz = fz.getDeviceArray().data();
-  fx.setDeviceArray(ctxIn->getForces()->x());
-  fy.setDeviceArray(ctxIn->getForces()->y());
-  fz.setDeviceArray(ctxIn->getForces()->z());
+  CudaContainer<double> fx(numAtoms), fy(numAtoms), fz(numAtoms);
+
+  copy_DtoD<double>(ctxIn->getForces()->x(), fx.getDeviceData(), numAtoms);
+  copy_DtoD<double>(ctxIn->getForces()->y(), fy.getDeviceData(), numAtoms);
+  copy_DtoD<double>(ctxIn->getForces()->z(), fz.getDeviceData(), numAtoms);
+  // double *tmpx = fx.getDeviceData();
+  // double *tmpy = fy.getDeviceData();
+  // double *tmpz = fz.getDeviceData();
+  // fx.setDeviceArray(ctxIn->getForces()->x());
+  // fy.setDeviceArray(ctxIn->getForces()->y());
+  // fz.setDeviceArray(ctxIn->getForces()->z());
   fx.transferFromDevice();
   fy.transferFromDevice();
   fz.transferFromDevice();
@@ -66,14 +68,14 @@ getForcesAsCudaContainer(std::shared_ptr<CharmmContext> ctxIn) {
     f.z = fz[i];
     forcesvec.push_back(f);
   }
-  fx.setDeviceArray(tmpx);
-  fy.setDeviceArray(tmpy);
-  fz.setDeviceArray(tmpz);
+  // fx.setDeviceArray(tmpx);
+  // fy.setDeviceArray(tmpy);
+  // fz.setDeviceArray(tmpz);
 
-  CudaContainer<double4> forceCC;
-  forceCC.allocate(numAtoms);
-  forceCC.set(forcesvec);
-  return forceCC;
+  // CudaContainer<double4> forceCC(numAtoms);
+  // forceCC.set(forcesvec);
+  // return forceCC;
+  return CudaContainer<double4>(forcesvec);
 }
 
 // Given a file containing three numbers per line, returns a vector of double4
@@ -236,13 +238,13 @@ TEST_CASE("argon10") {
         {0.00337, 0.00260, 0.00934},   {0.00078, -0.00625, 0.00898}};
     // refVals obtained from CHARMM c43b1
 
-    CudaContainer<double> fxc, fyc, fzc;
-    fxc.allocate(numAtoms);
-    fyc.allocate(numAtoms);
-    fzc.allocate(numAtoms);
-    fxc.setDeviceArray(ctx->getForces()->x());
-    fyc.setDeviceArray(ctx->getForces()->y());
-    fzc.setDeviceArray(ctx->getForces()->z());
+    CudaContainer<double> fxc(numAtoms), fyc(numAtoms), fzc(numAtoms);
+    copy_DtoD<double>(ctx->getForces()->x(), fxc.getDeviceData(), numAtoms);
+    copy_DtoD<double>(ctx->getForces()->y(), fyc.getDeviceData(), numAtoms);
+    copy_DtoD<double>(ctx->getForces()->z(), fzc.getDeviceData(), numAtoms);
+    // fxc.setDeviceArray(ctx->getForces()->x());
+    // fyc.setDeviceArray(ctx->getForces()->y());
+    // fzc.setDeviceArray(ctx->getForces()->z());
     fxc.transferFromDevice();
     fyc.transferFromDevice();
     fzc.transferFromDevice();

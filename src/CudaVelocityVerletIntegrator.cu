@@ -4,7 +4,7 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author: Antti-Pekka Hynninen, Samarjeet Prasad
+// Author: Antti-Pekka Hynninen, Samarjeet Prasad, James E. Gonzales II
 //
 // ENDLICENSE
 
@@ -14,22 +14,18 @@
 #include <iostream>
 #include <map>
 
-CudaVelocityVerletIntegrator::CudaVelocityVerletIntegrator(ts_t timeStep)
+CudaVelocityVerletIntegrator::CudaVelocityVerletIntegrator(
+    const double timeStep)
     : CudaIntegrator(timeStep) {
-  stepsSinceLastReport = 0;
+  m_StepsSinceLastReport = 0;
+  m_IntegratorTypeName = "VelocityVerlet";
 }
 
-void CudaVelocityVerletIntegrator::setCharmmContext(
-    std::shared_ptr<CharmmContext> ctx) {
-
-  CudaIntegrator::setCharmmContext(ctx);
-}
-
-void CudaVelocityVerletIntegrator::initialize() {}
+void CudaVelocityVerletIntegrator::initialize(void) { return; }
 
 static __global__ void firstHalfKickAndDrift(const int numAtoms,
                                              const int stride,
-                                             const ts_t timeStep,
+                                             const double timeStep,
                                              // float4 *__restrict__ xyzq,
                                              double4 *__restrict__ coordsCharge,
                                              double4 *__restrict__ velMass,
@@ -52,7 +48,7 @@ static __global__ void firstHalfKickAndDrift(const int numAtoms,
 }
 
 static __global__ void secondHalfKick(const int numAtoms, const int stride,
-                                      const ts_t timeStep,
+                                      const double timeStep,
                                       float4 *__restrict__ xyzq,
                                       double4 *__restrict__ coordsCharge,
                                       double4 *__restrict__ velMass,
@@ -84,20 +80,17 @@ updateSPKernel(int numAtoms, float4 *__restrict__ xyzq,
     xyzq[index].z = (float)coordsCharge[index].z;
   }
 }
-void CudaVelocityVerletIntegrator::propagateOneStep() {
 
-  auto xyzq = context->getXYZQ()->getDeviceXYZQ();
+void CudaVelocityVerletIntegrator::propagateOneStep(void) {
+  auto xyzq = m_Context->getXYZQ()->getDeviceXYZQ();
+  auto coordsCharge = m_Context->getCoordinatesCharges().getDeviceData();
+  auto velMass = m_Context->getVelocityMass().getDeviceData();
+  auto force = m_Context->getForces();
 
-  auto coordsCharge = context->getCoordinatesCharges().getDeviceArray().data();
-  auto velMass = context->getVelocityMass().getDeviceArray().data();
+  int numAtoms = m_Context->getNumAtoms();
+  int stride = m_Context->getForceStride();
 
-  auto force = context->getForces();
-
-  int numAtoms = context->getNumAtoms();
-  int stride = context->getForceStride();
-
-  copy_DtoD_sync<double4>(coordsCharge, coordsRef.getDeviceArray().data(),
-                          numAtoms);
+  copy_DtoD_sync<double4>(coordsCharge, m_CoordsRef.getDeviceData(), numAtoms);
 
   int numThreads = 128;
   int numBlocks = (numAtoms - 1) / numThreads + 1;
@@ -105,64 +98,66 @@ void CudaVelocityVerletIntegrator::propagateOneStep() {
   // Calculate v_(n+1/2)
   // Calculate r_(n+1) - before constriants
 
-  firstHalfKickAndDrift<<<numBlocks, numThreads, 0, *integratorStream>>>(
-      numAtoms, stride, timeStep, // xyzq,
+  firstHalfKickAndDrift<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
+      numAtoms, stride, m_TimeStep, // xyzq,
       coordsCharge, velMass, force->xyz());
 
-  cudaCheck(cudaStreamSynchronize(*integratorStream));
+  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
 
-  if (usingHolonomicConstraints) {
-    holonomicConstraint->handleHolonomicConstraints(
-        coordsRef.getDeviceArray().data());
+  if (m_UsingHolonomicConstraints) {
+    m_HolonomicConstraint->handleHolonomicConstraints(
+        m_CoordsRef.getDeviceData());
   }
 
-  updateSPKernel<<<numBlocks, numThreads, 0, *integratorStream>>>(
+  updateSPKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
       numAtoms, xyzq, coordsCharge);
 
-  cudaCheck(cudaStreamSynchronize(*integratorStream));
+  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
 
   // TODO : this should not be here
-  if (stepsSinceNeighborListUpdate % 20 == 0) {
-    context->resetNeighborList();
+  if (m_StepsSinceNeighborListUpdate % 20 == 0) {
+    m_Context->resetNeighborList();
   }
 
-  context->calculateForces();
-  force = context->getForces();
+  m_Context->calculateForces();
+  force = m_Context->getForces();
 
   // calculate v_(n+1)
-  secondHalfKick<<<numBlocks, numThreads, 0, *integratorStream>>>(
-      numAtoms, stride, timeStep, xyzq, coordsCharge, velMass, force->xyz());
-  cudaCheck(cudaStreamSynchronize(*integratorStream));
+  secondHalfKick<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
+      numAtoms, stride, m_TimeStep, xyzq, coordsCharge, velMass, force->xyz());
+  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
 
-  auto mycccc = context->getCoordinatesCharges(),
-       myccvm = context->getVelocityMass();
+  auto mycccc = m_Context->getCoordinatesCharges();
+  auto myccvm = m_Context->getVelocityMass();
   mycccc.transferFromDevice();
   myccvm.transferFromDevice();
 
-  stepsSinceLastReport++;
-  if (debugPrintFrequency > 0 &&
-      (stepsSinceLastReport + 1) % debugPrintFrequency == 0) {
-    auto peContainer = context->getPotentialEnergy();
+  m_StepsSinceLastReport++;
+  if (m_DebugPrintFrequency > 0 &&
+      (m_StepsSinceLastReport + 1) % m_DebugPrintFrequency == 0) {
+    auto peContainer = m_Context->getPotentialEnergy();
     peContainer.transferFromDevice();
     auto pe = peContainer[0];
-    auto ke = context->getKineticEnergy();
+    auto ke = m_Context->getKineticEnergy();
 
     //    std::cout << "[VVER]Potential energy : " << pe << "\n";
     //    std::cout << "[VVER]Kinetic energy : " << ke << "\n";
     //    std::cout << "[VVER]Total Energy : " << ke + pe << "\n";
-    //    std::cout << "[VVER]Temp : " << context->computeTemperature()
+    //    std::cout << "[VVER]Temp : " << m_Context->computeTemperature()
     //              << "\n-----------\n";
 
     std::cout << "[VVER] pos0x/vel0x: " << mycccc[0].x << " " << myccvm[0].x
               << "\n";
-    stepsSinceLastReport = 0;
+    m_StepsSinceLastReport = 0;
   }
+
+  return;
 }
 
 std::map<std::string, std::string>
-CudaVelocityVerletIntegrator::getIntegratorDescriptors() {
+CudaVelocityVerletIntegrator::getIntegratorDescriptors(void) {
   std::map<std::string, std::string> ret;
   ret["type"] = "VelocityVerlet";
-  ret["timestep"] = std::to_string(timeStep);
+  ret["timestep"] = std::to_string(m_TimeStep);
   return ret;
 }

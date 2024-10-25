@@ -137,8 +137,7 @@ void CharmmPSF::readCharmmPSFFile(std::string fileName) {
   }
   startEnd = {startResIdAtom - 1, numAtoms - 1};
   groupsPrep.push_back(startEnd);
-  residues.allocate(groupsPrep.size());
-  residues.set(groupsPrep);
+  residues = groupsPrep;
   // setMasses(massesPSF);
 
   // read blank line(s) and NBOND line
@@ -527,8 +526,7 @@ CudaContainer<int4> CharmmPSF::getWaterMolecules() {
         ++pos;
       }
     }
-    waterMolecules.allocate(waterMols.size());
-    waterMolecules.set(waterMols);
+    waterMolecules = waterMols;
   }
   return waterMolecules;
 }
@@ -571,8 +569,7 @@ void CharmmPSF::createConnectedComponents() {
     startAtom = endAtom + 1;
     groupsPrep.push_back(startEnd);
   }
-  groups.allocate(groupsPrep.size());
-  groups.set(groupsPrep);
+  groups = groupsPrep;
 }
 
 int CharmmPSF::getDegreesOfFreedom() {

@@ -26,10 +26,7 @@ public:
     ny = 100;
     nz = 100;
 
-    auto masses = context->getForceManager()->getPSF()->getAtomMasses();
-    // atomicMasses = CudaContainer<double>(masses.size());
-    atomicMasses.allocate(masses.size());
-    atomicMasses.set(masses);
+    atomicMasses = context->getForceManager()->getPSF()->getAtomMasses();
   }
 
   ~CudaEMap() { cudaCheck(cudaStreamDestroy(stream)); }

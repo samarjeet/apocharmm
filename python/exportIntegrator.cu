@@ -55,7 +55,7 @@ void exportIntegrator(py::module &mod) {
          )sitb")
       .def("subscribe",
            static_cast<void (CudaIntegrator::*)(
-               std::vector<std::shared_ptr<Subscriber>>)>(
+               const std::vector<std::shared_ptr<Subscriber>> &)>(
                &CudaIntegrator::subscribe),
            R"sitb(
       Add a list of subscribers to the Integrator.
@@ -72,7 +72,7 @@ void exportIntegrator(py::module &mod) {
       )sitb")
       .def("unsubscribe",
            static_cast<void (CudaIntegrator::*)(
-               std::vector<std::shared_ptr<Subscriber>>)>(
+               const std::vector<std::shared_ptr<Subscriber>> &)>(
                &CudaIntegrator::unsubscribe),
            R"sitb(
          Remove subscribers given in a list.

@@ -35,10 +35,10 @@ ForceManager::ForceManager(std::shared_ptr<CharmmPSF> psfIn,
   boxy = 0.0;
   boxz = 0.0;
 
-  virial.allocate(9);
-  directVirial.allocate(9);
-  bondedVirial.allocate(9);
-  reciprocalVirial.allocate(9);
+  virial.resize(9);
+  directVirial.resize(9);
+  bondedVirial.resize(9);
+  reciprocalVirial.resize(9);
 
   pbc = PBC::P1;
   vdwType = VDW_VFSW;
@@ -56,7 +56,7 @@ ForceManager::ForceManager(const ForceManager &fmIn)
   numAtoms = psf->getNumAtoms();
   boxDimensions = {boxx, boxy, boxz};
   initialized = false;
-  virial.allocate(9);
+  virial.resize(9);
 
   forceManagerStream = std::make_shared<cudaStream_t>();
   pbc = fmIn.getPeriodicBoundaryCondition();
@@ -137,10 +137,8 @@ void ForceManager::initializeHolonomicConstraintsVariables() {
     }
   }
 
-  shakeAtoms.setHostArray(h_shakeAtoms);
-  shakeAtoms.transferToDevice();
-  shakeParams.setHostArray(h_shakeParams);
-  shakeParams.transferToDevice();
+  shakeAtoms = h_shakeAtoms;
+  shakeParams = h_shakeParams;
 }
 
 void ForceManager::initialize() {
@@ -183,7 +181,8 @@ void ForceManager::initialize() {
   bondedForcePtr->setup_coef(bondedParamsAndList.paramsSize,
                              bondedParamsAndList.paramsVal);
 
-  bondedForcePtr->setBoxDimensions({boxx, boxy, boxz});
+  // bondedForcePtr->setBoxDimensions({boxx, boxy, boxz});
+  bondedForcePtr->setBoxDimensions(boxDimensions);
   bondedForcePtr->setForce(bondedForceValues);
   bondedForcePtr->setStream(bondedStream);
 
@@ -209,7 +208,8 @@ void ForceManager::initialize() {
   directForcePtr->setup(boxx, boxy, boxz, kappa, ctofnb, ctonnb, 1.0, vdwType,
                         //                      CFSWIT, q_p21);
                         EWALD, q_p21);
-  directForcePtr->setBoxDimensions({boxx, boxy, boxz});
+  // directForcePtr->setBoxDimensions({boxx, boxy, boxz});
+  directForcePtr->setBoxDimensions(boxDimensions);
   directForcePtr->setStream(directStream);
   directForcePtr->setForce(directForceValues);
   directForcePtr->setNumAtoms(numAtoms);
@@ -244,7 +244,7 @@ void ForceManager::initialize() {
   reciprocalForcePtr->setStream(reciprocalStream);
 
   cudaCheck(cudaDeviceSynchronize());
-  totalPotentialEnergy.allocate(1); // doing it for diffave and difflc; for Now
+  totalPotentialEnergy.resize(1); // doing it for diffave and difflc; for Now
 
   initializeHolonomicConstraintsVariables();
 
@@ -539,7 +539,11 @@ int ForceManager::getForceStride() {
   return stride;
 }
 
-const std::vector<double> &ForceManager::getBoxDimensions() {
+const std::vector<double> &ForceManager::getBoxDimensions(void) const {
+  return boxDimensions;
+}
+
+std::vector<double> &ForceManager::getBoxDimensions(void) {
   return boxDimensions;
 }
 
@@ -667,9 +671,9 @@ void ForceManagerComposite::initialize() {
   compositeStream = std::make_shared<cudaStream_t>();
   cudaStreamCreate(compositeStream.get());
 
-  totalPotentialEnergy.allocate(children.size());
+  totalPotentialEnergy.resize(children.size());
 
-  childrenPotentialEnergy.allocate(children.size());
+  childrenPotentialEnergy.resize(children.size());
 }
 
 std::vector<Bond> ForceManagerComposite::getBonds() {
@@ -855,7 +859,7 @@ std::vector<float> ForceManagerComposite::getPotentialEnergies() {
   return dummy;
 }
 
-CudaContainer<double> ForceManagerComposite::getPotentialEnergy() {
+CudaContainer<double> &ForceManagerComposite::getPotentialEnergy() {
   return totalPotentialEnergy;
 }
 std::vector<float> ForceManager::getPotentialEnergies() {
@@ -886,7 +890,11 @@ std::vector<float> ForceManager::getPotentialEnergies() {
   return out;
 }
 
-const std::vector<double> &ForceManagerComposite::getBoxDimensions() {
+const std::vector<double> &ForceManagerComposite::getBoxDimensions(void) const {
+  return children[0]->getBoxDimensions();
+}
+
+std::vector<double> &ForceManagerComposite::getBoxDimensions(void) {
   return children[0]->getBoxDimensions();
 }
 
@@ -927,7 +935,7 @@ bool ForceManager::hasCharmmContext() {
   return true;
 }
 
-CudaContainer<double> ForceManager::getPotentialEnergy() {
+CudaContainer<double> &ForceManager::getPotentialEnergy(void) {
   return totalPotentialEnergy;
 }
 

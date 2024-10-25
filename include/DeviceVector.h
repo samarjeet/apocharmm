@@ -10,32 +10,46 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cuda_runtime.h>
 #include <iostream>
-#include <stddef.h>
 
 template <typename T> class DeviceVector {
-public:
+public: // Member functions
   DeviceVector(void);
-  DeviceVector(const size_t size);
+  DeviceVector(const std::size_t count);
   DeviceVector(const DeviceVector<T> &other);
   DeviceVector(const DeviceVector<T> &&other);
+
   ~DeviceVector(void);
 
-public:
   DeviceVector<T> &operator=(const DeviceVector<T> &other);
   DeviceVector<T> &operator=(const DeviceVector<T> &&other);
 
-public:
-  void resize(const size_t size);
-  void deallocate(void);
+public: // Element access
   const T *data(void) const;
   T *data(void);
-  void set(T *data);
-  size_t size(void) const;
+
+public: // Capacity
+  bool empty(void) const;
+  std::size_t size(void) const;
+  std::size_t capacity(void) const;
+  void shrink_to_fit(void);
+
+public: // Modifiers
+  void clear(void);
+  // void push_back(const T &value);
+  void resize(const std::size_t count);
+  void swap(DeviceVector<T> &other);
 
 private:
-  size_t m_Size;
+  void allocate(const std::size_t count);
+  void reallocate(const std::size_t count);
+  void deallocate(void);
+
+private:
+  std::size_t m_Size;
+  std::size_t m_Capacity;
   T *m_Data;
 };
 
@@ -48,6 +62,11 @@ template class DeviceVector<float>;
 template class DeviceVector<float2>;
 template class DeviceVector<float3>;
 template class DeviceVector<float4>;
+template class DeviceVector<long long int>;
+template class DeviceVector<longlong2>;
+template class DeviceVector<longlong3>;
+template class DeviceVector<longlong4>;
+template class DeviceVector<std::size_t>;
 template class DeviceVector<double>;
 template class DeviceVector<double2>;
 template class DeviceVector<double3>;

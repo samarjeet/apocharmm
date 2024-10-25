@@ -4,7 +4,7 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author: Antti-Pekka Hynninen, Samarjeet Prasad
+// Author: Antti-Pekka Hynninen, Samarjeet Prasad, James E. Gonzales II
 //
 // ENDLICENSE
 
@@ -14,17 +14,15 @@
 #include <iostream>
 
 CudaVMMSVelocityVerletIntegrator::CudaVMMSVelocityVerletIntegrator(
-    ts_t timeStep)
-    : CudaIntegrator(timeStep) {
-  // std::cout << "Setting up a velocity-verlet integrator.\n";
-}
+    const double timeStep)
+    : CudaIntegrator(timeStep) {}
 
-void CudaVMMSVelocityVerletIntegrator::initialize() {}
+void CudaVMMSVelocityVerletIntegrator::initialize(void) {}
 
 void CudaVMMSVelocityVerletIntegrator::setCharmmContexts(
-    std::vector<CharmmContext> ctxs) {
-  contexts = ctxs;
-  std::cout << "Contexts set in VMMSIntegrator" << std::endl;
+    const std::vector<CharmmContext> &ctxs) {
+  m_Contexts = ctxs;
+  return;
 }
 /*
 __global__ void firstHalfKickAndDrift(const int numAtoms, const int stride,
@@ -102,27 +100,28 @@ __global__ void secondHalfKick(const int numAtoms, const int stride,
 }
 */
 
-void CudaVMMSVelocityVerletIntegrator::setSoluteAtoms(std::vector<int> atoms) {
-  soluteAtoms.allocate(atoms.size());
-  soluteAtoms.set(atoms);
-  std::cout << "Solute atoms set\n";
+void CudaVMMSVelocityVerletIntegrator::setSoluteAtoms(
+    const std::vector<int> &atoms) {
+  m_SoluteAtoms = atoms;
+  return;
 }
 
 __global__ void combineKernel() {}
-void CudaVMMSVelocityVerletIntegrator::combineForces() {
 
-  combinedForce->clear();
-  int numAtoms = contexts[0].getNumAtoms();
+void CudaVMMSVelocityVerletIntegrator::combineForces(void) {
+  m_CombinedForce->clear();
+  int numAtoms = m_Contexts[0].getNumAtoms();
   int numThreads = 512;
   int numBlocks = (numAtoms - 1) / numThreads + 1;
 
-  for (int i = 0; i < contexts.size(); ++i) {
-    weights[i] = 0.1;
+  for (std::size_t i = 0; i < m_Contexts.size(); ++i) {
+    m_Weights[i] = 0.1;
     combineKernel<<<numBlocks, numThreads>>>();
   }
 }
-void CudaVMMSVelocityVerletIntegrator::propagateOneStep() {
-  combineForces();
+
+void CudaVMMSVelocityVerletIntegrator::propagateOneStep(void) {
+  this->combineForces();
   /*
     auto force = contexts[0]->getForces();
     for (int i=1; i < conexts.size(); ++i){

@@ -20,69 +20,69 @@
 #include <map>
 #include <random>
 
-CudaLangevinPistonIntegrator::CudaLangevinPistonIntegrator(ts_t timeStep)
+CudaLangevinPistonIntegrator::CudaLangevinPistonIntegrator(
+    const double timeStep)
     : CudaLangevinPistonIntegrator(timeStep, CRYSTAL::ORTHORHOMBIC) {}
 
-CudaLangevinPistonIntegrator::CudaLangevinPistonIntegrator(ts_t timeStep,
-                                                           CRYSTAL _crystalType)
+CudaLangevinPistonIntegrator::CudaLangevinPistonIntegrator(
+    const double timeStep, const CRYSTAL crystalType)
     : CudaIntegrator(timeStep) {
-  // forceScale = 1.0;
-  // velScale = 1.0;
-  // noiseScale = 0.0;
-  pgamma = 0.0;
-  stepId = 0; // Remove this
+  m_UsingHolonomicConstraints = true;
 
-  stepsSinceLastReport = 0;
+  m_DevPHILOXStates = nullptr;
 
-  noseHooverFlag = true;
-  // setNoseHooverPistonMass(computeNoseHooverPistonMass());
-  noseHooverPistonPosition = 0.0;
-  noseHooverPistonForce = 0.0; // tentative bugfix
-  noseHooverPistonForcePrevious = 0.0;
+  m_StepsSinceLastReport = 0;
+  m_BathTemperature = 300.0;
 
-  noseHooverPistonVelocity = 0.0;         // tentative bugfix;
-  noseHooverPistonVelocityPrevious = 0.0; // tentative bugfix
+  m_NoseHooverFlag = true;
+  m_NoseHooverPistonMass = 0.0;
+  m_NoseHooverPistonPosition = 0.0;
+  m_NoseHooverPistonVelocity = 0.0;
+  m_NoseHooverPistonVelocityPrevious = 0.0;
+  m_NoseHooverPistonForce = 0.0;
+  m_NoseHooverPistonForcePrevious = 0.0;
 
-  setBathTemperature(300.0);
+  m_ConstantSurfaceTensionFlag = false;
 
-  usingHolonomicConstraints = true;
-  constantSurfaceTensionFlag = false;
-
-  kineticEnergyPressureTensor.allocate(6);
-  pressureTensor.allocate(6);
-  if (usingHolonomicConstraints) {
-    holonomicVirial.allocate(6);
-    holonomicVirial.set({0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
+  m_KineticEnergyPressureTensor.resize(6);
+  m_PressureTensor.resize(6);
+  if (m_UsingHolonomicConstraints) {
+    m_HolonomicVirial.resize(6);
+    m_HolonomicVirial.setToValue(0.0);
   }
 
-  crystalDimensions.allocate(6);
-  crystalDimensionsPrevious.allocate(6);
-  inverseCrystalDimensions.allocate(6);
+  m_CrystalDimensions.resize(6);
+  m_CrystalDimensionsPrevious.resize(6);
+  m_InverseCrystalDimensions.resize(6);
 
-  referencePressure.allocate(6);
-  referencePressure.set({1.0, 0.0, 1.0, 0.0, 0.0, 1.0});
+  m_ReferencePressure.resize(6);
+  m_ReferencePressure.set({1.0, 0.0, 1.0, 0.0, 0.0, 1.0});
 
-  deltaPressure.allocate(6);
-  deltaPressureNonChanging.allocate(6);
-  deltaPressureHalfStepKinetic.allocate(6);
+  m_DeltaPressure.resize(6);
+  m_DeltaPressureNonChanging.resize(6);
+  m_DeltaPressureHalfStepKinetic.resize(6);
 
-  palpha = 1.0;
-  // pbfact = timeStep * timeStep;
-  pvfact = 1.0 / timeStep;
+  m_Pgamma = 0.0;
+  // m_Pbfact = m_TimeStep * m_TimeStep;
+  m_Pvfact = 1.0 / m_TimeStep;
+
+  m_Palpha = 1.0;
 
   std::random_device rd{};
-  seed = rd();
-  rng.seed(seed);
+  m_Seed = rd();
+  m_Rng.seed(m_Seed);
 
-  switch (_crystalType) {
+  m_StepId = 0;
+
+  switch (crystalType) {
   case CRYSTAL::ORTHORHOMBIC:
-    pistonDegreesOfFreedom = 3;
+    m_PistonDegreesOfFreedom = 3;
     break;
   case CRYSTAL::TETRAGONAL:
-    pistonDegreesOfFreedom = 2;
+    m_PistonDegreesOfFreedom = 2;
     break;
   case CRYSTAL::CUBIC:
-    pistonDegreesOfFreedom = 1;
+    m_PistonDegreesOfFreedom = 1;
     break;
   default:
     throw std::invalid_argument(
@@ -90,61 +90,34 @@ CudaLangevinPistonIntegrator::CudaLangevinPistonIntegrator(ts_t timeStep,
         "CRYSTAL::TETRAGONAL or CRYSTAL::CUBIC.");
   }
 
-  // pistonDegreesOfFreedom = 3;
-  allocatePistonVariables();
-  for (int i = 0; i < pistonDegreesOfFreedom; i++) {
-    pistonMass[i] = 500.0;
-    inversePistonMass[i] = 1.0 / pistonMass[i];
+  this->allocatePistonVariables();
+  for (int i = 0; i < m_PistonDegreesOfFreedom; i++) {
+    m_PistonMass[i] = 500.0;
+    m_InversePistonMass[i] = 1.0 / m_PistonMass[i];
   }
-  inversePistonMass.transferToDevice();
+  m_PistonMass.transferToDevice();
+  m_InversePistonMass.transferToDevice();
 
-  onStepCrystalFactor.allocate(crystalDegreesOfFreedom);
-  halfStepCrystalFactor.allocate(crystalDegreesOfFreedom);
+  m_OnStepCrystalFactor.resize(m_CrystalDegreesOfFreedom);
+  m_HalfStepCrystalFactor.resize(m_CrystalDegreesOfFreedom);
 
-  pressureScalar.allocate(1);
+  m_PressureScalar.resize(1);
 
-  pressureScalar.allocate(1);
   // Allocations for HFCTEN calculation
-  halfStepKineticEnergy.allocate(1);
-  halfStepKineticEnergy1StepPrevious.allocate(1);
-  halfStepKineticEnergy1StepPrevious.set({0.0});
-  halfStepKineticEnergy2StepsPrevious.allocate(1);
-  potentialEnergyPrevious.allocate(1);
-  potentialEnergyPrevious.set({0.0});
-  hfctenTerm.allocate(1);
+  m_HalfStepKineticEnergy.resize(1);
+  m_HalfStepKineticEnergy1StepPrevious.resize(1);
+  m_HalfStepKineticEnergy1StepPrevious.setToValue(0.0);
+  m_HalfStepKineticEnergy2StepsPrevious.resize(1);
+  m_PotentialEnergyPrevious.resize(1);
+  m_PotentialEnergyPrevious.setToValue(0.0);
+  m_HfctenTerm.resize(1);
 
-  // debugTotalPressure = 0.0;
-  averagePressureScalar.allocate(1);
-  averagePressureScalar.set({0.0});
-  averagePressureTensor.allocate(6);
-  averagePressureTensor.set({0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
+  m_AveragePressureScalar.resize(1);
+  m_AveragePressureScalar.setToValue(0.0);
+  m_AveragePressureTensor.resize(6);
+  m_AveragePressureTensor.setToValue(0.0);
 
-  pistonFrictionSetFlag = false;
-}
-
-void CudaLangevinPistonIntegrator::allocatePistonVariables() {
-  std::vector<double> tempZero(pistonDegreesOfFreedom, 0.0);
-
-  onStepPistonPosition.allocate(pistonDegreesOfFreedom);
-  onStepPistonPosition.set(tempZero);
-  halfStepPistonPosition.allocate(pistonDegreesOfFreedom);
-  halfStepPistonPosition.set(tempZero);
-  onStepPistonVelocity.allocate(pistonDegreesOfFreedom);
-  onStepPistonVelocity.set(tempZero);
-  halfStepPistonVelocity.allocate(pistonDegreesOfFreedom);
-  halfStepPistonVelocity.set(tempZero);
-
-  pistonMass.resize(pistonDegreesOfFreedom);
-  inversePistonMass.allocate(pistonDegreesOfFreedom);
-  inversePistonMass.set(tempZero);
-  pistonDeltaPressure.allocate(pistonDegreesOfFreedom);
-  pistonDeltaPressure.set(tempZero);
-  pressurePistonPositionDelta.allocate(pistonDegreesOfFreedom);
-  pressurePistonPositionDelta.set(tempZero);
-  pressurePistonPositionDeltaPrevious.allocate(pistonDegreesOfFreedom);
-  pressurePistonPositionDeltaPrevious.set(tempZero);
-  pressurePistonPositionDeltaStored.allocate(pistonDegreesOfFreedom);
-  pressurePistonPositionDeltaStored.set(tempZero);
+  m_PistonFrictionSetFlag = false;
 }
 
 CudaLangevinPistonIntegrator::~CudaLangevinPistonIntegrator() {
@@ -152,8 +125,9 @@ CudaLangevinPistonIntegrator::~CudaLangevinPistonIntegrator() {
 }
 
 void CudaLangevinPistonIntegrator::setPressure(
-    std::vector<double> _referencePressure) {
-  referencePressure.set(_referencePressure);
+    const std::vector<double> &referencePressure) {
+  m_ReferencePressure = referencePressure;
+  return;
 }
 
 // void CudaLangevinPistonIntegrator::setPistonMass(double _pistonMass) {
@@ -172,92 +146,371 @@ void CudaLangevinPistonIntegrator::setPressure(
 // }
 
 void CudaLangevinPistonIntegrator::setPistonMass(
-    std::vector<double> _pistonMass) {
+    const std::vector<double> &pistonMass) {
   assert(
-      _pistonMass.size() == pistonDegreesOfFreedom &&
+      pistonMass.size() == m_PistonDegreesOfFreedom &&
       "size of pistonMass vector and pistonDegreesOfFreedom should be equal.");
 
-  for (int i = 0; i < pistonDegreesOfFreedom; i++) {
-    if (_pistonMass[i] == 0.0) {
-      _pistonMass[i] = std::numeric_limits<double>::max();
-      inversePistonMass[i] = 0.0;
-      pistonMass[i] = 0.0;
+  for (int i = 0; i < m_PistonDegreesOfFreedom; i++) {
+    if (pistonMass[i] == 0.0) {
+      // pistonMass[i] = std::numeric_limits<double>::max();
+      m_InversePistonMass[i] = 0.0;
+      m_PistonMass[i] = 0.0;
     } else {
-      inversePistonMass[i] = 1.0 / _pistonMass[i];
-      pistonMass[i] = _pistonMass[i];
+      m_InversePistonMass[i] = 1.0 / pistonMass[i];
+      m_PistonMass[i] = pistonMass[i];
     }
   }
-  inversePistonMass.transferToDevice();
+  m_PistonMass.transferToDevice();
+  m_InversePistonMass.transferToDevice();
+
+  return;
 }
 
-double CudaLangevinPistonIntegrator::computeNoseHooverPistonMass() {
-  CudaContainer<double4> velmassCC = context->getVelocityMass();
-  velmassCC.transferFromDevice();
-  std::vector<double4> velmass = velmassCC.getHostArray();
-  double totalMass = 0.0;
-  for (int i = 0; i < velmass.size(); i++) {
-    totalMass += 1. / velmass[i].w;
-  }
-  return totalMass / 50.0;
+void CudaLangevinPistonIntegrator::setNoseHooverPistonMass(
+    const double nhMass) {
+  m_NoseHooverPistonMass = nhMass;
+  return;
 }
 
-void CudaLangevinPistonIntegrator::setNoseHooverPistonMass(double _nhMass) {
-  noseHooverPistonMass = _nhMass;
-}
+void CudaLangevinPistonIntegrator::setCrystalType(const CRYSTAL crystalType) {
+  m_CrystalType = crystalType;
 
-void CudaLangevinPistonIntegrator::setCrystalType(CRYSTAL _crystalType) {
-  crystalType = _crystalType;
-  switch (crystalType) {
+  switch (m_CrystalType) {
   case CRYSTAL::ORTHORHOMBIC:
-    pistonDegreesOfFreedom = 3;
+    m_PistonDegreesOfFreedom = 3;
     break;
   case CRYSTAL::TETRAGONAL:
-    pistonDegreesOfFreedom = 2;
+    m_PistonDegreesOfFreedom = 2;
     break;
   case CRYSTAL::CUBIC:
-    pistonDegreesOfFreedom = 1;
+    m_PistonDegreesOfFreedom = 1;
     break;
   default:
     break;
   }
-  allocatePistonVariables();
+
+  this->allocatePistonVariables();
+
+  return;
 }
 
-CRYSTAL CudaLangevinPistonIntegrator::getCrystalType(void) const {
-  return crystalType;
-}
-
-void CudaLangevinPistonIntegrator::setSurfaceTension(double st) {
-
-  constantSurfaceTensionFlag = true;
+void CudaLangevinPistonIntegrator::setSurfaceTension(const double st) {
+  m_ConstantSurfaceTensionFlag = true;
 
   // Since we only have an orthorhombic box, only Z perpendicular to X-Y are
   // apt.
-  surfaceTension = 2 * st;
+  m_SurfaceTension = 2 * st;
+
+  return;
 }
 
-std::vector<double> CudaLangevinPistonIntegrator::getReferencePressure() {
-  referencePressure.transferFromDevice();
-  return referencePressure.getHostArray();
+// void CudaLangevinPistonIntegrator::setBoxDimensions(
+//     const std::vector<double> &boxDimensions) {
+//   m_BoxDimensions.resize(m_CrystalDegreesOfFreedom);
+//   m_BoxDimensions.setToValue(0.0);
+//   for (int i = 0; i < m_CrystalDegreesOfFreedom; i++)
+//     m_BoxDimensions[i] = boxDimensions[i];
+//   m_BoxDimensions.transferToDevice();
+//   return;
+// }
+
+void CudaLangevinPistonIntegrator::setPistonFriction(const double _friction) {
+  m_Pgamma = _friction;
+  double pgam = m_Timfac * m_TimeStep * m_Pgamma;
+  m_Palpha = (1 - pgam * 0.5) / (1 + pgam * 0.5);
+  m_Pbfact = m_TimeStep * m_TimeStep / (1 + pgam * 0.5);
+  m_Pvfact = 0.5 / m_TimeStep;
+
+  double kbt = charmm::constants::kBoltz * m_BathTemperature;
+  assert(m_PistonDegreesOfFreedom != 0);
+  m_Prfwd.resize(m_PistonDegreesOfFreedom);
+  m_Prfwd.setToValue(0.0);
+  for (int i = 0; i < m_PistonDegreesOfFreedom; i++) {
+    m_Prfwd[i] =
+        std::sqrt(2 * m_InversePistonMass[i] * pgam * kbt) / m_TimeStep;
+  }
+  m_Prfwd.transferToDevice();
+
+  m_PistonFrictionSetFlag = true;
+
+  return;
 }
 
-void CudaLangevinPistonIntegrator::setPistonFriction(double _friction) {
-  pgamma = _friction;
-  double pgam = timfac * timeStep * pgamma;
-  palpha = (1 - pgam * 0.5) / (1 + pgam * 0.5);
-  pbfact = timeStep * timeStep / (1 + pgam * 0.5);
-  pvfact = 0.5 / timeStep;
-
-  double kbt = charmm::constants::kBoltz * bathTemperature;
-  assert(pistonDegreesOfFreedom != 0);
-  for (int i = 0; i < pistonDegreesOfFreedom; i++)
-    prfwd.push_back(sqrt(2 * inversePistonMass[i] * pgam * kbt) / timeStep);
-
-  pistonFrictionSetFlag = true;
+void CudaLangevinPistonIntegrator::setBathTemperature(
+    const double bathTemperature) {
+  m_BathTemperature = bathTemperature;
+  return;
 }
 
-/** @brief Updates the single-precision coordinates container (xyzq) */
-static __global__ void
+void CudaLangevinPistonIntegrator::setNoseHooverFlag(
+    const bool noseHooverFlag) {
+  m_NoseHooverFlag = noseHooverFlag;
+  return;
+}
+
+void CudaLangevinPistonIntegrator::setOnStepPistonVelocity(
+    const CudaContainer<double> &onStepPistonVelocity) {
+  m_OnStepPistonVelocity = onStepPistonVelocity;
+  return;
+}
+
+void CudaLangevinPistonIntegrator::setOnStepPistonVelocity(
+    const std::vector<double> &onStepPistonVelocity) {
+  m_OnStepPistonVelocity = onStepPistonVelocity;
+  return;
+}
+
+void CudaLangevinPistonIntegrator::setHalfStepPistonVelocity(
+    const CudaContainer<double> &halfStepPistonVelocity) {
+  m_HalfStepPistonVelocity = halfStepPistonVelocity;
+  return;
+}
+
+void CudaLangevinPistonIntegrator::setHalfStepPistonVelocity(
+    const std::vector<double> &halfStepPistonVelocity) {
+  m_HalfStepPistonVelocity = halfStepPistonVelocity;
+  return;
+}
+
+void CudaLangevinPistonIntegrator::setOnStepPistonPosition(
+    const CudaContainer<double> &onStepPistonPosition) {
+  m_OnStepPistonPosition = onStepPistonPosition;
+  return;
+}
+
+void CudaLangevinPistonIntegrator::setOnStepPistonPosition(
+    const std::vector<double> &onStepPistonPosition) {
+  m_OnStepPistonPosition = onStepPistonPosition;
+  return;
+}
+
+void CudaLangevinPistonIntegrator::setHalfStepPistonPosition(
+    const CudaContainer<double> &halfStepPistonPosition) {
+  m_HalfStepPistonPosition = halfStepPistonPosition;
+  return;
+}
+
+void CudaLangevinPistonIntegrator::setHalfStepPistonPosition(
+    const std::vector<double> &halfStepPistonPosition) {
+  m_HalfStepPistonPosition = halfStepPistonPosition;
+  return;
+}
+
+void CudaLangevinPistonIntegrator::setCoordsDeltaPrevious(
+    const std::vector<std::vector<double>> &coordsDelta) {
+  assert((coordsDelta.size() == m_Context->getNumAtoms(),
+          "Wrong size in setCoordsDeltaPrevious"));
+  std::vector<double4> cdp;
+  for (std::size_t i = 0; i < coordsDelta.size(); i++) {
+    cdp.emplace_back(make_double4(coordsDelta[i][0], coordsDelta[i][1],
+                                  coordsDelta[i][2], 0.0));
+  }
+  m_CoordsDeltaPrevious = cdp;
+
+  return;
+}
+
+void CudaLangevinPistonIntegrator::setNoseHooverPistonVelocity(
+    const double noseHooverPistonVelocity) {
+  m_NoseHooverPistonVelocity = noseHooverPistonVelocity;
+  return;
+}
+
+void CudaLangevinPistonIntegrator::setNoseHooverPistonVelocityPrevious(
+    const double noseHooverPistonVelocityPrevious) {
+  m_NoseHooverPistonVelocityPrevious = noseHooverPistonVelocityPrevious;
+  return;
+}
+
+void CudaLangevinPistonIntegrator::setNoseHooverPistonForce(
+    const double noseHooverPistonForce) {
+  m_NoseHooverPistonForce = noseHooverPistonForce;
+  return;
+}
+
+void CudaLangevinPistonIntegrator::setNoseHooverPistonForcePrevious(
+    const double noseHooverPistonForcePrevious) {
+  m_NoseHooverPistonForcePrevious = noseHooverPistonForcePrevious;
+  return;
+}
+
+void CudaLangevinPistonIntegrator::setNoseHooverPistonPosition(
+    const double noseHooverPistonPosition) {
+  m_NoseHooverPistonPosition = noseHooverPistonPosition;
+  return;
+}
+
+void CudaLangevinPistonIntegrator::setMaxPredictorCorrectorSteps(
+    const int maxPredictorCorrectorSteps) {
+  m_MaxPredictorCorrectorSteps = maxPredictorCorrectorSteps;
+  return;
+}
+
+void CudaLangevinPistonIntegrator::setSeedForPistonFriction(
+    const uint64_t seed) {
+  m_Seed = seed;
+  m_Rng.seed(seed);
+  return;
+}
+
+double CudaLangevinPistonIntegrator::getPressureScalar(void) const {
+  // m_AveragePressureScalar.transferToHost();
+  return m_AveragePressureScalar[0];
+}
+
+const std::vector<double> &
+CudaLangevinPistonIntegrator::getPressureTensor(void) const {
+  // m_AveragePressureTensor.transferToHost();
+  return m_AveragePressureTensor.getHostArray();
+}
+
+std::vector<double> &CudaLangevinPistonIntegrator::getPressureTensor(void) {
+  // m_AveragePressureTensor.transferToHost();
+  return m_AveragePressureTensor.getHostArray();
+}
+
+double
+CudaLangevinPistonIntegrator::getInstantaneousPressureScalar(void) const {
+  // m_PressureScalar.transferToHost();
+  return m_PressureScalar[0];
+}
+
+const std::vector<double> &
+CudaLangevinPistonIntegrator::getInstantaneousPressureTensor(void) const {
+  // m_PressureTensor.transferToHost();
+  return m_PressureTensor.getHostArray();
+}
+
+std::vector<double> &
+CudaLangevinPistonIntegrator::getInstantaneousPressureTensor(void) {
+  // m_PressureTensor.transferToHost();
+  return m_PressureTensor.getHostArray();
+}
+
+double CudaLangevinPistonIntegrator::getPistonMass(void) const {
+  // m_PistonMass.transferToHost();
+  return m_PistonMass[0];
+}
+
+CRYSTAL CudaLangevinPistonIntegrator::getCrystalType(void) const {
+  return m_CrystalType;
+}
+
+const CudaContainer<double> &
+CudaLangevinPistonIntegrator::getReferencePressure(void) const {
+  return m_ReferencePressure;
+}
+
+CudaContainer<double> &
+CudaLangevinPistonIntegrator::getReferencePressure(void) {
+  return m_ReferencePressure;
+}
+
+int CudaLangevinPistonIntegrator::getPistonDegreesOfFreedom(void) const {
+  return m_PistonDegreesOfFreedom;
+}
+
+double CudaLangevinPistonIntegrator::getBathTemperature(void) const {
+  return m_BathTemperature;
+}
+
+double CudaLangevinPistonIntegrator::getNoseHooverPistonMass(void) const {
+  return m_NoseHooverPistonMass;
+}
+
+double CudaLangevinPistonIntegrator::getNoseHooverPistonPosition(void) const {
+  return m_NoseHooverPistonPosition;
+}
+
+double CudaLangevinPistonIntegrator::getNoseHooverPistonVelocity(void) const {
+  return m_NoseHooverPistonVelocity;
+}
+
+double
+CudaLangevinPistonIntegrator::getNoseHooverPistonVelocityPrevious(void) const {
+  return m_NoseHooverPistonVelocityPrevious;
+}
+
+double CudaLangevinPistonIntegrator::getNoseHooverPistonForce(void) const {
+  return m_NoseHooverPistonForce;
+}
+
+double
+CudaLangevinPistonIntegrator::getNoseHooverPistonForcePrevious(void) const {
+  return m_NoseHooverPistonForcePrevious;
+}
+
+const CudaContainer<double4> &
+CudaLangevinPistonIntegrator::getCoordsDelta(void) const {
+  return m_CoordsDelta;
+}
+
+CudaContainer<double4> &CudaLangevinPistonIntegrator::getCoordsDelta(void) {
+  return m_CoordsDelta;
+}
+
+const CudaContainer<double4> &
+CudaLangevinPistonIntegrator::getCoordsDeltaPrevious(void) const {
+  return m_CoordsDeltaPrevious;
+}
+
+CudaContainer<double4> &
+CudaLangevinPistonIntegrator::getCoordsDeltaPrevious(void) {
+  return m_CoordsDeltaPrevious;
+}
+
+const CudaContainer<double> &
+CudaLangevinPistonIntegrator::getOnStepPistonVelocity(void) const {
+  return m_OnStepPistonVelocity;
+}
+
+CudaContainer<double> &
+CudaLangevinPistonIntegrator::getOnStepPistonVelocity(void) {
+  return m_OnStepPistonVelocity;
+}
+
+const CudaContainer<double> &
+CudaLangevinPistonIntegrator::getHalfStepPistonVelocity(void) const {
+  return m_HalfStepPistonVelocity;
+}
+
+CudaContainer<double> &
+CudaLangevinPistonIntegrator::getHalfStepPistonVelocity(void) {
+  return m_HalfStepPistonVelocity;
+}
+
+const CudaContainer<double> &
+CudaLangevinPistonIntegrator::getOnStepPistonPosition(void) const {
+  return m_OnStepPistonPosition;
+}
+
+CudaContainer<double> &
+CudaLangevinPistonIntegrator::getOnStepPistonPosition(void) {
+  return m_OnStepPistonPosition;
+}
+
+const CudaContainer<double> &
+CudaLangevinPistonIntegrator::getHalfStepPistonPosition(void) const {
+  return m_HalfStepPistonPosition;
+}
+
+CudaContainer<double> &
+CudaLangevinPistonIntegrator::getHalfStepPistonPosition(void) {
+  return m_HalfStepPistonPosition;
+}
+
+bool CudaLangevinPistonIntegrator::hasPistonFrictionSet(void) const {
+  return m_PistonFrictionSetFlag;
+}
+
+uint64_t CudaLangevinPistonIntegrator::getSeedForPistonFriction(void) const {
+  return m_Seed;
+}
+
+/** @brief Updates the single-precision coordinates container (xyzq)
+ */
+__global__ static void
 updateSPKernel(int numAtoms, float4 *__restrict__ xyzq,
                const double4 *__restrict__ coordsCharge) {
   int index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -277,7 +530,7 @@ __global__ static void setup_kernel(int numAtoms,
 }
 */
 __global__ static void init(double kbt, const int numAtoms, const int stride,
-                            const ts_t timeStep,
+                            const double timeStep,
                             // double4 *__restrict__ coords,
                             double4 *__restrict__ coordsDelta,
                             double4 *__restrict__ coordsDeltaPrevious,
@@ -330,102 +583,96 @@ backStepInitializationKernel2(int numAtoms, double4 *__restrict__ coords,
   }
 }
 
-void CudaLangevinPistonIntegrator::setBoxDimensions(
-    std::vector<double> boxDimensionsOriginal) {
-  boxDimensions.clear();
-  for (int i = 0; i < crystalDegreesOfFreedom; ++i) {
-    boxDimensions.push_back(boxDimensionsOriginal[i]);
-  }
-}
+void CudaLangevinPistonIntegrator::initialize(void) {
+  int numAtoms = m_Context->getNumAtoms();
 
-void CudaLangevinPistonIntegrator::initialize() {
-  int numAtoms = context->getNumAtoms();
-
-  if (not hasPistonFrictionSet()) {
+  if (not this->hasPistonFrictionSet()) {
     throw std::invalid_argument(
         "Piston friction not set. Please set piston friction before "
         "using the Langevin piston integrator.");
   }
 
   //  Get the mass of the system and divide that by 50. (charmm-gui does that)
-  setNoseHooverPistonMass(computeNoseHooverPistonMass());
+  m_NoseHooverPistonMass = this->computeNoseHooverPistonMass();
+
   // Reset Nose-Hoover piston variables (if integrator is reused from earlier,
   // e.g.)
-  noseHooverPistonForce = 0.0;
-  noseHooverPistonForcePrevious = 0.0;
-  noseHooverPistonVelocity = 0.0;
-  noseHooverPistonVelocityPrevious = 0.0;
-  onStepPistonVelocity.setToValue(0.0);
-  halfStepPistonVelocity.setToValue(0.0);
-  onStepPistonPosition.setToValue(0.0);
-  halfStepPistonPosition.setToValue(0.0);
-  pistonDeltaPressure.setToValue(0.0);
-  pressurePistonPositionDelta.setToValue(0.0);
-  pressurePistonPositionDelta.setToValue(0.0);
-  pressurePistonPositionDeltaPrevious.setToValue(0.0);
-  pressurePistonPositionDeltaStored.setToValue(0.0);
-  deltaPressure.setToValue(0.0);
+  m_NoseHooverPistonForce = 0.0;
+  m_NoseHooverPistonForcePrevious = 0.0;
+  m_NoseHooverPistonVelocity = 0.0;
+  m_NoseHooverPistonVelocityPrevious = 0.0;
+  m_OnStepPistonVelocity.setToValue(0.0);
+  m_HalfStepPistonVelocity.setToValue(0.0);
+  m_OnStepPistonPosition.setToValue(0.0);
+  m_HalfStepPistonPosition.setToValue(0.0);
+  m_PistonDeltaPressure.setToValue(0.0);
+  m_PressurePistonPositionDelta.setToValue(0.0);
+  m_PressurePistonPositionDelta.setToValue(0.0);
+  m_PressurePistonPositionDeltaPrevious.setToValue(0.0);
+  m_PressurePistonPositionDeltaStored.setToValue(0.0);
+  m_DeltaPressure.setToValue(0.0);
 
-  coordsDelta.allocate(numAtoms);
-  coordsDeltaPrevious.allocate(numAtoms);
-  coordsDeltaPredicted.allocate(numAtoms);
+  m_CoordsDelta.resize(numAtoms);
+  m_CoordsDeltaPrevious.resize(numAtoms);
+  m_CoordsDeltaPredicted.resize(numAtoms);
 
-  auto coordsRefDevice = coordsRef.getDeviceArray().data();
-  if (usingHolonomicConstraints) {
-    holonomicConstraintForces.allocate(numAtoms);
-  }
+  auto coordsRefDevice = m_CoordsRef.getDeviceData();
+  if (m_UsingHolonomicConstraints)
+    m_HolonomicConstraintForces.resize(numAtoms);
 
-  auto boxDimensionsOriginal = context->getBoxDimensions();
-  setBoxDimensions(boxDimensionsOriginal);
+  auto boxDimensions = m_Context->getBoxDimensions();
+  // setBoxDimensions(boxDimensionsOriginal);
 
   int numThreads = 128;
   int numBlocks = (numAtoms - 1) / numThreads + 1;
 
-  auto coords = context->getCoordinatesCharges().getDeviceArray().data();
+  auto coords = m_Context->getCoordinatesCharges().getDeviceData();
 
-  auto xyzq = context->getXYZQ()->getDeviceXYZQ();
+  auto xyzq = m_Context->getXYZQ()->getDeviceXYZQ();
 
-  auto coordsDeltaDevice = coordsDelta.getDeviceArray().data();
-  auto coordsDeltaPreviousDevice = coordsDeltaPrevious.getDeviceArray().data();
+  auto coordsDeltaDevice = m_CoordsDelta.getDeviceData();
+  auto coordsDeltaPreviousDevice = m_CoordsDeltaPrevious.getDeviceData();
 
-  auto velMass = context->getVelocityMass().getDeviceArray().data();
+  auto velMass = m_Context->getVelocityMass().getDeviceData();
 
-  if (usingHolonomicConstraints) {
+  if (m_UsingHolonomicConstraints) {
     copy_DtoD_async<double4>(coords, coordsRefDevice, numAtoms,
-                             *integratorStream);
-    cudaCheck(cudaStreamSynchronize(*integratorStream));
+                             *m_IntegratorStream);
+    cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
 
-    holonomicConstraint->handleHolonomicConstraints(coordsRefDevice);
-    updateSPKernel<<<numBlocks, numThreads, 0, *integratorStream>>>(
+    m_HolonomicConstraint->handleHolonomicConstraints(coordsRefDevice);
+    updateSPKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
         numAtoms, xyzq, coords);
     copy_DtoD_async<double4>(coords, coordsRefDevice, numAtoms,
-                             *integratorStream);
-    cudaCheck(cudaStreamSynchronize(*integratorStream));
+                             *m_IntegratorStream);
+    cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
   }
 
-  context->calculateForces();
-  auto force = context->getForces();
+  m_Context->calculateForces();
+  auto force = m_Context->getForces();
 
-  int stride = context->getForceStride();
-  double kbt = charmm::constants::kBoltz * bathTemperature;
+  int stride = m_Context->getForceStride();
+  double kbt = charmm::constants::kBoltz * m_BathTemperature;
 
-  init<<<numBlocks, numThreads, 0, *integratorStream>>>(
-      kbt, numAtoms, stride, timeStep, // coords,
+  init<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
+      kbt, numAtoms, stride, m_TimeStep, // coords,
       coordsDeltaDevice, coordsDeltaPreviousDevice, velMass, force->xyz());
-  cudaCheck(cudaStreamSynchronize(*integratorStream));
+  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
 
-  if (usingHolonomicConstraints) {
+  if (m_UsingHolonomicConstraints) {
     backStepInitializationKernel<<<numBlocks, numThreads, 0,
-                                   *integratorStream>>>(
+                                   *m_IntegratorStream>>>(
         numAtoms, coords, coordsDeltaPreviousDevice);
 
-    holonomicConstraint->handleHolonomicConstraints(coordsRefDevice);
+    m_HolonomicConstraint->handleHolonomicConstraints(coordsRefDevice);
 
     backStepInitializationKernel2<<<numBlocks, numThreads, 0,
-                                    *integratorStream>>>(
+                                    *m_IntegratorStream>>>(
         numAtoms, coords, coordsRefDevice, coordsDeltaPreviousDevice);
   }
-  cudaCheck(cudaStreamSynchronize(*integratorStream));
+  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
+
+  return;
 }
 
 /* Integrate the forces NOT TAKING THE BAROSTAT INTO ACCOUNT, to compute
@@ -433,7 +680,7 @@ the non-barostatted half-step velocities. These will be used as initial
 value for the predictor corrector.
 */
 __global__ static void nonBarostatHalfStepVelocityUpdate(
-    double kbt, const int numAtoms, const int stride, const ts_t timeStep,
+    double kbt, const int numAtoms, const int stride, const double timeStep,
     double4 *__restrict__ coords, double4 *__restrict__ coordsDelta,
     const double4 *__restrict__ coordsDeltaPrevious,
     double4 *__restrict__ velMass, const double *__restrict__ force) {
@@ -456,8 +703,268 @@ __global__ static void nonBarostatHalfStepVelocityUpdate(
   }
 }
 
+/** @brief Computes the kinetic energy contribution to the pressure tensor
+ * using previous and next half step velocities. One might think the on-step
+ * velocity would be a better thing to use, but it would be unsound (Brooks
+ * 1987)
+ */
+__global__ static void calculateAverageKineticPressureKernel(
+    int numAtoms, double timeStep,
+    const double4 *__restrict__ coordsDeltaPrevious,
+    const double4 *__restrict__ coordsDelta,
+    const double4 *__restrict__ velMass, double *accumulant) {
+
+  constexpr int blockSize = 128 * 6;
+  __shared__ double sdata[blockSize];
+
+  int index = threadIdx.x + blockIdx.x * blockDim.x;
+  int threadId = threadIdx.x;
+
+  for (int i = 0; i < 6; i++) {
+    if (index == 0) {
+      accumulant[i] = 0.0;
+    }
+    sdata[threadId * 6 + i] = 0.0;
+  }
+
+  double timeStepSquared = timeStep * timeStep;
+  while (index < numAtoms) {
+    double factor = 0.5 / velMass[index].w / timeStepSquared;
+
+    // expand these to\ xx, xy, xz, yy, yz, zz
+
+    sdata[threadId * 6 + 0] +=
+        factor * (coordsDelta[index].x * coordsDelta[index].x +
+                  coordsDeltaPrevious[index].x * coordsDeltaPrevious[index].x);
+    sdata[threadId * 6 + 1] +=
+        factor * (coordsDelta[index].x * coordsDelta[index].y +
+                  coordsDeltaPrevious[index].x * coordsDeltaPrevious[index].y);
+    sdata[threadId * 6 + 2] +=
+        factor * (coordsDelta[index].y * coordsDelta[index].y +
+                  coordsDeltaPrevious[index].y * coordsDeltaPrevious[index].y);
+    sdata[threadId * 6 + 3] +=
+        factor * (coordsDelta[index].x * coordsDelta[index].z +
+                  coordsDeltaPrevious[index].x * coordsDeltaPrevious[index].z);
+    sdata[threadId * 6 + 4] +=
+        factor * (coordsDelta[index].y * coordsDelta[index].z +
+                  coordsDeltaPrevious[index].y * coordsDeltaPrevious[index].z);
+    sdata[threadId * 6 + 5] +=
+        factor * (coordsDelta[index].z * coordsDelta[index].z +
+                  coordsDeltaPrevious[index].z * coordsDeltaPrevious[index].z);
+
+    index += gridDim.x * blockDim.x;
+  }
+
+  for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1) {
+    __syncthreads();
+    if (threadId < s) {
+      for (int i = 0; i < 6; i++) {
+        sdata[threadId * 6 + i] += sdata[(threadId + s) * 6 + i];
+      }
+    }
+  }
+
+  if (threadId == 0) {
+    for (int i = 0; i < 6; i++) {
+      atomicAdd(accumulant + i, sdata[i]);
+    }
+  }
+}
+
+/** @brief Compute the next-half-step kinetic energy component of the pressure
+ * using updated coordsDelta. This is the only component of the pressure that
+ * is updated during the pred-corr (the previous-half-step does not change and
+ * the virial part is considered constant)
+ */
+__global__ static void calculateHalfStepKineticPressureKernel(
+    int numAtoms, double vcell, const double4 *__restrict__ coordsDelta,
+    const double4 *velMass, double *accumulant) {
+
+  constexpr int blockSize = 128 * 6;
+  __shared__ double sdata[blockSize];
+
+  int index = threadIdx.x + blockIdx.x * blockDim.x;
+  int threadId = threadIdx.x;
+
+  for (int i = 0; i < 6; i++) {
+    if (index == 0) {
+      accumulant[i] = 0.0;
+    }
+    sdata[threadId * 6 + i] = 0.0;
+  }
+
+  while (index < numAtoms) {
+    double factor = vcell / velMass[index].w;
+
+    sdata[threadId * 6 + 0] +=
+        factor * coordsDelta[index].x * coordsDelta[index].x;
+    sdata[threadId * 6 + 1] +=
+        factor * coordsDelta[index].x * coordsDelta[index].y;
+    sdata[threadId * 6 + 2] +=
+        factor * coordsDelta[index].y * coordsDelta[index].y;
+    sdata[threadId * 6 + 3] +=
+        factor * coordsDelta[index].x * coordsDelta[index].z;
+    sdata[threadId * 6 + 4] +=
+        factor * coordsDelta[index].y * coordsDelta[index].z;
+    sdata[threadId * 6 + 5] +=
+        factor * coordsDelta[index].z * coordsDelta[index].z;
+    index += gridDim.x * blockDim.x;
+  }
+
+  for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1) {
+    __syncthreads();
+    if (threadId < s) {
+      for (int i = 0; i < 6; i++) {
+        sdata[threadId * 6 + i] += sdata[(threadId + s) * 6 + i];
+      }
+    }
+  }
+
+  if (threadId == 0) {
+    for (int i = 0; i < 6; i++) {
+      atomicAdd(accumulant + i, sdata[i]);
+    }
+  }
+}
+
+// It's an independent function because we have to test it soon as a cuda
+// kernel
+/** @brief Projects deltaPressure tensor onto piston dofs
+ */
+void projectDeltaPressureToPistonDof(
+    CRYSTAL crystalType, std::vector<double> boxDimensions,
+    CudaContainer<double> deltaPressure,
+    CudaContainer<double> &pistonDeltaPressure) {
+
+  switch (crystalType) {
+  case CRYSTAL::ORTHORHOMBIC:
+    pistonDeltaPressure[0] = deltaPressure[0] / boxDimensions[0];
+    pistonDeltaPressure[1] = deltaPressure[2] / boxDimensions[1];
+    pistonDeltaPressure[2] = deltaPressure[5] / boxDimensions[2];
+    break;
+
+  case CRYSTAL::TETRAGONAL:
+    pistonDeltaPressure[0] =
+        (deltaPressure[0] + deltaPressure[2]) / boxDimensions[0];
+    pistonDeltaPressure[1] = deltaPressure[5] / boxDimensions[2];
+    break;
+
+  case CRYSTAL::CUBIC:
+    pistonDeltaPressure[0] =
+        (deltaPressure[0] + deltaPressure[2] + deltaPressure[5]) /
+        boxDimensions[0];
+    break;
+  default:
+    break;
+  }
+}
+
+void projectCrystalDimensionsToPistonPosition(
+    CRYSTAL crystalType, std::vector<double> boxDimensions,
+    CudaContainer<double> &pistonPosition) {
+
+  switch (crystalType) {
+  case CRYSTAL::ORTHORHOMBIC:
+    pistonPosition[0] = boxDimensions[0];
+    pistonPosition[1] = boxDimensions[1];
+    pistonPosition[2] = boxDimensions[2];
+    break;
+  case CRYSTAL::TETRAGONAL:
+    pistonPosition[0] = (boxDimensions[0] + boxDimensions[1]) / 2;
+    pistonPosition[1] = boxDimensions[2];
+    break;
+  case CRYSTAL::CUBIC:
+    pistonPosition[0] =
+        (boxDimensions[0] + boxDimensions[1] + boxDimensions[2]) / 3;
+
+    break;
+  default:
+    break;
+  }
+}
+
+/** boxDimenions is r_n at this time. It will be used to update
+ * onStepCrytalFactor and then updated to the value stored in
+ * onStepPistonPosition.
+ *
+ * Both Factors computed (onStepCrystalFactor and halfStepCrystalFactors)
+ * are dimensionless quantities.
+ *
+ * @todo name it sthg like "computeCrystalFactors" ? Also, this updates
+ * boxDimensions
+ */
+void projectPistonQuantitiesToCrystalQuantities(
+    CRYSTAL crystalType, double timeStep,
+    CudaContainer<double> onStepPistonPosition,
+    CudaContainer<double> halfStepPistonPosition,
+    CudaContainer<double> onStepPistonVelocity,
+    CudaContainer<double> pressurePistonPositionDelta,
+    CudaContainer<double> &onStepCrystalFactor,
+    CudaContainer<double> &halfStepCrystalFactor,
+    std::vector<double> &boxDimensions) {
+
+  switch (crystalType) {
+  case CRYSTAL::ORTHORHOMBIC:
+    onStepCrystalFactor[0] =
+        timeStep * onStepPistonVelocity[0] / boxDimensions[0];
+    onStepCrystalFactor[1] =
+        timeStep * onStepPistonVelocity[1] / boxDimensions[1];
+    onStepCrystalFactor[2] =
+        timeStep * onStepPistonVelocity[2] / boxDimensions[2];
+
+    halfStepCrystalFactor[0] =
+        pressurePistonPositionDelta[0] / halfStepPistonPosition[0];
+    halfStepCrystalFactor[1] =
+        pressurePistonPositionDelta[1] / halfStepPistonPosition[1];
+    halfStepCrystalFactor[2] =
+        pressurePistonPositionDelta[2] / halfStepPistonPosition[2];
+
+    boxDimensions[0] = onStepPistonPosition[0];
+    boxDimensions[1] = onStepPistonPosition[1];
+    boxDimensions[2] = onStepPistonPosition[2];
+    break;
+
+  case CRYSTAL::TETRAGONAL:
+    onStepCrystalFactor[0] =
+        timeStep * onStepPistonVelocity[0] / boxDimensions[0];
+    onStepCrystalFactor[1] = onStepCrystalFactor[0];
+    onStepCrystalFactor[2] =
+        timeStep * onStepPistonVelocity[1] / boxDimensions[2];
+
+    halfStepCrystalFactor[0] =
+        pressurePistonPositionDelta[0] / halfStepPistonPosition[0];
+    halfStepCrystalFactor[1] = halfStepCrystalFactor[0];
+    halfStepCrystalFactor[2] =
+        pressurePistonPositionDelta[1] / halfStepPistonPosition[1];
+
+    boxDimensions[0] = onStepPistonPosition[0];
+    boxDimensions[1] = onStepPistonPosition[0];
+    boxDimensions[2] = onStepPistonPosition[1];
+    break;
+
+  case CRYSTAL::CUBIC:
+    onStepCrystalFactor[0] =
+        timeStep * onStepPistonVelocity[0] / boxDimensions[0];
+    onStepCrystalFactor[1] = onStepCrystalFactor[0];
+    onStepCrystalFactor[2] = onStepCrystalFactor[0];
+
+    halfStepCrystalFactor[0] =
+        pressurePistonPositionDelta[0] / halfStepPistonPosition[0];
+    halfStepCrystalFactor[1] = halfStepCrystalFactor[0];
+    halfStepCrystalFactor[2] = halfStepCrystalFactor[0];
+
+    boxDimensions[0] = onStepPistonPosition[0];
+    boxDimensions[1] = onStepPistonPosition[0];
+    boxDimensions[2] = onStepPistonPosition[0];
+    break;
+  default:
+    break;
+  }
+}
+
 /** @brief One iteration of the predictor-corrector for the crystal dof
- * velocity, the predicted coordinate change and the predicted coordinates */
+ * velocity, the predicted coordinate change and the predicted coordinates
+ */
 __global__ void predictorCorrectorKernel(
     bool noseHooverFlag, int numAtoms, double timeStep,
     double noseHooverPistonVelocity, double4 *coordsRef, double4 *velMass,
@@ -553,10 +1060,13 @@ __global__ static void updateCoordsDeltaPredictedKernel(
 }
 
 /** @brief Given coordsDelta of previous and next half steps, returns the
- * on-step velocity */
-__global__ static void onStepVelocityCalculation(
-    const int numAtoms, const ts_t timeStep, double4 *__restrict__ coordsDelta,
-    double4 *__restrict__ coordsDeltaPrevious, double4 *__restrict__ velMass) {
+ * on-step velocity
+ */
+__global__ static void
+onStepVelocityCalculation(const int numAtoms, const double timeStep,
+                          double4 *__restrict__ coordsDelta,
+                          double4 *__restrict__ coordsDeltaPrevious,
+                          double4 *__restrict__ velMass) {
 
   int index = blockIdx.x * blockDim.x + threadIdx.x;
   if (index < numAtoms) {
@@ -569,266 +1079,6 @@ __global__ static void onStepVelocityCalculation(
         (coordsDelta[index].y + coordsDeltaPrevious[index].y) * fact;
     velMass[index].z =
         (coordsDelta[index].z + coordsDeltaPrevious[index].z) * fact;
-  }
-}
-
-/** @brief Computes the kinetic energy contribution to the pressure tensor
- * using previous and next half step velocities. One might think the on-step
- * velocity would be a better thing to use, but it would be unsound (Brooks
- * 1987) */
-static __global__ void calculateAverageKineticPressureKernel(
-    int numAtoms, double timeStep,
-    const double4 *__restrict__ coordsDeltaPrevious,
-    const double4 *__restrict__ coordsDelta,
-    const double4 *__restrict__ velMass, double *accumulant) {
-
-  constexpr int blockSize = 128 * 6;
-  __shared__ double sdata[blockSize];
-
-  int index = threadIdx.x + blockIdx.x * blockDim.x;
-  int threadId = threadIdx.x;
-
-  for (int i = 0; i < 6; i++) {
-    if (index == 0) {
-      accumulant[i] = 0.0;
-    }
-    sdata[threadId * 6 + i] = 0.0;
-  }
-
-  double timeStepSquared = timeStep * timeStep;
-  while (index < numAtoms) {
-    double factor = 0.5 / velMass[index].w / timeStepSquared;
-
-    // expand these to\ xx, xy, xz, yy, yz, zz
-
-    sdata[threadId * 6 + 0] +=
-        factor * (coordsDelta[index].x * coordsDelta[index].x +
-                  coordsDeltaPrevious[index].x * coordsDeltaPrevious[index].x);
-    sdata[threadId * 6 + 1] +=
-        factor * (coordsDelta[index].x * coordsDelta[index].y +
-                  coordsDeltaPrevious[index].x * coordsDeltaPrevious[index].y);
-    sdata[threadId * 6 + 2] +=
-        factor * (coordsDelta[index].y * coordsDelta[index].y +
-                  coordsDeltaPrevious[index].y * coordsDeltaPrevious[index].y);
-    sdata[threadId * 6 + 3] +=
-        factor * (coordsDelta[index].x * coordsDelta[index].z +
-                  coordsDeltaPrevious[index].x * coordsDeltaPrevious[index].z);
-    sdata[threadId * 6 + 4] +=
-        factor * (coordsDelta[index].y * coordsDelta[index].z +
-                  coordsDeltaPrevious[index].y * coordsDeltaPrevious[index].z);
-    sdata[threadId * 6 + 5] +=
-        factor * (coordsDelta[index].z * coordsDelta[index].z +
-                  coordsDeltaPrevious[index].z * coordsDeltaPrevious[index].z);
-
-    index += gridDim.x * blockDim.x;
-  }
-
-  for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1) {
-    __syncthreads();
-    if (threadId < s) {
-      for (int i = 0; i < 6; i++) {
-        sdata[threadId * 6 + i] += sdata[(threadId + s) * 6 + i];
-      }
-    }
-  }
-
-  if (threadId == 0) {
-    for (int i = 0; i < 6; i++) {
-      atomicAdd(accumulant + i, sdata[i]);
-    }
-  }
-}
-
-/** @brief Compute the next-half-step kinetic energy component of the pressure
- * using updated coordsDelta. This is the only component of the pressure that
- * is updated during the pred-corr (the previous-half-step does not change and
- * the virial part is considered constant)
- */
-static __global__ void calculateHalfStepKineticPressureKernel(
-    int numAtoms, double vcell, const double4 *__restrict__ coordsDelta,
-    const double4 *velMass, double *accumulant) {
-
-  constexpr int blockSize = 128 * 6;
-  __shared__ double sdata[blockSize];
-
-  int index = threadIdx.x + blockIdx.x * blockDim.x;
-  int threadId = threadIdx.x;
-
-  for (int i = 0; i < 6; i++) {
-    if (index == 0) {
-      accumulant[i] = 0.0;
-    }
-    sdata[threadId * 6 + i] = 0.0;
-  }
-
-  while (index < numAtoms) {
-    double factor = vcell / velMass[index].w;
-
-    sdata[threadId * 6 + 0] +=
-        factor * coordsDelta[index].x * coordsDelta[index].x;
-    sdata[threadId * 6 + 1] +=
-        factor * coordsDelta[index].x * coordsDelta[index].y;
-    sdata[threadId * 6 + 2] +=
-        factor * coordsDelta[index].y * coordsDelta[index].y;
-    sdata[threadId * 6 + 3] +=
-        factor * coordsDelta[index].x * coordsDelta[index].z;
-    sdata[threadId * 6 + 4] +=
-        factor * coordsDelta[index].y * coordsDelta[index].z;
-    sdata[threadId * 6 + 5] +=
-        factor * coordsDelta[index].z * coordsDelta[index].z;
-    index += gridDim.x * blockDim.x;
-  }
-
-  for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1) {
-    __syncthreads();
-    if (threadId < s) {
-      for (int i = 0; i < 6; i++) {
-        sdata[threadId * 6 + i] += sdata[(threadId + s) * 6 + i];
-      }
-    }
-  }
-
-  if (threadId == 0) {
-    for (int i = 0; i < 6; i++) {
-      atomicAdd(accumulant + i, sdata[i]);
-    }
-  }
-}
-
-// It's an independent function because we have to test it soon as a cuda
-// kernel
-/** @brief Projects deltaPressure tensor onto piston dofs */
-// projectDeltaPressureOverBoxDim
-void projectDeltaPressureToPistonDof(
-    CRYSTAL crystalType, std::vector<double> boxDimensions,
-    CudaContainer<double> deltaPressure,
-    CudaContainer<double> &pistonDeltaPressure) {
-
-  switch (crystalType) {
-  case CRYSTAL::ORTHORHOMBIC:
-    pistonDeltaPressure[0] = deltaPressure[0] / boxDimensions[0];
-    pistonDeltaPressure[1] = deltaPressure[2] / boxDimensions[1];
-    pistonDeltaPressure[2] = deltaPressure[5] / boxDimensions[2];
-    break;
-
-  case CRYSTAL::TETRAGONAL:
-    pistonDeltaPressure[0] =
-        (deltaPressure[0] + deltaPressure[2]) / boxDimensions[0];
-    pistonDeltaPressure[1] = deltaPressure[5] / boxDimensions[2];
-    break;
-
-  case CRYSTAL::CUBIC:
-    pistonDeltaPressure[0] =
-        (deltaPressure[0] + deltaPressure[2] + deltaPressure[5]) /
-        boxDimensions[0];
-    break;
-  default:
-    break;
-  }
-}
-
-void projectCrystalDimensionsToPistonPosition(
-    CRYSTAL crystalType, std::vector<double> boxDimensions,
-    CudaContainer<double> &pistonPosition) {
-
-  switch (crystalType) {
-  case CRYSTAL::ORTHORHOMBIC:
-    pistonPosition[0] = boxDimensions[0];
-    pistonPosition[1] = boxDimensions[1];
-    pistonPosition[2] = boxDimensions[2];
-    break;
-  case CRYSTAL::TETRAGONAL:
-    pistonPosition[0] = (boxDimensions[0] + boxDimensions[1]) / 2;
-    pistonPosition[1] = boxDimensions[2];
-    break;
-  case CRYSTAL::CUBIC:
-    pistonPosition[0] =
-        (boxDimensions[0] + boxDimensions[1] + boxDimensions[2]) / 3;
-
-    break;
-  default:
-    break;
-  }
-}
-
-/** boxDimenions is r_n at this time. It will be used to update
- * onStepCrytalFactor and then updated to the value stored in
- * onStepPistonPosition.
- *
- * Both Factors computed (onStepCrystalFactor and halfStepCrystalFactors)
- * are dimensionless quantities.
- *
- * @todo name it sthg like "computeCrystalFactors" ? Also, this updates
- * boxDimensions
- */
-void projectPistonQuantitiesToCrystalQuantities(
-    CRYSTAL crystalType, double timeStep,
-    CudaContainer<double> onStepPistonPosition,
-    CudaContainer<double> halfStepPistonPosition,
-    CudaContainer<double> onStepPistonVelocity,
-    CudaContainer<double> pressurePistonPositionDelta,
-    CudaContainer<double> &onStepCrystalFactor,
-    CudaContainer<double> &halfStepCrystalFactor,
-    std::vector<double> &boxDimensions) {
-
-  switch (crystalType) {
-  case CRYSTAL::ORTHORHOMBIC:
-    onStepCrystalFactor[0] =
-        timeStep * onStepPistonVelocity[0] / boxDimensions[0];
-    onStepCrystalFactor[1] =
-        timeStep * onStepPistonVelocity[1] / boxDimensions[1];
-    onStepCrystalFactor[2] =
-        timeStep * onStepPistonVelocity[2] / boxDimensions[2];
-
-    halfStepCrystalFactor[0] =
-        pressurePistonPositionDelta[0] / halfStepPistonPosition[0];
-    halfStepCrystalFactor[1] =
-        pressurePistonPositionDelta[1] / halfStepPistonPosition[1];
-    halfStepCrystalFactor[2] =
-        pressurePistonPositionDelta[2] / halfStepPistonPosition[2];
-
-    boxDimensions[0] = onStepPistonPosition[0];
-    boxDimensions[1] = onStepPistonPosition[1];
-    boxDimensions[2] = onStepPistonPosition[2];
-    break;
-
-  case CRYSTAL::TETRAGONAL:
-
-    onStepCrystalFactor[0] =
-        timeStep * onStepPistonVelocity[0] / boxDimensions[0];
-    onStepCrystalFactor[1] = onStepCrystalFactor[0];
-    onStepCrystalFactor[2] =
-        timeStep * onStepPistonVelocity[1] / boxDimensions[2];
-
-    halfStepCrystalFactor[0] =
-        pressurePistonPositionDelta[0] / halfStepPistonPosition[0];
-    halfStepCrystalFactor[1] = halfStepCrystalFactor[0];
-    halfStepCrystalFactor[2] =
-        pressurePistonPositionDelta[1] / halfStepPistonPosition[1];
-
-    boxDimensions[0] = onStepPistonPosition[0];
-    boxDimensions[1] = onStepPistonPosition[0];
-    boxDimensions[2] = onStepPistonPosition[1];
-    break;
-
-  case CRYSTAL::CUBIC:
-
-    onStepCrystalFactor[0] =
-        timeStep * onStepPistonVelocity[0] / boxDimensions[0];
-    onStepCrystalFactor[1] = onStepCrystalFactor[0];
-    onStepCrystalFactor[2] = onStepCrystalFactor[0];
-
-    halfStepCrystalFactor[0] =
-        pressurePistonPositionDelta[0] / halfStepPistonPosition[0];
-    halfStepCrystalFactor[1] = halfStepCrystalFactor[0];
-    halfStepCrystalFactor[2] = halfStepCrystalFactor[0];
-
-    boxDimensions[0] = onStepPistonPosition[0];
-    boxDimensions[1] = onStepPistonPosition[0];
-    boxDimensions[2] = onStepPistonPosition[0];
-    break;
-  default:
-    break;
   }
 }
 
@@ -919,7 +1169,7 @@ __global__ static void computeHolonomicConstraintVirial(
 }
 
 // TODO : do this in the imageCentering kernel in CharmmContext itself
-static __global__ void invertDeltaAsymmetric(int numGroups,
+__global__ static void invertDeltaAsymmetric(int numGroups,
                                              const int2 *__restrict__ groups,
                                              float boxx, const float4 *xyzq,
                                              int stride,
@@ -952,71 +1202,6 @@ static __global__ void invertDeltaAsymmetric(int numGroups,
   }
 }
 
-__global__ void averageNetForceKernel(int numAtoms, int stride,
-                                      const double *__restrict__ force) {}
-void CudaLangevinPistonIntegrator::removeCenterOfMassAverageNetForce() {
-
-  int numAtoms = context->getNumAtoms();
-  auto force = context->getForces();
-
-  int stride = context->getForceStride();
-
-  int numThreads = 128;
-  int numBlocks = (numAtoms + numThreads - 1) / numThreads;
-  averageNetForceKernel<<<numBlocks, numThreads>>>(numAtoms, stride,
-                                                   force->xyz());
-}
-
-void CudaLangevinPistonIntegrator::removeCenterOfMassMotion() {
-
-  auto pbc = context->getForceManager()->getPeriodicBoundaryCondition();
-
-  // TODO : do this in the kernel rather than the host side
-
-  int numAtoms = context->getNumAtoms();
-  auto velocityMass = context->getVelocityMass();
-  auto coords = context->getCoordinatesCharges();
-  auto boxDimensions = context->getBoxDimensions();
-  coords.transferFromDevice();
-  coordsDeltaPrevious.transferFromDevice();
-
-  // Remove the center of mass velocity
-  float3 cdpcom = {0.0, 0.0, 0.0};
-
-  float totalMass = 0.0;
-  for (int i = 0; i < numAtoms; ++i) {
-    auto mass = 1 / velocityMass[i].w;
-
-    cdpcom.x += coordsDeltaPrevious[i].x * mass;
-
-    if (pbc == PBC::P21) {
-      // cdpcom.y -= coordsDeltaPrevious[i].y * mass;
-      // cdpcom.z -= coordsDeltaPrevious[i].z * mass;
-    } else {
-      cdpcom.y += coordsDeltaPrevious[i].y * mass;
-      cdpcom.z += coordsDeltaPrevious[i].z * mass;
-    }
-
-    totalMass += mass;
-  }
-  cdpcom.x /= totalMass;
-  cdpcom.y /= totalMass;
-  cdpcom.z /= totalMass;
-
-  for (int i = 0; i < numAtoms; ++i) {
-    coordsDeltaPrevious[i].x -= cdpcom.x;
-
-    if (pbc == PBC::P21) {
-      // coordsDeltaPrevious[i].y += cdpcom.y;
-      // coordsDeltaPrevious[i].z += cdpcom.z;
-    } else {
-      coordsDeltaPrevious[i].y -= cdpcom.y;
-      coordsDeltaPrevious[i].z -= cdpcom.z;
-    }
-  }
-
-  coordsDeltaPrevious.transferToDevice();
-}
 /*
  - (update nblist if needed)
  - (copy coords in coordsRef)
@@ -1038,38 +1223,34 @@ void CudaLangevinPistonIntegrator::removeCenterOfMassMotion() {
 
 */
 
-#include <iomanip> // JEG240724: TEMP DELETE LATER
+void CudaLangevinPistonIntegrator::propagateOneStep(void) {
+  auto coords = m_Context->getCoordinatesCharges().getDeviceData();
+  auto xyzq = m_Context->getXYZQ()->getDeviceXYZQ();
+  auto coordsDeltaDevice = m_CoordsDelta.getDeviceData();
+  auto coordsDeltaPreviousDevice = m_CoordsDeltaPrevious.getDeviceData();
+  auto coordsRefDevice = m_CoordsRef.getDeviceData();
+  auto velMass = m_Context->getVelocityMass().getDeviceData();
 
-void CudaLangevinPistonIntegrator::propagateOneStep() {
-  auto coords = context->getCoordinatesCharges().getDeviceArray().data();
+  int numDegreesOfFreedom = m_Context->getDegreesOfFreedom();
 
-  auto xyzq = context->getXYZQ()->getDeviceXYZQ();
-  auto coordsDeltaDevice = coordsDelta.getDeviceArray().data();
-  auto coordsDeltaPreviousDevice = coordsDeltaPrevious.getDeviceArray().data();
-  auto coordsRefDevice = coordsRef.getDeviceArray().data();
+  double referenceKineticEnergy =
+      0.5 * numDegreesOfFreedom * charmm::constants::kBoltz * m_BathTemperature;
 
-  auto velMass = context->getVelocityMass().getDeviceArray().data();
+  std::vector<double> boxDimensions = m_Context->getBoxDimensions();
 
-  int numDegreesOfFreedom = context->getDegreesOfFreedom();
-
-  double referenceKineticEnergy = 0.5 * context->getDegreesOfFreedom() *
-                                  charmm::constants::kBoltz * bathTemperature;
-
-  std::vector<double> sixZeros(6, 0.0);
-
-  if (debugPrintFrequency > 0 && stepId % debugPrintFrequency == 0) {
-    std::cout << "\n Step id : " << stepId << "\n---\n";
-    for (int i = 0; i < crystalDegreesOfFreedom; ++i) {
+  if (m_DebugPrintFrequency > 0 && m_StepId % m_DebugPrintFrequency == 0) {
+    std::cout << "\n Step id : " << m_StepId << "\n---\n";
+    for (int i = 0; i < m_CrystalDegreesOfFreedom; ++i) {
       std::cout << "boxDimensions[" << i << "] = " << boxDimensions[i]
                 << std::endl;
     }
   }
 
-  auto volume = context->getVolume();
-  int numAtoms = context->getNumAtoms();
-  int stride = context->getForceStride();
-  double kbt = charmm::constants::kBoltz * bathTemperature;
-  // const double gamma = timeStep * timfac * friction;
+  auto volume = m_Context->getVolume();
+  int numAtoms = m_Context->getNumAtoms();
+  int stride = m_Context->getForceStride();
+  double kbt = charmm::constants::kBoltz * m_BathTemperature;
+  // const double gamma = m_TimeStep * m_Timfac * m_Friction;
 
   std::normal_distribution<double> dist(0, 1);
 
@@ -1077,195 +1258,257 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
   int numBlocks = (numAtoms - 1) / numThreads + 1;
   int numBlocksReduction = 64;
 
-  if (stepsSinceNeighborListUpdate % nonbondedListUpdateFrequency == 0) {
-    if (context->getForceManager()->getPeriodicBoundaryCondition() ==
+  if (m_StepsSinceNeighborListUpdate % m_NonbondedListUpdateFrequency == 0) {
+    if (m_Context->getForceManager()->getPeriodicBoundaryCondition() ==
         PBC::P21) {
-      auto groups = context->getForceManager()->getPSF()->getGroups();
+      auto groups = m_Context->getForceManager()->getPSF()->getGroups();
 
       // find a better place for this
       int numGroups = groups.size();
       int numThreads = 128;
       int numBlocks = (numGroups - 1) / numThreads + 1;
 
-      auto boxDimensions = context->getBoxDimensions();
+      auto boxDimensions = m_Context->getBoxDimensions();
       float3 box = {(float)boxDimensions[0], (float)boxDimensions[1],
                     (float)boxDimensions[2]};
 
-      invertDeltaAsymmetric<<<numBlocks, numThreads, 0, *integratorStream>>>(
-          numGroups, groups.getDeviceArray().data(), box.x, xyzq, stride,
+      invertDeltaAsymmetric<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
+          numGroups, groups.getDeviceData(), box.x, xyzq, stride,
           coordsDeltaPreviousDevice);
-      cudaCheck(cudaStreamSynchronize(*integratorStream));
+      cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
     }
-    context->resetNeighborList();
+    m_Context->resetNeighborList();
   }
 
-  if (stepId % removeCenterOfMassFrequency == 0) {
-    removeCenterOfMassMotion();
-  }
+  if (m_StepId % m_RemoveCenterOfMassFrequency == 0)
+    this->removeCenterOfMassMotion();
 
-  copy_DtoD_async<double4>(coords, coordsRef.getDeviceArray().data(), numAtoms,
-                           *integratorStream);
+  copy_DtoD_async<double4>(coords, m_CoordsRef.getDeviceData(), numAtoms,
+                           *m_IntegratorStream);
 
-  context->calculateForces(false, true, true);
-  auto force = context->getForces();
+  // {
+  //   auto tmp = m_Context->getCoordinatesCharges();
+  //   tmp.transferFromDevice();
+  //   std::cout << std::scientific << std::setprecision(8);
+  //   std::cout << "coords[0] = {" << tmp[0].x << ", " << tmp[0].y << ", "
+  //             << tmp[0].z << "}" << std::endl;
+  // }
 
-  // if (stepId % removeCenterOfMassFrequency == 0) {
-  //  removeCenterOfMassAverageNetForce();
+  m_Context->calculateForces(false, true, true);
+  auto force = m_Context->getForces();
+
+  // cudaCheck(cudaDeviceSynchronize()); // Returning from here eliminates error
+  // return;                             // Returning from here eliminates error
+
+  // if (m_StepId % m_RemoveCenterOfMassFrequency == 0) {
+  //  this->removeCenterOfMassAverageNetForce();
   //}
 
-  noseHooverPistonVelocityPrevious = noseHooverPistonVelocity;
-  noseHooverPistonForcePrevious = noseHooverPistonForce;
+  m_NoseHooverPistonVelocityPrevious = m_NoseHooverPistonVelocity;
+  m_NoseHooverPistonForcePrevious = m_NoseHooverPistonForce;
+
+  // {
+  //   auto tmp = m_Context->getVelocityMass();
+  //   tmp.transferFromDevice();
+  //   std::cout << std::scientific << std::setprecision(8);
+  //   std::cout << "velMass[0] = {" << tmp[0].x << ", " << tmp[0].y << ", "
+  //             << tmp[0].z << "}" << std::endl;
+  // }
 
   nonBarostatHalfStepVelocityUpdate<<<numBlocks, numThreads, 0,
-                                      *integratorStream>>>(
-      kbt, numAtoms, stride, timeStep, coords, coordsDeltaDevice,
+                                      *m_IntegratorStream>>>(
+      kbt, numAtoms, stride, m_TimeStep, coords, coordsDeltaDevice,
       coordsDeltaPreviousDevice, velMass, force->xyz());
+  // cudaCheck(cudaDeviceSynchronize()); // Returning from here eliminates error
+  // return;                             // Returning from here eliminates error
 
-  cudaCheck(cudaStreamSynchronize(*integratorStream));
-  auto virialTensor = context->getVirial();
+  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
+  // {
+  //   int idx = 1;
+  //   auto tmp = m_Context->getVelocityMass();
+  //   tmp.transferFromDevice();
+  //   std::cout << std::scientific << std::setprecision(8);
+  //   std::cout << idx << ": velMass = {" << tmp[idx].x << ", " << tmp[idx].y
+  //             << ", " << tmp[idx].z << ", " << tmp[idx].w << "}" <<
+  //             std::endl;
+  // }
+  auto virialTensor = m_Context->getVirial();
   virialTensor.transferFromDevice();
 
+  // std::cout << std::scientific << std::setprecision(8);
+  // for (int i = 0; i < 9; i++)
+  //   std::cout << i << ": virialTensor = " << virialTensor[i] << std::endl;
+
   // TODO :  Use profiler to determine where we do this computation
-  if (usingHolonomicConstraints) {
-    holonomicVirial.set(sixZeros);
+  if (m_UsingHolonomicConstraints) {
+    m_HolonomicVirial.setToValue(0.0);
 
     cudaCheck(cudaDeviceSynchronize());
-    cudaCheck(cudaStreamSynchronize(*integratorStream));
+    cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
 
-    holonomicConstraint->handleHolonomicConstraints(coordsRefDevice);
+    m_HolonomicConstraint->handleHolonomicConstraints(coordsRefDevice);
     cudaCheck(cudaDeviceSynchronize());
 
     computeHolonomicConstraintForces<<<numBlocks, numThreads, 0,
-                                       *integratorStream>>>(
-        numAtoms, timeStep, velMass, coordsRefDevice, coords, coordsDeltaDevice,
-        holonomicConstraintForces.getDeviceArray().data());
+                                       *m_IntegratorStream>>>(
+        numAtoms, m_TimeStep, velMass, coordsRefDevice, coords,
+        coordsDeltaDevice, m_HolonomicConstraintForces.getDeviceData());
 
     computeHolonomicConstraintVirial<<<numBlocksReduction, numThreads, 0,
-                                       *integratorStream>>>(
-        numAtoms, coordsRefDevice,
-        holonomicConstraintForces.getDeviceArray().data(),
-        holonomicVirial.getDeviceArray().data());
+                                       *m_IntegratorStream>>>(
+        numAtoms, coordsRefDevice, m_HolonomicConstraintForces.getDeviceData(),
+        m_HolonomicVirial.getDeviceData());
 
     updateCoordsDeltaAfterConstraint<<<numBlocks, numThreads, 0,
-                                       *integratorStream>>>(
+                                       *m_IntegratorStream>>>(
         numAtoms, coordsRefDevice, coords, coordsDeltaDevice);
 
-    cudaCheck(cudaStreamSynchronize(*integratorStream));
-    holonomicVirial.transferFromDevice();
+    cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
+    m_HolonomicVirial.transferFromDevice();
 
-    virialTensor[0] += holonomicVirial[0];
-    virialTensor[1] += holonomicVirial[1];
-    virialTensor[2] += holonomicVirial[3];
-    virialTensor[3] += holonomicVirial[1];
-    virialTensor[4] += holonomicVirial[2];
-    virialTensor[5] += holonomicVirial[4];
-    virialTensor[6] += holonomicVirial[3];
-    virialTensor[7] += holonomicVirial[4];
-    virialTensor[8] += holonomicVirial[5];
+    virialTensor[0] += m_HolonomicVirial[0];
+    virialTensor[1] += m_HolonomicVirial[1];
+    virialTensor[2] += m_HolonomicVirial[3];
+    virialTensor[3] += m_HolonomicVirial[1];
+    virialTensor[4] += m_HolonomicVirial[2];
+    virialTensor[5] += m_HolonomicVirial[4];
+    virialTensor[6] += m_HolonomicVirial[3];
+    virialTensor[7] += m_HolonomicVirial[4];
+    virialTensor[8] += m_HolonomicVirial[5];
 
     virialTensor.transferToDevice();
-    cudaCheck(cudaDeviceSynchronize());
   }
 
-  kineticEnergyPressureTensor.set(sixZeros);
+  m_KineticEnergyPressureTensor.setToValue(0.0);
   calculateAverageKineticPressureKernel<<<numBlocksReduction, numThreads, 0,
-                                          *integratorStream>>>(
-      numAtoms, timeStep, coordsDeltaPreviousDevice, coordsDeltaDevice, velMass,
-      kineticEnergyPressureTensor.getDeviceArray().data());
-  cudaCheck(cudaStreamSynchronize(*integratorStream));
-  kineticEnergyPressureTensor.transferFromDevice();
+                                          *m_IntegratorStream>>>(
+      numAtoms, m_TimeStep, coordsDeltaPreviousDevice, coordsDeltaDevice,
+      velMass, m_KineticEnergyPressureTensor.getDeviceData());
+  // cudaCheck(cudaDeviceSynchronize()); // Returning from here eliminates error
+  // return;                             // Returning from here eliminates error
+
+  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
+  m_KineticEnergyPressureTensor.transferFromDevice();
+
+  // // kineticEnergyPressureTensor differs
+  // std::cout << std::scientific << std::setprecision(8);
+  // for (int i = 0; i < 6; i++)
+  //   std::cout << i << ": m_KineticEnergyPressureTensor = "
+  //             << m_KineticEnergyPressureTensor[i] << std::endl;
+
+  // for (int i = 0; i < 6; i++)
+  //   std::cout << i << ": pressureTensor = " << m_PressureTensor[i] <<
+  //   std::endl;
 
   double volumeFactor = charmm::constants::patmos / volume;
-  pressureTensor[0] =
-      (virialTensor[0] + kineticEnergyPressureTensor[0]) * volumeFactor;
-  pressureTensor[1] =
-      (virialTensor[3] + kineticEnergyPressureTensor[1]) * volumeFactor;
-  pressureTensor[2] =
-      (virialTensor[4] + kineticEnergyPressureTensor[2]) * volumeFactor;
-  pressureTensor[3] =
-      (virialTensor[6] + kineticEnergyPressureTensor[3]) * volumeFactor;
-  pressureTensor[4] =
-      (virialTensor[7] + kineticEnergyPressureTensor[4]) * volumeFactor;
-  pressureTensor[5] =
-      (virialTensor[8] + kineticEnergyPressureTensor[5]) * volumeFactor;
+  m_PressureTensor[0] =
+      (virialTensor[0] + m_KineticEnergyPressureTensor[0]) * volumeFactor;
+  m_PressureTensor[1] =
+      (virialTensor[3] + m_KineticEnergyPressureTensor[1]) * volumeFactor;
+  m_PressureTensor[2] =
+      (virialTensor[4] + m_KineticEnergyPressureTensor[2]) * volumeFactor;
+  m_PressureTensor[3] =
+      (virialTensor[6] + m_KineticEnergyPressureTensor[3]) * volumeFactor;
+  m_PressureTensor[4] =
+      (virialTensor[7] + m_KineticEnergyPressureTensor[4]) * volumeFactor;
+  m_PressureTensor[5] =
+      (virialTensor[8] + m_KineticEnergyPressureTensor[5]) * volumeFactor;
 
-  pressureScalar[0] =
-      (pressureTensor[0] + pressureTensor[2] + pressureTensor[5]) / 3.0;
-  pressureScalar.transferToDevice();
+  m_PressureScalar[0] =
+      (m_PressureTensor[0] + m_PressureTensor[2] + m_PressureTensor[5]) / 3.0;
+  m_PressureScalar.transferToDevice();
 
-  if (constantSurfaceTensionFlag) {
-    referencePressure[0] =
-        (referencePressure[5] - surfaceTension *
-                                    charmm::constants::surfaceTensionFactor /
-                                    boxDimensions[2]);
-    referencePressure[2] = referencePressure[0];
+  if (m_ConstantSurfaceTensionFlag) {
+    m_ReferencePressure[0] =
+        (m_ReferencePressure[5] - m_SurfaceTension *
+                                      charmm::constants::surfaceTensionFactor /
+                                      boxDimensions[2]);
+    m_ReferencePressure[2] = m_ReferencePressure[0];
   }
 
-  deltaPressure[0] = pressureTensor[0] - referencePressure[0];
-  deltaPressure[1] = pressureTensor[1] - referencePressure[1];
-  deltaPressure[2] = pressureTensor[2] - referencePressure[2];
-  deltaPressure[3] = pressureTensor[3] - referencePressure[3];
-  deltaPressure[4] = pressureTensor[4] - referencePressure[4];
-  deltaPressure[5] = pressureTensor[5] - referencePressure[5];
-  deltaPressure.transferToDevice();
+  // for (int i = 0; i < 6; i++)
+  //   std::cout << i << ": pressureTensor = " << m_PressureTensor[i] <<
+  //   std::endl;
+
+  // std::cout << "BEFORE UPDATE" << std::endl;
+  // for (int i = 0; i < 6; i++)
+  //   std::cout << i << ": deltaPressure = " << m_DeltaPressure[i] <<
+  //   std::endl;
+  m_DeltaPressure[0] = m_PressureTensor[0] - m_ReferencePressure[0];
+  m_DeltaPressure[1] = m_PressureTensor[1] - m_ReferencePressure[1];
+  m_DeltaPressure[2] = m_PressureTensor[2] - m_ReferencePressure[2];
+  m_DeltaPressure[3] = m_PressureTensor[3] - m_ReferencePressure[3];
+  m_DeltaPressure[4] = m_PressureTensor[4] - m_ReferencePressure[4];
+  m_DeltaPressure[5] = m_PressureTensor[5] - m_ReferencePressure[5];
+  m_DeltaPressure.transferToDevice();
+  // std::cout << "AFTER UPDATE" << std::endl;
+  // for (int i = 0; i < 6; i++)
+  //   std::cout << i << ": deltaPressure = " << m_DeltaPressure[i] <<
+  //   std::endl;
 
   auto vcell =
-      0.25 * charmm::constants::patmos / volume / (timeStep * timeStep);
-  deltaPressureHalfStepKinetic.set(sixZeros);
+      0.25 * charmm::constants::patmos / volume / (m_TimeStep * m_TimeStep);
+  m_DeltaPressureHalfStepKinetic.setToValue(0.0);
   calculateHalfStepKineticPressureKernel<<<numBlocksReduction, numThreads, 0,
-                                           *integratorStream>>>(
+                                           *m_IntegratorStream>>>(
       numAtoms, vcell, coordsDeltaDevice, velMass,
-      deltaPressureHalfStepKinetic.getDeviceArray().data());
-  cudaCheck(cudaStreamSynchronize(*integratorStream));
+      m_DeltaPressureHalfStepKinetic.getDeviceData());
+  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
+  // cudaCheck(cudaDeviceSynchronize()); // Returning from here eliminates error
+  // return;                             // Returning from here eliminates error
 
-  deltaPressureHalfStepKinetic.transferFromDevice();
+  m_DeltaPressureHalfStepKinetic.transferFromDevice();
 
-  for (int i = 0; i < 6; ++i) {
-    deltaPressureNonChanging[i] =
-        deltaPressure[i] - deltaPressureHalfStepKinetic[i];
+  for (int i = 0; i < 6; i++) {
+    m_DeltaPressureNonChanging[i] =
+        m_DeltaPressure[i] - m_DeltaPressureHalfStepKinetic[i];
   }
 
-  for (int i = 0; i < pistonDegreesOfFreedom; ++i) {
-    pressurePistonPositionDeltaStored[i] = pressurePistonPositionDelta[i];
-  }
+  for (int i = 0; i < m_PistonDegreesOfFreedom; i++)
+    m_PressurePistonPositionDeltaStored[i] = m_PressurePistonPositionDelta[i];
 
   copy_DtoD_async<double4>(coordsDeltaDevice,
-                           coordsDeltaPredicted.getDeviceArray().data(),
-                           numAtoms, *integratorStream);
+                           m_CoordsDeltaPredicted.getDeviceData(), numAtoms,
+                           *m_IntegratorStream);
 
-  cudaCheck(cudaStreamSynchronize(*integratorStream));
-  std::vector<double> boxDimensionsStored;
+  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
+  // cudaCheck(cudaDeviceSynchronize()); // Returning from here eliminates error
+  // return;                             // Returning from here eliminates error
 
-  for (int i = 0; i < crystalDegreesOfFreedom; ++i) {
-    boxDimensionsStored.push_back(boxDimensions[i]);
-  }
+  std::vector<double> boxDimensionsStored = boxDimensions;
+  // for (int i = 0; i < crystalDegreesOfFreedom; i++) {
+  //   boxDimensionsStored.push_back(boxDimensions[i]);
+  // }
 
   double surfaceTensionInstantaneous =
       0.5 * boxDimensions[2] *
-      (pressureTensor[5] - 0.5 * (pressureTensor[0] + pressureTensor[2])) /
+      (m_PressureTensor[5] -
+       0.5 * (m_PressureTensor[0] + m_PressureTensor[2])) /
       charmm::constants::surfaceTensionFactor;
 
   // predictor corrector loop
   ///////////////////////////////
 
-  for (int iter = 0; iter < maxPredictorCorrectorSteps; ++iter) {
+  for (int iter = 0; iter < m_MaxPredictorCorrectorSteps; iter++) {
+    boxDimensions = boxDimensionsStored;
+    // for (int i = 0; i < m_CrystalDegreesOfFreedom; i++)
+    //   boxDimensions[i] = boxDimensionsStored[i];
 
-    for (int i = 0; i < crystalDegreesOfFreedom; ++i) {
-      boxDimensions[i] = boxDimensionsStored[i];
-    }
-
-    for (int i = 0; i < pistonDegreesOfFreedom; ++i) {
-      pressurePistonPositionDelta[i] = pressurePistonPositionDeltaStored[i];
-    }
+    for (int i = 0; i < m_PistonDegreesOfFreedom; i++)
+      m_PressurePistonPositionDelta[i] = m_PressurePistonPositionDeltaStored[i];
 
     // TODO : move to the device
-    projectDeltaPressureToPistonDof(crystalType, boxDimensions, deltaPressure,
-                                    pistonDeltaPressure);
+    // for (int i = 0; i < 6; i++)
+    //   std::cout << i << ": deltaPressure = " << m_DeltaPressure[i] <<
+    //   std::endl;
+    projectDeltaPressureToPistonDof(m_CrystalType, boxDimensions,
+                                    m_DeltaPressure, m_PistonDeltaPressure);
 
-    double fact = volume * pbfact * charmm::constants::atmosp;
+    double fact = volume * m_Pbfact * charmm::constants::atmosp;
 
-    for (int i = 0; i < pistonDegreesOfFreedom; ++i) {
-      pressurePistonPositionDeltaPrevious[i] = pressurePistonPositionDelta[i];
+    for (int i = 0; i < m_PistonDegreesOfFreedom; i++) {
+      m_PressurePistonPositionDeltaPrevious[i] =
+          m_PressurePistonPositionDelta[i];
       // double randVal = dist(rng);
       // double rdum = pbfact * prfwd[i] * randVal;
       // std::cout << "=============================================" <<
@@ -1293,10 +1536,10 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
       //     palpha * pressurePistonPositionDelta[i] +
       // inversePistonMass[i] * pistonDeltaPressure[i] * fact + rdum;
 
-      pressurePistonPositionDelta[i] =
-          palpha * pressurePistonPositionDelta[i] +
-          inversePistonMass[i] * pistonDeltaPressure[i] * fact +
-          pbfact * prfwd[i] * dist(rng);
+      m_PressurePistonPositionDelta[i] =
+          m_Palpha * m_PressurePistonPositionDelta[i] +
+          m_InversePistonMass[i] * m_PistonDeltaPressure[i] * fact +
+          m_Pbfact * m_Prfwd[i] * dist(m_Rng);
 
       // std::cout << std::scientific << std::setprecision(8);
       // std::cout << "BEFORE: pressurePistonPositionDelta[" << i
@@ -1319,25 +1562,28 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
       // std::cout << "AFTER: pressurePistonPositionDelta[" << i
       //           << "] = " << pressurePistonPositionDelta[i] << std::endl;
 
-      onStepPistonVelocity[i] = (pressurePistonPositionDelta[i] +
-                                 pressurePistonPositionDeltaPrevious[i]) /
-                                (2.0 * timeStep);
+      m_OnStepPistonVelocity[i] = (m_PressurePistonPositionDelta[i] +
+                                   m_PressurePistonPositionDeltaPrevious[i]) /
+                                  (2.0 * m_TimeStep);
 
       // std::cout << "onStepPistonVelocity[" << i
       //           << "] = " << onStepPistonVelocity[i] << std::endl;
     }
-    projectCrystalDimensionsToPistonPosition(crystalType, boxDimensions,
-                                             onStepPistonPosition);
+    projectCrystalDimensionsToPistonPosition(m_CrystalType, boxDimensions,
+                                             m_OnStepPistonPosition);
+    // cudaCheck(cudaDeviceSynchronize()); // Returning from here eliminates
+    // error return;                             // Returning from here
+    // eliminates error
 
-    for (int i = 0; i < pistonDegreesOfFreedom; ++i) {
-      onStepPistonPosition[i] += pressurePistonPositionDelta[i];
-      halfStepPistonPosition[i] =
-          onStepPistonPosition[i] - pressurePistonPositionDelta[i] / 2.0;
+    // Commenting out this loop makes it work
+    for (int i = 0; i < m_PistonDegreesOfFreedom; i++) {
+      m_OnStepPistonPosition[i] += m_PressurePistonPositionDelta[i];
+      m_HalfStepPistonPosition[i] =
+          m_OnStepPistonPosition[i] - m_PressurePistonPositionDelta[i] / 2.0;
     }
 
     // Calculate nose hoover thermal piston velocity and position
-    if (noseHooverFlag) {
-
+    if (m_NoseHooverFlag) {
       // TODO : change this to on step kinetic energy
       /*double onStepKineticEnergy =
           (deltaPressureHalfStepKinetic[0] + deltaPressureHalfStepKinetic[2] +
@@ -1345,18 +1591,17 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
           (0.5 * charmm::constants::patmos / volume);
       */
       double onStepKineticEnergy =
-          context->computeTemperature() *
+          m_Context->computeTemperature() *
           (0.5 * numDegreesOfFreedom * charmm::constants::kBoltz);
-      noseHooverPistonForce = 2.0 * timeStep *
-                              (onStepKineticEnergy - referenceKineticEnergy) /
-                              noseHooverPistonMass;
-      if (noseHooverPistonForcePrevious == 0.0) {
-        noseHooverPistonForcePrevious = noseHooverPistonForce;
-      }
+      m_NoseHooverPistonForce = 2.0 * m_TimeStep *
+                                (onStepKineticEnergy - referenceKineticEnergy) /
+                                m_NoseHooverPistonMass;
+      if (m_NoseHooverPistonForcePrevious == 0.0)
+        m_NoseHooverPistonForcePrevious = m_NoseHooverPistonForce;
 
-      noseHooverPistonVelocity =
-          noseHooverPistonVelocityPrevious +
-          (noseHooverPistonForce + noseHooverPistonForcePrevious) / 2.0;
+      m_NoseHooverPistonVelocity =
+          m_NoseHooverPistonVelocityPrevious +
+          (m_NoseHooverPistonForce + m_NoseHooverPistonForcePrevious) / 2.0;
       // std::cout << "onStepKineticEnergy: " << onStepKineticEnergy <<
       // std::endl; std::cout << "referenceKineticEnergy: " <<
       // referenceKineticEnergy
@@ -1373,14 +1618,42 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
     //              << noseHooverPistonForcePrevious << std::endl;
     //    std::cout << "noseHooverPistonVelocityPrevious: "
     //              << noseHooverPistonVelocityPrevious << std::endl;
-    //
-    projectPistonQuantitiesToCrystalQuantities(
-        crystalType, timeStep, onStepPistonPosition, halfStepPistonPosition,
-        onStepPistonVelocity, pressurePistonPositionDelta, onStepCrystalFactor,
-        halfStepCrystalFactor, boxDimensions);
 
-    onStepCrystalFactor.transferToDevice();
-    halfStepCrystalFactor.transferToDevice();
+    // std::cout << "BEFORE UPDATE:\n";
+    // std::cout << "boxDimensions = {" << boxDimensions[0] << ", "
+    //           << boxDimensions[1] << ", " << boxDimensions[2] << "}"
+    //           << std::endl;
+    // std::cout << "onStepCrystalFactor = {" << onStepCrystalFactor[0] << ", "
+    //           << onStepCrystalFactor[1] << ", " << onStepCrystalFactor[2] <<
+    //           "}"
+    //           << std::endl;
+    // std::cout << "halfStepCrystalFactor = {" << halfStepCrystalFactor[0] <<
+    // ", "
+    //           << halfStepCrystalFactor[1] << ", " << halfStepCrystalFactor[2]
+    //           << "}" << std::endl;
+    projectPistonQuantitiesToCrystalQuantities(
+        m_CrystalType, m_TimeStep, m_OnStepPistonPosition,
+        m_HalfStepPistonPosition, m_OnStepPistonVelocity,
+        m_PressurePistonPositionDelta, m_OnStepCrystalFactor,
+        m_HalfStepCrystalFactor, boxDimensions);
+    // std::cout << "AFTER UPDATE:\n";
+    // std::cout << "boxDimensions = {" << boxDimensions[0] << ", "
+    //           << boxDimensions[1] << ", " << boxDimensions[2] << "}"
+    //           << std::endl;
+    // std::cout << "onStepCrystalFactor = {" << onStepCrystalFactor[0] << ", "
+    //           << onStepCrystalFactor[1] << ", " << onStepCrystalFactor[2] <<
+    //           "}"
+    //           << std::endl;
+    // std::cout << "halfStepCrystalFactor = {" << halfStepCrystalFactor[0] <<
+    // ", "
+    //           << halfStepCrystalFactor[1] << ", " << halfStepCrystalFactor[2]
+    //           << "}" << std::endl;
+    // cudaCheck(cudaDeviceSynchronize()); // Returning from here eliminates
+    // error return;                             // Returning from here
+    // eliminates error
+
+    m_OnStepCrystalFactor.transferToDevice();
+    m_HalfStepCrystalFactor.transferToDevice();
 
     //        std::cout << " -- before predCorrKernel (iter " << iter << ")" <<
     //        std::endl; coordsDeltaPredicted.transferFromDevice(); std::cout <<
@@ -1412,17 +1685,17 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
     //        noseHooverPistonVelocity
     //                  << std::endl;
 
-    predictorCorrectorKernel<<<numBlocks, numThreads, 0, *integratorStream>>>(
-        noseHooverFlag, numAtoms, timeStep, noseHooverPistonVelocity,
-        coordsRef.getDeviceArray().data(), velMass, coords,
-        coordsDeltaPreviousDevice, coordsDeltaDevice,
-        coordsDeltaPredicted.getDeviceArray().data(),
-        onStepCrystalFactor.getDeviceArray().data(),
-        halfStepCrystalFactor.getDeviceArray().data());
+    predictorCorrectorKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
+        m_NoseHooverFlag, numAtoms, m_TimeStep, m_NoseHooverPistonVelocity,
+        m_CoordsRef.getDeviceData(), velMass, coords, coordsDeltaPreviousDevice,
+        coordsDeltaDevice, m_CoordsDeltaPredicted.getDeviceData(),
+        m_OnStepCrystalFactor.getDeviceData(),
+        m_HalfStepCrystalFactor.getDeviceData());
+    // cudaCheck(cudaDeviceSynchronize()); // Returning from here eliminates
+    // error return;                             // Returning from here
+    // eliminates error
 
-    deltaPressureHalfStepKinetic.transferFromDevice();
-
-    deltaPressureHalfStepKinetic.set(sixZeros);
+    m_DeltaPressureHalfStepKinetic.setToValue(0.0);
 
     //    std::cout << " -- before hafstepkinpress" << std::endl;
     //    coordsDeltaPredicted.transferFromDevice();
@@ -1435,22 +1708,36 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
     //              << std::endl;
     //
     calculateHalfStepKineticPressureKernel<<<numBlocks, numThreads, 0,
-                                             *integratorStream>>>(
-        numAtoms, vcell, coordsDeltaPredicted.getDeviceArray().data(), velMass,
-        deltaPressureHalfStepKinetic.getDeviceArray().data());
-    cudaCheck(cudaStreamSynchronize(*integratorStream));
+                                             *m_IntegratorStream>>>(
+        numAtoms, vcell, m_CoordsDeltaPredicted.getDeviceData(), velMass,
+        m_DeltaPressureHalfStepKinetic.getDeviceData());
+    cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
+    // cudaCheck(cudaDeviceSynchronize()); // Returning from here eliminates
+    // error return;                             // Returning from here
+    // eliminates error
+
     // xx, yy terms have been checked on CPU side and correspond
 
-    deltaPressureHalfStepKinetic.transferFromDevice();
+    m_DeltaPressureHalfStepKinetic.transferFromDevice();
 
-    for (int i = 0; i < 6; ++i) {
-      deltaPressure[i] =
-          deltaPressureNonChanging[i] + deltaPressureHalfStepKinetic[i];
+    for (int i = 0; i < 6; i++) {
+      m_DeltaPressure[i] =
+          m_DeltaPressureNonChanging[i] + m_DeltaPressureHalfStepKinetic[i];
     }
+
+    // if (iter == 1) {
+    //   cudaCheck(cudaDeviceSynchronize()); // Error persists returning from
+    //   here return;                             // Error persists returning
+    //   from here
+    // }
+    cudaCheck(cudaDeviceSynchronize());
   }
   //
   // end predcorr loop
   /////////////////////
+
+  // cudaCheck(cudaDeviceSynchronize()); // Error persists returning from here
+  // return;                             // Error persists returning from here
 
   //  std::cout << "after predcor" << std::endl;
   //  std::cout << "deltaPressureNonChanging: " << deltaPressureNonChanging[0]
@@ -1484,52 +1771,62 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
   //  std::cout << "refke: " << referenceKineticEnergy << std::endl;
   //  std::cout << "volume : " << volume << std::endl;
   //
-  if (usingHolonomicConstraints) {
-
-    holonomicConstraint->handleHolonomicConstraints(
-        coordsRef.getDeviceArray().data());
+  if (m_UsingHolonomicConstraints) {
+    m_HolonomicConstraint->handleHolonomicConstraints(
+        m_CoordsRef.getDeviceData());
 
     prepareCoordsRefForHolonomicConstraintsKernel<<<numBlocks, numThreads, 0,
-                                                    *integratorStream>>>(
-        numAtoms, coordsRef.getDeviceArray().data(), coords,
-        halfStepCrystalFactor.getDeviceArray().data());
+                                                    *m_IntegratorStream>>>(
+        numAtoms, m_CoordsRef.getDeviceData(), coords,
+        m_HalfStepCrystalFactor.getDeviceData());
 
     // Swapping coordsRef and coords as the holonomic constraint will update
     // the coords by calling it from the CharmmContext
 
-    double4 *temporary = coordsRef.getDeviceArray().data();
+    double4 *temporary = m_CoordsRef.getDeviceData();
     double4 *temporary2 = coords;
     coordsRefDevice = coords;
     coords = temporary;
-    context->getCoordinatesCharges().getDeviceArray().set(temporary);
+    // m_Context->getCoordinatesCharges().getDeviceData() = temporary;
+    copy_DtoD_async<double4>(temporary,
+                             m_Context->getCoordinatesCharges().getDeviceData(),
+                             numAtoms, *m_IntegratorStream);
+    cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
 
-    holonomicConstraint->handleHolonomicConstraints(coordsRefDevice);
+    m_HolonomicConstraint->handleHolonomicConstraints(coordsRefDevice);
 
     // temporary = coordsRef.getDeviceArray().data();
-    //  coordsRef.getDeviceArray().set(coords);
+    // coordsRef.getDeviceArray().set(coords);
     // coordsRefDevice = coords;
-    coordsRef.getDeviceArray().set(temporary);
-    context->getCoordinatesCharges().getDeviceArray().set(temporary2);
+    copy_DtoD_async<double4>(temporary, m_CoordsRef.getDeviceData(), numAtoms,
+                             *m_IntegratorStream);
+    copy_DtoD_async<double4>(temporary2,
+                             m_Context->getCoordinatesCharges().getDeviceData(),
+                             numAtoms, *m_IntegratorStream);
+    cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
 
-    coords = context->getCoordinatesCharges().getDeviceArray().data();
-    coordsRefDevice = coordsRef.getDeviceArray().data();
+    coords = m_Context->getCoordinatesCharges().getDeviceData();
+    coordsRefDevice = m_CoordsRef.getDeviceData();
 
     updateCoordsDeltaPredictedKernel<<<numBlocks, numThreads, 0,
-                                       *integratorStream>>>(
-        numAtoms, coordsDeltaPredicted.getDeviceArray().data(), coords,
-        coordsRef.getDeviceArray().data());
+                                       *m_IntegratorStream>>>(
+        numAtoms, m_CoordsDeltaPredicted.getDeviceData(), coords,
+        m_CoordsRef.getDeviceData());
   }
 
-  copy_DtoD_async<double4>(coordsDeltaPredicted.getDeviceArray().data(),
-                           coordsDeltaDevice, numAtoms, *integratorStream);
+  copy_DtoD_async<double4>(m_CoordsDeltaPredicted.getDeviceData(),
+                           coordsDeltaDevice, numAtoms, *m_IntegratorStream);
 
-  onStepVelocityCalculation<<<numBlocks, numThreads, 0, *integratorStream>>>(
-      numAtoms, timeStep, coordsDeltaDevice, coordsDeltaPreviousDevice,
+  onStepVelocityCalculation<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
+      numAtoms, m_TimeStep, coordsDeltaDevice, coordsDeltaPreviousDevice,
       velMass);
 
-  cudaCheck(cudaStreamSynchronize(*integratorStream));
+  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
+  // cudaCheck(cudaDeviceSynchronize()); // Error persists returning from here
+  // return;                             // Error persists returning from here
+
   // Calculate nose hoover thermal piston velocity and position
-  if (noseHooverFlag) {
+  if (m_NoseHooverFlag) {
 
     // TODO : change this to on step kinetic energy
     /*double onStepKineticEnergy =
@@ -1538,54 +1835,54 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
         (0.5 * charmm::constants::patmos / volume);
     */
     double onStepKineticEnergy =
-        context->computeTemperature() *
+        m_Context->computeTemperature() *
         (0.5 * numDegreesOfFreedom * charmm::constants::kBoltz);
-    noseHooverPistonForce = 2.0 * timeStep *
-                            (onStepKineticEnergy - referenceKineticEnergy) /
-                            noseHooverPistonMass;
+    m_NoseHooverPistonForce = 2.0 * m_TimeStep *
+                              (onStepKineticEnergy - referenceKineticEnergy) /
+                              m_NoseHooverPistonMass;
 
-    noseHooverPistonVelocity =
-        noseHooverPistonVelocityPrevious +
-        (noseHooverPistonForce + noseHooverPistonForcePrevious) / 2.0;
+    m_NoseHooverPistonVelocity =
+        m_NoseHooverPistonVelocityPrevious +
+        (m_NoseHooverPistonForce + m_NoseHooverPistonForcePrevious) / 2.0;
   }
 
   // start : MovePressureCalculationToEndTesting
-  kineticEnergyPressureTensor.set(sixZeros);
+  m_KineticEnergyPressureTensor.setToValue(0.0);
   calculateAverageKineticPressureKernel<<<numBlocksReduction, numThreads, 0,
-                                          *integratorStream>>>(
-      numAtoms, timeStep, coordsDeltaPreviousDevice, coordsDeltaDevice, velMass,
-      kineticEnergyPressureTensor.getDeviceArray().data());
-  cudaCheck(cudaStreamSynchronize(*integratorStream));
-  kineticEnergyPressureTensor.transferFromDevice();
+                                          *m_IntegratorStream>>>(
+      numAtoms, m_TimeStep, coordsDeltaPreviousDevice, coordsDeltaDevice,
+      velMass, m_KineticEnergyPressureTensor.getDeviceData());
+  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
+  m_KineticEnergyPressureTensor.transferFromDevice();
 
-  pressureTensor[0] =
-      (virialTensor[0] + kineticEnergyPressureTensor[0]) * volumeFactor;
-  pressureTensor[1] =
-      (virialTensor[3] + kineticEnergyPressureTensor[1]) * volumeFactor;
-  pressureTensor[2] =
-      (virialTensor[4] + kineticEnergyPressureTensor[2]) * volumeFactor;
-  pressureTensor[3] =
-      (virialTensor[6] + kineticEnergyPressureTensor[3]) * volumeFactor;
-  pressureTensor[4] =
-      (virialTensor[7] + kineticEnergyPressureTensor[4]) * volumeFactor;
-  pressureTensor[5] =
-      (virialTensor[8] + kineticEnergyPressureTensor[5]) * volumeFactor;
+  m_PressureTensor[0] =
+      (virialTensor[0] + m_KineticEnergyPressureTensor[0]) * volumeFactor;
+  m_PressureTensor[1] =
+      (virialTensor[3] + m_KineticEnergyPressureTensor[1]) * volumeFactor;
+  m_PressureTensor[2] =
+      (virialTensor[4] + m_KineticEnergyPressureTensor[2]) * volumeFactor;
+  m_PressureTensor[3] =
+      (virialTensor[6] + m_KineticEnergyPressureTensor[3]) * volumeFactor;
+  m_PressureTensor[4] =
+      (virialTensor[7] + m_KineticEnergyPressureTensor[4]) * volumeFactor;
+  m_PressureTensor[5] =
+      (virialTensor[8] + m_KineticEnergyPressureTensor[5]) * volumeFactor;
 
-  pressureScalar[0] =
-      (pressureTensor[0] + pressureTensor[2] + pressureTensor[5]) / 3.0;
-  pressureScalar.transferToDevice();
+  m_PressureScalar[0] =
+      (m_PressureTensor[0] + m_PressureTensor[2] + m_PressureTensor[5]) / 3.0;
+  m_PressureScalar.transferToDevice();
 
-  averagePressureScalar[0] =
-      (stepId / (stepId + 1.0)) * averagePressureScalar[0] +
-      (1.0 / (stepId + 1.0)) * pressureScalar[0];
+  m_AveragePressureScalar[0] =
+      (m_StepId / (m_StepId + 1.0)) * m_AveragePressureScalar[0] +
+      (1.0 / (m_StepId + 1.0)) * m_PressureScalar[0];
   for (int i = 0; i < 6; i++) {
-    averagePressureTensor[i] =
-        (stepId / (stepId + 1.0)) * averagePressureTensor[i] +
-        (1.0 / (stepId + 1.0)) * pressureTensor[i];
+    m_AveragePressureTensor[i] =
+        (m_StepId / (m_StepId + 1.0)) * m_AveragePressureTensor[i] +
+        (1.0 / (m_StepId + 1.0)) * m_PressureTensor[i];
   }
 
-  if (debugPrintFrequency > 0 && stepId % debugPrintFrequency == 0) {
-    for (int i = 0; i < 6; ++i) {
+  if (m_DebugPrintFrequency > 0 && m_StepId % m_DebugPrintFrequency == 0) {
+    for (int i = 0; i < 6; i++) {
       int j;
       switch (i) {
       case 0:
@@ -1610,12 +1907,12 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
         break;
       }
 
-      std::cout << "pressure[" << i << "] = " << pressureTensor[i] << "   "
-                << virialTensor[j] << "   " << kineticEnergyPressureTensor[i]
+      std::cout << "pressure[" << i << "] = " << m_PressureTensor[i] << "   "
+                << virialTensor[j] << "   " << m_KineticEnergyPressureTensor[i]
                 << std::endl;
     }
 
-    std::cout << "averagePressureScalar = " << averagePressureScalar[0]
+    std::cout << "averagePressureScalar = " << m_AveragePressureScalar[0]
               << std::endl;
   }
 
@@ -1624,81 +1921,82 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
 
   // *********************
   // Calculate HFCTE etc
-  double pressureTarget =
-      (referencePressure[0] + referencePressure[2] + referencePressure[5]) /
-      3.0;
+  double pressureTarget = (m_ReferencePressure[0] + m_ReferencePressure[2] +
+                           m_ReferencePressure[5]) /
+                          3.0;
   double pistonPotentialEnergy =
       pressureTarget * volume * charmm::constants::atmosp;
 
-  if (constantSurfaceTensionFlag) {
-    pressureTarget = referencePressure[5];
+  if (m_ConstantSurfaceTensionFlag) {
+    pressureTarget = m_ReferencePressure[5];
     pistonPotentialEnergy =
         pressureTarget * volume * charmm::constants::atmosp -
-        surfaceTension * charmm::constants::surfaceTensionFactor * volume *
+        m_SurfaceTension * charmm::constants::surfaceTensionFactor * volume *
             charmm::constants::atmosp / boxDimensions[2];
   }
 
   // *********************
-  if (noseHooverFlag) {
-    noseHooverPistonPosition += noseHooverPistonVelocity * timeStep +
-                                0.5 * noseHooverPistonForce * timeStep;
+  if (m_NoseHooverFlag) {
+    m_NoseHooverPistonPosition += m_NoseHooverPistonVelocity * m_TimeStep +
+                                  0.5 * m_NoseHooverPistonForce * m_TimeStep;
   }
-  updateSPKernel<<<numBlocks, numThreads, 0, *integratorStream>>>(numAtoms,
-                                                                  xyzq, coords);
+  updateSPKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
+      numAtoms, xyzq, coords);
 
   copy_DtoD_async<double4>(coordsDeltaDevice, coordsDeltaPreviousDevice,
-                           numAtoms, *integratorStream);
+                           numAtoms, *m_IntegratorStream);
 
-  cudaCheck(cudaStreamSynchronize(*integratorStream));
+  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
 
-  context->setBoxDimensions(boxDimensions);
+  m_Context->setBoxDimensions(boxDimensions);
   surfaceTensionInstantaneous =
       0.5 * boxDimensions[2] *
-      (pressureTensor[5] - 0.5 * (pressureTensor[0] + pressureTensor[2])) /
+      (m_PressureTensor[5] -
+       0.5 * (m_PressureTensor[0] + m_PressureTensor[2])) /
       charmm::constants::surfaceTensionFactor;
 
   // HFCTE calculation calculated only in debug mode
 
   // if (debugPrintFrequency > 0 && stepId % debugPrintFrequency == 0) {
   double pistonKineticEnergy = 0.0;
-  for (int i = 0; i < pistonDegreesOfFreedom; ++i) {
-    pistonKineticEnergy +=
-        0.5 * onStepPistonVelocity[i] * onStepPistonVelocity[i] * pistonMass[i];
+  for (int i = 0; i < m_PistonDegreesOfFreedom; i++) {
+    pistonKineticEnergy += 0.5 * m_OnStepPistonVelocity[i] *
+                           m_OnStepPistonVelocity[i] * m_PistonMass[i];
   }
-  context->calculateKineticEnergy();
-  auto ke = context->getKineticEnergy();
+  m_Context->calculateKineticEnergy();
+  auto ke = m_Context->getKineticEnergy();
   // exit if the kinetic energy is nan
   // if (ke != ke) {
   if (std::isnan(ke)) {
     throw std::runtime_error("NAN detected in kinetic energy");
     exit(1);
   }
-  auto peContainer = context->getPotentialEnergy();
+  auto peContainer = m_Context->getPotentialEnergy();
   peContainer.transferFromDevice();
   auto pe = peContainer[0];
 
-  deltaPressureHalfStepKinetic.set(sixZeros);
+  m_DeltaPressureHalfStepKinetic.setToValue(0.0);
   calculateHalfStepKineticPressureKernel<<<numBlocks, numThreads, 0,
-                                           *integratorStream>>>(
-      numAtoms, vcell, coordsDeltaPredicted.getDeviceArray().data(), velMass,
-      deltaPressureHalfStepKinetic.getDeviceArray().data());
-  cudaCheck(cudaStreamSynchronize(*integratorStream));
-  deltaPressureHalfStepKinetic.transferFromDevice();
+                                           *m_IntegratorStream>>>(
+      numAtoms, vcell, m_CoordsDeltaPredicted.getDeviceData(), velMass,
+      m_DeltaPressureHalfStepKinetic.getDeviceData());
+  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
+  m_DeltaPressureHalfStepKinetic.transferFromDevice();
   double totken =
-      (deltaPressureHalfStepKinetic[0] + deltaPressureHalfStepKinetic[2] +
-       deltaPressureHalfStepKinetic[5]) /
+      (m_DeltaPressureHalfStepKinetic[0] + m_DeltaPressureHalfStepKinetic[2] +
+       m_DeltaPressureHalfStepKinetic[5]) /
       (0.5 * charmm::constants::patmos / volume);
   // if (halfStepKineticEnergy1StepPrevious[0] == 0.0) {
   //   double epdiff;
   // }
 
   double hfcten =
-      (halfStepKineticEnergy1StepPrevious[0] - ke - pistonKineticEnergy +
-       potentialEnergyPrevious[0] - pe - pistonPotentialEnergy) /
+      (m_HalfStepKineticEnergy1StepPrevious[0] - ke - pistonKineticEnergy +
+       m_PotentialEnergyPrevious[0] - pe - pistonPotentialEnergy) /
           3.0 +
-      (halfStepKineticEnergy2StepsPrevious[0] - totken) / 12; // TODO fill it
+      (m_HalfStepKineticEnergy2StepsPrevious[0] - totken) / 12; // TODO fill it
 
-  if (debugPrintFrequency > 0 && stepId % debugPrintFrequency == 0) {
+  if (m_DebugPrintFrequency > 0 && m_StepId % m_DebugPrintFrequency == 0) {
     std::cout << "Kinetic energy = " << ke << std::endl;
 
     std::cout << "Potential energy = " << pe << std::endl;
@@ -1711,74 +2009,28 @@ void CudaLangevinPistonIntegrator::propagateOneStep() {
 
     std::cout << "HFCTE = " << hfcten << std::endl;
 
-    std::cout << "Temperature : " << context->computeTemperature() << "\n";
+    std::cout << "Temperature : " << m_Context->computeTemperature() << "\n";
     std::cout << "Surface tension instantaneous : "
               << surfaceTensionInstantaneous << "\n";
 
     std::cout << "Volume : " << std::fixed << volume << "\n";
     std::cout << "Inv piston mass: ";
-    for (int i = 0; i < pistonDegreesOfFreedom; ++i) {
-      std::cout << inversePistonMass[i] << " ";
+    for (int i = 0; i < m_PistonDegreesOfFreedom; i++) {
+      std::cout << m_InversePistonMass[i] << " ";
     }
     std::cout << "\n";
   }
-  halfStepKineticEnergy2StepsPrevious[0] =
-      halfStepKineticEnergy1StepPrevious[0];
-  halfStepKineticEnergy1StepPrevious[0] =
+  m_HalfStepKineticEnergy2StepsPrevious[0] =
+      m_HalfStepKineticEnergy1StepPrevious[0];
+  m_HalfStepKineticEnergy1StepPrevious[0] =
       totken; // fill it current next half step ke
-  potentialEnergyPrevious[0] = pe + pistonPotentialEnergy;
+  m_PotentialEnergyPrevious[0] = pe + pistonPotentialEnergy;
   //}
 
-  potentialEnergyPrevious[0] = pe + pistonPotentialEnergy;
+  m_PotentialEnergyPrevious[0] = pe + pistonPotentialEnergy;
   //}
 
-  stepId++;
-}
-
-double CudaLangevinPistonIntegrator::getPressureScalar() {
-  // averagePressureScalar.transferFromDevice();
-  return averagePressureScalar[0];
-}
-
-std::vector<double> CudaLangevinPistonIntegrator::getPressureTensor() {
-  // averagePressureTensor.transferFromDevice();
-  return averagePressureTensor.getHostArray();
-}
-
-double CudaLangevinPistonIntegrator::getInstantaneousPressureScalar() {
-  // pressureScalar.transferFromDevice();
-  return pressureScalar[0];
-}
-
-std::vector<double>
-CudaLangevinPistonIntegrator::getInstantaneousPressureTensor() {
-  // pressureTensor.transferFromDevice();
-  return pressureTensor.getHostArray();
-}
-
-CudaContainer<double4> CudaLangevinPistonIntegrator::getCoordsDeltaPrevious() {
-  return coordsDeltaPrevious;
-}
-
-CudaContainer<double4> CudaLangevinPistonIntegrator::getCoordsDelta() {
-  return coordsDelta;
-}
-
-void CudaLangevinPistonIntegrator::setCoordsDeltaPrevious(
-    std::vector<std::vector<double>> _coordsDeltaIn) {
-  assert((_coordsDeltaIn.size() == context->getNumAtoms(),
-          "Wrong size in setCoordsDeltaPrevious"));
-  std::vector<double4> cdpCC;
-  for (int i = 0; i < _coordsDeltaIn.size(); ++i) {
-    double4 temp;
-    temp.x = _coordsDeltaIn[i][0];
-    temp.y = _coordsDeltaIn[i][1];
-    temp.z = _coordsDeltaIn[i][2];
-    temp.w = 0.0;
-    cdpCC.push_back(temp);
-  }
-  coordsDeltaPrevious.setHostArray(cdpCC);
-  coordsDeltaPrevious.transferToDevice();
+  m_StepId++;
 }
 
 // void CudaLangevinPistonIntegrator::setOnStepPistonVelocity(
@@ -1842,13 +2094,120 @@ void CudaLangevinPistonIntegrator::setCoordsDeltaPrevious(
 // }
 
 std::map<std::string, std::string>
-CudaLangevinPistonIntegrator::getIntegratorDescriptors() {
+CudaLangevinPistonIntegrator::getIntegratorDescriptors(void) {
   std::map<std::string, std::string> ret;
   ret["type"] = "LangevinPiston";
-  ret["timeStep"] = std::to_string(timeStep);
-  ret["bathTemperature"] = std::to_string(bathTemperature);
-  ret["referencePressure"] = std::to_string(referencePressure[0]);
-  ret["pistonMass"] = std::to_string(pistonMass[0]);
-  ret["noseHooverPistonMass"] = std::to_string(noseHooverPistonMass);
+  ret["timeStep"] = std::to_string(m_TimeStep);
+  ret["bathTemperature"] = std::to_string(m_BathTemperature);
+  ret["referencePressure"] = std::to_string(m_ReferencePressure[0]);
+  ret["pistonMass"] = std::to_string(m_PistonMass[0]);
+  ret["noseHooverPistonMass"] = std::to_string(m_NoseHooverPistonMass);
   return ret;
+}
+
+double CudaLangevinPistonIntegrator::computeNoseHooverPistonMass(void) {
+  CudaContainer<double4> velmassCC = m_Context->getVelocityMass();
+  velmassCC.transferFromDevice();
+  std::vector<double4> velmass = velmassCC.getHostArray();
+  double totalMass = 0.0;
+  for (std::size_t i = 0; i < velmass.size(); i++)
+    totalMass += 1. / velmass[i].w;
+  return totalMass / 50.0;
+}
+
+void CudaLangevinPistonIntegrator::allocatePistonVariables(void) {
+  m_OnStepPistonPosition.resize(m_PistonDegreesOfFreedom);
+  m_OnStepPistonPosition.setToValue(0.0);
+  m_HalfStepPistonPosition.resize(m_PistonDegreesOfFreedom);
+  m_HalfStepPistonPosition.setToValue(0.0);
+  m_OnStepPistonVelocity.resize(m_PistonDegreesOfFreedom);
+  m_OnStepPistonVelocity.setToValue(0.0);
+  m_HalfStepPistonVelocity.resize(m_PistonDegreesOfFreedom);
+  m_HalfStepPistonVelocity.setToValue(0.0);
+
+  m_PistonMass.resize(m_PistonDegreesOfFreedom);
+  m_PistonMass.setToValue(0.0);
+  m_InversePistonMass.resize(m_PistonDegreesOfFreedom);
+  m_InversePistonMass.setToValue(0.0);
+  m_PistonDeltaPressure.resize(m_PistonDegreesOfFreedom);
+  m_PistonDeltaPressure.setToValue(0.0);
+  m_PressurePistonPositionDelta.resize(m_PistonDegreesOfFreedom);
+  m_PressurePistonPositionDelta.setToValue(0.0);
+  m_PressurePistonPositionDeltaPrevious.resize(m_PistonDegreesOfFreedom);
+  m_PressurePistonPositionDeltaPrevious.setToValue(0.0);
+  m_PressurePistonPositionDeltaStored.resize(m_PistonDegreesOfFreedom);
+  m_PressurePistonPositionDeltaStored.setToValue(0.0);
+
+  return;
+}
+
+void CudaLangevinPistonIntegrator::removeCenterOfMassMotion(void) {
+  auto pbc = m_Context->getForceManager()->getPeriodicBoundaryCondition();
+
+  // TODO : do this in the kernel rather than the host side
+
+  int numAtoms = m_Context->getNumAtoms();
+  auto velocityMass = m_Context->getVelocityMass();
+  auto coords = m_Context->getCoordinatesCharges();
+  auto boxDimensions = m_Context->getBoxDimensions();
+  coords.transferFromDevice();
+  m_CoordsDeltaPrevious.transferFromDevice();
+
+  // Remove the center of mass velocity
+  float3 cdpcom = make_float3(0.0, 0.0, 0.0);
+
+  float totalMass = 0.0;
+  for (int i = 0; i < numAtoms; i++) {
+    auto mass = 1 / velocityMass[i].w;
+
+    cdpcom.x += m_CoordsDeltaPrevious[i].x * mass;
+
+    if (pbc == PBC::P21) {
+      // cdpcom.y -= coordsDeltaPrevious[i].y * mass;
+      // cdpcom.z -= coordsDeltaPrevious[i].z * mass;
+    } else {
+      cdpcom.y += m_CoordsDeltaPrevious[i].y * mass;
+      cdpcom.z += m_CoordsDeltaPrevious[i].z * mass;
+    }
+
+    totalMass += mass;
+  }
+  cdpcom.x /= totalMass;
+  cdpcom.y /= totalMass;
+  cdpcom.z /= totalMass;
+
+  for (int i = 0; i < numAtoms; i++) {
+    m_CoordsDeltaPrevious[i].x -= cdpcom.x;
+
+    if (pbc == PBC::P21) {
+      // coordsDeltaPrevious[i].y += cdpcom.y;
+      // coordsDeltaPrevious[i].z += cdpcom.z;
+    } else {
+      m_CoordsDeltaPrevious[i].y -= cdpcom.y;
+      m_CoordsDeltaPrevious[i].z -= cdpcom.z;
+    }
+  }
+
+  m_CoordsDeltaPrevious.transferToDevice();
+
+  return;
+}
+
+__global__ void averageNetForceKernel(int numAtoms, int stride,
+                                      const double *__restrict__ force) {
+  return;
+}
+
+void CudaLangevinPistonIntegrator::removeCenterOfMassAverageNetForce(void) {
+  int numAtoms = m_Context->getNumAtoms();
+  auto force = m_Context->getForces();
+
+  int stride = m_Context->getForceStride();
+
+  int numThreads = 128;
+  int numBlocks = (numAtoms + numThreads - 1) / numThreads;
+  averageNetForceKernel<<<numBlocks, numThreads>>>(numAtoms, stride,
+                                                   force->xyz());
+
+  return;
 }

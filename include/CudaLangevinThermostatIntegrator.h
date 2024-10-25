@@ -4,7 +4,7 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author: Samarjeet Prasad
+// Author: Samarjeet Prasad, James E. Gonzales II
 //
 // ENDLICENSE
 
@@ -27,60 +27,62 @@ public:
   /** @brief Base constructor. Uses timeStep (in ps) as input.
    * @param timeStep Time step in ps
    */
-  CudaLangevinThermostatIntegrator(ts_t timeStep);
+  CudaLangevinThermostatIntegrator(const double timeStep);
+
   /** @brief Creates a Langevin Thermostat integrator using the time step length
    * (ps), the bath temperature (K) and the friction coefficient (ps-1).
    * @param timeStep Time step in ps
    * @param bathTemperature Bath temperature in K
    * @param friction Friction coefficient in ps-1
    */
-  CudaLangevinThermostatIntegrator(ts_t timeStep, double bathTemperature,
-                                   double friction);
-  ~CudaLangevinThermostatIntegrator();
+  CudaLangevinThermostatIntegrator(const double timeStep,
+                                   const double bathTemperature,
+                                   const double friction);
+
+  ~CudaLangevinThermostatIntegrator(void);
 
   // Put these in the base class
   // void setContext();
-  void initialize();
+  void initialize(void);
 
   /**
    * @brief Set the Friction value in ps ^ -1
    *
    * @param frictionIn
    */
-  void setFriction(double frictionIn) { friction = frictionIn; }
+  void setFriction(const double friction);
 
-  float getFriction() const { return friction; }
+  double getFriction(void) const;
+
   /**
    * @brief Set the Bath Temperature of the thermostat
    *
    * @param temp
    */
-  void setBathTemperature(double temp) { bathTemperature = temp; }
+  void setBathTemperature(const double bathTemperature);
 
   /**
    * @brief Get the Bath Temperature of the thermostat
    *
    * @return double
    */
-  double getBathTemperature() const { return bathTemperature; }
+  double getBathTemperature(void) const;
 
-  void propagateOneStep() override;
+  void propagateOneStep(void) override;
 
-  std::map<std::string, std::string> getIntegratorDescriptors() override;
+  std::map<std::string, std::string> getIntegratorDescriptors(void) override;
 
-  CudaContainer<double4> getCoordsDeltaPrevious() override;
+  const CudaContainer<double4> &getCoordsDeltaPrevious(void) const override;
+
+  CudaContainer<double4> &getCoordsDeltaPrevious(void) override;
 
   void setCoordsDeltaPrevious(
-      std::vector<std::vector<double>> _coordsDeltaPreviousIn) override;
+      const std::vector<std::vector<double>> &coordsDeltaPrevious) override;
 
 private:
-  double friction;
-  curandStatePhilox4_32_10_t *devPHILOXStates;
-
-  // CudaContainer<double4> coordsDeltaPrevious;
-
-  int stepsSinceLastReport;
-  double bathTemperature;
-
-  std::string integratorTypeName = "LangevinThermostat";
+  double m_Friction;
+  curandStatePhilox4_32_10_t *m_DevPHILOXStates;
+  int m_StepsSinceLastReport;
+  double m_BathTemperature;
+  std::string m_IntegratorTypeName; // = "LangevinThermostat";
 };

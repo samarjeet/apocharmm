@@ -283,7 +283,8 @@ public:
    */
   CudaContainer<double4> &getCoordinatesCharges();
 
-  const std::vector<double> &getBoxDimensions();
+  const std::vector<double> &getBoxDimensions(void) const;
+  std::vector<double> &getBoxDimensions(void);
 
   void setBoxDimensions(const std::vector<double> &boxDimensionsIn);
 
@@ -322,7 +323,7 @@ public:
    *
    * @return CudaContainer<double>
    */
-  CudaContainer<double> getPotentialEnergy();
+  CudaContainer<double> &getPotentialEnergy(void);
 
   double getVolume() const;
 

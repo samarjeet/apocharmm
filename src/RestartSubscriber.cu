@@ -405,7 +405,6 @@ std::vector<int> RestartSubscriber::readFFTGridDimensions(void) const {
     fftGrid.push_back(x);
   }
   return fftGrid;
-
 }
 
 std::vector<std::vector<double>>
@@ -911,7 +910,6 @@ void RestartSubscriber::readRestart(void) {
   if (langevinPistonIntegrator != nullptr) {
     // Langevin Piston : piston variables. Verify they are the right size.
     // Also, box dim
-    langevinPistonIntegrator->setBoxDimensions(readBoxDimensions());
     int nPistonDofs = langevinPistonIntegrator->getPistonDegreesOfFreedom();
     std::vector<double> ospp = readOnStepPistonPosition(),
                         hspp = readHalfStepPistonPosition(),

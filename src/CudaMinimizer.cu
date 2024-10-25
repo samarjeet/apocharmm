@@ -119,6 +119,7 @@ public:
   }
 };
 
+/*
 // TODO : move this code to CudaHolonomicConstraint
 __global__ static void removeHolonomicConstraintForces(
     int numAtoms, double timeStep, const double4 *__restrict__ velMass,
@@ -142,6 +143,8 @@ __global__ static void removeHolonomicConstraintForces(
     holonomicConstraintForces[index].z = delta.z;
   }
 }
+*/
+
 __global__ void steepestDescentKernel(int numAtoms, double stepSize, int stride,
                                       double4 *__restrict__ velMass,
                                       double4 *__restrict__ coords,
@@ -200,20 +203,20 @@ void CudaMinimizer::minimize(int numSteps) {
   double tol = 0.00001 / 1000000;
   bool toleranceReached = false;
   if (method == "sd") {
-    context->calculateForces(true, true, true);
-    auto pe = context->getPotentialEnergy();
+    m_Context->calculateForces(true, true, true);
+    auto pe = m_Context->getPotentialEnergy();
     pe.transferFromDevice();
 
     float prevEnergy = pe[0];
 
     double stepSize = 0.01;
     double s = 1.0;
-    int converged = 0;
-    double stepSizeTolerance = 0.0;
-    double gradientTolerance = 0.0;
+    // int converged = 0;
+    // double stepSizeTolerance = 0.0;
+    // double gradientTolerance = 0.0;
 
-    int numAtoms = context->getNumAtoms();
-    int stride = context->getForceStride();
+    int numAtoms = m_Context->getNumAtoms();
+    int stride = m_Context->getForceStride();
     int numThreads = 128;
     int numBlocks = (numAtoms - 1) / numThreads + 1;
 
@@ -225,50 +228,50 @@ void CudaMinimizer::minimize(int numSteps) {
         std::cout << "Iter : " << iter << " stepSize : " << stepSize << " ";
       }
 
-      auto xyzq = context->getXYZQ()->getDeviceXYZQ();
+      auto xyzq = m_Context->getXYZQ()->getDeviceXYZQ();
 
-      auto coords = context->getCoordinatesCharges().getDeviceArray().data();
-      auto velMass = context->getVelocityMass().getDeviceArray().data();
+      auto coords = m_Context->getCoordinatesCharges().getDeviceData();
+      auto velMass = m_Context->getVelocityMass().getDeviceData();
 
-      int numAtoms = context->getNumAtoms();
-      int stride = context->getForceStride();
-      cudaCheck(cudaStreamSynchronize(*integratorMemcpyStream));
+      int numAtoms = m_Context->getNumAtoms();
+      int stride = m_Context->getForceStride();
+      cudaCheck(cudaStreamSynchronize(*m_IntegratorMemcpyStream));
       cudaCheck(cudaDeviceSynchronize());
-      if (usingHolonomicConstraints) {
-        copy_DtoD_async<double4>(coords, coordsRef.getDeviceArray().data(),
-                                 numAtoms, *integratorMemcpyStream);
+      if (m_UsingHolonomicConstraints) {
+        copy_DtoD_async<double4>(coords, m_CoordsRef.getDeviceData(), numAtoms,
+                                 *m_IntegratorMemcpyStream);
       }
-      cudaCheck(cudaStreamSynchronize(*integratorMemcpyStream));
+      cudaCheck(cudaStreamSynchronize(*m_IntegratorMemcpyStream));
       cudaCheck(cudaDeviceSynchronize());
-      if (usingHolonomicConstraints) {
-        holonomicConstraint->handleHolonomicConstraints(
-            coordsRef.getDeviceArray().data());
+      if (m_UsingHolonomicConstraints) {
+        m_HolonomicConstraint->handleHolonomicConstraints(
+            m_CoordsRef.getDeviceData());
       }
-      cudaCheck(cudaStreamSynchronize(*integratorMemcpyStream));
+      cudaCheck(cudaStreamSynchronize(*m_IntegratorMemcpyStream));
       cudaCheck(cudaDeviceSynchronize());
 
-      context->resetNeighborList();
+      m_Context->resetNeighborList();
       // context->calculateForces();
-      context->calculateForces(true, true, true);
+      m_Context->calculateForces(true, true, true);
 
-      pe = context->getPotentialEnergy();
+      pe = m_Context->getPotentialEnergy();
       pe.transferFromDevice();
 
       float energy = pe[0];
       if (verboseFlag) {
         std::cout << "Energy : " << energy << " ";
       }
-      auto force = context->getForces();
+      auto force = m_Context->getForces();
 
-      if (usingHolonomicConstraints) {
-        holonomicConstraint->removeForceAlongHolonomicConstraints(
-            coordsRef.getDeviceArray().data(), stride, force->xyz());
+      if (m_UsingHolonomicConstraints) {
+        m_HolonomicConstraint->removeForceAlongHolonomicConstraints(
+            m_CoordsRef.getDeviceData(), stride, force->xyz());
       }
 
       // calculate the force norm
       // TODO : calculate the force norm sqrt( <f,f>/dim)
       int numThreads = 1024;
-      int numReductionBlocks = 256;
+      // int numReductionBlocks = 256;
       norm<<<numBlocks, numThreads>>>(numAtoms, stride, force->xyz(),
                                       d_forceNorm);
       cudaDeviceSynchronize();
@@ -287,15 +290,15 @@ void CudaMinimizer::minimize(int numSteps) {
         stepSize = 0.5 * stepSize;
       }
 
-      if (stepSize < stepSizeTolerance) {
-        converged = 1;
-      }
-      if (forceNorm < gradientTolerance) {
-        converged = 2;
-      }
-      if (std::abs(energy - prevEnergy) < tol) {
-        converged = 3;
-      }
+      // if (stepSize < stepSizeTolerance) {
+      //   converged = 1;
+      // }
+      // if (forceNorm < gradientTolerance) {
+      //   converged = 2;
+      // }
+      // if (std::abs(energy - prevEnergy) < tol) {
+      //   converged = 3;
+      // }
 
       if (stepSize < tol) {
         // std::cout << "[Minimization] Minimized till tolerance criterion.\n";
@@ -313,9 +316,9 @@ void CudaMinimizer::minimize(int numSteps) {
           numAtoms, s, stride, velMass, coords, force->xyz());
 
       // cudaCheck(cudaDeviceSynchronize());
-      updateSPKernel<<<numBlocks, numThreads, 0, *integratorStream>>>(
+      updateSPKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
           numAtoms, xyzq, coords);
-      cudaCheck(cudaStreamSynchronize(*integratorStream));
+      cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
       cudaCheck(cudaDeviceSynchronize());
 
       prevEnergy = energy;

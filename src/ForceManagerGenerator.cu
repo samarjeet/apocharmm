@@ -20,6 +20,8 @@ ForceManagerGenerator::ForceManagerGenerator(std::shared_ptr<ForceManager> fmIn)
 
 std::shared_ptr<ForceManager> ForceManagerGenerator::generateForceManager() {
   std::cout << "Not Implemented -- should not be called ?" << std::endl;
+  exit(1);
+  return baseForceManager;
 }
 
 AlchemicalForceManagerGenerator::AlchemicalForceManagerGenerator(

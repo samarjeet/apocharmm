@@ -205,7 +205,8 @@ public:
   /**
    * @brief Returns boxDimensions
    */
-  virtual const std::vector<double> &getBoxDimensions();
+  virtual const std::vector<double> &getBoxDimensions(void) const;
+  virtual std::vector<double> &getBoxDimensions(void);
   virtual void setKappa(float kappaIn) { kappa = kappaIn; }
   virtual void setCutoff(float cutoffIn) { cutoff = cutoffIn; }
   virtual void setCtonnb(float ctonnbIn) { ctonnb = ctonnbIn; }
@@ -296,7 +297,7 @@ public:
    */
   virtual CudaContainer<double> getVirial();
 
-  virtual CudaContainer<double> getPotentialEnergy();
+  virtual CudaContainer<double> &getPotentialEnergy(void);
 
   /**
    * @brief  returns decomposition of energy as vector of double. Intended as
@@ -697,8 +698,9 @@ public:
    *
    * @return CudaContainer<double>
    */
-  virtual CudaContainer<double> getPotentialEnergy() override;
-  const std::vector<double> &getBoxDimensions() override;
+  virtual CudaContainer<double> &getPotentialEnergy() override;
+  const std::vector<double> &getBoxDimensions(void) const override;
+  std::vector<double> &getBoxDimensions(void) override;
 
   std::shared_ptr<ForceManagerComposite> shared_from_this() {
     return std::static_pointer_cast<ForceManagerComposite>(

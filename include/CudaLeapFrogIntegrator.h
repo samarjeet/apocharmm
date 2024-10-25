@@ -4,7 +4,7 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author:  Samarjeet Prasad
+// Author:  Samarjeet Prasad, James E. Gonzales II
 //
 // ENDLICENSE
 
@@ -13,19 +13,17 @@
 #include "CudaIntegrator.h"
 
 class CudaLeapFrogIntegrator : public CudaIntegrator {
-private:
-  int stepsSinceLastReport;
-  std::string integratorTypeName = "CudaLeapFrogIntegrator";
-
 public:
-  CudaLeapFrogIntegrator(double timeStep);
-
-  void setCharmmContext(std::shared_ptr<CharmmContext> charmmContext);
+  CudaLeapFrogIntegrator(const double timeStep);
 
   // Put these in the base class
-  void initialize() override;
-  // void propagate(int nSteps);
-  void propagateOneStep() override;
+  void initialize(void) override;
 
-  std::map<std::string, std::string> getIntegratorDescriptors() override;
+  void propagateOneStep(void) override;
+
+  std::map<std::string, std::string> getIntegratorDescriptors(void) override;
+
+private:
+  int m_StepsSinceLastReport;
+  std::string m_IntegratorTypeName;
 };

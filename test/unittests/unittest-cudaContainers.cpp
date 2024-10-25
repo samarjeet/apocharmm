@@ -19,13 +19,12 @@ TEST_CASE("unittest") {
   SECTION("setToValue") {
     int intRef = 12;
     float floatRef = 12.0;
-    double4 double4Ref = {12.0, 12.0, 12.0, 12.0};
-    CudaContainer<int> intContainer;
+    double4 double4Ref = make_double4(12.0, 12.0, 12.0, 12.0);
+    CudaContainer<int> intContainer(size);
     CudaContainer<float> floatContainer;
     CudaContainer<double4> double4Container;
-    intContainer.allocate(size);
-    floatContainer.allocate(size);
-    double4Container.allocate(size);
+    floatContainer = CudaContainer<float>(size);
+    double4Container.resize(size);
     intContainer.setToValue(intRef);
     floatContainer.setToValue(floatRef);
     double4Container.setToValue(double4Ref);

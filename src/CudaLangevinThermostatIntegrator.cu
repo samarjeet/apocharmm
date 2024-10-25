@@ -4,7 +4,7 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author: Samarjeet Prasad
+// Author: Samarjeet Prasad, James E. Gonzales II
 //
 // ENDLICENSE
 
@@ -17,22 +17,24 @@
 #include <map>
 
 CudaLangevinThermostatIntegrator::CudaLangevinThermostatIntegrator(
-    ts_t timeStep)
+    const double timeStep)
     : CudaIntegrator(timeStep) {
-  friction = 0.0;
-  stepsSinceLastReport = 0;
+  m_Friction = 0.0;
+  m_DevPHILOXStates = nullptr;
+  m_StepsSinceLastReport = 0;
+  m_BathTemperature = 0;
+  m_IntegratorTypeName = "LangevinThermostat";
 }
 
 CudaLangevinThermostatIntegrator::CudaLangevinThermostatIntegrator(
-    ts_t timeStep, double bathTemperature, double friction)
-    : CudaIntegrator(timeStep) {
-  setFriction(friction);
-  setBathTemperature(bathTemperature);
-  stepsSinceLastReport = 0;
+    const double timeStep, const double bathTemperature, const double friction)
+    : CudaLangevinThermostatIntegrator(timeStep) {
+  m_Friction = friction;
+  m_BathTemperature = bathTemperature;
 }
 
 CudaLangevinThermostatIntegrator::~CudaLangevinThermostatIntegrator() {
-  // cudaCheck(cudaFree(devPHILOXStates));
+  cudaCheck(cudaFree(m_DevPHILOXStates));
 }
 
 __global__ static void setup_kernel(int numAtoms,
@@ -43,7 +45,7 @@ __global__ static void setup_kernel(int numAtoms,
 }
 
 __global__ static void init(double kbt, const double gamma, const int numAtoms,
-                            const int stride, const ts_t timeStep,
+                            const int stride, const double timeStep,
                             // double4 *__restrict__ coords,
                             double4 *__restrict__ coordsDelta,
                             double4 *__restrict__ coordsDeltaPrevious,
@@ -70,41 +72,61 @@ __global__ static void init(double kbt, const double gamma, const int numAtoms,
   }
 }
 
-void CudaLangevinThermostatIntegrator::initialize() {
-  int numAtoms = context->getNumAtoms();
+void CudaLangevinThermostatIntegrator::initialize(void) {
+  int numAtoms = m_Context->getNumAtoms();
 
-  coordsDelta.allocate(numAtoms);
-  coordsDeltaPrevious.allocate(numAtoms);
+  m_CoordsDelta.resize(numAtoms);
+  m_CoordsDeltaPrevious.resize(numAtoms);
 
-  cudaCheck(cudaMalloc((void **)&devPHILOXStates,
+  cudaCheck(cudaMalloc(reinterpret_cast<void **>(&m_DevPHILOXStates),
                        numAtoms * sizeof(curandStatePhilox4_32_10_t)));
 
   int numThreads = 128;
   int numBlocks = (numAtoms - 1) / numThreads + 1;
-  setup_kernel<<<numBlocks, numThreads>>>(numAtoms, devPHILOXStates);
+  setup_kernel<<<numBlocks, numThreads>>>(numAtoms, m_DevPHILOXStates);
   cudaCheck(cudaDeviceSynchronize());
 
-  auto coords = context->getCoordinatesCharges().getDeviceArray().data();
-  auto coordsDeltaDevice = coordsDelta.getDeviceArray().data();
-  auto coordsDeltaPreviousDevice = coordsDeltaPrevious.getDeviceArray().data();
+  auto coords = m_Context->getCoordinatesCharges().getDeviceData();
+  auto coordsDeltaDevice = m_CoordsDelta.getDeviceData();
+  auto coordsDeltaPreviousDevice = m_CoordsDeltaPrevious.getDeviceData();
+  auto velMass = m_Context->getVelocityMass().getDeviceData();
 
-  auto velMass = context->getVelocityMass().getDeviceArray().data();
+  m_Context->calculateForces(); // false, false, false);
+  auto force = m_Context->getForces();
 
-  context->calculateForces(); // false, false, false);
-  auto force = context->getForces();
-
-  int stride = context->getForceStride();
-  double kbt = charmm::constants::kBoltz * bathTemperature;
-  const double gamma = timeStep * timfac * friction;
+  int stride = m_Context->getForceStride();
+  double kbt = charmm::constants::kBoltz * m_BathTemperature;
+  const double gamma = m_TimeStep * m_Timfac * m_Friction;
 
   init<<<numBlocks, numThreads>>>(
-      kbt, gamma, numAtoms, stride, timeStep, // coords,
+      kbt, gamma, numAtoms, stride, m_TimeStep, // coords,
       coordsDeltaDevice, coordsDeltaPreviousDevice, velMass, force->xyz());
   cudaCheck(cudaDeviceSynchronize());
+
+  return;
+}
+
+void CudaLangevinThermostatIntegrator::setFriction(const double friction) {
+  m_Friction = friction;
+  return;
+}
+
+double CudaLangevinThermostatIntegrator::getFriction(void) const {
+  return m_Friction;
+}
+
+void CudaLangevinThermostatIntegrator::setBathTemperature(
+    const double bathTemperature) {
+  m_BathTemperature = bathTemperature;
+  return;
+}
+
+double CudaLangevinThermostatIntegrator::getBathTemperature(void) const {
+  return m_BathTemperature;
 }
 
 __global__ static void step1(double kbt, const double gamma, const int numAtoms,
-                             const int stride, const ts_t timeStep,
+                             const int stride, const double timeStep,
                              double4 *__restrict__ coords,
                              double4 *__restrict__ coordsDelta,
                              const double4 *__restrict__ coordsDeltaPrevious,
@@ -142,7 +164,7 @@ __global__ static void step1(double kbt, const double gamma, const int numAtoms,
 
 __global__ static void
 step2(double kbt, const double gamma, const int numAtoms, const int stride,
-      const ts_t timeStep, const double4 *__restrict__ coordsRef,
+      const double timeStep, const double4 *__restrict__ coordsRef,
       const double4 *__restrict__ coords, double4 *__restrict__ coordsDelta,
       double4 *__restrict__ coordsDeltaPrevious, double4 *__restrict__ velMass,
       const double *__restrict__ force) {
@@ -213,128 +235,134 @@ static __global__ void invertDeltaAsymmetric(int numGroups,
   }
 }
 
-void CudaLangevinThermostatIntegrator::propagateOneStep() {
+void CudaLangevinThermostatIntegrator::propagateOneStep(void) {
+  auto coords = m_Context->getCoordinatesCharges().getDeviceData();
+  auto xyzq = m_Context->getXYZQ()->getDeviceXYZQ();
+  auto coordsDeltaDevice = m_CoordsDelta.getDeviceData();
+  auto coordsDeltaPreviousDevice = m_CoordsDeltaPrevious.getDeviceData();
+  auto velMass = m_Context->getVelocityMass().getDeviceData();
 
-  auto coords = context->getCoordinatesCharges().getDeviceArray().data();
+  int numAtoms = m_Context->getNumAtoms();
+  int stride = m_Context->getForceStride();
 
-  auto xyzq = context->getXYZQ()->getDeviceXYZQ();
-  auto coordsDeltaDevice = coordsDelta.getDeviceArray().data();
-  auto coordsDeltaPreviousDevice = coordsDeltaPrevious.getDeviceArray().data();
-
-  auto velMass = context->getVelocityMass().getDeviceArray().data();
-
-  int numAtoms = context->getNumAtoms();
-  int stride = context->getForceStride();
-
-  if (stepsSinceNeighborListUpdate % nonbondedListUpdateFrequency == 0) {
-
-    if (context->getForceManager()->getPeriodicBoundaryCondition() ==
+  if (m_StepsSinceNeighborListUpdate % m_NonbondedListUpdateFrequency == 0) {
+    if (m_Context->getForceManager()->getPeriodicBoundaryCondition() ==
         PBC::P21) {
-      auto groups = context->getForceManager()->getPSF()->getGroups();
+      auto groups = m_Context->getForceManager()->getPSF()->getGroups();
 
       // find a better place for this
       int numGroups = groups.size();
       int numThreads = 128;
       int numBlocks = (numGroups - 1) / numThreads + 1;
 
-      auto boxDimensions = context->getBoxDimensions();
+      auto boxDimensions = m_Context->getBoxDimensions();
       float3 box = {(float)boxDimensions[0], (float)boxDimensions[1],
                     (float)boxDimensions[2]};
 
-      invertDeltaAsymmetric<<<numBlocks, numThreads, 0, *integratorStream>>>(
-          numGroups, groups.getDeviceArray().data(), box.x, xyzq, stride,
+      invertDeltaAsymmetric<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
+          numGroups, groups.getDeviceData(), box.x, xyzq, stride,
           coordsDeltaPreviousDevice);
-      cudaCheck(cudaStreamSynchronize(*integratorStream));
+      cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
     }
-    context->resetNeighborList();
+    m_Context->resetNeighborList();
   }
 
-  if (debugPrintFrequency > 0 &&
-      (stepsSinceLastReport + 1) % debugPrintFrequency == 0) {
-    context->calculateForces(false, true, false);
+  if (m_DebugPrintFrequency > 0 &&
+      (m_StepsSinceLastReport + 1) % m_DebugPrintFrequency == 0) {
+    m_Context->calculateForces(false, true, false);
   } else {
-    context->calculateForces(false, false, false);
+    m_Context->calculateForces(false, false, false);
   }
 
-  auto force = context->getForces();
+  auto force = m_Context->getForces();
 
-  double kbt = charmm::constants::kBoltz * bathTemperature;
-  const double gamma = timeStep * timfac * friction;
+  double kbt = charmm::constants::kBoltz * m_BathTemperature;
+  const double gamma = m_TimeStep * m_Timfac * m_Friction;
 
-  if (usingHolonomicConstraints) {
-    copy_DtoD_async<double4>(coords, coordsRef.getDeviceArray().data(),
-                             numAtoms, *integratorMemcpyStream);
+  if (m_UsingHolonomicConstraints) {
+    copy_DtoD_async<double4>(coords, m_CoordsRef.getDeviceData(), numAtoms,
+                             *m_IntegratorMemcpyStream);
   }
 
   int numThreads = 512;
   int numBlocks = (numAtoms - 1) / numThreads + 1;
 
-  step1<<<numBlocks, numThreads, 0, *integratorStream>>>(
-      kbt, gamma, numAtoms, stride, timeStep, coords, coordsDeltaDevice,
-      coordsDeltaPreviousDevice, velMass, force->xyz(), devPHILOXStates);
+  step1<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
+      kbt, gamma, numAtoms, stride, m_TimeStep, coords, coordsDeltaDevice,
+      coordsDeltaPreviousDevice, velMass, force->xyz(), m_DevPHILOXStates);
 
-  cudaCheck(cudaStreamSynchronize(*integratorMemcpyStream));
-  if (usingHolonomicConstraints) {
-    holonomicConstraint->handleHolonomicConstraints(
-        coordsRef.getDeviceArray().data());
+  cudaCheck(cudaStreamSynchronize(*m_IntegratorMemcpyStream));
+  if (m_UsingHolonomicConstraints) {
+    m_HolonomicConstraint->handleHolonomicConstraints(
+        m_CoordsRef.getDeviceData());
   }
 
-  step2<<<numBlocks, numThreads, 0, *integratorStream>>>(
-      kbt, gamma, numAtoms, stride, timeStep, coordsRef.getDeviceArray().data(),
+  step2<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
+      kbt, gamma, numAtoms, stride, m_TimeStep, m_CoordsRef.getDeviceData(),
       coords, coordsDeltaDevice, coordsDeltaPreviousDevice, velMass,
       force->xyz());
 
-  updateSPKernel<<<numBlocks, numThreads, 0, *integratorStream>>>(numAtoms,
-                                                                  xyzq, coords);
+  updateSPKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
+      numAtoms, xyzq, coords);
 
-  cudaCheck(cudaStreamSynchronize(*integratorStream));
-  stepsSinceLastReport++;
-  if (debugPrintFrequency > 0 &&
-      stepsSinceLastReport % debugPrintFrequency == 0) {
-    context->calculateKineticEnergy();
-    auto ke = context->getKineticEnergy();
+  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
+  m_StepsSinceLastReport++;
+  if (m_DebugPrintFrequency > 0 &&
+      m_StepsSinceLastReport % m_DebugPrintFrequency == 0) {
+    m_Context->calculateKineticEnergy();
+    auto ke = m_Context->getKineticEnergy();
     std::cout << "kinetic energy = " << ke << std::endl;
 
-    // context->getForceManager()->setPrintEnergyDecomposition(true);
-    // context->calculateForces(false, true, false);
-    // context->getForceManager()->setPrintEnergyDecomposition(false);
+    // m_Context->getForceManager()->setPrintEnergyDecomposition(true);
+    // m_Context->calculateForces(false, true, false);
+    // m_Context->getForceManager()->setPrintEnergyDecomposition(false);
 
-    auto peContainer = context->getPotentialEnergy();
+    auto peContainer = m_Context->getPotentialEnergy();
     peContainer.transferFromDevice();
     auto pe = peContainer[0];
     std::cout << "potential energy = " << pe << std::endl;
     std::cout << "total energy = " << pe + ke << std::endl;
 
-    std::cout << "[LangTherm]Temp : " << context->computeTemperature() << "\n";
-    stepsSinceLastReport = 0;
+    std::cout << "[LangTherm]Temp : " << m_Context->computeTemperature()
+              << "\n";
+    m_StepsSinceLastReport = 0;
   }
-}
 
-CudaContainer<double4>
-CudaLangevinThermostatIntegrator::getCoordsDeltaPrevious() {
-  return coordsDeltaPrevious;
+  return;
 }
 
 std::map<std::string, std::string>
-CudaLangevinThermostatIntegrator::getIntegratorDescriptors() {
+CudaLangevinThermostatIntegrator::getIntegratorDescriptors(void) {
   std::map<std::string, std::string> ret;
   ret["type"] = "LangevinThermostat";
-  ret["timeStep"] = std::to_string(timeStep);
-  ret["bathTemperature"] = std::to_string(bathTemperature);
-  ret["friction"] = std::to_string(friction);
+  ret["timeStep"] = std::to_string(m_TimeStep);
+  ret["bathTemperature"] = std::to_string(m_BathTemperature);
+  ret["friction"] = std::to_string(m_Friction);
   return ret;
 }
 
+const CudaContainer<double4> &
+CudaLangevinThermostatIntegrator::getCoordsDeltaPrevious(void) const {
+  return m_CoordsDeltaPrevious;
+}
+
+CudaContainer<double4> &
+CudaLangevinThermostatIntegrator::getCoordsDeltaPrevious(void) {
+  return m_CoordsDeltaPrevious;
+}
+
 void CudaLangevinThermostatIntegrator::setCoordsDeltaPrevious(
-    std::vector<std::vector<double>> _coordsDeltaPreviousIn) {
-  assert((_coordsDeltaPreviousIn.size() == context->getNumAtoms(),
+    const std::vector<std::vector<double>> &coordsDeltaPrevious) {
+  assert((coordsDeltaPrevious.size() == m_Context->getNumAtoms(),
           "Wrong size in setCoordsDeltaPrevious"));
-  std::vector<double4> cdpCC;
-  for (int i = 0; i < _coordsDeltaPreviousIn.size(); ++i) {
-    double4 temp = {_coordsDeltaPreviousIn[i][0], _coordsDeltaPreviousIn[i][1],
-                    _coordsDeltaPreviousIn[i][2], 0.0};
-    cdpCC.push_back(temp);
+  std::vector<double4> cdpd4;
+  for (std::size_t i = 0; i < coordsDeltaPrevious.size(); i++) {
+    cdpd4.emplace_back(make_double4(coordsDeltaPrevious[i][0],
+                                    coordsDeltaPrevious[i][1],
+                                    coordsDeltaPrevious[i][2], 0.0));
   }
-  coordsDeltaPrevious.setHostArray(cdpCC);
-  coordsDeltaPrevious.transferToDevice();
+
+  m_CoordsDeltaPrevious = cdpd4;
+
+  return;
 }

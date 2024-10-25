@@ -69,6 +69,12 @@ void exportCharmmContext(py::module &mod) {
            "get the number of degrees of freedom")
       .def("useHolonomicConstraints", &CharmmContext::useHolonomicConstraints,
            "Use holonomic constraints")
-      .def("getBoxDimensions", &CharmmContext::getBoxDimensions,
+      .def("getBoxDimensions",
+           static_cast<const std::vector<double> &(CharmmContext::*)(void)
+                           const>(&CharmmContext::getBoxDimensions),
+           "get box dimensions")
+      .def("getBoxDimensions",
+           static_cast<std::vector<double> &(CharmmContext::*)(void)>(
+               &CharmmContext::getBoxDimensions),
            "get box dimensions");
 }

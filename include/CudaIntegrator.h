@@ -4,7 +4,7 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author:  Samarjeet Prasad
+// Author:  Samarjeet Prasad, James E. Gonzales II
 //
 // ENDLICENSE
 
@@ -15,8 +15,6 @@
 #include "XYZQ.h"
 #include <map>
 #include <memory>
-
-typedef double ts_t;
 
 /**
  * @brief Base class for integrators
@@ -34,23 +32,25 @@ class CudaIntegrator : public std::enable_shared_from_this<CudaIntegrator> {
   // PUBLIC //
   ////////////
 public:
+  CudaIntegrator(void);
+
   /** @brief Class constructor. Takes timeStep (in ps) as argument.
    *
    * @param[in] timeStep Time step, in ps
    */
-  CudaIntegrator(ts_t timeStep);
+  CudaIntegrator(const double timeStep);
+
   /** @brief Class constructor. Takes timeStep (ps) as argument, as well as
    * debugPrintFrequency (default 0).
    * @param[in] timeStep Time step, in ps
    * @param[in] debugPrintFrequency Frequency (number of timestep) at which to
    * print integrator infos
    */
-  CudaIntegrator(ts_t timeStep, int debugPrintFrequency);
+  CudaIntegrator(const double timeStep, const int debugPrintFrequency);
 
-  CudaIntegrator() = default;
   /** @brief Returns integrator timestep (in ps)
    */
-  ts_t getTimeStep() const;
+  double getTimeStep(void) const;
 
   /**
    * @brief Set integrator timestep (in ps)
@@ -59,7 +59,7 @@ public:
    * If the Subscriber list is not empty, then calls setTimeStepFromIntegrator
    * for each member.
    */
-  void setTimeStep(const ts_t dt);
+  void setTimeStep(const double dt);
 
   /**
    * @brief Link integrator to  CharmmContext
@@ -72,18 +72,17 @@ public:
    */
   virtual void setCharmmContext(std::shared_ptr<CharmmContext> ctx);
 
-  std::shared_ptr<CharmmContext> getCharmmContext();
+  const std::shared_ptr<CharmmContext> getCharmmContext(void) const;
 
-  // remove this
-  // void initializeOldNewCoords(int numAtoms);
+  std::shared_ptr<CharmmContext> getCharmmContext(void);
 
-  // void setReportSteps(int num);
-  virtual void initialize();
+  virtual void initialize(void);
 
   /**
    * @brief Propagate a single time step
    */
-  virtual void propagateOneStep();
+  virtual void propagateOneStep(void);
+
   /**
    * @brief Propagate given number of steps
    *
@@ -93,19 +92,21 @@ public:
    *
    * @param[in] numSteps Number of steps to propagate
    */
-  void propagate(int numSteps);
-  // void useHolonomicConstraints(bool set);
+  void propagate(const int numSteps);
 
   /**
    * @brief Get the Number Of Atoms
    *
    * @return int
    */
-  int getNumberOfAtoms();
+  int getNumberOfAtoms(void) const;
 
-  void setDebugPrintFrequency(int freq) { debugPrintFrequency = freq; }
+  const std::vector<double> &getBoxDimensions(void) const;
+  std::vector<double> &getBoxDimensions(void);
 
-  void setNonbondedListUpdateFrequency(int _nfreq);
+  void setDebugPrintFrequency(const int freq);
+
+  void setNonbondedListUpdateFrequency(const int nfreq);
 
   // SUBSCRIBER FUNCTIONS
   //======================
@@ -117,6 +118,7 @@ public:
    * to reportFreqList.
    */
   void subscribe(std::shared_ptr<Subscriber> sub);
+
   /**
    * @brief Add a list of Subscribers
    * @param[in] sublist Subscriber vector (list of subscribers)
@@ -124,100 +126,86 @@ public:
    * Appends a vector of Subscribers to the subscribers list, appends their
    * respective report frequency to reportFreqList.
    */
-  void subscribe(std::vector<std::shared_ptr<Subscriber>> sublist);
+  void subscribe(const std::vector<std::shared_ptr<Subscriber>> &sublist);
+
   /**
    * @brief Remove a Subscriber
    *
    * @param[in] sub Subscriber to be removed from the subscribers list
    */
   void unsubscribe(std::shared_ptr<Subscriber> sub);
+
   /**
    * @brief Remove a list of Subscribers
    * @param[in] sublist Subscriber vector (list of subscribers) to be removed
    */
-  void unsubscribe(std::vector<std::shared_ptr<Subscriber>> sublist);
+  void unsubscribe(const std::vector<std::shared_ptr<Subscriber>> &sublist);
 
   /**
    * @brief Return the list of subscribers attached
    */
-  std::vector<std::shared_ptr<Subscriber>> getSubscribers() {
-    return subscribers;
-  }
+  const std::vector<std::shared_ptr<Subscriber>> &getSubscribers(void) const;
+
+  /**
+   * @brief Return the list of subscribers attached
+   */
+  std::vector<std::shared_ptr<Subscriber>> &getSubscribers(void);
 
   /**
    * @brief Return list of all Subscriber frequencies
    */
-  std::vector<int> getReportFreqList() { return reportFreqList; }
+  const std::vector<int> &getReportFreqList(void) const;
+
+  /**
+   * @brief Return list of all Subscriber frequencies
+   */
+  std::vector<int> &getReportFreqList(void);
 
   /**
    * @brief Set the Remove Center Of Mass Frequency value
    *
    * @param freq
    */
-  void setRemoveCenterOfMassFrequency(int freq) {
-    removeCenterOfMassFrequency = freq;
-  }
+  void setRemoveCenterOfMassFrequency(const int freq);
 
-  virtual CudaContainer<double4> getCoordsDelta() {
-    std::cerr << "CudaIntegrator::getCoordsDelta() : override me!\n";
-    exit(1);
-    return CudaContainer<double4>();
-  }
-  virtual CudaContainer<double4> getCoordsDeltaPrevious() {
-    std::cerr << "CudaIntegrator::getCoordsDeltaPrevious() : override me!\n";
-    exit(1);
-    return CudaContainer<double4>();
-  }
+  virtual const CudaContainer<double4> &getCoordsDelta(void) const;
+
+  virtual CudaContainer<double4> &getCoordsDelta(void);
+
+  virtual const CudaContainer<double4> &getCoordsDeltaPrevious(void) const;
+
+  virtual CudaContainer<double4> &getCoordsDeltaPrevious(void);
 
   virtual void
-  setCoordsDeltaPrevious(const std::vector<std::vector<double>> _coordsDelta) {
-    std::cerr << "CudaIntegrator::setCoordsDeltaPrevious() : override me!\n";
-    exit(1);
-  }
+  setCoordsDeltaPrevious(const std::vector<std::vector<double>> &coordsDelta);
+
   virtual void
-  setOnStepPistonVelocity(CudaContainer<double> _onStepPistonVelocity) {
-    std::cerr << "CudaIntegrator::setOnStepPistonVelocity() : override me!\n";
-    exit(1);
-  }
+  setOnStepPistonVelocity(const CudaContainer<double> &onStepPistonVelocity);
+
   virtual void
-  setOnStepPistonVelocity(const std::vector<double> _onStepPistonVelocity) {
-    std::cerr << "CudaIntegrator::setOnStepPistonVelocity() : override me!\n";
-    exit(1);
-  }
+  setOnStepPistonVelocity(const std::vector<double> &onStepPistonVelocity);
+
+  virtual void setHalfStepPistonVelocity(
+      const CudaContainer<double> &halfStepPistonVelocity);
+
   virtual void
-  setHalfStepPistonVelocity(CudaContainer<double> _halfStepPistonVelocity) {
-    std::cerr << "CudaIntegrator::setHalfStepPistonVelocity() : override me!\n";
-    exit(1);
-  }
+  setHalfStepPistonVelocity(const std::vector<double> &halfStepPistonVelocity);
+
   virtual void
-  setHalfStepPistonVelocity(const std::vector<double> _halfStepPistonVelocity) {
-    std::cerr << "CudaIntegrator::setHalfStepPistonVelocity() : override me!\n";
-    exit(1);
-  }
+  setOnStepPistonPosition(const CudaContainer<double> &onStepPistonPosition);
+
   virtual void
-  setOnStepPistonPosition(CudaContainer<double> _onStepPistonPosition) {
-    std::cerr << "CudaIntegrator::setOnStepPistonPosition() : override me!\n";
-    exit(1);
-  }
+  setOnStepPistonPosition(const std::vector<double> &onStepPistonPosition);
+
+  virtual void setHalfStepPistonPosition(
+      const CudaContainer<double> &halfStepPistonPosition);
+
   virtual void
-  setOnStepPistonPosition(const std::vector<double> _onStepPistonPosition) {
-    std::cerr << "CudaIntegrator::setOnStepPistonPosition() : override me!\n";
-    exit(1);
-  }
-  virtual void
-  setHalfStepPistonPosition(CudaContainer<double> _halfStepPistonPosition) {
-    std::cerr << "CudaIntegrator::setHalfStepPistonPosition() : override me!\n";
-    exit(1);
-  }
-  virtual void
-  setHalfStepPistonPosition(const std::vector<double> _halfStepPistonPosition) {
-    std::cerr << "CudaIntegrator::setHalfStepPistonPosition() : override me!\n";
-    exit(1);
-  }
+  setHalfStepPistonPosition(const std::vector<double> &halfStepPistonPosition);
 
   /** @brief Returns a map of the integrator descriptor. Should be overriden by
    * child classes.*/
-  virtual std::map<std::string, std::string> getIntegratorDescriptors();
+  virtual std::map<std::string, std::string> getIntegratorDescriptors(void);
 
   /** @brief Returns the current step which the integrator is on.
    */
@@ -227,38 +215,6 @@ public:
   // PROTECTED //
   ///////////////
 protected:
-  // double timeStep;
-  /** @brief Integrator time step, in AKMA units (ps / timfac) */
-  ts_t timeStep;
-  /** @brief Time unit conversion factor (t (AKMA) = t (psf) / timfac ) */
-  double timfac;
-
-  /** @brief If not 0, frequency at which integrator should print debug infos */
-  int debugPrintFrequency = 0;
-
-  /** @brief CharmmContext to which Integrator is attached */
-  std::shared_ptr<CharmmContext> context = nullptr;
-
-  /** @todo Pick a better name : this counts the number of steps and is used to
-   * compare with nblupdate frequency, rather than counting how many steps have
-   * happened since last NBLupdate */
-  int stepsSinceNeighborListUpdate;
-
-  /** @brief Allows subscribers to have knowledge of which step the integrator
-   * has propgated*/
-  int currentPropagatedStep;
-
-  std::shared_ptr<CudaHolonomicConstraint> holonomicConstraint;
-
-  /**
-   * @todo  document this
-   */
-  CudaContainer<double4> coordsRef, coordsDelta;
-  CudaContainer<double4> coordsDeltaPrevious;
-
-  std::shared_ptr<cudaStream_t> integratorStream, integratorMemcpyStream;
-  bool usingHolonomicConstraints;
-
   /**
    * @brief Returns indices of Subscriber needing update
    *
@@ -269,14 +225,55 @@ protected:
    *
    * @return List of indices of Subscriber to be updated (can be empty)
    */
-  void reportIfNeeded(int istep);
+  void reportIfNeeded(const int istep);
+
+  /** @brief Checks that the kinetic and potential energy are not nans. Throws
+   * an error otherwise. Called every min(10^7, min(reportFreqList)) steps.
+   * @todo Unittest this  */
+  void checkForNanEnergy(void);
+
+protected:
+  // double timeStep;
+  /** @brief Integrator time step, in AKMA units (ps / timfac) */
+  double m_TimeStep;
+
+  /** @brief Time unit conversion factor (t (AKMA) = t (psf) / timfac ) */
+  double m_Timfac;
+
+  /** @brief If not 0, frequency at which integrator should print debug infos */
+  int m_DebugPrintFrequency;
+
+  /** @brief CharmmContext to which Integrator is attached */
+  std::shared_ptr<CharmmContext> m_Context;
+
+  /** @todo Pick a better name : this counts the number of steps and is used to
+   * compare with nblupdate frequency, rather than counting how many steps have
+   * happened since last NBLupdate */
+  int m_StepsSinceNeighborListUpdate;
+
+  /** @brief Allows subscribers to have knowledge of which step the integrator
+   * has propgated*/
+  int m_CurrentPropagatedStep;
+
+  std::shared_ptr<CudaHolonomicConstraint> m_HolonomicConstraint;
+
+  /**
+   * @todo  document this
+   */
+  CudaContainer<double4> m_CoordsRef;
+  CudaContainer<double4> m_CoordsDelta;
+  CudaContainer<double4> m_CoordsDeltaPrevious;
+
+  std::shared_ptr<cudaStream_t> m_IntegratorStream;
+  std::shared_ptr<cudaStream_t> m_IntegratorMemcpyStream;
+  bool m_UsingHolonomicConstraints;
 
   /**
    * @brief Subscribers linked
    *
    * List of all Subscriber objects linked to the Integrator
    */
-  std::vector<std::shared_ptr<Subscriber>> subscribers;
+  std::vector<std::shared_ptr<Subscriber>> m_Subscribers;
 
   /**
    * @brief Report frequencies
@@ -284,22 +281,18 @@ protected:
    * List of all Subscriber report frequencies. Entry #i corresponds to
    * reportFreq of Subscriber #i.
    */
-  std::vector<int> reportFreqList;
+  std::vector<int> m_ReportFreqList;
 
   /**
    * @brief Flag reporting if CharmmContext object has been set
    */
-  bool isCharmmContextSet = false;
+  bool m_IsCharmmContextSet;
 
-  int nonbondedListUpdateFrequency;
+  int m_NonbondedListUpdateFrequency;
 
-  /** @brief Checks that the kinetic and potential energy are not nans. Throws
-   * an error otherwise. Called every min(10^7, min(reportFreqList)) steps.
-   * @todo Unittest this  */
-  void checkForNanEnergy();
-  int removeCenterOfMassFrequency;
+  int m_RemoveCenterOfMassFrequency;
 
   /** @brief Describe the integrator type. Useful to discriminate methods to
    * use, e.g. for restart subscribers. Could/should be a trait */
-  std::string integratorTypeName = "BaseClass integrator";
+  std::string m_IntegratorTypeName;
 };

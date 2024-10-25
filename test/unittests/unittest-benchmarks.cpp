@@ -4,7 +4,7 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author:  Samarjeet Prasad
+// Author:  Samarjeet Prasad, James E. Gonzales II
 //
 // ENDLICENSE
 
@@ -22,8 +22,98 @@
 #include "test_paths.h"
 #include <iostream>
 #include <limits>
+#include <random>
 #include <string>
 #include <vector>
+
+std::size_t InitRandCoordsChargesNeut(
+    std::vector<double> &coordsX, std::vector<double> &coordsY,
+    std::vector<double> &coordsZ, std::vector<double> &charges,
+    const double boxDimX, const double boxDimY, const double boxDimZ,
+    const std::size_t numAtomsPerDimX, const std::size_t numAtomsPerDimY,
+    const std::size_t numAtomsPerDimZ, const std::size_t seed) {
+  const std::size_t numAtoms =
+      numAtomsPerDimX * numAtomsPerDimY * numAtomsPerDimZ;
+  const double gapX = boxDimX / static_cast<double>(numAtomsPerDimX);
+  const double gapY = boxDimY / static_cast<double>(numAtomsPerDimY);
+  const double gapZ = boxDimZ / static_cast<double>(numAtomsPerDimZ);
+
+  std::uniform_real_distribution<double> dist(0.0, 1.0);
+  std::random_device rd;
+  std::mt19937 rng((seed == 0) ? rd() : seed);
+  double averageCharge = 0.0;
+
+  coordsX.clear();
+  coordsY.clear();
+  coordsZ.clear();
+  charges.clear();
+
+  // Take the regular grid of positions and add a small random shift
+  for (std::size_t ix = 0; ix < numAtomsPerDimX; ix++) {
+    double x = (static_cast<double>(ix) + 0.5) * gapX + 2.0 * dist(rng) - 1.0;
+    x = (x >= boxDimX) ? boxDimX - 1e-5 : x;
+    x = (x <= 0.0) ? 1e-5 : x;
+    for (std::size_t iy = 0; iy < numAtomsPerDimY; iy++) {
+      double y = (static_cast<double>(iy) + 0.5) * gapY + 2.0 * dist(rng) - 1.0;
+      y = (y >= boxDimY) ? boxDimY - 1e-5 : y;
+      y = (y <= 0.0) ? 1e-5 : y;
+      for (std::size_t iz = 0; iz < numAtomsPerDimZ; iz++) {
+        double z =
+            (static_cast<double>(iz) + 0.5) * gapZ + 2.0 * dist(rng) - 1.0;
+        z = (z >= boxDimZ) ? boxDimZ - 1e-5 : z;
+        z = (z <= 0.0) ? 1e-5 : z;
+
+        double q = 2.0 * dist(rng);
+
+        coordsX.push_back(x);
+        coordsY.push_back(y);
+        coordsZ.push_back(z);
+        charges.push_back(q);
+        averageCharge += q;
+      }
+    }
+  }
+
+  // Ensure that the total charge of the system is neutral
+  averageCharge /= static_cast<double>(numAtoms);
+  for (double &charge : charges)
+    charge -= averageCharge;
+
+  return numAtoms;
+}
+
+TEST_CASE("waterbox") {
+  std::string dataPath = getDataPath();
+
+  std::vector<std::string> prmFiles = {dataPath + "toppar_water_ions.str"};
+  std::vector<double> boxDim = {50.0, 50.0, 50.0};
+
+  // Parameters, PSF, and coordinates
+  auto prm = std::make_shared<CharmmParameters>(prmFiles);
+  auto psf = std::make_shared<CharmmPSF>(dataPath + "waterbox.psf");
+  auto crd = std::make_shared<CharmmCrd>(dataPath + "waterbox.crd");
+
+  // Force manager
+  auto fm = std::make_shared<ForceManager>(psf, prm);
+  fm->setBoxDimensions(boxDim);
+
+  // CHARMM context
+  auto ctx = std::make_shared<CharmmContext>(fm);
+  ctx->setCoordinates(crd);
+  ctx->useHolonomicConstraints(false);
+
+  ctx->calculatePotentialEnergy(true, true);
+
+  // std::cout << "No. of Atoms: " << ctx->getNumAtoms() << "\n";
+
+  // const std::vector<double> boxDim = {256.0, 256.0, 256.0};
+  // const std::vector<std::size_t> numAtomsPerDim = {256, 256, 256};
+
+  // std::vector<double> x, y, z, q;
+  // InitRandCoordsChargesNeut(x, y, z, q, boxDim[0], boxDim[1], boxDim[2],
+  //                           numAtomsPerDim[0], numAtomsPerDim[1],
+  //                           numAtomsPerDim[2], 314159);
+}
 
 /*
 TEST_CASE("pore", "[dynamics]") {
@@ -192,11 +282,13 @@ TEST_CASE("blade_benchmark", "[dynamics]") {
 
     // time in seconds
     std::chrono::duration<double> elapsed_seconds = end - start;
+    std::cout << "No. of Atoms: " << ctx->getNumAtoms() << "\n";
     std::cout << "Elapsed time: " << elapsed_seconds.count() << "s\n";
 
     std::cout << "speed in ns/day : "
               << (numSteps * timeStep) / (elapsed_seconds.count() * 1e3) * 86400
               << "\n";
+    std::cout << std::endl;
 
     // time for 10,000 energy calls
     /*start = std::chrono::high_resolution_clock::now();
@@ -248,11 +340,13 @@ TEST_CASE("blade_benchmark", "[dynamics]") {
 
     // time in seconds
     std::chrono::duration<double> elapsed_seconds = end - start;
+    std::cout << "No. of Atoms: " << ctx->getNumAtoms() << "\n";
     std::cout << "Elapsed time: " << elapsed_seconds.count() << "s\n";
 
     std::cout << "speed in nd/day : "
               << (numSteps * timeStep) / (elapsed_seconds.count() * 1e3) * 86400
               << "\n";
+    std::cout << std::endl;
   }
 }
 
@@ -306,11 +400,13 @@ TEST_CASE("microtubule", "[dyna]") {
 
     // time in seconds
     std::chrono::duration<double> elapsed_seconds = end - start;
+    std::cout << "No. of Atoms: " << ctx->getNumAtoms() << "\n";
     std::cout << "Elapsed time: " << elapsed_seconds.count() << "s\n";
 
     std::cout << "speed in nd/day : "
               << (numSteps * timeStep) / (elapsed_seconds.count() * 1e3) * 86400
               << "\n";
+    std::cout << std::endl;
   }
 }
 
@@ -365,11 +461,13 @@ TEST_CASE("namd_benchmark", "[dynamics]") {
 
     // time in seconds
     std::chrono::duration<double> elapsed_seconds = end - start;
+    std::cout << "No. of Atoms: " << ctx->getNumAtoms() << "\n";
     std::cout << "Elapsed time: " << elapsed_seconds.count() << "s\n";
 
     std::cout << "speed in nd/day : "
               << (numSteps * timeStep) / (elapsed_seconds.count() * 1e3) * 86400
               << "\n";
+    std::cout << std::endl;
   }
 
   SECTION("apoa1") {
@@ -416,11 +514,13 @@ TEST_CASE("namd_benchmark", "[dynamics]") {
 
     // time in seconds
     std::chrono::duration<double> elapsed_seconds = end - start;
+    std::cout << "No. of Atoms: " << ctx->getNumAtoms() << "\n";
     std::cout << "Elapsed time: " << elapsed_seconds.count() << "s\n";
 
     std::cout << "speed in nd/day : "
               << (numSteps * timeStep) / (elapsed_seconds.count() * 1e3) * 86400
               << "\n";
+    std::cout << std::endl;
   }
   SECTION("apoa1_new") {
     std::string dataPath = "/u/samar/projects/benchmark/apoa1_new/";
@@ -473,11 +573,13 @@ TEST_CASE("namd_benchmark", "[dynamics]") {
 
     // time in seconds
     std::chrono::duration<double> elapsed_seconds = end - start;
+    std::cout << "No. of Atoms: " << ctx->getNumAtoms() << "\n";
     std::cout << "Elapsed time: " << elapsed_seconds.count() << "s\n";
 
     std::cout << "speed in ns/day : "
               << (numSteps * timeStep) / (elapsed_seconds.count() * 1e3) * 86400
               << "\n";
+    std::cout << std::endl;
   }
 }
 

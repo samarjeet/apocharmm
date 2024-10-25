@@ -4,7 +4,7 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author:  Samarjeet Prasad
+// Author:  Samarjeet Prasad, James E. Gonzales II
 //
 // ENDLICENSE
 
@@ -22,98 +22,105 @@
 
 namespace py = pybind11;
 
-CudaIntegrator::CudaIntegrator(ts_t timeStep)
-    : timeStep{timeStep / 0.0488882129}, timfac{0.0488882129} {
+CudaIntegrator::CudaIntegrator(void)
+    : m_TimeStep(0.0), m_Timfac(0.0488882129), m_DebugPrintFrequency(0),
+      m_Context(nullptr), m_StepsSinceNeighborListUpdate(-1),
+      m_CurrentPropagatedStep(0), m_HolonomicConstraint(nullptr), m_CoordsRef(),
+      m_CoordsDelta(), m_CoordsDeltaPrevious(), m_IntegratorStream(nullptr),
+      m_IntegratorMemcpyStream(nullptr), m_UsingHolonomicConstraints(false),
+      m_Subscribers(), m_ReportFreqList(), m_IsCharmmContextSet(false),
+      m_NonbondedListUpdateFrequency(20), m_RemoveCenterOfMassFrequency(1000),
+      m_IntegratorTypeName("BaseClass integrator") {
+  m_IntegratorStream = std::make_shared<cudaStream_t>();
+  cudaCheck(cudaStreamCreate(m_IntegratorStream.get()));
 
-  stepsSinceNeighborListUpdate = -1;
-
-  integratorStream = std::make_shared<cudaStream_t>();
-  cudaStreamCreate(integratorStream.get());
-  integratorMemcpyStream = std::make_shared<cudaStream_t>();
-  cudaStreamCreate(integratorMemcpyStream.get());
-
-  context = nullptr;
-  setNonbondedListUpdateFrequency(20);
-  setRemoveCenterOfMassFrequency(1000);
+  m_IntegratorMemcpyStream = std::make_shared<cudaStream_t>();
+  cudaCheck(cudaStreamCreate(m_IntegratorMemcpyStream.get()));
 }
 
-CudaIntegrator::CudaIntegrator(ts_t timeStep, int debugPrintFrequency = 0)
-    : timeStep{timeStep / 0.0488882129}, timfac{0.0488882129} {
-
-  stepsSinceNeighborListUpdate = -1;
-
-  integratorStream = std::make_shared<cudaStream_t>();
-  cudaStreamCreate(integratorStream.get());
-  integratorMemcpyStream = std::make_shared<cudaStream_t>();
-  cudaStreamCreate(integratorMemcpyStream.get());
-
-  context = nullptr;
-  debugPrintFrequency = debugPrintFrequency;
-  setNonbondedListUpdateFrequency(20);
-  setRemoveCenterOfMassFrequency(1000);
+CudaIntegrator::CudaIntegrator(const double timeStep) : CudaIntegrator() {
+  m_TimeStep = timeStep / 0.0488882129;
 }
 
-ts_t CudaIntegrator::getTimeStep() const { return timeStep * timfac; }
+CudaIntegrator::CudaIntegrator(const double timeStep,
+                               const int debugPrintFrequency)
+    : CudaIntegrator(timeStep) {
+  m_DebugPrintFrequency = debugPrintFrequency;
+}
 
-void CudaIntegrator::setTimeStep(const ts_t dt) {
+double CudaIntegrator::getTimeStep(void) const {
+  return (m_TimeStep * m_Timfac);
+}
+
+void CudaIntegrator::setTimeStep(const double timeStep) {
   // Converting from ps to AKMA units ltm/consta_ltm
-  timeStep = dt / 0.0488882129;
+  m_TimeStep = timeStep / 0.0488882129;
+
   // If a new time step is set, and there are Subscribers linked to the current
   // integrator, the new timestep should be communicated to the subscribers.
-  if (subscribers.size() != 0) {
-    for (int i = 0; i < subscribers.size(); i++) {
-      subscribers[i]->setTimeStepFromIntegrator(timeStep * timfac);
-    }
-  }
-}
+  for (std::size_t i = 0; i < m_Subscribers.size(); i++)
+    m_Subscribers[i]->setTimeStepFromIntegrator(timeStep);
 
-std::shared_ptr<CharmmContext> CudaIntegrator::getCharmmContext(void) {
-  return context;
-}
-
-void CudaIntegrator::initialize() {
-  std::cout << "CudaIntegrator::initialize() : override me!\n";
-  //"Should not have been called!!\n";
+  return;
 }
 
 void CudaIntegrator::setCharmmContext(std::shared_ptr<CharmmContext> ctx) {
-  if (isCharmmContextSet) {
+  if (m_IsCharmmContextSet) {
     throw std::invalid_argument(
-        "A CharmmContext object was already set for this CudaIntegrator.\n");
+        "A CharmmContext object was already set for this CudaIntegrator.");
   }
-  context = ctx;
-  isCharmmContextSet = true;
-  if (context->getNumAtoms() < 0) {
-    std::stringstream mes;
-    mes << "CudaIntegrator: number of atoms is " << context->getNumAtoms()
-        << ".\n"
-        << "Can't allocate coordsRef with such a size.\n"
-        << "  -> No configuration (crd,pdb) was given ?\n";
-    throw std::invalid_argument(mes.str());
+  m_Context = ctx;
+  m_IsCharmmContextSet = true;
+  if (m_Context->getNumAtoms() < 0) {
+    throw std::invalid_argument("CudaIntegrator: Number of atoms is " +
+                                std::to_string(m_Context->getNumAtoms()) +
+                                ".\nCan't allocate memory with such a size.\n "
+                                "-> No configuration (crd, pdb) was given?\n");
   }
 
-  coordsRef.allocate(context->getNumAtoms());
-  usingHolonomicConstraints = context->isUsingHolonomicConstraints();
-  if (usingHolonomicConstraints) {
-    holonomicConstraint = std::make_shared<CudaHolonomicConstraint>();
-    holonomicConstraint->setCharmmContext(ctx);
-    holonomicConstraint->setup(timeStep);
-    holonomicConstraint->setStream(integratorStream);
-    holonomicConstraint->setMemcpyStream(integratorMemcpyStream);
+  m_CoordsRef.resize(m_Context->getNumAtoms());
+  m_UsingHolonomicConstraints = m_Context->isUsingHolonomicConstraints();
+  if (m_UsingHolonomicConstraints) {
+    m_HolonomicConstraint = std::make_shared<CudaHolonomicConstraint>();
+    m_HolonomicConstraint->setCharmmContext(ctx);
+    m_HolonomicConstraint->setup(m_TimeStep);
+    m_HolonomicConstraint->setStream(m_IntegratorStream);
+    m_HolonomicConstraint->setMemcpyStream(m_IntegratorMemcpyStream);
   }
-  initialize();
+  this->initialize();
+
+  return;
 }
 
-// void CudaIntegrator::setReportSteps(int num) { reportSteps = num; }
+const std::shared_ptr<CharmmContext>
+CudaIntegrator::getCharmmContext(void) const {
+  return m_Context;
+}
 
-void CudaIntegrator::propagate(int numSteps) {
+std::shared_ptr<CharmmContext> CudaIntegrator::getCharmmContext(void) {
+  return m_Context;
+}
+
+void CudaIntegrator::initialize(void) {
+  std::cerr << "CudaIntegrator::initialize() : override me!" << std::endl;
+  exit(1);
+  return;
+}
+
+void CudaIntegrator::propagateOneStep() {
+  std::cout << "CudaIntegrator::propagateOneStep() : override me!" << std::endl;
+  exit(1);
+  return;
+}
+
+void CudaIntegrator::propagate(const int numSteps) {
   // Before starting the propagation, check if ForceManager is initialized.
-  if (context == nullptr) {
+  if (m_Context == nullptr) {
     throw std::invalid_argument(
         "CudaIntegrator::setSimulationContext\nNo CharmmContext object was "
         "set for this CudaIntegrator.\n");
   }
-  if (not context->getForceManager()->isInitialized()) {
+  if (not m_Context->getForceManager()->isInitialized()) {
     throw std::invalid_argument(
         "CudaIntegrator::setSimulationContext\nForceManager is not "
         "initialized. Please call "
@@ -122,20 +129,19 @@ void CudaIntegrator::propagate(int numSteps) {
 
   // Logging
   if (false) {
-    if (not context->hasLoggerSet()) {
-      context->setLogger();
-    }
-    auto testptr = shared_from_this();
-    std::shared_ptr<Logger> currentLogger = context->getLogger();
-    currentLogger->updateLog(shared_from_this(), numSteps);
+    if (not m_Context->hasLoggerSet())
+      m_Context->setLogger();
+    auto testptr = this->shared_from_this();
+    std::shared_ptr<Logger> currentLogger = m_Context->getLogger();
+    currentLogger->updateLog(this->shared_from_this(), numSteps);
   }
 
-  context->resetNeighborList();
+  m_Context->resetNeighborList();
 
   std::chrono::steady_clock::time_point start =
       std::chrono::steady_clock::now();
   for (int i = 0; i < numSteps; ++i) {
-    currentPropagatedStep = i;
+    m_CurrentPropagatedStep = i;
     // std::cout << "---\nStep " << i << " of " << numSteps << "\n";
 
     // Capture Ctrl-C SIGINT when running with the python interface
@@ -158,123 +164,257 @@ void CudaIntegrator::propagate(int numSteps) {
       start = std::chrono::steady_clock::now();
     }
 
-    if (i % removeCenterOfMassFrequency == 0) {
-      // context->removeCenterOfMassMotion();
-    }
-    propagateOneStep();
+    // if (i % removeCenterOfMassFrequency == 0) {
+    //   context->removeCenterOfMassMotion();
+    // }
+    this->propagateOneStep();
 
-    ++stepsSinceNeighborListUpdate;
+    m_StepsSinceNeighborListUpdate++;
 
     int minReportFreq = 100000;
 
-    if (subscribers.size() > 0) {
-
-      // if there are subscribers, find the smallest report freq instead
-      for (int j = 0; j < subscribers.size(); j++) {
-        if (reportFreqList[j] < minReportFreq) {
-          minReportFreq = reportFreqList[j];
-        }
-      }
+    // if there are subscribers, find the smallest report freq instead
+    for (std::size_t j = 0; j < m_Subscribers.size(); j++) {
+      if (m_ReportFreqList[j] < minReportFreq)
+        minReportFreq = m_ReportFreqList[j];
     }
     // Check if we have nan-esque energy.
-    if (i % minReportFreq == 0) {
-      checkForNanEnergy();
-    }
+    if (i % minReportFreq == 0)
+      this->checkForNanEnergy();
+
     // Check if report is needed for one or more of the subscribers
-    reportIfNeeded(i);
+    this->reportIfNeeded(i);
   }
+
+  return;
 }
 
-int CudaIntegrator::getNumberOfAtoms() {
-  assert(context != nullptr);
-  return context->getNumAtoms();
+int CudaIntegrator::getNumberOfAtoms(void) const {
+  assert(m_Context != nullptr);
+  return m_Context->getNumAtoms();
 }
 
-void CudaIntegrator::setNonbondedListUpdateFrequency(int _nfreq) {
-  nonbondedListUpdateFrequency = _nfreq;
+const std::vector<double> &CudaIntegrator::getBoxDimensions(void) const {
+  assert(m_Context != nullptr);
+  return m_Context->getBoxDimensions();
 }
 
-void CudaIntegrator::propagateOneStep() {
-  std::cout << "Integrator : override me!\n";
+std::vector<double> &CudaIntegrator::getBoxDimensions(void) {
+  assert(m_Context != nullptr);
+  return m_Context->getBoxDimensions();
 }
 
-// SUBSCRIBER FUNCTIONS
+void CudaIntegrator::setDebugPrintFrequency(const int freq) {
+  m_DebugPrintFrequency = freq;
+  return;
+}
 
-void CudaIntegrator::subscribe(
-    const std::vector<std::shared_ptr<Subscriber>> sublist) {
-  for (int i = 0; i < sublist.size(); i++) {
-    this->subscribe(sublist[i]);
-  }
+void CudaIntegrator::setNonbondedListUpdateFrequency(const int nfreq) {
+  m_NonbondedListUpdateFrequency = nfreq;
+  return;
 }
 
 void CudaIntegrator::subscribe(std::shared_ptr<Subscriber> sub) {
-  subscribers.push_back(sub);
-  reportFreqList.push_back(sub->getReportFreq());
-  sub->setCharmmContext(context);
-  sub->setTimeStepFromIntegrator(timeStep * timfac);
+  m_Subscribers.push_back(sub);
+  m_ReportFreqList.push_back(sub->getReportFreq());
+  sub->setCharmmContext(m_Context);
+  sub->setTimeStepFromIntegrator(m_TimeStep * m_Timfac);
 
   try {
-    sub->setIntegrator(shared_from_this());
+    sub->setIntegrator(this->shared_from_this());
   } catch (const std::exception &e) {
     std::cout << "Error : " << e.what() << '\n';
   }
 }
 
-void CudaIntegrator::unsubscribe(
-    const std::vector<std::shared_ptr<Subscriber>> sublist) {
-  for (int i = 0; i < sublist.size(); i++) {
-    this->unsubscribe(sublist[i]);
+void CudaIntegrator::subscribe(
+    const std::vector<std::shared_ptr<Subscriber>> &sublist) {
+  for (std::size_t i = 0; i < sublist.size(); i++) {
+    this->subscribe(sublist[i]);
   }
 }
 
 void CudaIntegrator::unsubscribe(std::shared_ptr<Subscriber> sub) {
-  auto subIterator = std::find(subscribers.begin(), subscribers.end(), sub);
-  if (subIterator != subscribers.end()) {
-    subscribers.erase(subIterator);
-  } else {
-    std::stringstream tmpexc;
-    tmpexc << "Subscriber not found (file " << sub->getFileName() << ")"
-           << std::endl;
-    throw std::invalid_argument(tmpexc.str());
+  auto subIterator = std::find(m_Subscribers.begin(), m_Subscribers.end(), sub);
+  if (subIterator != m_Subscribers.end())
+    m_Subscribers.erase(subIterator);
+  else {
+    // std::stringstream tmpexc;
+    // tmpexc << "Subscriber not found (file " << sub->getFileName() << ")"
+    //        << std::endl;
+    // throw std::invalid_argument(tmpexc.str());
+    throw std::invalid_argument("Subscriber not found (file \"" +
+                                sub->getFileName() + "\")");
   }
   // if you unsubscribe, you should also remove the corresponding freq
-  auto freqIterator = std::find(reportFreqList.begin(), reportFreqList.end(),
-                                sub->getReportFreq());
-  reportFreqList.erase(freqIterator);
+  auto freqIterator = std::find(m_ReportFreqList.begin(),
+                                m_ReportFreqList.end(), sub->getReportFreq());
+  m_ReportFreqList.erase(freqIterator);
+
+  return;
 }
 
-void CudaIntegrator::reportIfNeeded(int istep) {
-  // Loop over each report frequency. If modulo is 0, then update the
-  // corresponding Subscriber
-  for (int i = 0; i < reportFreqList.size(); i++) {
-    if ((istep + 1) % reportFreqList[i] == 0) {
-      subscribers[i]->update();
-    }
-  }
+void CudaIntegrator::unsubscribe(
+    const std::vector<std::shared_ptr<Subscriber>> &sublist) {
+  for (std::size_t i = 0; i < sublist.size(); i++)
+    this->unsubscribe(sublist[i]);
+  return;
 }
 
-void CudaIntegrator::checkForNanEnergy() {
-  // Check if we have nan-esque energy
-  CudaContainer<double> potEnergyCC = context->getPotentialEnergy();
-  potEnergyCC.transferFromDevice();
-  double potEnergy = potEnergyCC.getHostArray()[0];
-  double kinEnergy = context->getKineticEnergy();
-
-  if (std::isnan(kinEnergy)) {
-    throw std::runtime_error("Kinetic energy is NaN");
-  }
-  if (std::isnan(potEnergy)) {
-    throw std::runtime_error("Potential energy is NaN");
-  }
+const std::vector<std::shared_ptr<Subscriber>> &
+CudaIntegrator::getSubscribers(void) const {
+  return m_Subscribers;
 }
 
-std::map<std::string, std::string> CudaIntegrator::getIntegratorDescriptors() {
-  std::cout
-      << "CudaIntegrator::getIntegratorDescriptors() : override me! Returning "
-         "base class.\n";
+std::vector<std::shared_ptr<Subscriber>> &CudaIntegrator::getSubscribers(void) {
+  return m_Subscribers;
+}
+
+const std::vector<int> &CudaIntegrator::getReportFreqList(void) const {
+  return m_ReportFreqList;
+}
+
+std::vector<int> &CudaIntegrator::getReportFreqList(void) {
+  return m_ReportFreqList;
+}
+
+void CudaIntegrator::setRemoveCenterOfMassFrequency(const int freq) {
+  m_RemoveCenterOfMassFrequency = freq;
+  return;
+}
+
+const CudaContainer<double4> &CudaIntegrator::getCoordsDelta(void) const {
+  std::cerr << "CudaIntegrator::getCoordsDelta() : override me!" << std::endl;
+  exit(1);
+  return m_CoordsDelta;
+}
+
+CudaContainer<double4> &CudaIntegrator::getCoordsDelta(void) {
+  std::cerr << "CudaIntegrator::getCoordsDelta() : override me!" << std::endl;
+  exit(1);
+  return m_CoordsDelta;
+}
+
+const CudaContainer<double4> &
+CudaIntegrator::getCoordsDeltaPrevious(void) const {
+  std::cerr << "CudaIntegrator::getCoordsDeltaPrevious() : override me!"
+            << std::endl;
+  exit(1);
+  return m_CoordsDeltaPrevious;
+}
+
+CudaContainer<double4> &CudaIntegrator::getCoordsDeltaPrevious(void) {
+  std::cerr << "CudaIntegrator::getCoordsDeltaPrevious() : override me!"
+            << std::endl;
+  exit(1);
+  return m_CoordsDeltaPrevious;
+}
+
+void CudaIntegrator::setCoordsDeltaPrevious(
+    const std::vector<std::vector<double>> &coordsDelta) {
+  std::cerr << "CudaIntegrator::setCoordsDeltaPrevious() : override me!"
+            << std::endl;
+  exit(1);
+  return;
+}
+
+void CudaIntegrator::setOnStepPistonVelocity(
+    const CudaContainer<double> &onStepPistonVelocity) {
+  std::cerr << "CudaIntegrator::setOnStepPistonVelocity() : override me!"
+            << std::endl;
+  exit(1);
+  return;
+}
+
+void CudaIntegrator::setOnStepPistonVelocity(
+    const std::vector<double> &onStepPistonVelocity) {
+  std::cerr << "CudaIntegrator::setOnStepPistonVelocity() : override me!"
+            << std::endl;
+  exit(1);
+  return;
+}
+
+void CudaIntegrator::setHalfStepPistonVelocity(
+    const CudaContainer<double> &halfStepPistonVelocity) {
+  std::cerr << "CudaIntegrator::setHalfStepPistonVelocity() : override me!"
+            << std::endl;
+  exit(1);
+  return;
+}
+
+void CudaIntegrator::setHalfStepPistonVelocity(
+    const std::vector<double> &halfStepPistonVelocity) {
+  std::cerr << "CudaIntegrator::setHalfStepPistonVelocity() : override me!"
+            << std::endl;
+  exit(1);
+  return;
+}
+
+void CudaIntegrator::setOnStepPistonPosition(
+    const CudaContainer<double> &onStepPistonPosition) {
+  std::cerr << "CudaIntegrator::setOnStepPistonPosition() : override me!"
+            << std::endl;
+  exit(1);
+  return;
+}
+
+void CudaIntegrator::setOnStepPistonPosition(
+    const std::vector<double> &onStepPistonPosition) {
+  std::cerr << "CudaIntegrator::setOnStepPistonPosition() : override me!"
+            << std::endl;
+  exit(1);
+  return;
+}
+
+void CudaIntegrator::setHalfStepPistonPosition(
+    const CudaContainer<double> &halfStepPistonPosition) {
+  std::cerr << "CudaIntegrator::setHalfStepPistonPosition() : override me!"
+            << std::endl;
+  exit(1);
+  return;
+}
+
+void CudaIntegrator::setHalfStepPistonPosition(
+    const std::vector<double> &halfStepPistonPosition) {
+  std::cerr << "CudaIntegrator::setHalfStepPistonPosition() : override me!"
+            << std::endl;
+  exit(1);
+  return;
+}
+
+std::map<std::string, std::string>
+CudaIntegrator::getIntegratorDescriptors(void) {
+  std::cerr << "CudaIntegrator::getIntegratorDescriptors() : override me!"
+            << std::endl;
+  exit(1);
   return {{"IntegratorDescriptor", "CudaIntegrator Baseclass"}};
 }
 
 int CudaIntegrator::getCurrentPropagatedStep(void) const {
-  return currentPropagatedStep;
+  return m_CurrentPropagatedStep;
+}
+
+void CudaIntegrator::reportIfNeeded(const int istep) {
+  // Loop over each report frequency. If modulo is 0, then update the
+  // corresponding Subscriber
+  for (std::size_t i = 0; i < m_ReportFreqList.size(); i++) {
+    if ((istep + 1) % m_ReportFreqList[i] == 0)
+      m_Subscribers[i]->update();
+  }
+  return;
+}
+
+void CudaIntegrator::checkForNanEnergy(void) {
+  // Check if we have nan-esque energy
+  CudaContainer<double> &potEnergyCC = m_Context->getPotentialEnergy();
+  potEnergyCC.transferFromDevice();
+  double potEnergy = potEnergyCC.getHostArray()[0];
+  double kinEnergy = m_Context->getKineticEnergy();
+
+  if (std::isnan(kinEnergy))
+    throw std::runtime_error("Kinetic energy is NaN");
+  if (std::isnan(potEnergy))
+    throw std::runtime_error("Potential energy is NaN");
+
+  return;
 }

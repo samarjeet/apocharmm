@@ -4,7 +4,7 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author: Antti-Pekka Hynninen, Samarjeet Prasad
+// Author: Antti-Pekka Hynninen, Samarjeet Prasad, James E. Gonzales II
 //
 // ENDLICENSE
 
@@ -12,7 +12,11 @@
 #include <iostream>
 
 CudaVerletIntegrator::CudaVerletIntegrator(double timeStep)
-    : CudaIntegrator(timeStep) {}
+    : CudaIntegrator(timeStep) {
+  m_OldXYZQ = nullptr;
+  m_NewXYZQ = nullptr;
+  m_IntegratorTypeName = "CudaVerletIntegrator";
+}
 
 extern __global__ void printKernel(int numAtoms, float4 *array);
 extern __global__ void printKernel(int numAtoms, double4 *array);
@@ -77,27 +81,29 @@ __global__ void initializeKernel(float4 *coords, float4 *oldCoords,
   }
 }
 
-void initializeOldNewCoords(int numAtoms) {}
-void CudaVerletIntegrator::initialize() {
-  int numAtoms = context->getNumAtoms();
+void CudaVerletIntegrator::initialize(void) {
+  int numAtoms = m_Context->getNumAtoms();
   // CudaIntegrator::initializeOldNewCoords(numAtoms);
-  auto energy = context->calculatePotentialEnergy(true);
+  auto energy = m_Context->calculatePotentialEnergy(true);
   // std::cout << "Total energy = " << energy << "\n";
-  auto force = context->getForces();
+  auto force = m_Context->getForces();
   double *forceData = (double *)force->xyz();
-  auto velocityMass = context->getVelocityMass();
+  auto velocityMass = m_Context->getVelocityMass();
   DeviceVector<double4> vmDeviceArray = velocityMass.getDeviceArray();
   double4 *d_velMass = vmDeviceArray.data();
-  auto xyzq = context->getXYZQ();
+  auto xyzq = m_Context->getXYZQ();
   auto coords = xyzq->getDeviceXYZQ();
-  auto stride = context->getForceStride();
+  auto stride = m_Context->getForceStride();
   int nThreads = 128;
   int nBlocks = (numAtoms - 1) / nThreads + 1;
   // printKernel<<<nBlocks, nThreads>>>(1000, coords);
   initializeKernel<<<nBlocks, nThreads>>>(
-      xyzq->getDeviceXYZQ(), oldXYZQ->getDeviceXYZQ(), newXYZQ->getDeviceXYZQ(),
-      d_velMass, forceData, stride, timeStep, numAtoms);
+      xyzq->getDeviceXYZQ(), m_OldXYZQ->getDeviceXYZQ(),
+      m_NewXYZQ->getDeviceXYZQ(), d_velMass, forceData, stride, m_TimeStep,
+      numAtoms);
   cudaDeviceSynchronize();
+
+  return;
 }
 
 __global__ void imageCenteringKernel(float4 *__restrict__ coords,
@@ -150,6 +156,7 @@ __global__ void imageCenteringKernel(float4 *__restrict__ coords,
   }
 }
 
+/*
 void CudaVerletIntegrator::propagate(int numSteps) {
   auto energy = context->calculatePotentialEnergy(true);
   std::cout << energy << "\n";
@@ -201,3 +208,4 @@ void CudaVerletIntegrator::propagate(int numSteps) {
     // std::cout << *ke << "\n";
   }
 }
+*/

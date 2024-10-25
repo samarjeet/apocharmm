@@ -285,11 +285,11 @@ TEST_CASE("waterbox", "[dynamics]") {
   SECTION("seed") {
     std::vector<std::string> prmFiles{dataPath + "toppar_water_ions.str"};
     std::vector<double> boxDim = {50.0, 50.0, 50.0};
-    int rdmSeed = 314159, nsteps = 1; // 10000;
+    int rdmSeed = 314159, nsteps = 10000; // 0;
     double pistonMass = 500.0;
     double pistonFriction = 12.0;
-    bool useHolonomicConstraints = false;
-    bool useNoseHoover = false;
+    bool useHolonomicConstraints = true;
+    bool useNoseHoover = true;
 
     // Topology, parameters, PSF, and coordinates
     auto prm1 = std::make_shared<CharmmParameters>(prmFiles);
@@ -415,10 +415,7 @@ TEST_CASE("waterbox", "[dynamics]") {
           integrator2->getNoseHooverPistonForcePrevious());
 
     // Propagate simulations
-    fm1->setPrintEnergyDecomposition(true);
-    fm2->setPrintEnergyDecomposition(true);
     integrator1->propagate(nsteps);
-    std::cout << std::endl;
     integrator2->propagate(nsteps);
 
     // Check that coordinates match

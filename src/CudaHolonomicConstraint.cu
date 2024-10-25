@@ -41,7 +41,7 @@ void CudaHolonomicConstraint::setCharmmContext(
 void CudaHolonomicConstraint::setup(double ts) {
   timeStep = ts;
   // xyzq_stored.set_ncoord(context->getNumAtoms());
-  coords_stored.allocate(context->getNumAtoms());
+  coords_stored.resize(context->getNumAtoms());
 
   settleWaterIndex = context->getWaterMolecules();
   numWaterMolecules = settleWaterIndex.size();
@@ -669,6 +669,7 @@ void CudaHolonomicConstraint::handleHolonomicConstraints(const double4 *ref) {
   // xx updateVelocities(ref, current);
 }
 
+/*
 __device__ static void removeOneForce(int i, int j, int stride,
                                       const double4 *__restrict__ ref,
                                       double *__restrict__ force) {
@@ -694,7 +695,9 @@ __device__ static void removeOneForce(int i, int j, int stride,
   atomicAdd(&force[j + stride], -acor * yrij);
   atomicAdd(&force[j + 2 * stride], -acor * zrij);
 }
+*/
 
+/*
 __global__ static void removeForceAlongHolonomicConstraintsKernel(
     const int4 *shakeAtomsIndex, int numConstraints, int stride,
     const double4 *__restrict__ ref, double *__restrict__ force) {
@@ -710,6 +713,7 @@ __global__ static void removeForceAlongHolonomicConstraintsKernel(
     // float4 params = shakeParams[index];
   }
 }
+*/
 
 void CudaHolonomicConstraint::removeForceAlongHolonomicConstraints(
     const double4 *ref, int stride, double *force) {

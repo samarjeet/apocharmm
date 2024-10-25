@@ -4,7 +4,7 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author: Samarjeet Prasad
+// Author: Samarjeet Prasad, James E. Gonzales II
 //
 // ENDLICENSE
 
@@ -21,31 +21,30 @@
 class CudaNoseHooverThermostatIntegrator : public CudaIntegrator {
 
 public:
-  CudaNoseHooverThermostatIntegrator(ts_t timeStep);
+  CudaNoseHooverThermostatIntegrator(const double timeStep);
 
-  void setNoseHooverPistonMass(double _nhMass);
-  double getNoseHooverPistonMass() { return noseHooverPistonMass; }
+  void initialize(void);
 
-  void setBathTemperature(double temp) { bathTemperature = temp; }
+  void propagateOneStep(void) override;
 
-  // Put these in the base class
-  // void setContext();
-  void initialize();
-  void propagateOneStep() override;
+  void setNoseHooverPistonMass(const double nhMass);
+  double getNoseHooverPistonMass(void); // { return noseHooverPistonMass; }
+
+  void setBathTemperature(
+      const double bathTemperature); // { bathTemperature = temp; }
 
 private:
-  int chainLength;
+  int m_ChainLength;
 
-  int stepId;
+  int m_StepId;
 
-  double noseHooverPistonMass;
-  double noseHooverPistonPosition, noseHooverPistonVelocity,
-      noseHooverPistonVelocityPrevious, noseHooverPistonForce,
-      noseHooverPistonForcePrevious;
-  double bathTemperature;
+  double m_NoseHooverPistonMass;
+  double m_NoseHooverPistonPosition;
+  double m_NoseHooverPistonVelocity;
+  double m_NoseHooverPistonVelocityPrevious;
+  double m_NoseHooverPistonForce;
+  double m_NoseHooverPistonForcePrevious;
+  double m_BathTemperature;
 
-  // CudaContainer<double4> chainPositions;
-  // CudaContainer<double4> chainVelocities;
-
-  std::string integratorTypeName = "LangevinThermostat";
+  std::string m_IntegratorTypeName;
 };

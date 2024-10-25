@@ -4,27 +4,23 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author:  Samarjeet Prasad
+// Author:  Samarjeet Prasad, James E. Gonzales II
 //
 // ENDLICENSE
 
 #include "CudaLeapFrogIntegrator.h"
 #include <iostream>
 
-CudaLeapFrogIntegrator::CudaLeapFrogIntegrator(double timeStep)
+CudaLeapFrogIntegrator::CudaLeapFrogIntegrator(const double timeStep)
     : CudaIntegrator(timeStep) {
-  stepsSinceLastReport = 0;
+  m_StepsSinceLastReport = 0;
+  m_IntegratorTypeName = "CudaLeapFrogIntegrator";
 }
 
-void CudaLeapFrogIntegrator::initialize() {}
-
-void CudaLeapFrogIntegrator::setCharmmContext(
-    std::shared_ptr<CharmmContext> ctx) {
-  CudaIntegrator::setCharmmContext(ctx);
-}
+void CudaLeapFrogIntegrator::initialize(void) { return; }
 
 __global__ static void leapFrogKernel(const int numAtoms, const int stride,
-                                      const ts_t timeStep,
+                                      const double timeStep,
                                       float4 *__restrict__ xyzq,
                                       double4 *__restrict__ velMass,
                                       const double *__restrict__ force) {
@@ -44,48 +40,48 @@ __global__ static void leapFrogKernel(const int numAtoms, const int stride,
   }
 }
 
-void CudaLeapFrogIntegrator::propagateOneStep() {
+void CudaLeapFrogIntegrator::propagateOneStep(void) {
+  auto xyzq = m_Context->getXYZQ()->getDeviceXYZQ();
+  auto velMass = m_Context->getVelocityMass().getDeviceData();
 
-  auto xyzq = context->getXYZQ()->getDeviceXYZQ();
-  auto velMass = context->getVelocityMass().getDeviceArray().data();
+  if (m_StepsSinceNeighborListUpdate % 20 == 0)
+    m_Context->resetNeighborList();
 
-  if (stepsSinceNeighborListUpdate % 20 == 0) {
-    context->resetNeighborList();
-  }
+  m_Context->calculateForces();
+  auto force = m_Context->getForces();
 
-  context->calculateForces();
-  auto force = context->getForces();
-
-  context->calculateKineticEnergy();
-  auto ke = context->getKineticEnergy();
-  auto peContainer = context->getPotentialEnergy();
+  m_Context->calculateKineticEnergy();
+  auto ke = m_Context->getKineticEnergy();
+  auto peContainer = m_Context->getPotentialEnergy();
   peContainer.transferFromDevice();
   auto pe = peContainer[0];
 
-  int numAtoms = context->getNumAtoms();
-  int stride = context->getForceStride();
+  int numAtoms = m_Context->getNumAtoms();
+  int stride = m_Context->getForceStride();
 
   int numThreads = 1024;
   int numBlocks = (numAtoms - 1) / numThreads + 1;
 
   gpu_range_start("leapFrog");
-  leapFrogKernel<<<numBlocks, numThreads>>>(numAtoms, stride, timeStep, xyzq,
+  leapFrogKernel<<<numBlocks, numThreads>>>(numAtoms, stride, m_TimeStep, xyzq,
                                             velMass, force->xyz());
   cudaCheck(cudaDeviceSynchronize());
 
   gpu_range_stop();
 
-  stepsSinceLastReport++;
-  if (debugPrintFrequency > 0 &&
-      stepsSinceLastReport % debugPrintFrequency == 0) {
-    stepsSinceLastReport = 0;
+  m_StepsSinceLastReport++;
+  if (m_DebugPrintFrequency > 0 &&
+      m_StepsSinceLastReport % m_DebugPrintFrequency == 0) {
+    m_StepsSinceLastReport = 0;
   }
+
+  return;
 }
 
 std::map<std::string, std::string>
-CudaLeapFrogIntegrator::getIntegratorDescriptors() {
+CudaLeapFrogIntegrator::getIntegratorDescriptors(void) {
   std::map<std::string, std::string> descriptors;
   descriptors["integratorType"] = "LeapFrog";
-  descriptors["timeStep"] = std::to_string(timeStep);
+  descriptors["timeStep"] = std::to_string(m_TimeStep);
   return descriptors;
 }

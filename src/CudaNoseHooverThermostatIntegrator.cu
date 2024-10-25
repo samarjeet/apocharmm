@@ -4,7 +4,7 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author: Antti-Pekka Hynninen, Samarjeet Prasad
+// Author: Antti-Pekka Hynninen, Samarjeet Prasad, James E. Gonzales II
 //
 // ENDLICENSE
 
@@ -15,16 +15,23 @@
 #include <iostream>
 
 CudaNoseHooverThermostatIntegrator::CudaNoseHooverThermostatIntegrator(
-    ts_t timeStep)
+    const double timeStep)
     : CudaIntegrator(timeStep) {
-  // std::cout << "Setting up the nose-hoover integrator.\n";
-  chainLength = 5;
+  m_ChainLength = 5;
+  m_StepId = 0;
+  m_NoseHooverPistonMass = 0.0;
+  m_NoseHooverPistonPosition = 0.0;
+  m_NoseHooverPistonVelocity = 0.0;
+  m_NoseHooverPistonVelocityPrevious = 0.0;
+  m_NoseHooverPistonForce = 0.0;
+  m_NoseHooverPistonForcePrevious = 0.0;
+  m_BathTemperature = 300.0;
 
-  bathTemperature = 300.0;
+  m_IntegratorTypeName = "CudaNoseHooverThermostatIntegrator";
 }
 
 __global__ static void init(double kbt, const int numAtoms, const int stride,
-                            const ts_t timeStep,
+                            const double timeStep,
                             // double4 *__restrict__ coords,
                             double4 *__restrict__ coordsDelta,
                             double4 *__restrict__ coordsDeltaPrevious,
@@ -87,79 +94,76 @@ updateSPKernel(int numAtoms, float4 *__restrict__ xyzq,
     xyzq[index].z = (float)coordsCharge[index].z;
   }
 }
-void CudaNoseHooverThermostatIntegrator::initialize() {
 
-  int numAtoms = context->getNumAtoms();
+void CudaNoseHooverThermostatIntegrator::initialize(void) {
+  int numAtoms = m_Context->getNumAtoms();
 
-  // chainPositions.allocate(chainLength);
-  // chainVelocities.allocate(chainLength);
-  noseHooverPistonMass = 500.0; // TODO : set this
-  noseHooverPistonForce = 0.0;
-  noseHooverPistonForcePrevious = 0.0;
-  noseHooverPistonVelocity = 0.0;
-  noseHooverPistonVelocityPrevious = 0.0;
+  m_NoseHooverPistonMass = 500.0; // TODO : set this
+  m_NoseHooverPistonVelocity = 0.0;
+  m_NoseHooverPistonVelocityPrevious = 0.0;
+  m_NoseHooverPistonForce = 0.0;
+  m_NoseHooverPistonForcePrevious = 0.0;
 
-  coordsDelta.allocate(numAtoms);
-  coordsDeltaPrevious.allocate(numAtoms);
+  m_CoordsDelta.resize(numAtoms);
+  m_CoordsDeltaPrevious.resize(numAtoms);
 
-  auto coordsRefDevice = coordsRef.getDeviceArray().data();
-  if (usingHolonomicConstraints) {
-    // holonomicConstraintForces.allocate(numAtoms);
-  }
+  auto coordsRefDevice = m_CoordsRef.getDeviceData();
+  // if (m_UsingHolonomicConstraints) {
+  //   m_HolonomicConstraintForces.resize(numAtoms);
+  // }
 
   int numThreads = 128;
   int numBlocks = (numAtoms - 1) / numThreads + 1;
 
-  auto coords = context->getCoordinatesCharges().getDeviceArray().data();
+  auto coords = m_Context->getCoordinatesCharges().getDeviceData();
+  auto xyzq = m_Context->getXYZQ()->getDeviceXYZQ();
+  auto coordsDeltaDevice = m_CoordsDelta.getDeviceData();
+  auto coordsDeltaPreviousDevice = m_CoordsDeltaPrevious.getDeviceData();
+  auto velMass = m_Context->getVelocityMass().getDeviceData();
 
-  auto xyzq = context->getXYZQ()->getDeviceXYZQ();
-
-  auto coordsDeltaDevice = coordsDelta.getDeviceArray().data();
-  auto coordsDeltaPreviousDevice = coordsDeltaPrevious.getDeviceArray().data();
-
-  auto velMass = context->getVelocityMass().getDeviceArray().data();
-
-  if (usingHolonomicConstraints) {
+  if (m_UsingHolonomicConstraints) {
     copy_DtoD_async<double4>(coords, coordsRefDevice, numAtoms,
-                             *integratorStream);
-    cudaCheck(cudaStreamSynchronize(*integratorStream));
+                             *m_IntegratorStream);
+    cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
     // cudaCheck(cudaDeviceSynchronize());
 
-    holonomicConstraint->handleHolonomicConstraints(coordsRefDevice);
-    updateSPKernel<<<numBlocks, numThreads, 0, *integratorStream>>>(
+    m_HolonomicConstraint->handleHolonomicConstraints(coordsRefDevice);
+    updateSPKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
         numAtoms, xyzq, coords);
     copy_DtoD_async<double4>(coords, coordsRefDevice, numAtoms,
-                             *integratorStream);
-    cudaCheck(cudaStreamSynchronize(*integratorStream));
+                             *m_IntegratorStream);
+    cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
     // cudaCheck(cudaDeviceSynchronize());
   }
 
-  context->calculateForces();
-  auto force = context->getForces();
+  m_Context->calculateForces();
+  auto force = m_Context->getForces();
 
-  int stride = context->getForceStride();
-  double kbt = charmm::constants::kBoltz * bathTemperature;
+  int stride = m_Context->getForceStride();
+  double kbt = charmm::constants::kBoltz * m_BathTemperature;
 
-  init<<<numBlocks, numThreads, 0, *integratorStream>>>(
-      kbt, numAtoms, stride, timeStep, // coords,
+  init<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
+      kbt, numAtoms, stride, m_TimeStep, // coords,
       coordsDeltaDevice, coordsDeltaPreviousDevice, velMass, force->xyz());
-  cudaCheck(cudaStreamSynchronize(*integratorStream));
+  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
   // cudaCheck(cudaDeviceSynchronize());
 
-  if (usingHolonomicConstraints) {
+  if (m_UsingHolonomicConstraints) {
     backStepInitializationKernel<<<numBlocks, numThreads, 0,
-                                   *integratorStream>>>(
+                                   *m_IntegratorStream>>>(
         numAtoms, coords, coordsDeltaPreviousDevice);
 
-    holonomicConstraint->handleHolonomicConstraints(coordsRefDevice);
+    m_HolonomicConstraint->handleHolonomicConstraints(coordsRefDevice);
 
     backStepInitializationKernel2<<<numBlocks, numThreads, 0,
-                                    *integratorStream>>>(
+                                    *m_IntegratorStream>>>(
         numAtoms, coords, coordsRefDevice, coordsDeltaPreviousDevice);
   }
-  cudaCheck(cudaStreamSynchronize(*integratorStream));
+  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
 
-  stepId = 0;
+  m_StepId = 0;
+
+  return;
 }
 
 // change this to save delta
@@ -336,7 +340,7 @@ void CudaNoseHooverThermostatIntegrator::initialize() {
 // }
 
 __global__ static void coordsHalfStepVelocityUpdate(
-    double kbt, const int numAtoms, const int stride, const ts_t timeStep,
+    double kbt, const int numAtoms, const int stride, const double timeStep,
     double4 *__restrict__ coords, double4 *__restrict__ coordsDelta,
     const double4 *__restrict__ coordsDeltaPrevious,
     double4 *__restrict__ velMass, const double *__restrict__ force) {
@@ -375,9 +379,11 @@ __global__ static void updateCoordsDeltaAfterConstraint(
 
 /** @brief Given coordsDelta of previous and next half steps, returns the
  * on-step velocity */
-__global__ static void onStepVelocityCalculation(
-    const int numAtoms, const ts_t timeStep, double4 *__restrict__ coordsDelta,
-    double4 *__restrict__ coordsDeltaPrevious, double4 *__restrict__ velMass) {
+__global__ static void
+onStepVelocityCalculation(const int numAtoms, const double timeStep,
+                          double4 *__restrict__ coordsDelta,
+                          double4 *__restrict__ coordsDeltaPrevious,
+                          double4 *__restrict__ velMass) {
 
   int index = blockIdx.x * blockDim.x + threadIdx.x;
   if (index < numAtoms) {
@@ -393,34 +399,30 @@ __global__ static void onStepVelocityCalculation(
   }
 }
 
-void CudaNoseHooverThermostatIntegrator::propagateOneStep() {
+void CudaNoseHooverThermostatIntegrator::propagateOneStep(void) {
+  auto coords = m_Context->getCoordinatesCharges().getDeviceData();
+  auto xyzq = m_Context->getXYZQ()->getDeviceXYZQ();
+  auto coordsDeltaDevice = m_CoordsDelta.getDeviceData();
+  auto coordsDeltaPreviousDevice = m_CoordsDeltaPrevious.getDeviceData();
+  auto coordsRefDevice = m_CoordsRef.getDeviceData();
+  auto velMass = m_Context->getVelocityMass().getDeviceData();
 
-  auto coords = context->getCoordinatesCharges().getDeviceArray().data();
+  int numDegreesOfFreedom = m_Context->getDegreesOfFreedom();
 
-  auto xyzq = context->getXYZQ()->getDeviceXYZQ();
-  auto coordsDeltaDevice = coordsDelta.getDeviceArray().data();
-  auto coordsDeltaPreviousDevice = coordsDeltaPrevious.getDeviceArray().data();
-  auto coordsRefDevice = coordsRef.getDeviceArray().data();
+  double referenceKineticEnergy =
+      0.5 * numDegreesOfFreedom * charmm::constants::kBoltz * m_BathTemperature;
 
-  auto velMass = context->getVelocityMass().getDeviceArray().data();
-
-  int numDegreesOfFreedom = context->getDegreesOfFreedom();
-
-  double referenceKineticEnergy = 0.5 * context->getDegreesOfFreedom() *
-                                  charmm::constants::kBoltz * bathTemperature;
-
-  if (debugPrintFrequency > 0 && stepId % debugPrintFrequency == 0) {
-    std::cout << "Step id : " << stepId << std::endl;
-    // std::cout << "\n Step id : " << stepId << "\n---\n";
+  if (m_DebugPrintFrequency > 0 && m_StepId % m_DebugPrintFrequency == 0) {
+    std::cout << "Step id : " << m_StepId << std::endl;
   }
 
-  int numAtoms = context->getNumAtoms();
-  int stride = context->getForceStride();
-  double kbt = charmm::constants::kBoltz * bathTemperature;
+  int numAtoms = m_Context->getNumAtoms();
+  int stride = m_Context->getForceStride();
+  double kbt = charmm::constants::kBoltz * m_BathTemperature;
 
-  if (stepsSinceNeighborListUpdate % nonbondedListUpdateFrequency == 0) {
+  if (m_StepsSinceNeighborListUpdate % m_NonbondedListUpdateFrequency == 0) {
     /*
-    if (context->getForceManager()->getPeriodicBoundaryCondition() ==
+    if (m_Context->getForceManager()->getPeriodicBoundaryCondition() ==
         PBC::P21) {
       auto groups = context->getForceManager()->getPSF()->getGroups();
 
@@ -429,64 +431,64 @@ void CudaNoseHooverThermostatIntegrator::propagateOneStep() {
       int numThreads = 128;
       int numBlocks = (numGroups - 1) / numThreads + 1;
 
-      auto boxDimensions = context->getBoxDimensions();
+      auto boxDimensions = m_Context->getBoxDimensions();
       float3 box = {(float)boxDimensions[0], (float)boxDimensions[1],
                     (float)boxDimensions[2]};
 
-      invertDeltaAsymmetric<<<numBlocks, numThreads, 0, *integratorStream>>>(
-          numGroups, groups.getDeviceArray().data(), box.x, xyzq, stride,
+      invertDeltaAsymmetric<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
+          numGroups, groups.getDeviceData(), box.x, xyzq, stride,
           coordsDeltaPreviousDevice);
-      cudaCheck(cudaStreamSynchronize(*integratorStream));
+      cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
     }
     */
-    context->resetNeighborList();
+    m_Context->resetNeighborList();
   }
 
-  if (stepId % removeCenterOfMassFrequency == 0) {
+  if (m_StepId % m_RemoveCenterOfMassFrequency == 0) {
     // TODO : activate this
     // removeCenterOfMassMotion();
   }
 
-  copy_DtoD_async<double4>(coords, coordsRef.getDeviceArray().data(), numAtoms,
-                           *integratorStream);
+  copy_DtoD_async<double4>(coords, m_CoordsRef.getDeviceData(), numAtoms,
+                           *m_IntegratorStream);
 
-  context->calculateForces(false, true, true);
-  auto force = context->getForces();
+  m_Context->calculateForces(false, true, true);
+  auto force = m_Context->getForces();
 
-  noseHooverPistonVelocityPrevious = noseHooverPistonVelocity;
-  noseHooverPistonForcePrevious = noseHooverPistonForce;
+  m_NoseHooverPistonVelocityPrevious = m_NoseHooverPistonVelocity;
+  m_NoseHooverPistonForcePrevious = m_NoseHooverPistonForce;
 
   int numThreads = 128;
   int numBlocks = (numAtoms - 1) / numThreads + 1;
   // int numBlocksReduction = 64;
 
-  coordsHalfStepVelocityUpdate<<<numBlocks, numThreads, 0, *integratorStream>>>(
-      kbt, numAtoms, stride, timeStep, coords, coordsDeltaDevice,
+  coordsHalfStepVelocityUpdate<<<numBlocks, numThreads, 0,
+                                 *m_IntegratorStream>>>(
+      kbt, numAtoms, stride, m_TimeStep, coords, coordsDeltaDevice,
       coordsDeltaPreviousDevice, velMass, force->xyz());
 
-  cudaCheck(cudaStreamSynchronize(*integratorStream));
+  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
 
   // TODO :  Use profiler to determine where we do this computation
 
-  if (usingHolonomicConstraints) {
-
+  if (m_UsingHolonomicConstraints) {
     cudaCheck(cudaDeviceSynchronize());
-    cudaCheck(cudaStreamSynchronize(*integratorStream));
+    cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
 
-    holonomicConstraint->handleHolonomicConstraints(coordsRefDevice);
+    m_HolonomicConstraint->handleHolonomicConstraints(coordsRefDevice);
     cudaCheck(cudaDeviceSynchronize());
 
     // computeHolonomicConstraintForces<<<numBlocks, numThreads, 0,
-    //                                    *integratorStream>>>(
+    //                                    *m_IntegratorStream>>>(
     //     numAtoms, timeStep, velMass, coordsRefDevice, coords,
     //     coordsDeltaDevice,
-    //     holonomicConstraintForces.getDeviceArray().data());
+    //     holonomicConstraintForces.getDeviceData());
 
     updateCoordsDeltaAfterConstraint<<<numBlocks, numThreads, 0,
-                                       *integratorStream>>>(
+                                       *m_IntegratorStream>>>(
         numAtoms, coordsRefDevice, coords, coordsDeltaDevice);
 
-    cudaCheck(cudaStreamSynchronize(*integratorStream));
+    cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
     cudaCheck(cudaDeviceSynchronize());
   }
   // Calculate nose hoover thermal piston velocity and position
@@ -498,51 +500,51 @@ void CudaNoseHooverThermostatIntegrator::propagateOneStep() {
       (0.5 * charmm::constants::patmos / volume);
   */
 
-  onStepVelocityCalculation<<<numBlocks, numThreads, 0, *integratorStream>>>(
-      numAtoms, timeStep, coordsDeltaDevice, coordsDeltaPreviousDevice,
+  onStepVelocityCalculation<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
+      numAtoms, m_TimeStep, coordsDeltaDevice, coordsDeltaPreviousDevice,
       velMass);
-  cudaCheck(cudaStreamSynchronize(*integratorStream));
+  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
 
   double onStepKineticEnergy =
-      context->computeTemperature() *
+      m_Context->computeTemperature() *
       (0.5 * numDegreesOfFreedom * charmm::constants::kBoltz);
-  noseHooverPistonForce = 2.0 * timeStep *
-                          (onStepKineticEnergy - referenceKineticEnergy) /
-                          noseHooverPistonMass;
-  if (noseHooverPistonForcePrevious == 0.0) {
-    noseHooverPistonForcePrevious = noseHooverPistonForce;
+  m_NoseHooverPistonForce = 2.0 * m_TimeStep *
+                            (onStepKineticEnergy - referenceKineticEnergy) /
+                            m_NoseHooverPistonMass;
+  if (m_NoseHooverPistonForcePrevious == 0.0) {
+    m_NoseHooverPistonForcePrevious = m_NoseHooverPistonForce;
   }
 
-  noseHooverPistonVelocity =
-      noseHooverPistonVelocityPrevious +
-      (noseHooverPistonForce + noseHooverPistonForcePrevious) / 2.0;
+  m_NoseHooverPistonVelocity =
+      m_NoseHooverPistonVelocityPrevious +
+      (m_NoseHooverPistonForce + m_NoseHooverPistonForcePrevious) / 2.0;
 
-  // onStepKineticEnergy = context->computeTemperature() *
+  // onStepKineticEnergy = m_Context->computeTemperature() *
   //                       (0.5 * numDegreesOfFreedom *
   //                       charmm::constants::kBoltz);
-  // noseHooverPistonForce = 2.0 * timeStep *
+  // m_oseHooverPistonForce = 2.0 * timeStep *
   //                         (onStepKineticEnergy - referenceKineticEnergy) /
-  //                         noseHooverPistonMass;
+  //                         m_NoseHooverPistonMass;
 
-  // noseHooverPistonVelocity =
-  //     noseHooverPistonVelocityPrevious +
-  //     (noseHooverPistonForce + noseHooverPistonForcePrevious) / 2.0;
+  // m_NoseHooverPistonVelocity =
+  //     m_NoseHooverPistonVelocityPrevious +
+  //     (m_NoseHooverPistonForce + m_NoseHooverPistonForcePrevious) / 2.0;
 
-  noseHooverPistonPosition += noseHooverPistonVelocity * timeStep +
-                              0.5 * noseHooverPistonForce * timeStep;
+  m_NoseHooverPistonPosition += m_NoseHooverPistonVelocity * m_TimeStep +
+                                0.5 * m_NoseHooverPistonForce * m_TimeStep;
 
-  updateSPKernel<<<numBlocks, numThreads, 0, *integratorStream>>>(numAtoms,
-                                                                  xyzq, coords);
+  updateSPKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
+      numAtoms, xyzq, coords);
 
-  cudaCheck(cudaStreamSynchronize(*integratorStream));
+  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
 
   copy_DtoD_async<double4>(coordsDeltaDevice, coordsDeltaPreviousDevice,
-                           numAtoms, *integratorStream);
+                           numAtoms, *m_IntegratorStream);
 
-  cudaCheck(cudaStreamSynchronize(*integratorStream));
+  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
 
-  context->calculateKineticEnergy();
-  auto ke = context->getKineticEnergy();
+  m_Context->calculateKineticEnergy();
+  auto ke = m_Context->getKineticEnergy();
   // exit if the kinetic energy is nan
   // if (ke != ke) {
   if (std::isnan(ke)) {
@@ -550,8 +552,8 @@ void CudaNoseHooverThermostatIntegrator::propagateOneStep() {
     exit(1);
   }
 
-  if (debugPrintFrequency > 0 && stepId % debugPrintFrequency == 0) {
-    auto peContainer = context->getPotentialEnergy();
+  if (m_DebugPrintFrequency > 0 && m_StepId % m_DebugPrintFrequency == 0) {
+    auto peContainer = m_Context->getPotentialEnergy();
     peContainer.transferFromDevice();
     auto pe = peContainer[0];
 
@@ -565,7 +567,7 @@ void CudaNoseHooverThermostatIntegrator::propagateOneStep() {
 
     // std::cout << "HFCTE = " << hfcten << std::endl;
 
-    std::cout << "Temperature : " << context->computeTemperature() << "\n";
+    std::cout << "Temperature : " << m_Context->computeTemperature() << "\n";
     std::cout << "\n";
   }
 
@@ -601,5 +603,7 @@ void CudaNoseHooverThermostatIntegrator::propagateOneStep() {
   //                                         velMass, force->xyz(), coords);
   // cudaCheck(cudaDeviceSynchronize()); // TODO : remove these
 
-  ++stepId;
+  m_StepId++;
+
+  return;
 }

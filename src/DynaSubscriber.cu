@@ -73,7 +73,7 @@ void DynaSubscriber::update(void) {
     double pressi = lp->getInstantaneousPressureScalar();
 
     // Calculate volume
-    std::vector<double> boxDims = lp->getBoxDimensions();
+    std::vector<double> boxDims = charmmContext->getBoxDimensions();
     double volu = -9999.9999;
     switch (lp->getCrystalType()) {
     case CRYSTAL::CUBIC:

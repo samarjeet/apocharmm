@@ -34,8 +34,8 @@ EDSForceManager::EDSForceManager(std::shared_ptr<ForceManager> fm1,
 
 void EDSForceManager::initialize() {
   ForceManagerComposite::initialize();
-  energyOffsets.allocate(children.size());
-  weights.allocate(children.size());
+  energyOffsets.resize(children.size());
+  weights.resize(children.size());
   // children[1]->computeDirectSpaceForces = false;
 }
 
@@ -172,8 +172,7 @@ void EDSForceManager::setEnergyOffsets(std::vector<double> _energyOffsets) {
   assertm(
       energyOffsets.size() == _energyOffsets.size(),
       "Wrong energyOffsets size -- EDSForceManager might not be initialized.");
-  energyOffsets.setHostArray(_energyOffsets);
-  energyOffsets.transferToDevice();
+  energyOffsets = _energyOffsets;
 }
 
 float EDSForceManager::getSValue() { return sValue; }

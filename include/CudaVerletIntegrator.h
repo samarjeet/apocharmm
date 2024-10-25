@@ -4,7 +4,7 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author: Antti-Pekka Hynninen, Samarjeet Prasad
+// Author: Antti-Pekka Hynninen, Samarjeet Prasad, James E. Gonzales II
 //
 // ENDLICENSE
 
@@ -13,18 +13,19 @@
 #include "CudaIntegrator.h"
 
 class CudaVerletIntegrator : public CudaIntegrator {
-private:
-  XYZQ *oldXYZQ, *newXYZQ;
-
-  std::string integratorTypeName = "Verlet";
-
 public:
   /** @brief Verlet integrator. NOT WORKING
    * @todo Completely obsolete.
    */
-  CudaVerletIntegrator(double timeStep);
+  CudaVerletIntegrator(const double timeStep);
 
-  // Put these in the base class
-  void initialize();
-  void propagate(int nSteps);
+  void initialize(void);
+
+  // void propagate(const int nSteps);
+
+private:
+  XYZQ *m_OldXYZQ;
+  XYZQ *m_NewXYZQ;
+
+  std::string m_IntegratorTypeName = "Verlet";
 };

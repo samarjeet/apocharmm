@@ -23,7 +23,7 @@ void FEPEIForceManager::setLambdas(std::vector<float> lambdasIn) {
   assertm(lambdasIn[0] == 0.0 && lambdasIn[lambdasIn.size() - 1] == 1.0,
           "0th lambda should be 0.0 and last lambda should be 1.0.");
   lambdas.set(lambdasIn);
-  lambdaPotentialEnergies.allocate(lambdas.size());
+  lambdaPotentialEnergies.resize(lambdas.size());
 }
 
 void FEPEIForceManager::setSelectorVec(std::vector<float> lambdaIn) {

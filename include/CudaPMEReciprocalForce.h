@@ -220,7 +220,7 @@ public:
 
   void setNumAtoms(int n) {
     if (pbc == PBC::P21)
-      p21FullCellCoords.allocate(2 * n);
+      p21FullCellCoords.resize(2 * n);
     numAtoms = n;
   }
 

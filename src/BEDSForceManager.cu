@@ -34,8 +34,8 @@ BEDSForceManager::BEDSForceManager(std::shared_ptr<ForceManager> fm1,
 
 void BEDSForceManager::initialize() {
   ForceManagerComposite::initialize();
-  energyOffsets.allocate(lambdas.size());
-  weights.allocate(lambdas.size());
+  energyOffsets.resize(lambdas.size());
+  weights.resize(lambdas.size());
   // children[1]->computeDirectSpaceForces = false;
 }
 
@@ -192,9 +192,9 @@ void BEDSForceManager::setLambdas(std::vector<float> lambdasIn) {
   lambdas.set(lambdasIn);
 
   // TODO : remove these allocations from initialize
-  weights.allocate(lambdas.size());
-  energyOffsets.allocate(lambdas.size());
-  lambdaPotentialEnergies.allocate(lambdas.size());
+  weights.resize(lambdas.size());
+  energyOffsets.resize(lambdas.size());
+  lambdaPotentialEnergies.resize(lambdas.size());
 }
 
 void BEDSForceManager::setEndStateEnergyOffsets(
@@ -216,8 +216,7 @@ void BEDSForceManager::setEndStateEnergyOffsets(
         (1 - lambdas[i]) * _energyOffsets[0] + lambdas[i] * _energyOffsets[1];
   }
 
-  energyOffsets.setHostArray(allEnergyOffsets);
-  energyOffsets.transferToDevice();
+  energyOffsets = allEnergyOffsets;
 }
 
 CudaContainer<double> BEDSForceManager::getLambdaPotentialEnergies() {
