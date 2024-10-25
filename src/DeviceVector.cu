@@ -68,6 +68,11 @@ template <typename T> const T *DeviceVector<T>::data(void) const {
 
 template <typename T> T *DeviceVector<T>::data(void) { return m_Data; }
 
+template <typename T> void DeviceVector<T>::assignData(T *data) {
+  m_Data = data;
+  return;
+}
+
 template <typename T> bool DeviceVector<T>::empty(void) const {
   return (m_Size == 0);
 }

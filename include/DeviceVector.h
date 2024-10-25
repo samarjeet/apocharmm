@@ -30,6 +30,8 @@ public: // Element access
   const T *data(void) const;
   T *data(void);
 
+  void assignData(T *data);
+
 public: // Capacity
   bool empty(void) const;
   std::size_t size(void) const;

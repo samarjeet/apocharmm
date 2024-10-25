@@ -1787,23 +1787,12 @@ void CudaLangevinPistonIntegrator::propagateOneStep(void) {
     double4 *temporary2 = coords;
     coordsRefDevice = coords;
     coords = temporary;
-    // m_Context->getCoordinatesCharges().getDeviceData() = temporary;
-    copy_DtoD_async<double4>(temporary,
-                             m_Context->getCoordinatesCharges().getDeviceData(),
-                             numAtoms, *m_IntegratorStream);
-    cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
+    m_Context->getCoordinatesCharges().getDeviceArray().assignData(temporary);
 
     m_HolonomicConstraint->handleHolonomicConstraints(coordsRefDevice);
 
-    // temporary = coordsRef.getDeviceArray().data();
-    // coordsRef.getDeviceArray().set(coords);
-    // coordsRefDevice = coords;
-    copy_DtoD_async<double4>(temporary, m_CoordsRef.getDeviceData(), numAtoms,
-                             *m_IntegratorStream);
-    copy_DtoD_async<double4>(temporary2,
-                             m_Context->getCoordinatesCharges().getDeviceData(),
-                             numAtoms, *m_IntegratorStream);
-    cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
+    m_CoordsRef.getDeviceArray().assignData(temporary);
+    m_Context->getCoordinatesCharges().getDeviceArray().assignData(temporary2);
 
     coords = m_Context->getCoordinatesCharges().getDeviceData();
     coordsRefDevice = m_CoordsRef.getDeviceData();

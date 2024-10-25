@@ -343,7 +343,7 @@ TEST_CASE("waterbox", "[dynamics]") {
 
     std::map<std::string, double> eneComps1 = fm1->getEnergyComponents();
     std::map<std::string, double> eneComps2 = fm2->getEnergyComponents();
-    double tol = 1e-16;
+    double tol = 0.0;
     CHECK(eneComps1["bond"] == Approx(eneComps2["bond"]).margin(tol));
     CHECK(eneComps1["angle"] == Approx(eneComps2["angle"]).margin(tol));
     CHECK(eneComps1["ureyb"] == Approx(eneComps2["ureyb"]).margin(tol));
