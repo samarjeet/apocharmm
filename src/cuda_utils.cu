@@ -15,7 +15,6 @@
 #include <cuda.h>
 #include <fstream>
 #include <iostream>
-#include <nvToolsExtCuda.h>
 #include <utility>
 
 //----------------------------------------------------------------------------------------
