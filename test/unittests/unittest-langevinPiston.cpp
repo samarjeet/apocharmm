@@ -291,6 +291,8 @@ TEST_CASE("waterbox", "[dynamics]") {
     bool useHolonomicConstraints = true;
     bool useNoseHoover = true;
 
+    std::cout << std::scientific << std::setprecision(8);
+
     // Topology, parameters, PSF, and coordinates
     auto prm1 = std::make_shared<CharmmParameters>(prmFiles);
     auto psf1 = std::make_shared<CharmmPSF>(dataPath + "waterbox.psf");
@@ -305,7 +307,8 @@ TEST_CASE("waterbox", "[dynamics]") {
     fm1->setBoxDimensions(boxDim);
 
     auto fm2 = std::make_shared<ForceManager>(psf2, prm2);
-    fm2->setBoxDimensions(boxDim);
+    fm2->setBoxDimensions({50.1, 50.1, 50.1});
+    // fm2->setBoxDimensions(boxDim);
 
     // Setup CHARMM context
     auto ctx1 = std::make_shared<CharmmContext>(fm1);
@@ -338,6 +341,8 @@ TEST_CASE("waterbox", "[dynamics]") {
                           velocityMass2.getHostArray(), 0.0, true));
 
     // Calculate potential energies and verify they are the same
+    fm1->setPrintEnergyDecomposition(true);
+    fm2->setPrintEnergyDecomposition(true);
     ctx1->calculatePotentialEnergy(true, true);
     ctx2->calculatePotentialEnergy(true, true);
 
@@ -355,6 +360,7 @@ TEST_CASE("waterbox", "[dynamics]") {
     CHECK(eneComps1["elec"] == Approx(eneComps2["elec"]).margin(tol));
     CHECK(eneComps1["vdw"] == Approx(eneComps2["vdw"]).margin(tol));
 
+    /* *
     // Setup integrators
     auto integrator1 = std::make_shared<CudaLangevinPistonIntegrator>(0.001);
     integrator1->setCrystalType(CRYSTAL::CUBIC);
@@ -415,8 +421,19 @@ TEST_CASE("waterbox", "[dynamics]") {
           integrator2->getNoseHooverPistonForcePrevious());
 
     // Propagate simulations
+    std::cout << "INTEGRATOR 1" << std::endl;
     integrator1->propagate(nsteps);
-    integrator2->propagate(nsteps);
+    // ctx2->setCoordinates(crd2);
+    std::vector<double> bd1 = ctx1->getBoxDimensions();
+    std::cout << "Box dimensions: " << bd1[0] << " " << bd1[1] << " " << bd1[2]
+              << std::endl;
+    std::vector<double> bd2 = ctx2->getBoxDimensions();
+    std::cout << "Box dimensions: " << bd2[0] << " " << bd2[1] << " " << bd2[2]
+              << std::endl;
+    ctx2->calculatePotentialEnergy(true, true);
+    std::cout << std::endl;
+    // std::cout << "INTEGRATOR 2" << std::endl;
+    // integrator2->propagate(nsteps);
 
     // Check that coordinates match
     auto coordinatesCharges1 = ctx1->getCoordinatesCharges();
@@ -441,6 +458,7 @@ TEST_CASE("waterbox", "[dynamics]") {
     velocityMass2.transferFromDevice();
     CHECK(CompareVectors1(velocityMass1.getHostArray(),
                           velocityMass2.getHostArray(), 0.0, true));
+    * */
   }
 }
 

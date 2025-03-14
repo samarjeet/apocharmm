@@ -56,7 +56,10 @@ test/pytest/out/*
 test/pytest/*res
 *.out
 *.rst
-
+CMakeUserPresets.json
+dist
+dist*
+dist/*
 compile.sh
 clean.sh
 dyn_form.out

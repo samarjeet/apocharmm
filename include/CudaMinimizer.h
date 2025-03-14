@@ -27,6 +27,8 @@ public:
   void minimize(int numSteps);
   void minimize();
 
+  void setMethod(std::string _method);
+
   void setVerboseFlag(bool _flag = true);
 
 private:

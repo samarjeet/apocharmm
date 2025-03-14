@@ -10,7 +10,7 @@
 
 #include "CudaIntegrator.h"
 #include "Subscriber.h"
-#include "pybind11/pybind11.h"
+// #include "pybind11/pybind11.h"
 #include <chrono>
 #include <climits>
 // #include <experimental/source_location> // C++20
@@ -20,7 +20,7 @@
 #include <source_location> // C++20
 #include <sstream>
 
-namespace py = pybind11;
+// namespace py = pybind11;
 
 CudaIntegrator::CudaIntegrator(void)
     : m_TimeStep(0.0), m_Timfac(0.0488882129), m_DebugPrintFrequency(0),

@@ -59,6 +59,7 @@ list(APPEND src_files
   src/FEPEIForceManager.cu
   src/MBARForceManager.cu
   src/CudaMinimizer.cu
+  src/MPIDForce.cu
   src/NetCDFSubscriber.cu
   src/PDB.cu
   src/PertForceManager.cu

@@ -50,6 +50,53 @@ void CudaHolonomicConstraint::setup(double ts) {
   //  settleWaterIndex = waterMolecules;
   shakeAtoms = context->getShakeAtoms();
   shakeParams = context->getShakeParams();
+
+  std::vector<int2> allConstrainedAtomPairsHost;
+  int2 constrainedPair;
+
+  for (int i = 0; i < shakeAtoms.size(); ++i) {
+    constrainedPair.x = shakeAtoms[i].x;
+    constrainedPair.y = shakeAtoms[i].y;
+    allConstrainedAtomPairsHost.push_back(constrainedPair);
+    if (shakeAtoms[i].z != -1) {
+      constrainedPair.x = shakeAtoms[i].x;
+      constrainedPair.y = shakeAtoms[i].z;
+      allConstrainedAtomPairsHost.push_back(constrainedPair);
+      constrainedPair.x = shakeAtoms[i].y;
+      constrainedPair.y = shakeAtoms[i].z;
+      allConstrainedAtomPairsHost.push_back(constrainedPair);
+    } else if (shakeAtoms[i].w == -1) {
+      constrainedPair.x = shakeAtoms[i].x;
+      constrainedPair.y = shakeAtoms[i].w;
+      allConstrainedAtomPairsHost.push_back(constrainedPair);
+      constrainedPair.x = shakeAtoms[i].y;
+      constrainedPair.y = shakeAtoms[i].w;
+      allConstrainedAtomPairsHost.push_back(constrainedPair);
+      constrainedPair.x = shakeAtoms[i].z;
+      constrainedPair.y = shakeAtoms[i].w;
+      allConstrainedAtomPairsHost.push_back(constrainedPair);
+    }
+  }
+  for (int i = 0; i < settleWaterIndex.size(); ++i) {
+    constrainedPair.x = settleWaterIndex[i].x;
+    constrainedPair.y = settleWaterIndex[i].y;
+    allConstrainedAtomPairsHost.push_back(constrainedPair);
+    constrainedPair.x = settleWaterIndex[i].x;
+    constrainedPair.y = settleWaterIndex[i].z;
+    allConstrainedAtomPairsHost.push_back(constrainedPair);
+    constrainedPair.x = settleWaterIndex[i].y;
+    constrainedPair.y = settleWaterIndex[i].z;
+    allConstrainedAtomPairsHost.push_back(constrainedPair);
+  }
+
+  allConstrainedAtomPairs.allocate(allConstrainedAtomPairsHost.size());
+  allConstrainedAtomPairs.setHostArray(allConstrainedAtomPairsHost);
+  allConstrainedAtomPairs.transferToDevice();
+
+  // std::cout << "[Holo] "
+  //           << "Num of constrained pairs : " <<
+  //           allConstrainedAtomPairs.size()
+  //           << "\n";
 }
 
 /*
@@ -671,20 +718,26 @@ void CudaHolonomicConstraint::handleHolonomicConstraints(const double4 *ref) {
 
 /*
 __device__ static void removeOneForce(int i, int j, int stride,
-                                      const double4 *__restrict__ ref,
+                                      const double4 *__restrict__ current,
                                       double *__restrict__ force) {
   double xpij = force[i] - force[j];
   double ypij = force[i + stride] - force[j + stride];
   double zpij = force[i + 2 * stride] - force[j + 2 * stride];
 
   double acor = xpij * xpij + ypij * ypij + zpij * zpij;
+  if (acor < 1.0)
+    acor = 1.0;
 
-  double xrij = ref[i].x - ref[j].x;
-  double yrij = ref[i].y - ref[j].y;
-  double zrij = ref[i].z - ref[j].z;
+  double xrij = current[i].x - current[j].x;
+  double yrij = current[i].y - current[j].y;
+  double zrij = current[i].z - current[j].z;
 
   double rrijsq = xrij * xrij + yrij * yrij + zrij * zrij;
   double rijrijp = xrij * xpij + yrij * ypij + zrij * zpij;
+
+  // if (std::abs(rijrijp) < std::sqrt(acor * rrijsq) * 1e-6) {
+
+  // } else {
 
   acor = -0.5 * rijrijp / rrijsq; // 0.5 as per CHARMM
 
@@ -694,31 +747,41 @@ __device__ static void removeOneForce(int i, int j, int stride,
   atomicAdd(&force[j], -acor * xrij);
   atomicAdd(&force[j + stride], -acor * yrij);
   atomicAdd(&force[j + 2 * stride], -acor * zrij);
+  //}
 }
 */
 
 /*
 __global__ static void removeForceAlongHolonomicConstraintsKernel(
-    const int4 *shakeAtomsIndex, int numConstraints, int stride,
-    const double4 *__restrict__ ref, double *__restrict__ force) {
-  int index = blockDim.x * blockIdx.x + threadIdx.x;
+    const int2 *__restrict__ constrainedPairs, int numConstraints, int stride,
+    const double4 *__restrict__ current, double *__restrict__ force) {
+  int threadIndex = blockDim.x * blockIdx.x + threadIdx.x;
 
-  if (index < numConstraints) {
-    int4 shakeAtoms = shakeAtomsIndex[index];
-    removeOneForce(shakeAtoms.x, shakeAtoms.y, stride, ref, force);
-    if (shakeAtoms.z == -1)
-      removeOneForce(shakeAtoms.x, shakeAtoms.z, stride, ref, force);
-    if (shakeAtoms.w == -1)
-      removeOneForce(shakeAtoms.x, shakeAtoms.w, stride, ref, force);
-    // float4 params = shakeParams[index];
+  int maxIter = 20;
+  for (int iter = 0; iter < maxIter; iter++) {
+
+    for (int i = threadIndex; i < numConstraints; i += gridDim.x * blockDim.x) {
+      int2 pair = constrainedPairs[i];
+      removeOneForce(pair.x, pair.y, stride, current, force);
+    }
   }
 }
 */
 
-void CudaHolonomicConstraint::removeForceAlongHolonomicConstraints(
-    const double4 *ref, int stride, double *force) {
-  if (shakeAtoms.size()) {
-    int numThreads = 128;
-    int numBlocks = (shakeAtoms.size() - 1) / numThreads + 1;
+void CudaHolonomicConstraint::removeForceAlongHolonomicConstraints() {
+  auto current = context->getCoordinatesCharges().getDeviceArray().data();
+  int stride = context->getForceStride();
+  auto force = context->getForces();
+
+  if (allConstrainedAtomPairs.size()) {
+
+    int numThreads = 1024;
+    int numBlocks = 64;
+
+    removeForceAlongHolonomicConstraintsKernel<<<numBlocks, numThreads, 0,
+                                                 *stream>>>(
+        allConstrainedAtomPairs.getDeviceArray().data(),
+        allConstrainedAtomPairs.size(), stride, current, force->xyz());
   }
+  cudaStreamSynchronize(*stream);
 }

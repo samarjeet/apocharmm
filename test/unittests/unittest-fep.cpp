@@ -20,6 +20,44 @@
 #include "test_paths.h"
 #include <iostream>
 #include <vector>
+
+TEST_CASE("relative", "[energy]") {
+  SECTION("eth_eth") {
+    auto psf = std::make_shared<CharmmPSF>(
+        "/u/samar/projects/free_energy/eth_eth/ethane_dual.psf");
+    std::vector<std::string> prmFiles{"../test/data/toppar_water_ions.str",
+                                      "../test/data/par_all36_cgenff.prm"};
+    auto prm = std::make_shared<CharmmParameters>(prmFiles);
+    auto fm = std::make_shared<ForceManager>(psf, prm);
+    auto crd = std::make_shared<CharmmCrd>(
+        "/u/samar/projects/free_energy/eth_eth/ethane_dual.cor");
+
+    float lambda = 0.2;
+    float elecLambdaOff = 0.75; // factor for charges being switches off
+    float vdwLambdaOff = 0.9;
+
+    fm->setBoxDimensions({21.8, 21.8, 21.8});
+    fm->setFFTGrid(24, 24, 24);
+    fm->setPmeSplineOrder(4);
+    fm->setKappa(0.34);
+    fm->setCutoff(10.0);
+    fm->setCtonnb(8.0);
+    fm->setCtofnb(9.0);
+    fm->initialize();
+
+    auto ctx = std::make_shared<CharmmContext>(fm);
+    ctx->setCoordinates(crd);
+    ctx->assignVelocitiesAtTemperature(300.0);
+
+    auto integrator = std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
+    integrator->setFriction(5.0);
+    integrator->setBathTemperature(300.0);
+    integrator->setCharmmContext(ctx);
+
+    integrator->propagate(1000);
+  }
+}
+
 /*
 TEST_CASE("pert", "[energy]") {
   SECTION("pert") {

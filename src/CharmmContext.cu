@@ -145,8 +145,9 @@ void CharmmContext::setCoordinates(
   // 4N-sized vector to contain spatial coords + atomic charges
   std::vector<double4> crdCharges(coords.size());
   for (int i = 0; i < numAtoms; i++)
-    crdCharges[i] = {coords[i][0], coords[i][1], coords[i][2],
-                     static_cast<double>(static_cast<float>(charges[i]))};
+    crdCharges[i] =
+        make_double4(coords[i][0], coords[i][1], coords[i][2],
+                     static_cast<double>(static_cast<float>(charges[i])));
 
   // xyzq gets initialized with coords (crd->getCoordinates()) + the charges
   // extracted from the PSF
@@ -174,24 +175,25 @@ std::vector<std::vector<double>> CharmmContext::getCoordinates() {
   return coordsVec;
 }
 
-void CharmmContext::setCoordinatesNumpy(pybind11::array_t<double> input_array) {
-  // Get shape and data type of array
-  auto shape = input_array.shape();
-  throw std::invalid_argument("setCoordinatesNumpy not implemented fully");
-  /*std::string dtype = input_array.dtype().name();
+// void CharmmContext::setCoordinatesNumpy(pybind11::array_t<double>
+// input_array) {
+//   // Get shape and data type of array
+//   auto shape = input_array.shape();
+//   throw std::invalid_argument("setCoordinatesNumpy not implemented fully");
+//   /*std::string dtype = input_array.dtype().name();
 
-  // Print shape and data type
-  std::cout << "Array shape: (";
-  for (size_t i = 0; i < shape.size(); i++) {
-    std::cout << shape[i];
-    if (i < shape.size() - 1) {
-      std::cout << ", ";
-    }
-  }
-  std::cout << ")" << std::endl;
-  std::cout << "Array data type: " << dtype << std::endl;
-  */
-}
+//   // Print shape and data type
+//   std::cout << "Array shape: (";
+//   for (size_t i = 0; i < shape.size(); i++) {
+//     std::cout << shape[i];
+//     if (i < shape.size() - 1) {
+//       std::cout << ", ";
+//     }
+//   }
+//   std::cout << ")" << std::endl;
+//   std::cout << "Array data type: " << dtype << std::endl;
+//   */
+// }
 
 void CharmmContext::setCoords(const std::vector<float> &coords) {
   assert(coords.size() == numAtoms * 3);

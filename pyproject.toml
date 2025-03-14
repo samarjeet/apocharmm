@@ -1,0 +1,47 @@
+#[build-system]
+#requires = [
+#  "setuptools>=61.0",
+##  "pybind11>=2.10.0",
+#  "wheel",
+#  "cmake",
+#]
+#build-backend = "setuptools.build_meta"
+
+[build-system]
+requires = [
+    "scikit-build-core",
+    "pybind11",
+    "netCDF4",
+    "nvidia-cuda-runtime-cu12",
+    "nvidia-cuda-nvcc-cu12",
+    "nvidia-cufft-cu12",
+    "nvidia-nvtx-cu12",
+    "packaging",
+]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "apocharmm"
+version = "0.0.2"
+authors = [{ name = "Samarjeet Prasad", email = "p.samar.j@gmail.com" }]
+requires-python = ">=3.11"
+description = "CHARMM GPU-only molecular dynamics package."
+readme = "README.md"
+keywords = ["molecular dynamics GPU"]
+dependencies = [
+    "numpy",
+    "netCDF4",
+    "pybind11",
+    "nvidia-cuda-runtime-cu12",
+    "nvidia-cuda-nvcc-cu12",
+    "nvidia-cufft-cu12",
+    "nvidia-nvtx-cu12",
+]
+#dynamic=[""]
+
+[project.optional-dependencies]
+doc = ["sphinx~=4.2.0"]
+
+[tool.cibuildwheel]
+build = "cp3*"                           # Build for all Python 3 versions
+manylinux-x86_64-image = "manylinux2014"

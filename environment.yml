@@ -1,7 +1,7 @@
 name: apoenv
 channels:
   - conda-forge
-  - defaults
+#  - defaults
 dependencies:
   - netcdf4
   - cmake

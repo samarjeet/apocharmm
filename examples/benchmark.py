@@ -12,7 +12,8 @@ samarPath = "/u/samar/Documents/git/test_gpu/"
 
 
 # Run dhfr as a first test (also named JAC)
-paramFiles = [dataPath + "par_all36m_prot.prm", dataPath + "toppar_water_ions.str"]
+#paramFiles = [dataPath + "par_all36m_prot.prm", dataPath + "toppar_water_ions.str"]
+paramFiles = [dataPath + "par_all22_prot.prm", dataPath + "toppar_water_ions.str"]
 prm = ac.CharmmParameters(paramFiles)
 psf = ac.CharmmPSF(samarPath + "JAC.psf")
 
@@ -42,8 +43,3 @@ mini.minimize(1000)
 integrator = ac.LangevinThermostatIntegrator(.001, 5.0, 300.0)
 integrator.setSimulationContext(ctx)
 integrator.propagate(1000)
-
-
-
-
-

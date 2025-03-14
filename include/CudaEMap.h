@@ -40,6 +40,7 @@ private:
   // cudastream
   cudaStream_t stream;
   // fft
+  // fftx, ffty, fftz
 
   int nx, ny, nz;
 };

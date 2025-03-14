@@ -16,7 +16,7 @@ PLAT_TO_CMAKE = {
     "win-arm64": "ARM64",
 }
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 """
 ext_modules = [
     Pybind11Extension('apocharmm', ['pywrapper_main.cu']),
@@ -33,6 +33,9 @@ class CMakeExtension(Extension):
 
 class CMakeBuild(build_ext):
     def build_extension(self, ext):
+        # import pdb
+        # pdb.set_trace()
+        # self.announce(f"\n\n\nSamar\nBuilding {ext.name}...", level=3)
         extdir = os.path.abspath(os.path.dirname(
             self.get_ext_fullpath(ext.name)))
 
@@ -139,7 +142,8 @@ setup(
     description="CHARMM GPU-only molecular dynamics pakcage.",
     long_description="CHARMM GPU-only molecular dynamics pakcage.",
     keywords="molecular dynamics GPU",
-    #packages=find_packages(),
+    # packages=find_packages(),
+    # install_requires=['netCDF4'],
     install_requires=['netcdf4'],
     ext_modules=[CMakeExtension('charmm.apocharmm')],
     cmdclass={"build_ext": CMakeBuild},

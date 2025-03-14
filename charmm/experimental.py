@@ -364,7 +364,7 @@ class PRM:
 
     def getAtomParameter(self, atomType: str) -> AtomParameters:
         """
-        Given an atom type, returns the AtomParameters object associated with it
+        Given an atom type , returns the AtomParameters object associated with it
         """
         for atomParameter in self.atomParameters:
             if atomParameter.atomType == atomType:

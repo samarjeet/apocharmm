@@ -35,8 +35,7 @@ public:
   // Fix this : don't pass raw pointers
   void handleHolonomicConstraints(const double4 *ref);
 
-  void removeForceAlongHolonomicConstraints(const double4 *ref, int stride,
-                                            double *force);
+  void removeForceAlongHolonomicConstraints();
 
   void setStream(std::shared_ptr<cudaStream_t> _stream) { stream = _stream; }
 
@@ -52,6 +51,8 @@ private:
   int numWaterMolecules;
   CudaContainer<int4> settleWaterIndex;
   CudaContainer<int4> shakeAtoms;
+  CudaContainer<int2> allConstrainedAtomPairs; // for projecting out the forces
+                                               // during minimization
   CudaContainer<float4> shakeParams;
 
   // CudaContainer<int2> shakeAtomPairs, shakeAtomTriples, shakeAtomQuads;

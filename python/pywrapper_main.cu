@@ -1,6 +1,6 @@
-#include <pybind11/numpy.h>
+//#include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+//#include <pybind11/stl.h>
 #include <vector>
 
 #include "cuda_utils.h"
@@ -20,7 +20,7 @@ void exportForceManagerGenerator(py::module &mod);
 void exportMinimizer(py::module &mod);
 void exportPBC(py::module &mod);
 
-PYBIND11_MODULE(apocharmm, mod) {
+PYBIND11_MODULE(_core, mod) {
   mod.doc() = R"pbdoc(
      python interface for apocharmm
      ------------------------------

@@ -19,6 +19,7 @@
 CharmmPSF::CharmmPSF() {}
 
 CharmmPSF::CharmmPSF(const std::string &fileName) {
+  numCrossTerms = 0;
   readCharmmPSFFile(fileName);
   buildTopologicalExclusions();
 }
@@ -387,6 +388,41 @@ void CharmmPSF::readCharmmPSFFile(std::string fileName) {
       // }
     }
   }
+  /*
+
+  // Assuming that the rest of sections are optional
+
+  enum State { NIMPHI, NDON, NACC, NNB, NGRP, MOLNT, NUMP, NCTERM, AUTOGEN };
+  enum State state = NIMPHI;
+  std::getline(psfFile, line);
+  while (line.size() == 0)
+    std::getline(psfFile, line);
+  if (line.find_first_of("!NDON") != std::string::npos) {
+    state = NDON;
+    std::cout << "NDON\n";
+  } else if (line.find_first_of("!NACC") != std::string::npos) {
+    state = NACC;
+    std::cout << "NACC\n";
+  } else if (line.find_first_of("!NNB") != std::string::npos) {
+    state = NNB;
+    std::cout << "NNB\n";
+  } else if (line.find_first_of("!NGRP") != std::string::npos) {
+    state = NGRP;
+    std::cout << "NGRP\n";
+  } else if (line.find_first_of("!MOLNT") != std::string::npos) {
+    state = MOLNT;
+    std::cout << "MOLNT\n";
+  } else if (line.find_first_of("!NUMP") != std::string::npos) {
+    state = NUMP;
+    std::cout << "NUMP\n";
+  } else if (line.find_first_of("!NCTERM") != std::string::npos) {
+    state = NCTERM;
+    std::cout << "NCTERM\n";
+  } else if (line.find_first_of("!AUTOGEN") != std::string::npos) {
+    state = AUTOGEN;
+    std::cout << "AUTOGEN\n";
+  }
+
 
   // skipping the ngrp entries for now
   std::getline(psfFile, line);
@@ -410,7 +446,7 @@ void CharmmPSF::readCharmmPSFFile(std::string fileName) {
 
   // read blank line
   std::getline(psfFile, line);
-  while (line.size() == 0)
+  while (line.size() != 0)
     std::getline(psfFile, line);
 
   // std::cout << line << std::endl;
@@ -419,9 +455,10 @@ void CharmmPSF::readCharmmPSFFile(std::string fileName) {
     // std::cerr << line << "\n";
     // std::cerr << "Wrong format :  NCRTERM missing!\n";
 
-    throw std::invalid_argument(line + "\n\nWrong format : NCRTERM missing!\n");
+    // throw std::invalid_argument(line + "\n\nWrong format : NCRTERM
+    // missing!\n");
 
-    exit(0);
+    // exit(0);
   }
 
   int nCrossTerm = std::stoul(line.substr(0, pos));
@@ -446,11 +483,13 @@ void CharmmPSF::readCharmmPSFFile(std::string fileName) {
 
   // read blank line
   std::getline(psfFile, line);
+  //
 
   while (psfFile) {
     std::getline(psfFile, line);
     // std::cout << line << "\n";
   }
+  */
 
   createConnectedComponents();
 }

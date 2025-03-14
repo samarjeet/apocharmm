@@ -12,8 +12,8 @@
 
 #pragma once
 #include <memory>
-#include <pybind11/numpy.h>
-#include <pybind11/pybind11.h>
+// #include <pybind11/numpy.h>
+// #include <pybind11/pybind11.h>
 #include <vector>
 
 #include "CharmmPSF.h"
@@ -391,7 +391,7 @@ public:
    * @warning Not implemented yet
    * @todo
    */
-  void setCoordinatesNumpy(pybind11::array_t<double> input_array);
+  // void setCoordinatesNumpy(pybind11::array_t<double> input_array);
 
   /**
    * @brief Reads coordinates and velocities from a restart file.

@@ -384,7 +384,7 @@ TEST_CASE("microtubule", "[dyna]") {
     ctx->assignVelocitiesAtTemperature(300);
 
     double timeStep = 0.002;
-    double numSteps = 1000;
+    double numSteps = 100;
 
     auto langevinThermostat =
         std::make_shared<CudaLangevinThermostatIntegrator>(timeStep);
@@ -415,21 +415,28 @@ TEST_CASE("namd_benchmark", "[dynamics]") {
     std::string dataPath = "/u/samar/projects/benchmark/stmv/";
     std::vector<std::string> prmFiles{dataPath + "par_all27_prot_na.inp"};
     auto prm = std::make_shared<CharmmParameters>(prmFiles);
+
+
+    std::cout << "Read the prm file\n";
     auto psf = std::make_shared<CharmmPSF>(dataPath + "stmv.psf");
+
+    std::cout << "Read the PSF file\n";
 
     auto fm = std::make_shared<ForceManager>(psf, prm);
     fm->setBoxDimensions({216.832, 216.832, 216.832});
     fm->setFFTGrid(216, 216, 216);
     fm->setKappa(0.34);
-    fm->setCutoff(8.0);
-    fm->setCtonnb(7.0);
-    fm->setCtofnb(7.5);
+    fm->setCutoff(9.5);
+    fm->setCtonnb(7.5);
+    fm->setCtofnb(9.0);
 
     auto ctx = std::make_shared<CharmmContext>(fm);
     auto crd = std::make_shared<PDB>(dataPath + "stmv.pdb");
     ctx->setCoordinates(crd);
     ctx->calculatePotentialEnergy(true, true);
     ctx->assignVelocitiesAtTemperature(300);
+
+    std::cout << "DOFs : " << ctx->getDegreesOfFreedom() << "\n";
 
     /*CudaMinimizer minimizer;
     minimizer.setCharmmContext(ctx);
@@ -649,3 +656,58 @@ TEST_CASE("benchmark", "[dynamics]") {
   }
 }
 */
+
+
+TEST_CASE("waterbox", "[dynamics]") {
+  std::string dataPath = getDataPath();
+  SECTION("waterbox") {
+    float expectedBoxDim = 48.9342, approxBoxDim = 50.;
+    auto prm =
+        std::make_shared<CharmmParameters>(dataPath + "toppar_water_ions.str");
+    auto psf = std::make_shared<CharmmPSF>(dataPath + "waterbox.psf");
+
+    auto fm = std::make_shared<ForceManager>(psf, prm);
+    fm->setBoxDimensions({approxBoxDim, approxBoxDim, approxBoxDim});
+    fm->setCutoff(12.0);
+    fm->setCtonnb(10.0);
+    fm->setCtofnb(9.0);
+
+    auto ctx = std::make_shared<CharmmContext>(fm);
+    // ctx->readRestart(dataPath + "restart/waterbox.npt.restart");
+    ctx->readRestart(
+        "/u/aviatfel/work/apocharmm/restartgen/equilibratedRestart.res");
+
+    auto dimFromRestart = fm->getBoxDimensions();
+    std::cout << "Box dimensions from restart: " << dimFromRestart[0] << " "
+              << dimFromRestart[1] << " " << dimFromRestart[2] << std::endl;
+
+    double timeStep = 0.002;
+    double numSteps = 1000;
+
+        auto langevinThermostat =
+        std::make_shared<CudaLangevinThermostatIntegrator>(timeStep);
+    // CudaVelocityVerletIntegrator langevinThermostat(0.002);
+    langevinThermostat->setFriction(0.0);
+    langevinThermostat->setBathTemperature(300.0);
+    langevinThermostat->setCharmmContext(ctx);
+
+    auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(timeStep);
+    integrator->setPistonFriction(12.);
+    integrator->setCharmmContext(ctx);
+    integrator->setCrystalType(CRYSTAL::CUBIC);
+
+
+    auto start = std::chrono::high_resolution_clock::now();
+    integrator->propagate(numSteps);
+    //langevinThermostat->propagate(numSteps);
+
+    auto end = std::chrono::high_resolution_clock::now();
+        // time in seconds
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    std::cout << "Elapsed time: " << elapsed_seconds.count() << "s\n";
+
+    std::cout << "speed in ns/day : "
+              << (numSteps * timeStep) / (elapsed_seconds.count() * 1e3) * 86400
+              << "\n";
+  }
+}

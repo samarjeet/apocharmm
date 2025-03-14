@@ -1666,7 +1666,6 @@ void CudaLangevinPistonIntegrator::propagateOneStep(void) {
     //        velmassprint.getHostArray().data()[0].x
     //                  << std::endl;
     //        coordsDeltaPrevious.transferFromDevice();
-    //        std::cout << "coordsDeltaPrevious: "
     //                  << coordsDeltaPrevious.getHostArray().data()[0].x <<
     //                  std::endl;
     //        coordsRef.transferFromDevice();
