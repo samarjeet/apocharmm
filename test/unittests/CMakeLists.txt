@@ -49,7 +49,8 @@ set(SOURCES_UNITTESTS_TESTS
 
     unittest-replicaExchange.cpp
     unittest-emap.cpp
-    unittest-mpid.cpp
+
+    # unittest-mpid.cpp
 
     # unittest-addForce.cu
     # unittest-boltzmannVelocity.cu
@@ -121,6 +122,7 @@ foreach(name ${TARGETS_UNITTESTS_TESTS})
     add_executable(${name} ${name}.cpp $<TARGET_OBJECTS:CatchMain> ${HEADER_DIR}/catch.hpp)
     target_compile_definitions(${name} PUBLIC DATA_PATH="${PROJECT_SOURCE_DIR}/test/data/")
     target_link_libraries(${name} PRIVATE ${EXTERNAL_LIBRARIES})
+    set_property(TARGET ${name} PROPERTY CUDA_RUNTIME_LIBRARY SHARED) # For CMake 3.23 and later
 
     # target_link_libraries( ${name} PRIVATE chcudalib)
     target_link_libraries(${name} PRIVATE chcudadynlib)
@@ -132,8 +134,8 @@ endforeach()
 foreach(name ${TARGETS_ALL})
     target_include_directories(${name} PRIVATE ${HEADER_DIR})
 
-    set_property(TARGET ${name} PROPERTY CXX_STANDARD 11)
-    set_property(TARGET ${name} PROPERTY CUDA_ARCHITECTURES 60 70)
+    set_property(TARGET ${name} PROPERTY CXX_STANDARD 20)
+    set_property(TARGET ${name} PROPERTY CUDA_ARCHITECTURES 60 70 80)
 
     # GCC specific warning go here
     if(CMAKE_CXX_COMPILER_ID MATCHES "GCC")

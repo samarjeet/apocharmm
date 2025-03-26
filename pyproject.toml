@@ -17,6 +17,7 @@ requires = [
     "nvidia-cufft-cu12",
     "nvidia-nvtx-cu12",
     "packaging",
+    #    "cuda-toolkit", # install this via conda 
 ]
 build-backend = "scikit_build_core.build"
 
@@ -43,5 +44,5 @@ dependencies = [
 doc = ["sphinx~=4.2.0"]
 
 [tool.cibuildwheel]
-build = "cp3*"                           # Build for all Python 3 versions
-manylinux-x86_64-image = "manylinux2014"
+build = "cp3*"                            # Build for all Python 3 versions
+manylinux-x86_64-image = "manylinux_2_28"

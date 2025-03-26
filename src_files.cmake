@@ -5,7 +5,8 @@ list(APPEND src_files
   src/CheckpointSubscriber.cu
   src/Coordinates.cu
   src/CudaContainer.cu
-#  src/Constraints.cu
+
+  # src/Constraints.cu
   src/CudaBAOABIntegrator.cu
   src/CudaBondedForce.cu
   src/DynaSubscriber.cu
@@ -35,7 +36,8 @@ list(APPEND src_files
   src/Force.cu
   src/ForceManager.cu
   src/ForceManagerGenerator.cu
-#  src/ForceType.cu
+
+  # src/ForceType.cu
   src/CharmmCrd.cu
   src/CharmmParameters.cu
   src/CharmmPSF.cu
@@ -59,7 +61,8 @@ list(APPEND src_files
   src/FEPEIForceManager.cu
   src/MBARForceManager.cu
   src/CudaMinimizer.cu
-  src/MPIDForce.cu
+
+  # src/MPIDForce.cu
   src/NetCDFSubscriber.cu
   src/PDB.cu
   src/PertForceManager.cu

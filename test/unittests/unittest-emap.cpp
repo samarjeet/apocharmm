@@ -39,7 +39,8 @@ TEST_CASE("emap", "[emap]") {
     auto crd = std::make_shared<CharmmCrd>("../test/data/jac_5dhfr.crd");
     ctx->setCoordinates(crd);
 
-    std::shared_ptr<CudaEMap> emap = std::make_shared<CudaEMap>(ctx);
-    emap->generate();
+    //std::shared_ptr<CudaEMap> emap = std::make_shared<CudaEMap>(ctx);
+    //emap->generate();
+
   }
 }

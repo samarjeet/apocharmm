@@ -15,7 +15,8 @@
 #include <cuda.h>
 #include <fstream>
 #include <iostream>
-#include <nvToolsExtCuda.h>
+#include <nvtx3/nvToolsExtCuda.h>
+// #include <nvtx3/nvtx3.hpp>
 #include <utility>
 
 //----------------------------------------------------------------------------------------

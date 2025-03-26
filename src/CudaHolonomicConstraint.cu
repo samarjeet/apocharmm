@@ -89,9 +89,10 @@ void CudaHolonomicConstraint::setup(double ts) {
     allConstrainedAtomPairsHost.push_back(constrainedPair);
   }
 
-  allConstrainedAtomPairs.allocate(allConstrainedAtomPairsHost.size());
-  allConstrainedAtomPairs.setHostArray(allConstrainedAtomPairsHost);
-  allConstrainedAtomPairs.transferToDevice();
+  // allConstrainedAtomPairs.allocate(allConstrainedAtomPairsHost.size());
+  // allConstrainedAtomPairs.setHostArray(allConstrainedAtomPairsHost);
+  // allConstrainedAtomPairs.transferToDevice();
+  allConstrainedAtomPairs = allConstrainedAtomPairsHost;
 
   // std::cout << "[Holo] "
   //           << "Num of constrained pairs : " <<
@@ -716,7 +717,7 @@ void CudaHolonomicConstraint::handleHolonomicConstraints(const double4 *ref) {
   // xx updateVelocities(ref, current);
 }
 
-/*
+//
 __device__ static void removeOneForce(int i, int j, int stride,
                                       const double4 *__restrict__ current,
                                       double *__restrict__ force) {
@@ -749,9 +750,8 @@ __device__ static void removeOneForce(int i, int j, int stride,
   atomicAdd(&force[j + 2 * stride], -acor * zrij);
   //}
 }
-*/
+//
 
-/*
 __global__ static void removeForceAlongHolonomicConstraintsKernel(
     const int2 *__restrict__ constrainedPairs, int numConstraints, int stride,
     const double4 *__restrict__ current, double *__restrict__ force) {
@@ -766,7 +766,6 @@ __global__ static void removeForceAlongHolonomicConstraintsKernel(
     }
   }
 }
-*/
 
 void CudaHolonomicConstraint::removeForceAlongHolonomicConstraints() {
   auto current = context->getCoordinatesCharges().getDeviceArray().data();

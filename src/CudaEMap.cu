@@ -50,4 +50,5 @@ void CudaEMap::generate() {
   // reduce the mass of the particles to the grid
   // this is similar to the spread of pme
   // how is it now
+  */
 }

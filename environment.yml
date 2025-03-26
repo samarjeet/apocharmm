@@ -4,7 +4,8 @@ channels:
 #  - defaults
 dependencies:
   - netcdf4
-  - cmake
-  - sphinx
-  - sphinx_rtd_theme
-  - icu=70.1
+  - cuda-toolkit
+#  - cmake
+#  - sphinx
+#  - sphinx_rtd_theme
+#  - icu=70.1

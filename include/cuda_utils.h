@@ -13,7 +13,9 @@
 #ifndef CUDA_UTILS_H
 #define CUDA_UTILS_H
 
-#include <nvToolsExt.h>
+// #include <nvToolsExt.h>
+#include <nvtx3/nvToolsExt.h>
+// #include <nvtx3/nvtx3.hpp>
 #include <stdio.h>
 #include <vector>
 

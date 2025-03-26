@@ -40,8 +40,8 @@ TEST_CASE("kernel", "[Energy]") {
     std::cout << "Testing kernel\n";
     // Direct
 
-    auto directStream = std::make_shared<cudaStream_t>();
-    cudaStreamCreate(directStream.get());
+    //auto directStream = std::make_shared<cudaStream_t>();
+    //cudaStreamCreate(directStream.get());
     // directForceValues = std::make_shared<Force<long long int>>();
     // directForceValues->realloc(numAtoms, 1.5f);
 
