@@ -24,7 +24,7 @@ jobs:
         environment-file: environment.yml
 
     - name: Build and install
-      run:
+      run: |
         conda activate test
         pip install --verbose .
       #uses: pypa/cibbuildwheels-action@v2
