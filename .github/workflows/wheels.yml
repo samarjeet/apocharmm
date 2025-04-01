@@ -27,6 +27,6 @@ jobs:
 
     - name: Build and install
       run: |
-        conda activate test
+        #conda activate test
         pip install --verbose .
       #uses: pypa/cibbuildwheels-action@v2
