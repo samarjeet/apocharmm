@@ -1,5 +1,7 @@
 on: [push]
 
+env:
+  CONDA_ENV: apoenv
 jobs:
   build_wheels:
     runs-on: ${{ matrix.os }}
@@ -18,5 +20,6 @@ jobs:
         python-version: ${{ matrix.python-version }}
         environment-file: environment.yml
 
-    #- name: Build wheels
-    #  uses: pypa/cibbuildwheels-action@v2
+    - name: Build and install
+      run: pip install --verbose .
+      #uses: pypa/cibbuildwheels-action@v2
