@@ -22,6 +22,8 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         environment-file: environment.yml
+        activate-environment: ${{ env.CONDA_ENV }}
+        auto-activate-base: false
 
     - name: Build and install
       run: |
