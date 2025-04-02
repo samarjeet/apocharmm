@@ -5,7 +5,8 @@ channels:
 dependencies:
   - netcdf4
   - cuda-toolkit
-#  - cmake
+  - cmake
+  - pybind11
 #  - sphinx
 #  - sphinx_rtd_theme
 #  - icu=70.1
