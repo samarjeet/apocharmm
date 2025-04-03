@@ -26,7 +26,11 @@ jobs:
         auto-activate-base: false
 
     - name: Build and install
+      shell: bash -l {0}
       run: |
-        #conda activate ${{ env.CONDA_ENV }}
-        conda run -n ${{ env.CONDA_ENV}} pip install --verbose .
+        #conda run -n ${{ env.CONDA_ENV}} pip install --verbose .
+        conda activate ${{ env.CONDA_ENV }}
+        pip install nvidia-nvtx-cu12
+        pip install --verbose .
+        
       #uses: pypa/cibbuildwheels-action@v2
