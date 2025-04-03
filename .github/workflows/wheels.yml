@@ -31,6 +31,7 @@ jobs:
         #conda run -n ${{ env.CONDA_ENV}} pip install --verbose .
         conda activate ${{ env.CONDA_ENV }}
         pip install nvidia-nvtx-cu12
+        pip install cibuildwheel
         pip install --verbose .
     - name: Build wheels using cibuildwheel
       run: |
