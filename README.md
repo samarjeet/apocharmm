@@ -27,7 +27,7 @@ Bernard R. Brooks (NIH)
 ## Installation 
 
 
-Preffered installation instructions:
+Preferred installation instructions:
 ```
 conda create --name abuild python==3.13 netcdf4 cuda-toolkit cmake pybind11 conda-forge::gxx==13.3.0
 conda activate abuild
