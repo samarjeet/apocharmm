@@ -26,6 +26,18 @@ Bernard R. Brooks (NIH)
 
 ## Installation 
 
+
+Preffered installation instructions:
+```
+conda create --name abuild python==3.13 netcdf4 cuda-toolkit cmake pybind11 conda-forge::gxx==13.3.0
+conda activate abuild
+pip install nvidia-nvtx-cu12
+pip install git+https://github.com/samarjeet/apocharmm.git 
+
+```
+
+Source build instructions : 
+
 Requirements:
 * gcc [10.1]
 * CUDA [11.1.1]
