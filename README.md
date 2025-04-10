@@ -19,7 +19,6 @@ enumerated below.
 
 Samarjeet Prasad (NIH)
 
-Antti-Pekka Hynninen
 Bernard R. Brooks (NIH)
 # apocharmm
 
