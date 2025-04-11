@@ -32,7 +32,6 @@ conda create --name abuild python==3.13 netcdf4 cuda-toolkit cmake pybind11 cond
 conda activate abuild
 pip install nvidia-nvtx-cu12
 pip install git+https://github.com/samarjeet/apocharmm.git 
-
 ```
 
 Source build instructions : 
