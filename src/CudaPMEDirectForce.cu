@@ -1219,6 +1219,14 @@ void calc_vdw_cpu(const CudaNeighborListBuild<32> &nlist, int nvdwparam,
 
   // only for test
 }
+
+template <typename AT, typename CT>
+void CudaPMEDirectForce<AT, CT>::clear(void) {
+  energyVirial.clear(*directStream);
+  forceVal->clear(*directStream);
+  return;
+}
+
 // Calculates direct force
 //
 template <typename AT, typename CT>

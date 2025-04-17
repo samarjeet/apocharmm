@@ -157,7 +157,12 @@ TEST_CASE("bilayer", "[all]") {
 
   SECTION("nvt") {
     langevinThermostat->setFriction(12.0);
-    langevinThermostat->propagate(nSteps);
+    std::string subfile = "p21_bilayer_nvt.dcd";
+    // auto subscriber = std::make_shared<DcdSubscriber>(subfile, 1000, ctx);
+    auto subscriber = std::make_shared<DcdSubscriber>(subfile, 1000);
+    // subscriber->setCharmmContext(ctx);
+    langevinThermostat->subscribe(subscriber);
+    langevinThermostat->propagate(nSteps*10);
   }
 
   SECTION("npt") {
@@ -178,7 +183,7 @@ TEST_CASE("bilayer", "[all]") {
     // fm->setPrintEnergyDecomposition(true);
 
     // integrator->setDebugPrintFrequency(100);
-    integrator->propagate(nSteps);
+    integrator->propagate(nSteps*100);
   }
   SECTION("nvt_npt") {
 

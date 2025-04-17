@@ -26,14 +26,14 @@
 // CT = calculation type
 //
 
-//#define USE_DP_SFORCE
+// #define USE_DP_SFORCE
 
 /** @brief Representation of the (bonded) force objects.
  *
  * Contains all informations regarding the bonded forces. Can compute (bonded)
  * energy, forces, virial via cuda kernels.
  *
- * @note Does NOT contain the force *values* (see Force). 
+ * @note Does NOT contain the force *values* (see Force).
  */
 template <typename AT, typename CT> class CudaBondedForce {
 private:
@@ -170,13 +170,15 @@ public:
              const dihe_t *imdihe, const int ncmap_tbl, const int *cmap_tbl,
              const cmap_t *cmap, cudaStream_t stream = 0);
 
+  void clear(void);
+
   /** @brief Compute (bonded) forces
    *
    * Takes booleans for each bonded term (bond, U-B, angle, dihedral,
-   * improper). 
+   * improper).
    * Actual computation is done on cuda kernels.
    *
-   * Energy terms are stored in CudaEnergyVirial object 
+   * Energy terms are stored in CudaEnergyVirial object
    */
   void calc_force(const float4 *xyzq, const CT boxx, const CT boxy,
                   const CT boxz, const bool calc_energy, const bool calc_virial,
@@ -190,6 +192,8 @@ public:
   void setStream(std::shared_ptr<cudaStream_t> streamIn);
   void calc_force(const float4 *xyzq, bool calcEnergy, bool calcVirial);
   void setBoxDimensions(std::vector<double> dim) { boxDimensions = dim; }
+
+  std::shared_ptr<Force<long long int>> getForce(void);
 };
 
 #endif // CUDABONDEDFORCE_H

@@ -37,29 +37,74 @@
 // Forward declaration
 class CharmmContext;
 
-/**
- * @todo doc this...
- */
-class ForceType {
+// /**
+//  * @todo doc this...
+//  */
+// class ForceType {
+// public:
+//   template <class T>
+//   ForceType(T t) noexcept : self{std::make_unique<model_t<T>>(std::move(t))}
+//   {} void calc_force(const float4 *xyzq) { self->calc_force(xyzq); }
+
+// private:
+//   struct concept_t {
+//     virtual ~concept_t() = default;
+//     virtual void calc_force(const float4 *xyzq) = 0;
+//   };
+
+//   template <class T> struct model_t : concept_t {
+//     model_t(T s) noexcept : self{std::move(s)} {}
+//     // TODO : there should be other interface functions
+//     void calc_force(const float4 *xyzq) override { self.calc_force(xyzq); }
+//     T self;
+//   };
+
+//   std::unique_ptr<concept_t> self;
+// };
+
+class ForceView {
 public:
-  template <class T>
-  ForceType(T t) noexcept : self{std::make_unique<model_t<T>>(std::move(t))} {}
-  void calc_force(const float4 *xyzq) { self->calc_force(xyzq); }
+  template <typename ForceType>
+  ForceView(ForceType *inputForce)
+      : m_Force(static_cast<void *>(inputForce)),
+        clear_impl{[](void *force) -> void {
+          ForceType *ptr = static_cast<ForceType *>(force);
+          return ptr->clear();
+        }},
+        calc_force_impl{[](void *force, const float4 *xyzq, bool calcEnergy,
+                           bool calcVirial) -> void {
+          ForceType *ptr = static_cast<ForceType *>(force);
+          return ptr->calc_force(xyzq, calcEnergy, calcVirial);
+        }},
+        getForceImpl{[](void *force) -> std::shared_ptr<Force<long long int>> {
+          ForceType *ptr = static_cast<ForceType *>(force);
+          return ptr->getForce();
+        }} {}
+  //       ,
+  // getEnergyVirialImpl{[](void *force) -> CudaEnergyVirial {
+  //   ForceType *ptr = static_cast<ForceType *>(force);
+  //   return ptr->getEnergyVirial();
+  // }} {}
+
+  void clear(void) { return this->clear_impl(m_Force); }
+
+  void calc_force(const float4 *xyzq, bool calcEnergy, bool calcVirial) {
+    return this->calc_force_impl(m_Force, xyzq, calcEnergy, calcVirial);
+  }
+
+  std::shared_ptr<Force<long long int>> getForce(void) {
+    return this->getForceImpl(m_Force);
+  }
+
+  // void add()
 
 private:
-  struct concept_t {
-    virtual ~concept_t() = default;
-    virtual void calc_force(const float4 *xyzq) = 0;
-  };
-
-  template <class T> struct model_t : concept_t {
-    model_t(T s) noexcept : self{std::move(s)} {}
-    // TODO : there should be other interface functions
-    void calc_force(const float4 *xyzq) override { self.calc_force(xyzq); }
-    T self;
-  };
-
-  std::unique_ptr<concept_t> self;
+  void *m_Force;
+  void (*clear_impl)(void *force);
+  void (*calc_force_impl)(void *force, const float4 *xyzq, bool calcEnergy,
+                          bool calcVirial);
+  std::shared_ptr<Force<long long int>> (*getForceImpl)(void *force);
+  // void (*getEnergyVirialImpl)(void *force);
 };
 
 // enum class PBC { P1, P21 };
@@ -394,6 +439,52 @@ public:
    */
   void setPrintEnergyDecomposition(bool bIn = true);
 
+  template <typename ForceType>
+  void subscribe(std::shared_ptr<ForceType> force, const std::string &forceTag,
+                 std::shared_ptr<cudaStream_t> forceStream,
+                 std::shared_ptr<Force<long long int>> forceValues,
+                 std::shared_ptr<CudaEnergyVirial> energyVirial) {
+    m_ForcePtrs.push_back(static_cast<std::shared_ptr<void>>(force));
+    m_ForceViews.push_back(ForceView(force.get()));
+    m_ForceTags.push_back(forceTag);
+    m_ForceStreams.push_back(forceStream);
+    m_ForceValues.push_back(forceValues);
+    m_EnergyVirials.push_back(energyVirial);
+    return;
+  }
+
+  template <typename ForceType>
+  void unsubscribe(std::shared_ptr<ForceType> force) {
+    for (std::size_t i = 0; i < m_ForceViews.size(); i++) {
+      if (static_cast<void *>(force.get()) ==
+          static_cast<void *>(m_ForcePtrs[i].get())) {
+        m_ForcePtrs.erase(m_ForcePtrs.begin() + i);
+        m_ForceViews.erase(m_ForceViews.begin() + i);
+        m_ForceTags.erase(m_ForceTags.begin() + i);
+        m_ForceStreams.erase(m_ForceStreams.begin() + i);
+        m_ForceValues.erase(m_ForceValues.begin() + i);
+        m_EnergyVirials.erase(m_EnergyVirials.begin() + i);
+        break;
+      }
+    }
+    return;
+  }
+
+  void unsubscribe(const std::string &forceTag) {
+    for (std::size_t i = 0; i < m_ForceTags.size(); i++) {
+      if (m_ForceTags[i] == forceTag) {
+        m_ForcePtrs.erase(m_ForcePtrs.begin() + i);
+        m_ForceViews.erase(m_ForceViews.begin() + i);
+        m_ForceTags.erase(m_ForceTags.begin() + i);
+        m_ForceStreams.erase(m_ForceStreams.begin() + i);
+        m_ForceValues.erase(m_ForceValues.begin() + i);
+        m_EnergyVirials.erase(m_EnergyVirials.begin() + i);
+        break;
+      }
+    }
+    return;
+  }
+
   ///////////////
   // PROTECTED //
   ///////////////
@@ -558,6 +649,13 @@ protected:
   /** @brief Check that a vector contains correct dimensions (positive, non-zero
    * numbers). Returns true if so, throws an error otherwise. */
   bool checkBoxDimensions(const std::vector<double> &size);
+
+  std::vector<std::shared_ptr<void>> m_ForcePtrs;
+  std::vector<ForceView> m_ForceViews;
+  std::vector<std::string> m_ForceTags;
+  std::vector<std::shared_ptr<cudaStream_t>> m_ForceStreams;
+  std::vector<std::shared_ptr<Force<long long int>>> m_ForceValues;
+  std::vector<std::shared_ptr<CudaEnergyVirial>> m_EnergyVirials;
 
 private:
   /**

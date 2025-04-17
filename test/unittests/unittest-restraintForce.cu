@@ -15,9 +15,9 @@
 #include "GeometricRestraintForce.h"
 #include "catch.hpp"
 #include "test_paths.h"
+#include <cuda_runtime.h>
 #include <iostream>
 #include <memory>
-#include <cuda_runtime.h>
 
 TEST_CASE("restraintForce", "[energy]") {
   std::string dataPath = getDataPath();
@@ -32,17 +32,16 @@ TEST_CASE("restraintForce", "[energy]") {
   restraintForceValues->realloc(numAtoms, 1.5f);
 
   CudaEnergyVirial restraintEnergyVirial;
-  /*auto restraint = std::make_shared<GeometricRestraintForce<long long, float>>(
-      restraintEnergyVirial);
-  restraint->setForce(restraintForceValues);
+  /*auto restraint = std::make_shared<GeometricRestraintForce<long long,
+  float>>( restraintEnergyVirial); restraint->setForce(restraintForceValues);
   // put this force on a stream
 
   restraint->addRestraint(RestraintShape::PLANE, PotentialFunction::HARMONIC,
                           false, {0.0, 0.0, 0.0}, true, {1.0, 0.0, 0.0}, false,
                           1.0, 0.0, {0, 1, 2});
 
-  
-  
+
+
 
   auto fm = std::make_shared<ForceManager>(psf, prm);
 

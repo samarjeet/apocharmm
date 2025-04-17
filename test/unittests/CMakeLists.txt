@@ -3,14 +3,14 @@ set(SOURCES_UNITTESTS_TESTS
 
     # Base tests
     unittest-charmmContext.cpp
-    unittest-forceManager.cpp
+    unittest-forceManager.cu
     unittest-subscribers.cpp
     unittest-readCoordinates.cpp
     unittest-integrators.cpp
     unittest-readPRM.cpp
 
     # unittest-ForceManagerGenerator.cpp
-    unittest-restraintForce.cpp
+    unittest-restraintForce.cu
     unittest-logger.cpp
     unittest-utils.cpp
     unittest-cudaContainers.cpp
@@ -119,13 +119,23 @@ set(TARGETS_ALL ${TARGETS_UNITTESTS_TESTS} CatchMain)
 add_library(CatchMain OBJECT ${UNITTEST_DIR}/${SOURCES_UNITTESTS_MAIN} ${HEADER_DIR}/catch.hpp)
 
 foreach(name ${TARGETS_UNITTESTS_TESTS})
-    add_executable(${name} ${name}.cpp $<TARGET_OBJECTS:CatchMain> ${HEADER_DIR}/catch.hpp)
+    if(${name} MATCHES "unittest-restraintForce" OR ${name} MATCHES "unittest-forceManager")
+        set(filename ${name}.cu)
+    else()
+        set(filename ${name}.cpp)
+    endif()
+
+    add_executable(${name} ${filename} $<TARGET_OBJECTS:CatchMain> ${HEADER_DIR}/catch.hpp)
+
     target_compile_definitions(${name} PUBLIC DATA_PATH="${PROJECT_SOURCE_DIR}/test/data/")
     target_link_libraries(${name} PRIVATE ${EXTERNAL_LIBRARIES})
     set_property(TARGET ${name} PROPERTY CUDA_RUNTIME_LIBRARY SHARED) # For CMake 3.23 and later
 
     # target_link_libraries( ${name} PRIVATE chcudalib)
     target_link_libraries(${name} PRIVATE chcudadynlib)
+
+    # target_link_libraries(${name} PRIVATE )
+    set_target_properties(${name} PROPERTIES LINKER_LANGUAGE CUDA)
     add_test(NAME ${name}
         COMMAND ${name}
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/test/unittests)

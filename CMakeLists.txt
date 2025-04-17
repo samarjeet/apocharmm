@@ -25,6 +25,7 @@ target_include_directories(chcudadynlib PUBLIC ${NETCDF_INCLUDES})
 target_include_directories(chcudadynlib PUBLIC ${Python_SITEARCH}/nvidia/nvtx/include)
 
 target_compile_features(chcudadynlib PUBLIC cxx_std_20 cuda_std_20)
+#target_compile_features(chcudadynlib PUBLIC cxx_std_20)
 set_property(TARGET chcudadynlib PROPERTY CUDA_ARCHITECTURES 70 80)
 
 target_compile_options(chcudadynlib PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:

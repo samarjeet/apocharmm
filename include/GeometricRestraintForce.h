@@ -9,6 +9,7 @@
 // ENDLICENSE
 
 #pragma once
+#include "CudaContainer.h"
 #include "CudaEnergyVirial.h"
 #include "Force.h"
 #include <iostream>
@@ -91,6 +92,7 @@ public:
 private:
   CudaEnergyVirial &energyVirial;
   std::shared_ptr<Force<long long int>> forceVal;
+  // CudaContainer<Restraint> restraints;
   thrust::device_vector<Restraint> restraints; // use a unified memory vector
   // thrust::device_vector<thrust::device_vector<int>> restraintAtoms;
 };

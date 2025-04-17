@@ -315,6 +315,12 @@ __global__ void updatePotentialEnergy(
           e8[0] + e9[0];
 }
 
+__global__ static void UpdatePotentialEnergy2(const double *__restrict__ en,
+                                              double *__restrict__ pe) {
+  pe[0] += en[0];
+  return;
+}
+
 /*
  * clearing using each ForceValues's  clear seems to be taking a lot of time
  * Testing with a consolidated kernel
@@ -342,6 +348,10 @@ std::begin(forces_), std::end(forces_),
   auto bStream = *bondedStream;
   auto rStream = *reciprocalStream;
   auto dStream = *directStream;
+
+  for (auto &forceView : m_ForceViews) {
+    forceView.clear();
+  }
 
   if (!clearGraphCreated) {
     cudaStreamBeginCapture(*forceManagerStream, cudaStreamCaptureModeGlobal);
@@ -374,6 +384,10 @@ void ForceManager::calc_force_part2(const float4 *xyzq, bool reset,
   }
   */
 
+  for (auto &forceView : m_ForceViews) {
+    forceView.calc_force(xyzq, calcEnergy, calcVirial);
+  }
+
   // calcEnergy = true;
 
   gpu_range_start("bonded");
@@ -389,9 +403,9 @@ void ForceManager::calc_force_part2(const float4 *xyzq, bool reset,
   gpu_range_stop();
   //}
 }
+
 void ForceManager::calc_force_part3(const float4 *xyzq, bool reset,
                                     bool calcEnergy, bool calcVirial) {
-
   totalForceValues->clear(*forceManagerStream);
 
   cudaCheck(cudaStreamSynchronize(*bondedStream));
@@ -402,6 +416,12 @@ void ForceManager::calc_force_part3(const float4 *xyzq, bool reset,
 
   cudaCheck(cudaStreamSynchronize(*directStream));
   totalForceValues->add<double>(*directForceValues, *forceManagerStream);
+
+  for (std::size_t i = 0; i < m_ForceViews.size(); i++) {
+    cudaCheck(cudaStreamSynchronize(*m_ForceStreams[i]));
+    totalForceValues->add<double>(*m_ForceViews[i].getForce(),
+                                  *forceManagerStream);
+  }
 
   // TODO : find a better way.
   // For now, as virial requires forces to be double
@@ -414,10 +434,15 @@ void ForceManager::calc_force_part3(const float4 *xyzq, bool reset,
     bondedForceValues->convert<double>(*bondedStream);
     reciprocalForceValues->convert<double>(*reciprocalStream);
     directForceValues->convert<double>(*directStream);
+    for (std::size_t i = 0; i < m_ForceViews.size(); i++)
+      m_ForceValues[i]->convert<double>(*m_ForceStreams[i]);
 
     cudaCheck(cudaStreamSynchronize(*bondedStream));
     cudaCheck(cudaStreamSynchronize(*reciprocalStream));
     cudaCheck(cudaStreamSynchronize(*directStream));
+    for (std::size_t i = 0; i < m_ForceViews.size(); i++)
+      cudaCheck(cudaStreamSynchronize(*m_ForceStreams[i]));
+
     bondedEnergyVirial.calcVirial(
         numAtoms, xyzq, boxDimensions[0], boxDimensions[1], boxDimensions[2],
         getForceStride(), (double *)bondedForceValues->xyz(), *bondedStream);
@@ -429,10 +454,18 @@ void ForceManager::calc_force_part3(const float4 *xyzq, bool reset,
     directEnergyVirial.calcVirial(
         numAtoms, xyzq, boxDimensions[0], boxDimensions[1], boxDimensions[2],
         getForceStride(), (double *)directForceValues->xyz(), *directStream);
+    for (std::size_t i = 0; i < m_ForceViews.size(); i++) {
+      m_EnergyVirials[i]->calcVirial(
+          numAtoms, xyzq, boxDimensions[0], boxDimensions[1], boxDimensions[2],
+          getForceStride(), reinterpret_cast<double *>(m_ForceValues[i]->xyz()),
+          *m_ForceStreams[i]);
+    }
 
     cudaCheck(cudaStreamSynchronize(*bondedStream));
     cudaCheck(cudaStreamSynchronize(*reciprocalStream));
     cudaCheck(cudaStreamSynchronize(*directStream));
+    for (std::size_t i = 0; i < m_ForceViews.size(); i++)
+      cudaCheck(cudaStreamSynchronize(*m_ForceStreams[i]));
   }
 
   // Copy everything (all EnergyVirials) to Host, add together
@@ -443,6 +476,8 @@ void ForceManager::calc_force_part3(const float4 *xyzq, bool reset,
     bondedEnergyVirial.copyToHost();
     reciprocalEnergyVirial.copyToHost();
     directEnergyVirial.copyToHost();
+    for (std::size_t i = 0; i < m_ForceViews.size(); i++)
+      m_EnergyVirials[i]->copyToHost();
     cudaDeviceSynchronize();
 
     totalBondedEnergy = bondedEnergyVirial.getEnergy("bond") +
@@ -468,11 +503,30 @@ void ForceManager::calc_force_part3(const float4 *xyzq, bool reset,
         directEnergyVirial.getEnergyPointer("vdw"),
         reciprocalEnergyVirial.getEnergyPointer("ewks"),
         reciprocalEnergyVirial.getEnergyPointer("ewse"),
-        totalPotentialEnergy.getDeviceArray().data());
+        totalPotentialEnergy.getDeviceData());
+
+    for (std::size_t i = 0; i < m_ForceViews.size(); i++) {
+      UpdatePotentialEnergy2<<<1, 1, 0, *forceManagerStream>>>(
+          m_EnergyVirials[i]->getEnergyPointer("bond"),
+          totalPotentialEnergy.getDeviceData());
+      UpdatePotentialEnergy2<<<1, 1, 0, *forceManagerStream>>>(
+          m_EnergyVirials[i]->getEnergyPointer("angle"),
+          totalPotentialEnergy.getDeviceData());
+      UpdatePotentialEnergy2<<<1, 1, 0, *forceManagerStream>>>(
+          m_EnergyVirials[i]->getEnergyPointer("ureyb"),
+          totalPotentialEnergy.getDeviceData());
+      UpdatePotentialEnergy2<<<1, 1, 0, *forceManagerStream>>>(
+          m_EnergyVirials[i]->getEnergyPointer("dihe"),
+          totalPotentialEnergy.getDeviceData());
+      UpdatePotentialEnergy2<<<1, 1, 0, *forceManagerStream>>>(
+          m_EnergyVirials[i]->getEnergyPointer("imdihe"),
+          totalPotentialEnergy.getDeviceData());
+    }
+
     cudaCheck(cudaStreamSynchronize(*forceManagerStream));
 
     if (printEnergyDecomposition) {
-      std::cout << "Bond energy         : "
+      std::cout << "bond energy         : "
                 << bondedEnergyVirial.getEnergy("bond") << "\n";
       std::cout << "angle energy        : "
                 << bondedEnergyVirial.getEnergy("angle") << "\n";
@@ -494,8 +548,27 @@ void ForceManager::calc_force_part3(const float4 *xyzq, bool reset,
                 << directEnergyVirial.getEnergy("elec") << "\n";
       std::cout << "vdw energy          : "
                 << directEnergyVirial.getEnergy("vdw") << "\n";
-      std::cout << "Total potential energy : "
-                << totalBondedEnergy + totalNonBondedEnergy << " ---\n\n";
+
+      for (std::size_t i = 0; i < m_ForceViews.size(); i++) {
+        std::cout << "New Force " << i << ":\n";
+        std::cout << "bond energy         : "
+                  << m_EnergyVirials[i]->getEnergy("bond") << "\n";
+        std::cout << "angle energy        : "
+                  << m_EnergyVirials[i]->getEnergy("angle") << "\n";
+        std::cout << "ureyb energy        : "
+                  << m_EnergyVirials[i]->getEnergy("ureyb") << "\n";
+        std::cout << "dihe energy         : "
+                  << m_EnergyVirials[i]->getEnergy("dihe") << "\n";
+        std::cout << "imdihe energy       : "
+                  << m_EnergyVirials[i]->getEnergy("imdihe") << "\n";
+      }
+
+      totalPotentialEnergy.transferToHost();
+
+      // std::cout << "Total potential energy : "
+      //           << totalBondedEnergy + totalNonBondedEnergy << " ---\n\n";
+      std::cout << "Total potential energy : " << totalPotentialEnergy[0]
+                << " ---\n\n";
     }
   }
 }

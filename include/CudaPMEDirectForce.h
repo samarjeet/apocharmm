@@ -88,6 +88,8 @@ public:
                              const bool calc_virial, const int stride,
                              AT *force, cudaStream_t stream = 0) = 0;
 
+  virtual void clear(void) = 0;
+
   virtual void calc_force(const int whichlist, const float4 *xyzq,
                           const CudaNeighborListBuild<32> &nlist,
                           const bool calc_energy, const bool calc_virial,
@@ -262,6 +264,8 @@ public:
   void calc_14_force(const float4 *xyzq, const bool calc_energy,
                      const bool calc_virial, const int stride, AT *force,
                      cudaStream_t stream = 0);
+
+  void clear(void);
 
   /** @brief Calculates direct force
    * @todo */

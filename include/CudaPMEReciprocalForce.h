@@ -226,6 +226,8 @@ public:
 
   void setBoxDimensions(std::vector<double> dim) { boxDimensions = dim; }
 
+  void clear(void);
+
   void calc_force(const float4 *xyzq, bool calcEnergy, bool calcVirial) {
     // set_stream(*recipStream);
     calc(1.0 / boxDimensions[0], 1.0 / boxDimensions[1], 1.0 / boxDimensions[2],

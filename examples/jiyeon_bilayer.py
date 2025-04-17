@@ -1,4 +1,5 @@
-from charmm import apocharmm as ch
+# from charmm import apocharmm as ch
+import apocharmm._core as ch
 import argparse
 
 
@@ -26,48 +27,48 @@ def pore_simulation(args):
     ctx.setCoordinates(crd)
     ctx.assignVelocitiesAtTemperature(300)
 
-  # An initial NVT simulation
-  langevinThermostat = ch.LangevinThermostatIntegrator(0.002)
-  langevinThermostat.setFriction(5.0)
-  langevinThermostat.setBathTemperature(298.17)
-  langevinThermostat.setSimulationContext(ctx)
-  restartsubscriber = ch.RestartSubscriber("out/jiyeon_nvt.res", 10000)
-  langevinThermostat.subscribe([restartsubscriber])
-  numSteps = int(1e5)
-  langevinThermostat.propagate(numSteps)
-  print("NVT done")
+    # An initial NVT simulation
+    langevinThermostat = ch.LangevinThermostatIntegrator(0.002)
+    langevinThermostat.setFriction(5.0)
+    langevinThermostat.setBathTemperature(298.17)
+    langevinThermostat.setSimulationContext(ctx)
+    restartsubscriber = ch.RestartSubscriber("out/jiyeon_nvt.res", 10000)
+    langevinThermostat.subscribe([restartsubscriber])
+    numSteps = int(1e5)
+    langevinThermostat.propagate(numSteps)
+    print("NVT done")
 
-  # An additional short NPT simulation to get the right area
-  langevinPiston = ch.LangevinPistonIntegrator(0.002)
-  langevinPiston.setCrystalType(ch.CRYSTAL.TETRAGONAL)
-  #langevinPiston.setPistonMass(500.0)
-  langevinPiston.setPistonFriction(12.0)
-  langevinPiston.setBathTemperature(298.17)
-  langevinPiston.setSimulationContext(ctx)
-  subscriber = ch.DcdSubscriber("out/jiyeon_npt.dcd", 1000)
-  restartsubscriber = ch.RestartSubscriber("out/jiyeon_npt.res", 10000)
-  #stateSub = ch.StateSubscriber("out/jiyeon_npt.state", 100)
-  #stateSub.setReportFlags("all")
-  langevinPiston.subscribe([subscriber, restartsubscriber])
-  nptSteps = int(1e5)
-  langevinPiston.propagate(nptSteps)
-  print("Short NPT done")
+    # An additional short NPT simulation to get the right area
+    langevinPiston = ch.LangevinPistonIntegrator(0.002)
+    langevinPiston.setCrystalType(ch.CRYSTAL.TETRAGONAL)
+    # langevinPiston.setPistonMass(500.0)
+    langevinPiston.setPistonFriction(12.0)
+    langevinPiston.setBathTemperature(298.17)
+    langevinPiston.setSimulationContext(ctx)
+    subscriber = ch.DcdSubscriber("out/jiyeon_npt.dcd", 1000)
+    restartsubscriber = ch.RestartSubscriber("out/jiyeon_npt.res", 10000)
+    # stateSub = ch.StateSubscriber("out/jiyeon_npt.state", 100)
+    # stateSub.setReportFlags("all")
+    langevinPiston.subscribe([subscriber, restartsubscriber])
+    nptSteps = int(1e5)
+    langevinPiston.propagate(nptSteps)
+    print("Short NPT done")
 
-  # A production NPT simulation
-  langevinPiston = ch.LangevinPistonIntegrator(0.002)
-  langevinPiston.setCrystalType(ch.CRYSTAL.TETRAGONAL)
-  langevinPiston.setPistonMass([0.0, 500.0])
-  langevinPiston.setPistonFriction(12.0)
-  langevinPiston.setBathTemperature(298.17)
-  langevinPiston.setSimulationContext(ctx)
-  subscriber = ch.DcdSubscriber("out/jiyeon_npat.dcd", 10000)
-  restartsubscriber = ch.RestartSubscriber("out/jiyeon_npat.res", 50000)
-  #stateSub = ch.StateSubscriber("out/jiyeon_npt.state", 100)
-  #stateSub.setReportFlags("all")
-  langevinPiston.subscribe([subscriber, restartsubscriber])
-  nptSteps = int(1e7)
-  langevinPiston.setDebugPrintFrequency(1000)
-  langevinPiston.propagate(nptSteps)
+    # A production NPT simulation
+    langevinPiston = ch.LangevinPistonIntegrator(0.002)
+    langevinPiston.setCrystalType(ch.CRYSTAL.TETRAGONAL)
+    langevinPiston.setPistonMass([0.0, 500.0])
+    langevinPiston.setPistonFriction(12.0)
+    langevinPiston.setBathTemperature(298.17)
+    langevinPiston.setSimulationContext(ctx)
+    subscriber = ch.DcdSubscriber("out/jiyeon_npat.dcd", 10000)
+    restartsubscriber = ch.RestartSubscriber("out/jiyeon_npat.res", 50000)
+    # stateSub = ch.StateSubscriber("out/jiyeon_npt.state", 100)
+    # stateSub.setReportFlags("all")
+    langevinPiston.subscribe([subscriber, restartsubscriber])
+    nptSteps = int(1e7)
+    langevinPiston.setDebugPrintFrequency(1000)
+    langevinPiston.propagate(nptSteps)
 
 
 if __name__ == "__main__":

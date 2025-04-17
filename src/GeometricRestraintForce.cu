@@ -146,10 +146,14 @@ void GeometricRestraintForce<AT, CT>::addRestraint(
   r.size = atoms.size();
   // r.atoms = atoms;
 
+  // int idx = restraints.size();
+  // restraints.resize(restraints.size() + 1);
+  // restraints[idx] = r;
+
   restraints.push_back(r);
   thrust::device_vector<int> atoms_d(atoms);
-  thrust::device_vector<thrust::device_vector<int>> restraintAtoms;
-  // restraintAtoms.push_back(atoms_d);
+  // // thrust::device_vector<thrust::device_vector<int>> restraintAtoms;
+  // // restraintAtoms.push_back(atoms_d);
 }
 
 template <typename AT, typename CT>
@@ -169,6 +173,11 @@ void GeometricRestraintForce<AT, CT>::calc_force(const float4 *xyzq,
 
   float3 box = {50.0, 50.0, 50.0};
 
+  // restraintKernel<<<numBlocks, numThreads>>>(
+  //   restraints.size(), restraints.getDeviceData(),
+  //   // calcEnergy, calcVirial,
+  //   xyzq, forceVal->stride(), box.x, box.y, box.z, forceVal->xyz(),
+  //   energyVirial.getEnergyPointer("geo"));
   restraintKernel<<<numBlocks, numThreads>>>(
       restraints.size(), thrust::raw_pointer_cast(restraints.data()),
       // calcEnergy, calcVirial,

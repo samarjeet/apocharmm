@@ -92,3 +92,9 @@ void CudaPMEReciprocalForce::calc(const double inv_boxx, const double inv_boxy,
   if (calc_energy)
     PMErecip.calc_self_energy(coord, ncoord, this->kappa);
 }
+
+void CudaPMEReciprocalForce::clear(void) {
+  energyVirial.clear(*recipStream);
+  forceVal->clear(*recipStream);
+  return;
+}

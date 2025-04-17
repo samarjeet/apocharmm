@@ -20,6 +20,29 @@
 
 #include "helper.h"
 
+
+
+TEST_CASE("generate", "[setup]"){
+  std::string dataPath = getDataPath();
+
+  SECTION("PSF generation tests") {
+    CharmmPSF psf;
+    CharmmResidueTopology rtf;
+
+    rtf.readRTF(dataPath + "top_all36_prot.rtf");
+
+    // rtf.print();
+
+    std::vector<std::string> sequence{"MET", "ILE"};
+    std::string segment{"PROA"};
+    psf.generate(rtf, sequence, segment);
+    std::vector<std::string> water(1000, "TIP3");
+
+    psf.append(rtf, sequence, "BWAT");
+  }
+
+}
+
 TEST_CASE("readPSF", "[energy]") {
   std::string dataPath = getDataPath();
 

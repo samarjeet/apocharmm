@@ -1019,7 +1019,7 @@ __global__ void setup_list_kernel(
 
 //-----------------------------------------------------------------------------------------------------------
 
-//#############################################################################################
+// #############################################################################################
 
 //
 // Dummy constructor
@@ -1660,6 +1660,12 @@ template <typename AT, typename CT> void CudaBondedForce<AT, CT>::print() {
             << std::setw(maxw) << nimdihecoef << std::endl;
 }
 
+template <typename AT, typename CT> void CudaBondedForce<AT, CT>::clear(void) {
+  energyVirial.clear(*bondedStream);
+  forceVal->clear(*bondedStream);
+  return;
+}
+
 //
 // Calculates forces
 //
@@ -1839,6 +1845,11 @@ void CudaBondedForce<AT, CT>::calc_force(const float4 *xyzq, bool calcEnergy,
                             forceVal->xyz(), *bondedStream);
   }
   */
+}
+
+template <typename AT, typename CT>
+std::shared_ptr<Force<long long int>> CudaBondedForce<AT, CT>::getForce(void) {
+  return forceVal;
 }
 
 //

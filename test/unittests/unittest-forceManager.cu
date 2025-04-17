@@ -18,6 +18,7 @@
 #include "catch.hpp"
 #include "helper.h"
 #include "test_paths.h"
+#include <cuda_runtime.h>
 #include <iostream>
 #include <vector>
 
@@ -422,4 +423,76 @@ TEST_CASE("MBARForceManager", "[unit]") {
     */
     // CHECK_NOTHROW(integrator.propagate(1000));
   }
+}
+
+TEST_CASE("ModForces", "") {
+  std::string dataPath = getDataPath();
+  SECTION("Add") {
+    auto prm =
+        std::make_shared<CharmmParameters>(dataPath + "toppar_water_ions.str");
+    auto psf = std::make_shared<CharmmPSF>(dataPath + "waterbox.psf");
+
+    auto fm = std::make_shared<ForceManager>(psf, prm);
+
+    double cubeLength1 = 50.0;
+    fm->setBoxDimensions({cubeLength1, cubeLength1, cubeLength1});
+    fm->setFFTGrid(48, 48, 48);
+    fm->setKappa(0.34);
+    fm->setCutoff(9.0);
+    fm->setCtonnb(8.0);
+    fm->setCtofnb(8.5);
+
+    fm->setPrintEnergyDecomposition(true);
+
+    auto ctx = std::make_shared<CharmmContext>(fm);
+    auto crd = std::make_shared<CharmmCrd>(dataPath + "waterbox.crd");
+    // auto crd = std::make_shared<CharmmCrd>(path + "step3_pbcsetup.crd");
+    ctx->setCoordinates(crd);
+
+    // ctx->calculatePotentialEnergy(true, true);
+    ctx->calculateForces(true, true, true);
+    // ctx->getPotentialEnergy();
+
+    // Create a new force
+
+    std::shared_ptr<CudaBondedForce<long long int, float>> bondedForcePtr;
+    std::shared_ptr<cudaStream_t> bondedStream;
+    std::shared_ptr<Force<long long int>> bondedForceValues;
+    std::shared_ptr<CudaEnergyVirial> bondedEnergyVirial =
+        std::make_shared<CudaEnergyVirial>();
+
+    std::vector<double> boxDimensions = {50.0, 50.0, 50.0};
+    int numAtoms = psf->getNumAtoms();
+
+    bondedStream = std::make_shared<cudaStream_t>();
+    cudaStreamCreate(bondedStream.get());
+    auto bondedParamsAndList = prm->getBondedParamsAndLists(psf);
+    bondedForceValues = std::make_shared<Force<long long int>>();
+    bondedForceValues->realloc(numAtoms, 1.5f);
+
+    bondedForcePtr = std::make_shared<CudaBondedForce<long long int, float>>(
+        *bondedEnergyVirial, "bond", "ureyb", "angle", "dihe", "imdihe",
+        "cmap");
+
+    bondedForcePtr->setup_list(bondedParamsAndList.listsSize,
+                               bondedParamsAndList.listVal, *bondedStream);
+    bondedForcePtr->setup_coef(bondedParamsAndList.paramsSize,
+                               bondedParamsAndList.paramsVal);
+
+    // bondedForcePtr->setBoxDimensions({boxx, boxy, boxz});
+    bondedForcePtr->setBoxDimensions(boxDimensions);
+    bondedForcePtr->setForce(bondedForceValues);
+    bondedForcePtr->setStream(bondedStream);
+
+    // Subscribe force to forceManager
+    fm->subscribe(bondedForcePtr, "new bonded force", bondedStream,
+                  bondedForceValues, bondedEnergyVirial);
+
+    std::cout << "bonded force added" << std::endl;
+    // ctx->calculatePotentialEnergy(true, true);
+    ctx->calculateForces(true, true, true);
+    // ctx->getPotentialEnergy();
+  }
+
+  SECTION("Remove") {}
 }
