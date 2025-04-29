@@ -28,6 +28,7 @@ CudaLangevinPistonIntegrator::CudaLangevinPistonIntegrator(
     const double timeStep, const CRYSTAL crystalType)
     : CudaIntegrator(timeStep) {
   m_UsingHolonomicConstraints = true;
+  m_MaxPredictorCorrectorSteps = 3;
 
   m_DevPHILOXStates = nullptr;
 
