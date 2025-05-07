@@ -428,5 +428,72 @@ __forceinline__ __device__ void get_val(long long int &val, const int wid) {
 #endif
 //----------------------------------------------------------------------------------------
 
+template <typename T> __device__ __inline__ T WarpReduceSum(T value) {
+#pragma unroll
+  for (unsigned int offset = warpSize / 2; offset > 0; offset /= 2)
+    value += __shfl_down_sync(0xFFFFFFFF, value, offset, warpSize);
+  return value;
+}
+
+template <> __device__ __inline__ double4 WarpReduceSum(double4 value) {
+#pragma unroll
+  for (unsigned int offset = warpSize / 2; offset > 0; offset /= 2) {
+    value.x += __shfl_down_sync(0xFFFFFFFF, value.x, offset, warpSize);
+    value.y += __shfl_down_sync(0xFFFFFFFF, value.y, offset, warpSize);
+    value.z += __shfl_down_sync(0xFFFFFFFF, value.z, offset, warpSize);
+    value.w += __shfl_down_sync(0xFFFFFFFF, value.w, offset, warpSize);
+  }
+  return value;
+}
+
+template <typename T> __device__ __inline__ T BlockReduceSum(T value) {
+  __shared__ T cache[32];
+  const unsigned int lane = threadIdx.x % warpSize;
+  const unsigned int warpIdx = threadIdx.x / warpSize;
+
+  // Perform reduction within warp
+  value = WarpReduceSum<T>(value);
+
+  // Write partially reduced value to shared memory
+  if (lane == 0)
+    cache[warpIdx] = value;
+  __syncthreads();
+
+  // Ensure we only grab a value from shared memory if that warp "existed"
+  value =
+      (threadIdx.x < blockDim.x / warpSize) ? cache[lane] : static_cast<T>(0);
+
+  // The "first" warp has each warp's partially reduced value
+  if (warpIdx == 0)
+    value = WarpReduceSum<T>(value);
+
+  return value;
+}
+
+template <> __device__ __inline__ double4 BlockReduceSum(double4 value) {
+  __shared__ double4 cache[32];
+  const unsigned int lane = threadIdx.x % warpSize;
+  const unsigned int warpIdx = threadIdx.x / warpSize;
+
+  // Perform reduction within warp
+  value = WarpReduceSum<double4>(value);
+
+  // Write partially reduced value to shared memory
+  if (lane == 0)
+    cache[warpIdx] = value;
+  __syncthreads();
+
+  // Ensure we only grab a value from shared memory if that warp "existed"
+  value = (threadIdx.x < blockDim.x / warpSize)
+              ? cache[lane]
+              : make_double4(0.0, 0.0, 0.0, 0.0);
+
+  // The "first" warp has each warp's partially reduced value
+  if (warpIdx == 0)
+    value = WarpReduceSum<double4>(value);
+
+  return value;
+}
+
 #endif // GPU_UTILS_H
 #endif // NOCUDAC

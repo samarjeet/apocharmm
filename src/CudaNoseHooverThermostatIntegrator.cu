@@ -4,7 +4,7 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author: Antti-Pekka Hynninen, Samarjeet Prasad, James E. Gonzales II
+// Author: James E. Gonzales II, Samarjeet Prasad
 //
 // ENDLICENSE
 
@@ -17,593 +17,697 @@
 CudaNoseHooverThermostatIntegrator::CudaNoseHooverThermostatIntegrator(
     const double timeStep)
     : CudaIntegrator(timeStep) {
-  m_ChainLength = 5;
-  m_StepId = 0;
-  m_NoseHooverPistonMass = 0.0;
-  m_NoseHooverPistonPosition = 0.0;
-  m_NoseHooverPistonVelocity = 0.0;
-  m_NoseHooverPistonVelocityPrevious = 0.0;
-  m_NoseHooverPistonForce = 0.0;
-  m_NoseHooverPistonForcePrevious = 0.0;
-  m_BathTemperature = 300.0;
+  m_UsingHolonomicConstraints = true;
 
-  m_IntegratorTypeName = "CudaNoseHooverThermostatIntegrator";
+  m_ReferenceTemperature = 300.0;
+
+  // Allocate memory for Nose-Hoover variables
+  m_NoseHooverPistonMass.resize(1);
+  m_NoseHooverPistonVelocity.resize(1);
+  m_NoseHooverPistonVelocityPrevious.resize(1);
+  m_NoseHooverPistonForce.resize(1);
+  m_NoseHooverPistonForcePrevious.resize(1);
+
+  // Set Nose-Hoover variables to default values
+  m_NoseHooverPistonMass.setToValue(-9999.9999);
+  m_NoseHooverPistonVelocity.setToValue(0.0);
+  m_NoseHooverPistonVelocityPrevious.setToValue(0.0);
+  m_NoseHooverPistonForce.setToValue(0.0);
+  m_NoseHooverPistonForcePrevious.setToValue(0.0);
+
+  m_MaxPredictorCorrectorIterations = 3;
+
+  m_KineticEnergy.resize(1);
+  m_KineticEnergy.setToValue(0.0);
+
+  m_AverageTemperature.resize(1);
+  m_AverageTemperature.setToValue(0.0);
 }
 
-__global__ static void init(double kbt, const int numAtoms, const int stride,
-                            const double timeStep,
-                            // double4 *__restrict__ coords,
-                            double4 *__restrict__ coordsDelta,
-                            double4 *__restrict__ coordsDeltaPrevious,
-                            const double4 *__restrict__ velMass,
-                            const double *__restrict__ force) {
-  int index = blockIdx.x * blockDim.x + threadIdx.x;
-  if (index < numAtoms) {
-    double fx = -force[index];
-    double fy = -force[index + stride];
-    double fz = -force[index + 2 * stride];
-
-    double fact = timeStep * timeStep * velMass[index].w * 0.5;
-
-    coordsDeltaPrevious[index].x = velMass[index].x * timeStep - fx * fact;
-    coordsDeltaPrevious[index].y = velMass[index].y * timeStep - fy * fact;
-    coordsDeltaPrevious[index].z = velMass[index].z * timeStep - fz * fact;
-
-    coordsDelta[index].x = velMass[index].x * timeStep + fx * fact;
-    coordsDelta[index].y = velMass[index].y * timeStep + fy * fact;
-    coordsDelta[index].z = velMass[index].z * timeStep + fz * fact;
-  }
+void CudaNoseHooverThermostatIntegrator::setReferenceTemperature(
+    const double referenceTemperature) {
+  m_ReferenceTemperature = referenceTemperature;
+  return;
 }
 
-__global__ static void
-backStepInitializationKernel(int numAtoms, double4 *__restrict__ coords,
-                             double4 *__restrict__ coordsDeltaPrevious) {
-
-  int index = blockIdx.x * blockDim.x + threadIdx.x;
-  if (index < numAtoms) {
-    coords[index].x -= coordsDeltaPrevious[index].x;
-    coords[index].y -= coordsDeltaPrevious[index].y;
-    coords[index].z -= coordsDeltaPrevious[index].z;
-  }
+void CudaNoseHooverThermostatIntegrator::setNoseHooverPistonMass(
+    const double noseHooverPistonMass) {
+  m_NoseHooverPistonMass.setToValue(noseHooverPistonMass);
+  return;
 }
 
-__global__ static void
-backStepInitializationKernel2(int numAtoms, double4 *__restrict__ coords,
-                              double4 *__restrict__ coordsRef,
-                              double4 *__restrict__ coordsDeltaPrevious) {
-
-  int index = blockIdx.x * blockDim.x + threadIdx.x;
-  if (index < numAtoms) {
-    coordsDeltaPrevious[index].x = coordsRef[index].x - coords[index].x;
-    coordsDeltaPrevious[index].y = coordsRef[index].y - coords[index].y;
-    coordsDeltaPrevious[index].z = coordsRef[index].z - coords[index].z;
-
-    coords[index].x = coordsRef[index].x;
-    coords[index].y = coordsRef[index].y;
-    coords[index].z = coordsRef[index].z;
-  }
+void CudaNoseHooverThermostatIntegrator::setNoseHooverPistonVelocity(
+    const double noseHooverPistonVelocity) {
+  m_NoseHooverPistonVelocity.setToValue(noseHooverPistonVelocity);
+  return;
 }
 
-static __global__ void
-updateSPKernel(int numAtoms, float4 *__restrict__ xyzq,
-               const double4 *__restrict__ coordsCharge) {
-  int index = blockIdx.x * blockDim.x + threadIdx.x;
-  if (index < numAtoms) {
-    xyzq[index].x = (float)coordsCharge[index].x;
-    xyzq[index].y = (float)coordsCharge[index].y;
-    xyzq[index].z = (float)coordsCharge[index].z;
-  }
+void CudaNoseHooverThermostatIntegrator::setNoseHooverPistonVelocityPrevious(
+    const double noseHooverPistonVelocityPrevious) {
+  m_NoseHooverPistonVelocityPrevious.setToValue(
+      noseHooverPistonVelocityPrevious);
+  return;
 }
 
-void CudaNoseHooverThermostatIntegrator::initialize(void) {
-  int numAtoms = m_Context->getNumAtoms();
+void CudaNoseHooverThermostatIntegrator::setNoseHooverPistonForce(
+    const double noseHooverPistonForce) {
+  m_NoseHooverPistonForce.setToValue(noseHooverPistonForce);
+  return;
+}
 
-  m_NoseHooverPistonMass = 500.0; // TODO : set this
-  m_NoseHooverPistonVelocity = 0.0;
-  m_NoseHooverPistonVelocityPrevious = 0.0;
-  m_NoseHooverPistonForce = 0.0;
-  m_NoseHooverPistonForcePrevious = 0.0;
+void CudaNoseHooverThermostatIntegrator::setNoseHooverPistonForcePrevious(
+    const double noseHooverPistonForcePrevious) {
+  m_NoseHooverPistonForcePrevious.setToValue(noseHooverPistonForcePrevious);
+  return;
+}
 
-  m_CoordsDelta.resize(numAtoms);
-  m_CoordsDeltaPrevious.resize(numAtoms);
+void CudaNoseHooverThermostatIntegrator::setMaxPredictorCorrectorIterations(
+    const int maxPredictorCorrectorIterations) {
+  m_MaxPredictorCorrectorIterations = maxPredictorCorrectorIterations;
+  return;
+}
 
-  auto coordsRefDevice = m_CoordsRef.getDeviceData();
-  // if (m_UsingHolonomicConstraints) {
-  //   m_HolonomicConstraintForces.resize(numAtoms);
-  // }
+double CudaNoseHooverThermostatIntegrator::getReferenceTemperature(void) const {
+  return m_ReferenceTemperature;
+}
 
-  int numThreads = 128;
-  int numBlocks = (numAtoms - 1) / numThreads + 1;
+const CudaContainer<double> &
+CudaNoseHooverThermostatIntegrator::getNoseHooverPistonMass(void) const {
+  return m_NoseHooverPistonMass;
+}
 
-  auto coords = m_Context->getCoordinatesCharges().getDeviceData();
-  auto xyzq = m_Context->getXYZQ()->getDeviceXYZQ();
-  auto coordsDeltaDevice = m_CoordsDelta.getDeviceData();
-  auto coordsDeltaPreviousDevice = m_CoordsDeltaPrevious.getDeviceData();
-  auto velMass = m_Context->getVelocityMass().getDeviceData();
+const CudaContainer<double> &
+CudaNoseHooverThermostatIntegrator::getNoseHooverPistonVelocity(void) const {
+  return m_NoseHooverPistonVelocity;
+}
 
-  if (m_UsingHolonomicConstraints) {
-    copy_DtoD_async<double4>(coords, coordsRefDevice, numAtoms,
-                             *m_IntegratorStream);
-    cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
-    // cudaCheck(cudaDeviceSynchronize());
+const CudaContainer<double> &
+CudaNoseHooverThermostatIntegrator::getNoseHooverPistonVelocityPrevious(
+    void) const {
+  return m_NoseHooverPistonVelocityPrevious;
+}
 
-    m_HolonomicConstraint->handleHolonomicConstraints(coordsRefDevice);
-    updateSPKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
-        numAtoms, xyzq, coords);
-    copy_DtoD_async<double4>(coords, coordsRefDevice, numAtoms,
-                             *m_IntegratorStream);
-    cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
-    // cudaCheck(cudaDeviceSynchronize());
+const CudaContainer<double> &
+CudaNoseHooverThermostatIntegrator::getNoseHooverPistonForce(void) const {
+  return m_NoseHooverPistonForce;
+}
+
+const CudaContainer<double> &
+CudaNoseHooverThermostatIntegrator::getNoseHooverPistonForcePrevious(
+    void) const {
+  return m_NoseHooverPistonForcePrevious;
+}
+
+int CudaNoseHooverThermostatIntegrator::getMaxPredictorCorrectorIterations(
+    void) const {
+  return m_MaxPredictorCorrectorIterations;
+}
+
+const CudaContainer<double> &
+CudaNoseHooverThermostatIntegrator::getKineticEnergy(void) const {
+  return m_KineticEnergy;
+}
+
+const CudaContainer<double> &
+CudaNoseHooverThermostatIntegrator::getAverageTemperature(void) const {
+  return m_AverageTemperature;
+}
+
+CudaContainer<double> &
+CudaNoseHooverThermostatIntegrator::getNoseHooverPistonMass(void) {
+  return m_NoseHooverPistonMass;
+}
+
+CudaContainer<double> &
+CudaNoseHooverThermostatIntegrator::getNoseHooverPistonVelocity(void) {
+  return m_NoseHooverPistonVelocity;
+}
+
+CudaContainer<double> &
+CudaNoseHooverThermostatIntegrator::getNoseHooverPistonVelocityPrevious(void) {
+  return m_NoseHooverPistonVelocityPrevious;
+}
+
+CudaContainer<double> &
+CudaNoseHooverThermostatIntegrator::getNoseHooverPistonForce(void) {
+  return m_NoseHooverPistonForce;
+}
+
+CudaContainer<double> &
+CudaNoseHooverThermostatIntegrator::getNoseHooverPistonForcePrevious(void) {
+  return m_NoseHooverPistonForcePrevious;
+}
+
+CudaContainer<double> &
+CudaNoseHooverThermostatIntegrator::getKineticEnergy(void) {
+  return m_KineticEnergy;
+}
+
+CudaContainer<double> &
+CudaNoseHooverThermostatIntegrator::getAverageTemperature(void) {
+  return m_AverageTemperature;
+}
+
+/** @brief Updates the single-prercision coordinates container (xyzq)
+ */
+__global__ static void UpdateSinglePrecisionCoordinatesKernel(
+    float4 *__restrict__ xyzq, const double4 *__restrict__ coordsCharges,
+    const int numAtoms) {
+  const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (idx < numAtoms) {
+    xyzq[idx].x = static_cast<float>(coordsCharges[idx].x);
+    xyzq[idx].y = static_cast<float>(coordsCharges[idx].y);
+    xyzq[idx].z = static_cast<float>(coordsCharges[idx].z);
   }
-
-  m_Context->calculateForces();
-  auto force = m_Context->getForces();
-
-  int stride = m_Context->getForceStride();
-  double kbt = charmm::constants::kBoltz * m_BathTemperature;
-
-  init<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
-      kbt, numAtoms, stride, m_TimeStep, // coords,
-      coordsDeltaDevice, coordsDeltaPreviousDevice, velMass, force->xyz());
-  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
-  // cudaCheck(cudaDeviceSynchronize());
-
-  if (m_UsingHolonomicConstraints) {
-    backStepInitializationKernel<<<numBlocks, numThreads, 0,
-                                   *m_IntegratorStream>>>(
-        numAtoms, coords, coordsDeltaPreviousDevice);
-
-    m_HolonomicConstraint->handleHolonomicConstraints(coordsRefDevice);
-
-    backStepInitializationKernel2<<<numBlocks, numThreads, 0,
-                                    *m_IntegratorStream>>>(
-        numAtoms, coords, coordsRefDevice, coordsDeltaPreviousDevice);
-  }
-  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
-
-  m_StepId = 0;
 
   return;
 }
 
-// change this to save delta
-
-// static __global__ void firstHalfKickAndDrift(const int numAtoms,
-//                                              const int stride,
-//                                              const ts_t timeStep, float4
-//                                              *xyzq, double4 *velMass, const
-//                                              double *__restrict__ force) {
-//   int index = blockIdx.x * blockDim.x + threadIdx.x;
-//   if (index < numAtoms) {
-//     float fx = force[index];
-//     float fy = force[index + stride];
-//     float fz = force[index + 2 * stride];
-//
-//     velMass[index].x -= 0.5 * timeStep * fx * velMass[index].w;
-//     velMass[index].y -= 0.5 * timeStep * fy * velMass[index].w;
-//     velMass[index].z -= 0.5 * timeStep * fz * velMass[index].w;
-//
-//     xyzq[index].x += timeStep * velMass[index].x;
-//     xyzq[index].y += timeStep * velMass[index].y;
-//     xyzq[index].z += timeStep * velMass[index].z;
-//   }
-// }
-//
-// static __global__ void secondHalfKick(const int numAtoms, const int stride,
-//                                       const ts_t timeStep, float4 *xyzq,
-//                                       double4 *velMass, const double *force)
-//                                       {
-//   int index = blockIdx.x * blockDim.x + threadIdx.x;
-//   if (index < numAtoms) {
-//
-//     float fx = force[index];
-//     float fy = force[index + stride];
-//     float fz = force[index + 2 * stride];
-//
-//     velMass[index].x -= 0.5 * timeStep * fx * velMass[index].w;
-//     velMass[index].y -= 0.5 * timeStep * fy * velMass[index].w;
-//     velMass[index].z -= 0.5 * timeStep * fz * velMass[index].w;
-//   }
-// }
-//
-//__global__ void ke(const double4 *velMass, int numAtoms, double *d_ke) {
-//   extern __shared__ double sdata[];
-//
-//   unsigned int id = threadIdx.x;
-//   unsigned int tid = threadIdx.x + blockDim.x * blockIdx.x;
-//
-//   if (tid < numAtoms) {
-//     sdata[id] =
-//         (velMass[tid].x * velMass[tid].x + velMass[tid].y * velMass[tid].y +
-//          velMass[tid].z * velMass[tid].z) /
-//         velMass[tid].w;
-//   } else {
-//     sdata[id] = 0.0f;
-//   }
-//   __syncthreads();
-//
-//   for (int s = 1; s < blockDim.x; s *= 2) {
-//     if (id % (s * 2) == 0) {
-//       sdata[id] += sdata[id + s];
-//     }
-//     __syncthreads();
-//
-//     if (id == 0) {
-//       d_ke[blockIdx.x] = (double)sdata[0];
-//     }
-//   }
-// }
-//
-/*
- Velocity-Verlet drift step propagator
-*/
-// static __global__ void u1Propagator(float deltaT, int numAtoms,
-//                                     const double4 *__restrict__ velMass,
-//                                     double4 *__restrict__ xyzq) {
-
-//   int index = blockIdx.x * blockDim.x + threadIdx.x;
-//   if (index < numAtoms) {
-//     xyzq[index].x += deltaT * velMass[index].x;
-//     xyzq[index].y += deltaT * velMass[index].y;
-//     xyzq[index].z += deltaT * velMass[index].z;
-//   }
-// }
-
-// /*
-// Velocty-Verlet kick step propagator
-// */
-// static __global__ void u2Propagator(float deltaT, int numAtoms, int stride,
-//                                     double4 *__restrict__ velMass,
-//                                     const double *__restrict__ force,
-//                                     const double4 *__restrict__ xyzq) {
-//   int index = blockIdx.x * blockDim.x + threadIdx.x;
-//   if (index < numAtoms) {
-
-//     const double fx = force[index];
-//     const double fy = force[index + stride];
-//     const double fz = force[index + 2 * stride];
-
-//     velMass[index].x -= deltaT * fx * velMass[index].w;
-//     velMass[index].y -= deltaT * fy * velMass[index].w;
-//     velMass[index].z -= deltaT * fz * velMass[index].w;
-//   }
-// }
-
-///*
-// Thermostat propagator
-// chain positions
-//*/
-//  __global__ void
-// u3Propagator(float deltaT, int numAtoms, double4 *__restrict__ velMass,
-//              int chainLength, double *__restrict__ chainPositions,
-//              const double *__restrict__ chainVelocities) {
-//   unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
-//
-//   if (index < numAtoms) {
-//     velMass[index].x *= exp(-deltaT * chainVelocities[0]);
-//     velMass[index].y *= exp(-deltaT * chainVelocities[0]);
-//     velMass[index].z *= exp(-deltaT * chainVelocities[0]);
-//   }
-//
-//   if (index == 0) {
-//     for (int i = 0; i < chainLength; i++) {
-//       chainPositions[i] += deltaT * chainVelocities[i];
-//     }
-//   }
-// }
-//
-///*
-// Thermostat propagator
-// chain velocities are updated
-//*/
-//__global__ void u434Propagator(float deltaT, int numAtoms, double kT,
-//                                       int ndegf, double4 *__restrict__
-//                                       velMass, int chainLength, double
-//                                       *__restrict__ chainPositions, double
-//                                       *__restrict__ chainVelocities, const
-//                                       double *__restrict__ chainMasses) {
-//
-//   // Calculate p * p / m
-//   unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
-//   if (index < numAtoms) {
-//   }
-//
-//   double kineticEnergy = 0.0; // TODO : calculate it
-//   int M = chainLength - 1;
-//   double G =
-//       ((chainVelocities[M - 1] * chainVelocities[M - 1]) * chainMasses[M - 1]
-//       -
-//        kT) /
-//       chainMasses[M];
-//
-//   chainVelocities[M] += deltaT * G;
-//
-//   for (int m = M - 1; m >= 0; m--) {
-//     G = ((chainVelocities[m - 1] * chainVelocities[m - 1]) *
-//              chainMasses[m - 1] -
-//          kT) /
-//         chainMasses[m];
-//     double scale = exp(-deltaT * chainVelocities[m]);
-//     chainVelocities[m] = scale * (scale * chainVelocities[m] + deltaT * G);
-//   }
-//
-//   // put u3 here
-//
-//   G = (2 * kineticEnergy - ndegf * kT) / chainMasses[0];
-//   for (int m = 0; m < M - 1; m++) {
-//     double scale = exp(-deltaT * chainVelocities[m + 1]);
-//     chainVelocities[m] = scale * (scale * chainVelocities[m] + deltaT * G);
-//     G = (chainVelocities[m] * chainVelocities[m] * chainMasses[m] - kT) /
-//         chainMasses[m + 1];
-//   }
-//   chainVelocities[M] += deltaT * G;
-// }
-
-__global__ static void coordsHalfStepVelocityUpdate(
-    double kbt, const int numAtoms, const int stride, const double timeStep,
-    double4 *__restrict__ coords, double4 *__restrict__ coordsDelta,
-    const double4 *__restrict__ coordsDeltaPrevious,
-    double4 *__restrict__ velMass, const double *__restrict__ force) {
-
-  int index = blockIdx.x * blockDim.x + threadIdx.x;
-  if (index < numAtoms) {
-
-    double fx = -force[index];
-    double fy = -force[index + stride];
-    double fz = -force[index + 2 * stride];
-
-    double fact = timeStep * timeStep * velMass[index].w;
-
-    coordsDelta[index].x = coordsDeltaPrevious[index].x + fact * fx;
-    coordsDelta[index].y = coordsDeltaPrevious[index].y + fact * fy;
-    coordsDelta[index].z = coordsDeltaPrevious[index].z + fact * fz;
-
-    coords[index].x += coordsDelta[index].x;
-    coords[index].y += coordsDelta[index].y;
-    coords[index].z += coordsDelta[index].z;
-  }
-}
-
-__global__ static void updateCoordsDeltaAfterConstraint(
-    int numAtoms, const double4 *__restrict__ coordsRef,
-    const double4 *__restrict__ coords, double4 *__restrict__ coordsDelta) {
-
-  int index = blockIdx.x * blockDim.x + threadIdx.x;
-
-  if (index < numAtoms) {
-    coordsDelta[index].x = coords[index].x - coordsRef[index].x;
-    coordsDelta[index].y = coords[index].y - coordsRef[index].y;
-    coordsDelta[index].z = coords[index].z - coordsRef[index].z;
-  }
-}
-
-/** @brief Given coordsDelta of previous and next half steps, returns the
- * on-step velocity */
 __global__ static void
-onStepVelocityCalculation(const int numAtoms, const double timeStep,
-                          double4 *__restrict__ coordsDelta,
-                          double4 *__restrict__ coordsDeltaPrevious,
-                          double4 *__restrict__ velMass) {
+InitializationKernel(double4 *__restrict__ coordsDelta,
+                     double4 *__restrict__ coordsDeltaPrevious,
+                     const double4 *__restrict__ velMass, const int numAtoms,
+                     const double *__restrict__ forces, const int forceStride,
+                     const double timeStep) {
+  const int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
-  int index = blockIdx.x * blockDim.x + threadIdx.x;
-  if (index < numAtoms) {
+  if (idx < numAtoms) {
+    const double fx = forces[0 * forceStride + idx];
+    const double fy = forces[1 * forceStride + idx];
+    const double fz = forces[2 * forceStride + idx];
+    const double fact = 0.5 * timeStep * timeStep * velMass[idx].w;
 
-    double fact = 0.5 / timeStep;
+    coordsDelta[idx].x = timeStep * velMass[idx].x - fact * fx;
+    coordsDelta[idx].y = timeStep * velMass[idx].y - fact * fy;
+    coordsDelta[idx].z = timeStep * velMass[idx].z - fact * fz;
 
-    velMass[index].x =
-        (coordsDelta[index].x + coordsDeltaPrevious[index].x) * fact;
-    velMass[index].y =
-        (coordsDelta[index].y + coordsDeltaPrevious[index].y) * fact;
-    velMass[index].z =
-        (coordsDelta[index].z + coordsDeltaPrevious[index].z) * fact;
+    coordsDeltaPrevious[idx].x = timeStep * velMass[idx].x + fact * fx;
+    coordsDeltaPrevious[idx].y = timeStep * velMass[idx].y + fact * fy;
+    coordsDeltaPrevious[idx].z = timeStep * velMass[idx].z + fact * fz;
   }
+
+  return;
+}
+
+__global__ static void
+BackStepInitializationKernel1(double4 *__restrict__ coordsCharges,
+                              const double4 *__restrict__ coordsDeltaPrevious,
+                              const int numAtoms) {
+  const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (idx < numAtoms) {
+    coordsCharges[idx].x -= coordsDeltaPrevious[idx].x;
+    coordsCharges[idx].y -= coordsDeltaPrevious[idx].y;
+    coordsCharges[idx].z -= coordsDeltaPrevious[idx].z;
+  }
+
+  return;
+}
+
+__global__ static void
+BackStepInitializationKernel2(double4 *__restrict__ coordsCharges,
+                              double4 *__restrict__ coordsDeltaPrevious,
+                              const double4 *__restrict__ coordsRef,
+                              const int numAtoms) {
+  const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (idx < numAtoms) {
+    coordsDeltaPrevious[idx].x = coordsRef[idx].x - coordsCharges[idx].x;
+    coordsDeltaPrevious[idx].y = coordsRef[idx].y - coordsCharges[idx].y;
+    coordsDeltaPrevious[idx].z = coordsRef[idx].z - coordsCharges[idx].z;
+
+    coordsCharges[idx].x = coordsRef[idx].x;
+    coordsCharges[idx].y = coordsRef[idx].y;
+    coordsCharges[idx].z = coordsRef[idx].z;
+  }
+
+  return;
+}
+
+void CudaNoseHooverThermostatIntegrator::initialize(void) {
+  const int numAtoms = m_Context->getNumAtoms();
+
+  m_CoordsDeltaPredicted.resize(numAtoms);
+
+  if (m_NoseHooverPistonMass[0] == -9999.9999)
+    m_NoseHooverPistonMass.setToValue(this->computeNoseHooverPistonMass());
+
+  double4 *coordsCharges = m_Context->getCoordinatesCharges().getDeviceData();
+  float4 *xyzq = m_Context->getXYZQ()->getDeviceXYZQ();
+
+  if (m_UsingHolonomicConstraints) {
+    copy_DtoD_async<double4>(coordsCharges, m_CoordsRef.getDeviceData(),
+                             numAtoms, *m_IntegratorStream);
+
+    m_HolonomicConstraint->handleHolonomicConstraints(
+        m_CoordsRef.getDeviceData());
+
+    const int numThreads = 256;
+    const int numBlocks = numAtoms / numThreads + 1;
+    UpdateSinglePrecisionCoordinatesKernel<<<numBlocks, numThreads, 0,
+                                             *m_IntegratorStream>>>(
+        xyzq, coordsCharges, numAtoms);
+
+    copy_DtoD_async<double4>(coordsCharges, m_CoordsRef.getDeviceData(),
+                             numAtoms, *m_IntegratorStream);
+
+    cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
+  }
+
+  m_Context->calculateForces();
+
+  double4 *velMass = m_Context->getVelocityMass().getDeviceData();
+  double *forces = m_Context->getForces()->xyz();
+  int forceStride = m_Context->getForceStride();
+
+  {
+    const int numThreads = 256;
+    const int numBlocks = numAtoms / numThreads + 1;
+    InitializationKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
+        m_CoordsDelta.getDeviceData(), m_CoordsDeltaPrevious.getDeviceData(),
+        velMass, numAtoms, forces, forceStride, m_TimeStep);
+  }
+
+  if (m_UsingHolonomicConstraints) {
+    const int numThreads = 256;
+    const int numBlocks = numAtoms / numThreads + 1;
+    BackStepInitializationKernel1<<<numBlocks, numThreads, 0,
+                                    *m_IntegratorStream>>>(
+        coordsCharges, m_CoordsDeltaPrevious.getDeviceData(), numAtoms);
+
+    m_HolonomicConstraint->handleHolonomicConstraints(
+        m_CoordsRef.getDeviceData());
+
+    BackStepInitializationKernel2<<<numBlocks, numThreads, 0,
+                                    *m_IntegratorStream>>>(
+        coordsCharges, m_CoordsDeltaPrevious.getDeviceData(),
+        m_CoordsRef.getDeviceData(), numAtoms);
+  }
+
+  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
+
+  return;
+}
+
+__global__ static void InvertDeltaAsymmetricKernel(
+    double4 *__restrict__ coordsDeltaPrevious, const float4 *__restrict__ xyzq,
+    const int2 *__restrict__ groups, const int numGroups, const float boxDimX) {
+  const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (idx < numGroups) {
+    const int2 group = groups[idx];
+
+    float gx = 0.0f, gy = 0.0f, gz = 0.0f;
+    for (int i = group.x; i <= group.y; i++) {
+      gx += xyzq[i].x;
+      gy += xyzq[i].y;
+      gz += xyzq[i].z;
+    }
+    gx /= static_cast<float>(group.y - group.x + 1);
+    gy /= static_cast<float>(group.y - group.x + 1);
+    gz /= static_cast<float>(group.y - group.x + 1);
+
+    if ((gx > 0.5 * boxDimX) || (gx < -0.5 * boxDimX)) {
+      for (int i = group.x; i <= group.y; i++) {
+        coordsDeltaPrevious[i].y *= -1.0;
+        coordsDeltaPrevious[i].z *= -1.0;
+      }
+    }
+  }
+
+  return;
+}
+
+__global__ static void
+HalfStepVelocityKernel(double4 *__restrict__ coordsCharges,
+                       double4 *__restrict__ coordsDelta,
+                       const double4 *__restrict__ coordsDeltaPrevious,
+                       const double4 *__restrict__ velMass, const int numAtoms,
+                       const double *__restrict__ forces, const int forceStride,
+                       const double timeStep) {
+  const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (idx < numAtoms) {
+    const double fx = forces[0 * forceStride + idx];
+    const double fy = forces[1 * forceStride + idx];
+    const double fz = forces[2 * forceStride + idx];
+    const double fact = timeStep * timeStep * velMass[idx].w;
+
+    coordsDelta[idx].x = coordsDeltaPrevious[idx].x - fact * fx;
+    coordsDelta[idx].y = coordsDeltaPrevious[idx].y - fact * fy;
+    coordsDelta[idx].z = coordsDeltaPrevious[idx].z - fact * fz;
+
+    coordsCharges[idx].x += coordsDelta[idx].x;
+    coordsCharges[idx].y += coordsDelta[idx].y;
+    coordsCharges[idx].z += coordsDelta[idx].z;
+  }
+
+  return;
+}
+
+__global__ static void UpdateCoordsDeltaAfterHolonomicConstraintKernel(
+    double4 *__restrict__ coordsDelta,
+    const double4 *__restrict__ coordsCharges,
+    const double4 *__restrict__ coordsRef, const int numAtoms) {
+  const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (idx < numAtoms) {
+    coordsDelta[idx].x = coordsCharges[idx].x - coordsRef[idx].x;
+    coordsDelta[idx].y = coordsCharges[idx].y - coordsRef[idx].y;
+    coordsDelta[idx].z = coordsCharges[idx].z - coordsRef[idx].z;
+  }
+
+  return;
+}
+
+__global__ static void
+ComputeKineticEnergyKernel(double *__restrict__ kineticEnergy,
+                           const double4 *__restrict__ velMass,
+                           const int numAtoms) {
+  const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  const int stride = gridDim.x * blockDim.x;
+
+  double ke = 0.0;
+  for (int i = idx; i < numAtoms; i += stride) {
+    ke += 0.5 *
+          ((velMass[i].x * velMass[i].x) + (velMass[i].y * velMass[i].y) +
+           (velMass[i].z * velMass[i].z)) /
+          velMass[i].w;
+  }
+
+  ke = BlockReduceSum<double>(ke);
+
+  if (threadIdx.x == 0)
+    atomicAdd(kineticEnergy, ke);
+
+  return;
+}
+
+__global__ static void UpdateNoseHooverPistonKernel(
+    double *__restrict__ noseHooverPistonForce,
+    double *__restrict__ noseHooverPistonForcePrevious,
+    double *__restrict__ noseHooverPistonVelocity,
+    const double *__restrict__ noseHooverPistonVelocityPrevious,
+    const double *__restrict__ noseHooverPistonMass,
+    const double *__restrict__ kineticEnergy,
+    const double referenceKineticEnergy, const double timeStep) {
+  if (threadIdx.x == 0) {
+    // Actually store the change in velocity (not the force)
+    noseHooverPistonForce[0] = 2.0 * timeStep *
+                               (kineticEnergy[0] - referenceKineticEnergy) /
+                               noseHooverPistonMass[0];
+
+    if (noseHooverPistonForcePrevious[0] == 0.0)
+      noseHooverPistonForcePrevious[0] = noseHooverPistonForce[0];
+
+    noseHooverPistonVelocity[0] =
+        noseHooverPistonVelocityPrevious[0] +
+        0.5 * (noseHooverPistonForce[0] + noseHooverPistonForcePrevious[0]);
+  }
+
+  return;
+}
+
+__global__ static void PredictorCorrectorKernel(
+    double4 *__restrict__ coordsCharges, double4 *__restrict__ velMass,
+    double4 *__restrict__ coordsDeltaPredicted,
+    const double4 *__restrict__ coordsDelta,
+    const double4 *__restrict__ coordsDeltaPrevious,
+    const double4 *__restrict__ coordsRef, const int numAtoms,
+    const double *__restrict__ noseHooverPistonVelocity,
+    const double timeStep) {
+  const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (idx < numAtoms) {
+    const double fact = 0.5 / timeStep;
+    const double onStepVelocityX =
+        fact * (coordsDeltaPrevious[idx].x + coordsDeltaPredicted[idx].x);
+    const double onStepVelocityY =
+        fact * (coordsDeltaPrevious[idx].y + coordsDeltaPredicted[idx].y);
+    const double onStepVelocityZ =
+        fact * (coordsDeltaPrevious[idx].z + coordsDeltaPredicted[idx].z);
+    const double nhFact = timeStep * timeStep * noseHooverPistonVelocity[0];
+
+    coordsDeltaPredicted[idx].x = coordsDelta[idx].x - nhFact * onStepVelocityX;
+    coordsDeltaPredicted[idx].y = coordsDelta[idx].y - nhFact * onStepVelocityY;
+    coordsDeltaPredicted[idx].z = coordsDelta[idx].z - nhFact * onStepVelocityZ;
+
+    velMass[idx].x = onStepVelocityX;
+    velMass[idx].y = onStepVelocityY;
+    velMass[idx].z = onStepVelocityZ;
+
+    coordsCharges[idx].x = coordsRef[idx].x + coordsDeltaPredicted[idx].x;
+    coordsCharges[idx].y = coordsRef[idx].y + coordsDeltaPredicted[idx].y;
+    coordsCharges[idx].z = coordsRef[idx].z + coordsDeltaPredicted[idx].z;
+  }
+
+  return;
+}
+
+__global__ static void
+OnStepVelocityKernel(double4 *__restrict__ velMass,
+                     const double4 *__restrict__ coordDelta,
+                     const double4 *__restrict__ coordDeltaPrevious,
+                     const int numAtoms, const double timeStep) {
+  const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (idx < numAtoms) {
+    velMass[idx].x =
+        0.5 * (coordDelta[idx].x + coordDeltaPrevious[idx].x) / timeStep;
+    velMass[idx].y =
+        0.5 * (coordDelta[idx].y + coordDeltaPrevious[idx].y) / timeStep;
+    velMass[idx].z =
+        0.5 * (coordDelta[idx].z + coordDeltaPrevious[idx].z) / timeStep;
+  }
+
+  return;
+}
+
+__global__ static void
+UpdateAverageTemperatureKernel(double *__restrict__ averageTemperature,
+                               const double *__restrict__ kineticEnergy,
+                               const int numDegreesOfFreedom,
+                               const double kBoltz, const int step) {
+  if (threadIdx.x == 0) {
+    const double s = static_cast<double>(step);
+    const double temperature =
+        kineticEnergy[0] /
+        (0.5 * static_cast<double>(numDegreesOfFreedom) * kBoltz);
+    averageTemperature[0] = (s / (s + 1.0)) * averageTemperature[0] +
+                            (1.0 / (s + 1.0)) * temperature;
+  }
+  return;
 }
 
 void CudaNoseHooverThermostatIntegrator::propagateOneStep(void) {
-  auto coords = m_Context->getCoordinatesCharges().getDeviceData();
-  auto xyzq = m_Context->getXYZQ()->getDeviceXYZQ();
-  auto coordsDeltaDevice = m_CoordsDelta.getDeviceData();
-  auto coordsDeltaPreviousDevice = m_CoordsDeltaPrevious.getDeviceData();
-  auto coordsRefDevice = m_CoordsRef.getDeviceData();
-  auto velMass = m_Context->getVelocityMass().getDeviceData();
+  const int numDegreesOfFreedom = m_Context->getDegreesOfFreedom();
+  const double referenceKineticEnergy =
+      0.5 * static_cast<double>(numDegreesOfFreedom) *
+      charmm::constants::kBoltz * m_ReferenceTemperature;
 
-  int numDegreesOfFreedom = m_Context->getDegreesOfFreedom();
+  const int numAtoms = m_Context->getNumAtoms();
+  double4 *coordsCharges = m_Context->getCoordinatesCharges().getDeviceData();
+  float4 *xyzq = m_Context->getXYZQ()->getDeviceXYZQ();
+  double4 *velMass = m_Context->getVelocityMass().getDeviceData();
+  const int forceStride = m_Context->getForceStride();
+  double *forces = m_Context->getForces()->xyz();
 
-  double referenceKineticEnergy =
-      0.5 * numDegreesOfFreedom * charmm::constants::kBoltz * m_BathTemperature;
-
-  if (m_DebugPrintFrequency > 0 && m_StepId % m_DebugPrintFrequency == 0) {
-    std::cout << "Step id : " << m_StepId << std::endl;
-  }
-
-  int numAtoms = m_Context->getNumAtoms();
-  int stride = m_Context->getForceStride();
-  double kbt = charmm::constants::kBoltz * m_BathTemperature;
+  constexpr int numThreads = 256;
+  const int numBlocks = numAtoms / numThreads + 1;
 
   if (m_StepsSinceNeighborListUpdate % m_NonbondedListUpdateFrequency == 0) {
-    /*
     if (m_Context->getForceManager()->getPeriodicBoundaryCondition() ==
         PBC::P21) {
-      auto groups = context->getForceManager()->getPSF()->getGroups();
+      // Find a better place for this
+      int numGroups =
+          m_Context->getForceManager()->getPSF()->getGroups().size();
+      int2 *groups =
+          m_Context->getForceManager()->getPSF()->getGroups().getDeviceData();
+      float boxDimX = static_cast<float>(m_Context->getBoxDimensions()[0]);
 
-      // find a better place for this
-      int numGroups = groups.size();
-      int numThreads = 128;
-      int numBlocks = (numGroups - 1) / numThreads + 1;
-
-      auto boxDimensions = m_Context->getBoxDimensions();
-      float3 box = {(float)boxDimensions[0], (float)boxDimensions[1],
-                    (float)boxDimensions[2]};
-
-      invertDeltaAsymmetric<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
-          numGroups, groups.getDeviceData(), box.x, xyzq, stride,
-          coordsDeltaPreviousDevice);
+      const int numThreads = 256;
+      const int numBlocks = numGroups / numThreads + 1;
+      InvertDeltaAsymmetricKernel<<<numBlocks, numThreads, 0,
+                                    *m_IntegratorStream>>>(
+          m_CoordsDeltaPrevious.getDeviceData(), xyzq, groups, numGroups,
+          boxDimX);
       cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
     }
-    */
     m_Context->resetNeighborList();
   }
 
-  if (m_StepId % m_RemoveCenterOfMassFrequency == 0) {
-    // TODO : activate this
-    // removeCenterOfMassMotion();
-  }
+  if (m_CurrentPropagatedStep % m_RemoveCenterOfMassFrequency == 0)
+    this->removeCenterOfMassMotion();
 
-  copy_DtoD_async<double4>(coords, m_CoordsRef.getDeviceData(), numAtoms,
+  copy_DtoD_async<double4>(coordsCharges, m_CoordsRef.getDeviceData(), numAtoms,
                            *m_IntegratorStream);
 
-  m_Context->calculateForces(false, true, true);
-  auto force = m_Context->getForces();
+  if ((m_DebugPrintFrequency > 0) &&
+      ((m_CurrentPropagatedStep + 1) % m_DebugPrintFrequency == 0)) {
+    m_Context->calculateForces(false, true, false);
+  } else {
+    m_Context->calculateForces(false, false, false);
+  }
 
-  m_NoseHooverPistonVelocityPrevious = m_NoseHooverPistonVelocity;
-  m_NoseHooverPistonForcePrevious = m_NoseHooverPistonForce;
+  copy_DtoD_async<double>(m_NoseHooverPistonVelocity.getDeviceData(),
+                          m_NoseHooverPistonVelocityPrevious.getDeviceData(), 1,
+                          *m_IntegratorStream);
+  copy_DtoD_async<double>(m_NoseHooverPistonForce.getDeviceData(),
+                          m_NoseHooverPistonForcePrevious.getDeviceData(), 1,
+                          *m_IntegratorStream);
 
-  int numThreads = 128;
-  int numBlocks = (numAtoms - 1) / numThreads + 1;
-  // int numBlocksReduction = 64;
-
-  coordsHalfStepVelocityUpdate<<<numBlocks, numThreads, 0,
-                                 *m_IntegratorStream>>>(
-      kbt, numAtoms, stride, m_TimeStep, coords, coordsDeltaDevice,
-      coordsDeltaPreviousDevice, velMass, force->xyz());
-
-  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
-
-  // TODO :  Use profiler to determine where we do this computation
+  HalfStepVelocityKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
+      coordsCharges, m_CoordsDelta.getDeviceData(),
+      m_CoordsDeltaPrevious.getDeviceData(), velMass, numAtoms, forces,
+      forceStride, m_TimeStep);
 
   if (m_UsingHolonomicConstraints) {
-    cudaCheck(cudaDeviceSynchronize());
+    // JEG250506: Need sync here, otherwise race condition? I don't get it
+    // either...
     cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
 
-    m_HolonomicConstraint->handleHolonomicConstraints(coordsRefDevice);
-    cudaCheck(cudaDeviceSynchronize());
+    m_HolonomicConstraint->handleHolonomicConstraints(
+        m_CoordsRef.getDeviceData());
 
-    // computeHolonomicConstraintForces<<<numBlocks, numThreads, 0,
-    //                                    *m_IntegratorStream>>>(
-    //     numAtoms, timeStep, velMass, coordsRefDevice, coords,
-    //     coordsDeltaDevice,
-    //     holonomicConstraintForces.getDeviceData());
-
-    updateCoordsDeltaAfterConstraint<<<numBlocks, numThreads, 0,
-                                       *m_IntegratorStream>>>(
-        numAtoms, coordsRefDevice, coords, coordsDeltaDevice);
-
-    cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
-    cudaCheck(cudaDeviceSynchronize());
+    UpdateCoordsDeltaAfterHolonomicConstraintKernel<<<numBlocks, numThreads, 0,
+                                                      *m_IntegratorStream>>>(
+        m_CoordsDelta.getDeviceData(), coordsCharges,
+        m_CoordsRef.getDeviceData(), numAtoms);
   }
-  // Calculate nose hoover thermal piston velocity and position
 
-  // TODO : change this to on step kinetic energy
-  /*double onStepKineticEnergy =
-      (deltaPressureHalfStepKinetic[0] + deltaPressureHalfStepKinetic[2] +
-       deltaPressureHalfStepKinetic[5]) /
-      (0.5 * charmm::constants::patmos / volume);
-  */
+  copy_DtoD_async<double4>(m_CoordsDelta.getDeviceData(),
+                           m_CoordsDeltaPredicted.getDeviceData(), numAtoms,
+                           *m_IntegratorStream);
 
-  onStepVelocityCalculation<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
-      numAtoms, m_TimeStep, coordsDeltaDevice, coordsDeltaPreviousDevice,
-      velMass);
+  for (int iter = 0; iter < m_MaxPredictorCorrectorIterations; iter++) {
+    cudaCheck(
+        cudaMemsetAsync(static_cast<void *>(m_KineticEnergy.getDeviceData()), 0,
+                        sizeof(double), *m_IntegratorStream));
+
+    ComputeKineticEnergyKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
+        m_KineticEnergy.getDeviceData(), velMass, numAtoms);
+
+    UpdateNoseHooverPistonKernel<<<1, 32, 0, *m_IntegratorStream>>>(
+        m_NoseHooverPistonForce.getDeviceData(),
+        m_NoseHooverPistonForcePrevious.getDeviceData(),
+        m_NoseHooverPistonVelocity.getDeviceData(),
+        m_NoseHooverPistonVelocityPrevious.getDeviceData(),
+        m_NoseHooverPistonMass.getDeviceData(), m_KineticEnergy.getDeviceData(),
+        referenceKineticEnergy, m_TimeStep);
+
+    PredictorCorrectorKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
+        coordsCharges, velMass, m_CoordsDeltaPredicted.getDeviceData(),
+        m_CoordsDelta.getDeviceData(), m_CoordsDeltaPrevious.getDeviceData(),
+        m_CoordsRef.getDeviceData(), numAtoms,
+        m_NoseHooverPistonVelocity.getDeviceData(), m_TimeStep);
+  }
+
+  if (m_UsingHolonomicConstraints) {
+    m_HolonomicConstraint->handleHolonomicConstraints(
+        m_CoordsRef.getDeviceData());
+
+    UpdateCoordsDeltaAfterHolonomicConstraintKernel<<<numBlocks, numThreads, 0,
+                                                      *m_IntegratorStream>>>(
+        m_CoordsDeltaPredicted.getDeviceData(), coordsCharges,
+        m_CoordsRef.getDeviceData(), numAtoms);
+  }
+
+  copy_DtoD_async<double4>(m_CoordsDeltaPredicted.getDeviceData(),
+                           m_CoordsDelta.getDeviceData(), numAtoms,
+                           *m_IntegratorStream);
+
+  OnStepVelocityKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
+      velMass, m_CoordsDelta.getDeviceData(),
+      m_CoordsDeltaPrevious.getDeviceData(), numAtoms, m_TimeStep);
+
+  cudaCheck(
+      cudaMemsetAsync(static_cast<void *>(m_KineticEnergy.getDeviceData()), 0,
+                      sizeof(double), *m_IntegratorStream));
+
+  ComputeKineticEnergyKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
+      m_KineticEnergy.getDeviceData(), velMass, numAtoms);
+
+  UpdateNoseHooverPistonKernel<<<1, 32, 0, *m_IntegratorStream>>>(
+      m_NoseHooverPistonForce.getDeviceData(),
+      m_NoseHooverPistonForcePrevious.getDeviceData(),
+      m_NoseHooverPistonVelocity.getDeviceData(),
+      m_NoseHooverPistonVelocityPrevious.getDeviceData(),
+      m_NoseHooverPistonMass.getDeviceData(), m_KineticEnergy.getDeviceData(),
+      referenceKineticEnergy, m_TimeStep);
+
+  UpdateAverageTemperatureKernel<<<1, 32, 0, *m_IntegratorStream>>>(
+      m_AverageTemperature.getDeviceData(), m_KineticEnergy.getDeviceData(),
+      numDegreesOfFreedom, charmm::constants::kBoltz, m_CurrentPropagatedStep);
+
+  UpdateSinglePrecisionCoordinatesKernel<<<numBlocks, numThreads, 0,
+                                           *m_IntegratorStream>>>(
+      xyzq, coordsCharges, numAtoms);
+
+  copy_DtoD_async<double4>(m_CoordsDelta.getDeviceData(),
+                           m_CoordsDeltaPrevious.getDeviceData(), numAtoms,
+                           *m_IntegratorStream);
+
   cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
 
-  double onStepKineticEnergy =
-      m_Context->computeTemperature() *
-      (0.5 * numDegreesOfFreedom * charmm::constants::kBoltz);
-  m_NoseHooverPistonForce = 2.0 * m_TimeStep *
-                            (onStepKineticEnergy - referenceKineticEnergy) /
-                            m_NoseHooverPistonMass;
-  if (m_NoseHooverPistonForcePrevious == 0.0) {
-    m_NoseHooverPistonForcePrevious = m_NoseHooverPistonForce;
-  }
+  return;
+}
 
-  m_NoseHooverPistonVelocity =
-      m_NoseHooverPistonVelocityPrevious +
-      (m_NoseHooverPistonForce + m_NoseHooverPistonForcePrevious) / 2.0;
+double CudaNoseHooverThermostatIntegrator::computeNoseHooverPistonMass(void) {
+  if (m_Context == nullptr)
+    return -9999.9999;
 
-  // onStepKineticEnergy = m_Context->computeTemperature() *
-  //                       (0.5 * numDegreesOfFreedom *
-  //                       charmm::constants::kBoltz);
-  // m_oseHooverPistonForce = 2.0 * timeStep *
-  //                         (onStepKineticEnergy - referenceKineticEnergy) /
-  //                         m_NoseHooverPistonMass;
+  CudaContainer<double4> velMass = m_Context->getVelocityMass();
+  velMass.transferToHost();
 
-  // m_NoseHooverPistonVelocity =
-  //     m_NoseHooverPistonVelocityPrevious +
-  //     (m_NoseHooverPistonForce + m_NoseHooverPistonForcePrevious) / 2.0;
+  double totalMass = 0.0;
+  for (std::size_t i = 0; i < velMass.size(); i++)
+    totalMass += (1.0 / velMass[i].w);
 
-  m_NoseHooverPistonPosition += m_NoseHooverPistonVelocity * m_TimeStep +
-                                0.5 * m_NoseHooverPistonForce * m_TimeStep;
+  return (0.2 * totalMass);
+}
 
-  updateSPKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
-      numAtoms, xyzq, coords);
-
+void CudaNoseHooverThermostatIntegrator::removeCenterOfMassMotion(void) {
   cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
 
-  copy_DtoD_async<double4>(coordsDeltaDevice, coordsDeltaPreviousDevice,
-                           numAtoms, *m_IntegratorStream);
+  auto pbc = m_Context->getForceManager()->getPeriodicBoundaryCondition();
+  int numAtoms = m_Context->getNumAtoms();
+  CudaContainer<double4> velMass = m_Context->getVelocityMass();
 
-  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
+  velMass.transferToHost();
+  m_CoordsDeltaPrevious.transferToHost();
 
-  m_Context->calculateKineticEnergy();
-  auto ke = m_Context->getKineticEnergy();
-  // exit if the kinetic energy is nan
-  // if (ke != ke) {
-  if (std::isnan(ke)) {
-    throw std::runtime_error("NAN detected in kinetic energy");
-    exit(1);
+  double3 com = make_double3(0.0, 0.0, 0.0);
+  double totalMass = 0.0;
+  for (int i = 0; i < numAtoms; i++) {
+    double mass = 1.0 / velMass[i].w;
+
+    com.x += m_CoordsDeltaPrevious[i].x * mass;
+    if (pbc == PBC::P21) {
+      com.y -= m_CoordsDeltaPrevious[i].y * mass;
+      com.z -= m_CoordsDeltaPrevious[i].z * mass;
+    } else {
+      com.y += m_CoordsDeltaPrevious[i].y * mass;
+      com.z += m_CoordsDeltaPrevious[i].z * mass;
+    }
+
+    totalMass += mass;
   }
+  com.x /= totalMass;
+  com.y /= totalMass;
+  com.z /= totalMass;
 
-  if (m_DebugPrintFrequency > 0 && m_StepId % m_DebugPrintFrequency == 0) {
-    auto peContainer = m_Context->getPotentialEnergy();
-    peContainer.transferFromDevice();
-    auto pe = peContainer[0];
-
-    std::cout << "Kinetic energy = " << ke << std::endl;
-
-    std::cout << "Potential energy = " << pe << std::endl;
-    // std::cout << "Total energy = "
-    //           << pe + ke + pistonPotentialEnergy + pistonKineticEnergy +
-    //           hfcten
-    //           << std::endl;
-
-    // std::cout << "HFCTE = " << hfcten << std::endl;
-
-    std::cout << "Temperature : " << m_Context->computeTemperature() << "\n";
-    std::cout << "\n";
+  for (int i = 0; i < numAtoms; i++) {
+    m_CoordsDeltaPrevious[i].x -= com.x;
+    if (pbc == PBC::P21) {
+      m_CoordsDeltaPrevious[i].y += com.y;
+      m_CoordsDeltaPrevious[i].z += com.z;
+    } else {
+      m_CoordsDeltaPrevious[i].y -= com.y;
+      m_CoordsDeltaPrevious[i].z -= com.z;
+    }
   }
-
-  // old code
-
-  /*
- u4 u3 u4
- */
-
-  // int numThreads = 128;
-  // int numBlocks = (numAtoms - 1) / numThreads + 1;
-
-  // u2Propagator<<<numBlocks, numThreads>>>(timeStep / 2.0, numAtoms, stride,
-  //                                         velMass, force->xyz(), coords);
-
-  // cudaCheck(cudaDeviceSynchronize()); // TODO : remove these
-
-  // u1Propagator<<<numBlocks, numThreads>>>(timeStep, numAtoms, velMass,
-  // coords); cudaCheck(cudaDeviceSynchronize()); // TODO : remove these
-
-  // updateSPKernel<<<numBlocks, numThreads, 0, *integratorStream>>>(numAtoms,
-  //                                                                 xyzq,
-  //                                                                 coords);
-  // cudaCheck(cudaDeviceSynchronize()); // TODO : remove these
-  // if (stepsSinceNeighborListUpdate % 20 == 0) {
-  //   context->resetNeighborList();
-  // }
-
-  // context->calculateForces();
-  // force = context->getForces();
-
-  // u2Propagator<<<numBlocks, numThreads>>>(timeStep / 2.0, numAtoms, stride,
-  //                                         velMass, force->xyz(), coords);
-  // cudaCheck(cudaDeviceSynchronize()); // TODO : remove these
-
-  m_StepId++;
+  m_CoordsDeltaPrevious.transferToDevice();
 
   return;
 }

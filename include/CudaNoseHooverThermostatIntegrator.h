@@ -4,7 +4,7 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author: Samarjeet Prasad, James E. Gonzales II
+// Author: James E. Gonzales II, Samarjeet Prasad
 //
 // ENDLICENSE
 
@@ -12,39 +12,61 @@
 
 #include "CharmmContext.h"
 #include "CudaIntegrator.h"
-#include <memory>
 
-/** @brief Integrator with Nose-Hoover thermostat. Not working yet
- * @todo finish this ?
- * @attention Should not be used yet
- */
 class CudaNoseHooverThermostatIntegrator : public CudaIntegrator {
-
 public:
   CudaNoseHooverThermostatIntegrator(const double timeStep);
 
-  void initialize(void);
+public:
+  void setReferenceTemperature(const double referenceTemperature);
+  void setNoseHooverPistonMass(const double noseHooverPistonMass);
+  void setNoseHooverPistonVelocity(const double noseHooverPistonVelocity);
+  void setNoseHooverPistonVelocityPrevious(
+      const double noseHooverPistonVelocityPrevious);
+  void setNoseHooverPistonForce(const double noseHooverPistonForce);
+  void
+  setNoseHooverPistonForcePrevious(const double noseHooverPistonForcePrevious);
+  void
+  setMaxPredictorCorrectorIterations(const int maxPredictorCorrectorIterations);
 
+public:
+  double getReferenceTemperature(void) const;
+  const CudaContainer<double> &getNoseHooverPistonMass(void) const;
+  const CudaContainer<double> &getNoseHooverPistonVelocity(void) const;
+  const CudaContainer<double> &getNoseHooverPistonVelocityPrevious(void) const;
+  const CudaContainer<double> &getNoseHooverPistonForce(void) const;
+  const CudaContainer<double> &getNoseHooverPistonForcePrevious(void) const;
+  int getMaxPredictorCorrectorIterations(void) const;
+  const CudaContainer<double> &getKineticEnergy(void) const;
+  const CudaContainer<double> &getAverageTemperature(void) const;
+
+  CudaContainer<double> &getNoseHooverPistonMass(void);
+  CudaContainer<double> &getNoseHooverPistonVelocity(void);
+  CudaContainer<double> &getNoseHooverPistonVelocityPrevious(void);
+  CudaContainer<double> &getNoseHooverPistonForce(void);
+  CudaContainer<double> &getNoseHooverPistonForcePrevious(void);
+  CudaContainer<double> &getKineticEnergy(void);
+  CudaContainer<double> &getAverageTemperature(void);
+
+public:
+  void initialize(void) override;
   void propagateOneStep(void) override;
 
-  void setNoseHooverPistonMass(const double nhMass);
-  double getNoseHooverPistonMass(void); // { return noseHooverPistonMass; }
+protected:
+  double computeNoseHooverPistonMass(void);
+  void removeCenterOfMassMotion(void);
 
-  void setBathTemperature(
-      const double bathTemperature); // { bathTemperature = temp; }
+protected:
+  double m_ReferenceTemperature;
+  CudaContainer<double> m_NoseHooverPistonMass;
+  CudaContainer<double> m_NoseHooverPistonVelocity;
+  CudaContainer<double> m_NoseHooverPistonVelocityPrevious;
+  CudaContainer<double> m_NoseHooverPistonForce;
+  CudaContainer<double> m_NoseHooverPistonForcePrevious;
+  CudaContainer<double4> m_CoordsDeltaPredicted;
 
-private:
-  int m_ChainLength;
+  int m_MaxPredictorCorrectorIterations;
 
-  int m_StepId;
-
-  double m_NoseHooverPistonMass;
-  double m_NoseHooverPistonPosition;
-  double m_NoseHooverPistonVelocity;
-  double m_NoseHooverPistonVelocityPrevious;
-  double m_NoseHooverPistonForce;
-  double m_NoseHooverPistonForcePrevious;
-  double m_BathTemperature;
-
-  std::string m_IntegratorTypeName;
+  CudaContainer<double> m_KineticEnergy;
+  CudaContainer<double> m_AverageTemperature;
 };

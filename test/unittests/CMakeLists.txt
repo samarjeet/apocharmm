@@ -25,8 +25,9 @@ set(SOURCES_UNITTESTS_TESTS
     unittest-p21.cpp
 
     # Integrators
-    unittest-langevinThermostat.cpp
     unittest-langevinPiston.cpp
+    unittest-langevinThermostat.cpp
+    unittest-noseHoover.cpp
 
     # Systems
     unittest-argon1000.cpp
@@ -62,7 +63,6 @@ set(SOURCES_UNITTESTS_TESTS
     # unittest-leapFrogIntegrator.cu
     # unittest-nacl.cu
     # unittest-nonEquil.cu
-    # unittest-noseHoover.cpp
     # unittest-rcsb.cu
     # unittest-walp.cpp
     # unittest-argon10.cpp

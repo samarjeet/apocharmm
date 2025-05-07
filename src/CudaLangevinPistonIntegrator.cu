@@ -28,6 +28,7 @@ CudaLangevinPistonIntegrator::CudaLangevinPistonIntegrator(
     const double timeStep, const CRYSTAL crystalType)
     : CudaIntegrator(timeStep) {
   m_UsingHolonomicConstraints = true;
+  m_MaxPredictorCorrectorSteps = 3;
 
   m_DevPHILOXStates = nullptr;
 
@@ -1001,7 +1002,7 @@ __global__ void predictorCorrectorKernel(
 
     velMass[i].x = onStepVelocityX;
     velMass[i].y = onStepVelocityY;
-    velMass[i].z = onStepVelocityX;
+    velMass[i].z = onStepVelocityZ;
 
     double halfStepPositionX = (coordsRef[i].x + coords[i].x) / 2.0;
     double halfStepPositionY = (coordsRef[i].y + coords[i].y) / 2.0;

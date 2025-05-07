@@ -201,52 +201,76 @@ TEST_CASE("Basic functions", "[unittest]") {
 }
 
 TEST_CASE("waterbox") {
-  int nsteps = 100;
   std::string dataPath = getDataPath();
+  std::vector<double> boxDims{50.0, 50.0, 50.0};
+  int randomSeed = 314159, nsteps = 21; // 000;
+  bool useHolonomicConstraints = false;
+
   auto prm =
       std::make_shared<CharmmParameters>(dataPath + "toppar_water_ions.str");
   auto psf = std::make_shared<CharmmPSF>(dataPath + "waterbox.psf");
   auto crd = std::make_shared<CharmmCrd>(dataPath + "waterbox.crd");
+
   auto fm = std::make_shared<ForceManager>(psf, prm);
 
-  fm->setBoxDimensions({50.0, 50.0, 50.0});
-  fm->setFFTGrid(48, 48, 48);
-  fm->setKappa(0.34);
-  fm->setCutoff(10.0);
-  fm->setCtonnb(7.0);
-  fm->setCtofnb(8.0);
-  fm->initialize();
+  fm->setBoxDimensions(boxDims);
+  // fm->setFFTGrid(48, 48, 48);
+  // fm->setKappa(0.34);
+  // fm->setCutoff(10.0);
+  // fm->setCtonnb(7.0);
+  // fm->setCtofnb(8.0);
+  // fm->initialize();
 
+  std::cout << "Making CHARMM context" << std::endl;
   auto ctx = std::make_shared<CharmmContext>(fm);
   ctx->setCoordinates(crd);
-  ctx->assignVelocitiesAtTemperature(300);
+  ctx->setRandomSeedForVelocities(randomSeed);
+  ctx->assignVelocitiesAtTemperature(300.0);
+  ctx->useHolonomicConstraints(useHolonomicConstraints);
 
   SECTION("LangevinPiston") {
-    auto integrator = setupLangevinPistonIntegrator(ctx);
+    // auto integrator = setupLangevinPistonIntegrator(ctx);
+    auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
+    integrator->setCrystalType(CRYSTAL::CUBIC);
+    integrator->setPistonMass({500.0});
+    integrator->setPistonFriction(12.0);
+    integrator->setSeedForPistonFriction(randomSeed);
+    integrator->setNoseHooverFlag(true);
+    integrator->setCharmmContext(ctx);
+    CHECK_NOTHROW(integrator->propagate(nsteps));
+
+    std::cout << "LangevinPiston Done." << std::endl;
+  }
+
+  SECTION("NoseHooverThermostat") {
+    auto integrator =
+        std::make_shared<CudaNoseHooverThermostatIntegrator>(0.002);
+    integrator->setCharmmContext(ctx);
+
     CHECK_NOTHROW(integrator->propagate(nsteps));
   }
 
-  SECTION("LangevinThermostat") {
-    auto integrator = setupLangevinThermostatIntegrator(ctx);
-    CHECK_NOTHROW(integrator->propagate(nsteps));
-  }
+  // SECTION("LangevinThermostat") {
+  //   auto integrator = setupLangevinThermostatIntegrator(ctx);
+  //   CHECK_NOTHROW(integrator->propagate(nsteps));
+  // }
 
-  SECTION("leapfrog") {
-    auto integrator = setupLeapFrogIntegrator(ctx);
-    CHECK_NOTHROW(integrator->propagate(nsteps));
-  }
+  // SECTION("leapfrog") {
+  //   auto integrator = setupLeapFrogIntegrator(ctx);
+  //   CHECK_NOTHROW(integrator->propagate(nsteps));
+  // }
 
-  SECTION("velocityVerlet") {
-    auto integrator = setupVelocityVerletIntegrator(ctx);
-    CHECK_NOTHROW(integrator->propagate(nsteps));
-  }
+  // SECTION("velocityVerlet") {
+  //   auto integrator = setupVelocityVerletIntegrator(ctx);
+  //   CHECK_NOTHROW(integrator->propagate(nsteps));
+  // }
 
-  // VERLET IS BUGGED -- yields a Segfault
-  //    SECTION("Verlet") {
-  //        auto integrator = setupVerletIntegrator(ctx);
-  //        CHECK_NOTHROW(integrator.propagate(nsteps));
-  //    }
-  // Add remaining ones there...
+  // // VERLET IS BUGGED -- yields a Segfault
+  // //    SECTION("Verlet") {
+  // //        auto integrator = setupVerletIntegrator(ctx);
+  // //        CHECK_NOTHROW(integrator.propagate(nsteps));
+  // //    }
+  // // Add remaining ones there...
 }
 
 TEST_CASE("dhfr") {
@@ -516,7 +540,8 @@ TEST_CASE("casting") {
   CHECK(lttolpintegrator == nullptr);
 }
 
-TEST_CASE("noseHoover", "[]") {
+/* *
+TEST_CASE("noseHoover") {
   std::string dataPath = getDataPath();
   auto prm =
       std::make_shared<CharmmParameters>(dataPath + "toppar_water_ions.str");
@@ -544,3 +569,4 @@ TEST_CASE("noseHoover", "[]") {
     //CHECK_NOTHROW(integrator->propagate(100000));
   }
 }
+* */

@@ -16,19 +16,31 @@
 // #include <nvToolsExt.h>
 #include <nvtx3/nvToolsExt.h>
 // #include <nvtx3/nvtx3.hpp>
+#include <stdexcept>
 #include <stdio.h>
+#include <string>
 #include <vector>
 
-#define cudaCheck(stmt)                                                        \
-  do {                                                                         \
-    cudaError_t err = stmt;                                                    \
-    if (err != cudaSuccess) {                                                  \
-      printf("Error running %s in file %s, function %s\n", #stmt, __FILE__,    \
-             __FUNCTION__);                                                    \
-      printf("Error string: %s\n", cudaGetErrorString(err));                   \
-      exit(1);                                                                 \
-    }                                                                          \
+/* *
+#define cudaCheck(stmt)
+  do {
+    cudaError_t err = stmt;
+    if (err != cudaSuccess) {
+      printf("Error running %s in file %s, function %s\n", #stmt, __FILE__,
+             __FUNCTION__);
+      printf("Error string: %s\n", cudaGetErrorString(err));
+      exit(1);
+    }
   } while (0)
+* */
+#define cudaCheck(result)                                                      \
+  if (result != cudaSuccess) {                                                 \
+    std::string msg = std::string(cudaGetErrorString(result)) + "\n";          \
+    msg += "  file(): " + std::string(__FILE__) + "\n";                        \
+    msg += "   ftn(): " + std::string(__FUNCTION__) + "\n";                    \
+    msg += "  line(): " + std::to_string(__LINE__) + "\n";                     \
+    throw std::runtime_error(msg);                                             \
+  }
 
 // The following macro is from
 // https://stackoverflow.com/questions/6978643/cuda-and-classes

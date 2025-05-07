@@ -79,6 +79,8 @@ void CudaIntegrator::setCharmmContext(std::shared_ptr<CharmmContext> ctx) {
   }
 
   m_CoordsRef.resize(m_Context->getNumAtoms());
+  m_CoordsDelta.resize(m_Context->getNumAtoms());
+  m_CoordsDeltaPrevious.resize(m_Context->getNumAtoms());
   m_UsingHolonomicConstraints = m_Context->isUsingHolonomicConstraints();
   if (m_UsingHolonomicConstraints) {
     m_HolonomicConstraint = std::make_shared<CudaHolonomicConstraint>();
@@ -140,31 +142,34 @@ void CudaIntegrator::propagate(const int numSteps) {
 
   std::chrono::steady_clock::time_point start =
       std::chrono::steady_clock::now();
-  for (int i = 0; i < numSteps; ++i) {
-    m_CurrentPropagatedStep = i;
-    // std::cout << "---\nStep " << i << " of " << numSteps << "\n";
+
+  m_StepsSinceNeighborListUpdate = 1;
+
+  for (int step = 1; step <= numSteps; step++) {
+    m_CurrentPropagatedStep = step;
+    // std::cout << "---\nStep " << step << " of " << numSteps << "\n";
 
     // Capture Ctrl-C SIGINT when running with the python interface
     // if (PyErr_CheckSignals() != 0){
     //  throw py::error_already_set();
     //}
 
-    if (i % 10000 == 0 && i != 0) {
+    if (step % 10000 == 0) {
       std::chrono::steady_clock::time_point end =
           std::chrono::steady_clock::now();
       std::chrono::steady_clock::duration duration = end - start;
 
       std::cout
-          << "Step = " << i << " "
+          << "Step = " << step << " "
           << std::chrono::duration_cast<std::chrono::milliseconds>(
                  //<< std::chrono::duration_cast<std::chrono::microseconds>(
                  duration)
                  .count()
-          << "ms\n";
+          << "ms" << std::endl;
       start = std::chrono::steady_clock::now();
     }
 
-    // if (i % removeCenterOfMassFrequency == 0) {
+    // if (step % removeCenterOfMassFrequency == 0) {
     //   context->removeCenterOfMassMotion();
     // }
     this->propagateOneStep();
@@ -174,16 +179,16 @@ void CudaIntegrator::propagate(const int numSteps) {
     int minReportFreq = 100000;
 
     // if there are subscribers, find the smallest report freq instead
-    for (std::size_t j = 0; j < m_Subscribers.size(); j++) {
-      if (m_ReportFreqList[j] < minReportFreq)
-        minReportFreq = m_ReportFreqList[j];
+    for (std::size_t i = 0; i < m_Subscribers.size(); i++) {
+      if (m_ReportFreqList[i] < minReportFreq)
+        minReportFreq = m_ReportFreqList[i];
     }
     // Check if we have nan-esque energy.
-    if (i % minReportFreq == 0)
+    if (step % minReportFreq == 0)
       this->checkForNanEnergy();
 
     // Check if report is needed for one or more of the subscribers
-    this->reportIfNeeded(i);
+    this->reportIfNeeded(step);
   }
 
   return;
