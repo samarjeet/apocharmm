@@ -28,6 +28,7 @@ public:
   setNoseHooverPistonForcePrevious(const double noseHooverPistonForcePrevious);
   void
   setMaxPredictorCorrectorIterations(const int maxPredictorCorrectorIterations);
+  void useOldTemperature(const bool useJungTemperature);
 
 public:
   double getReferenceTemperature(void) const;
@@ -39,6 +40,7 @@ public:
   int getMaxPredictorCorrectorIterations(void) const;
   const CudaContainer<double> &getKineticEnergy(void) const;
   const CudaContainer<double> &getAverageTemperature(void) const;
+  const CudaContainer<double> &getAverageOldTemperature(void) const;
 
   CudaContainer<double> &getNoseHooverPistonMass(void);
   CudaContainer<double> &getNoseHooverPistonVelocity(void);
@@ -47,6 +49,8 @@ public:
   CudaContainer<double> &getNoseHooverPistonForcePrevious(void);
   CudaContainer<double> &getKineticEnergy(void);
   CudaContainer<double> &getAverageTemperature(void);
+  CudaContainer<double> &getAverageOldTemperature(void);
+  double getInstantaneousTemperature(void);
 
 public:
   void initialize(void) override;
@@ -69,4 +73,7 @@ protected:
 
   CudaContainer<double> m_KineticEnergy;
   CudaContainer<double> m_AverageTemperature;
+
+  bool m_UseOldTemperature;
+  CudaContainer<double> m_AverageOldTemperature;
 };

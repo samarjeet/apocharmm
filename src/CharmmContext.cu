@@ -562,6 +562,8 @@ int CharmmContext::getForceStride() const {
   return forceManager->getForceStride();
 }
 
+// JEG250506: THIS HAS A RACE CONDITION
+/* *
 // Cuda Kernel to compute kinetic energy
 __global__ void
 calculateKineticEnergyKernel(int numAtoms, const double4 *__restrict__ velMass,
@@ -603,6 +605,41 @@ void CharmmContext::calculateKineticEnergy() {
       kineticEnergy.getDeviceArray().data());
 
   cudaCheck(cudaDeviceSynchronize()); // TODO fix this
+}
+* */
+
+__global__ static void
+CalculateKineticEnergyKernel(double *__restrict__ kineticEnergy,
+                             const double4 *__restrict__ velMass,
+                             const int numAtoms) {
+  const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  const int stride = gridDim.x * blockDim.x;
+
+  double ke = 0.0;
+  for (int i = idx; i < numAtoms; i += stride) {
+    ke += 0.5 *
+          ((velMass[i].x * velMass[i].x) + (velMass[i].y * velMass[i].y) +
+           (velMass[i].z * velMass[i].z)) /
+          velMass[i].w;
+  }
+
+  ke = BlockReduceSum<double>(ke);
+
+  if (threadIdx.x == 0)
+    atomicAdd(kineticEnergy, ke);
+
+  return;
+}
+
+void CharmmContext::calculateKineticEnergy(void) {
+  cudaCheck(cudaMemset(static_cast<void *>(kineticEnergy.getDeviceData()), 0,
+                       sizeof(double)));
+  CalculateKineticEnergyKernel<<<1, 1024>>>(
+      kineticEnergy.getDeviceData(), velocityMass.getDeviceData(), numAtoms);
+
+  cudaCheck(cudaDeviceSynchronize());
+
+  return;
 }
 
 double CharmmContext::getKineticEnergy() {

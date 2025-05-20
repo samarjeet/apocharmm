@@ -11,6 +11,7 @@
 #include "CharmmContext.h"
 #include "CharmmCrd.h"
 #include "CudaNoseHooverThermostatIntegrator.h"
+#include "DcdSubscriber.h"
 #include "ForceManager.h"
 #include "catch.hpp"
 #include "compare.h"
@@ -22,7 +23,7 @@ TEST_CASE("noseHooverThermostat", "[dynamics]") {
   const std::vector<double> boxDims(3, 50.0);
   const int randomSeed = 314159;
   const double temperature = 300.0;
-  const bool useHolonomicConstraints = false;
+  const bool useHolonomicConstraints = true;
   const int nsteps = 10000;
   const double timeStep = (useHolonomicConstraints) ? 0.002 : 0.001;
 
@@ -48,6 +49,8 @@ TEST_CASE("noseHooverThermostat", "[dynamics]") {
         std::make_shared<CudaNoseHooverThermostatIntegrator>(timeStep);
     integrator->setCharmmContext(ctx);
 
+    // integrator->useOldTemperature(true); // "Jung temperature" is the default
+
     if (useHolonomicConstraints)
       CHECK(ctx->computeTemperature() == 1841.79761f);
     else
@@ -60,11 +63,11 @@ TEST_CASE("noseHooverThermostat", "[dynamics]") {
     averageTemperature.transferToHost();
 
     if (useHolonomicConstraints) {
-      CHECK(ctx->computeTemperature() == 302.81256f);
-      CHECK(averageTemperature[0] == Approx(299.851426339).margin(1e-8));
+      CHECK(ctx->computeTemperature() == 306.75604f);
+      CHECK(averageTemperature[0] == Approx(299.9286502683).margin(1e-8));
     } else {
-      CHECK(ctx->computeTemperature() == 300.1882f);
-      CHECK(averageTemperature[0] == Approx(299.9776116026).margin(1e-8));
+      CHECK(ctx->computeTemperature() == 294.28967f);
+      CHECK(averageTemperature[0] == Approx(299.9650298325).margin(1e-8));
     }
   }
 
@@ -267,3 +270,82 @@ TEST_CASE("noseHooverThermostat", "[dynamics]") {
     CHECK(averageTemperature1[0] == averageTemperature2[0]);
   }
 }
+
+/* *
+TEST_CASE("optimalTemperature") {
+  const std::string dataPath = getDataPath();
+  const std::vector<double> boxDims(3, 50.0);
+  const int randomSeed = 314159;
+  const double temperature = 300.0;
+  const int nsteps = 100000;
+  const double timeStep = 0.003;
+  const bool useHolonomicConstraints = true;
+
+  auto prm =
+      std::make_shared<CharmmParameters>(dataPath + "toppar_water_ions.str");
+  auto psf = std::make_shared<CharmmPSF>(dataPath + "waterbox.psf");
+  auto crd = std::make_shared<CharmmCrd>(dataPath + "waterbox.crd");
+
+  // Setup force manager
+  auto fm = std::make_shared<ForceManager>(psf, prm);
+  fm->setBoxDimensions(boxDims);
+
+  // Setup CHARMM context
+  auto ctx = std::make_shared<CharmmContext>(fm);
+  ctx->setCoordinates(crd);
+  ctx->setRandomSeedForVelocities(randomSeed);
+  ctx->assignVelocitiesAtTemperature(temperature);
+  ctx->useHolonomicConstraints(useHolonomicConstraints);
+
+  SECTION("oldTemp") {
+    // Setup integrator
+    auto integrator =
+        std::make_shared<CudaNoseHooverThermostatIntegrator>(timeStep);
+    integrator->setCharmmContext(ctx);
+    integrator->useOldTemperature(true);
+
+    auto dcdSubscriber =
+        std::make_shared<DcdSubscriber>("waterbox_3_s_old.dcd", 1);
+
+    integrator->subscribe(dcdSubscriber);
+
+    integrator->propagate(nsteps);
+
+    CudaContainer<double> averageOldTemperature =
+        integrator->getAverageOldTemperature();
+    CudaContainer<double> averageTemperature =
+        integrator->getAverageTemperature();
+    averageOldTemperature.transferToHost();
+    averageTemperature.transferToHost();
+    std::cout << "Average Old Temperature:  " << averageOldTemperature[0]
+              << std::endl;
+    std::cout << "Average Jung Temperature: " << averageTemperature[0]
+              << std::endl;
+  }
+
+  SECTION("newTemp") {
+    // Setup integrator
+    auto integrator =
+        std::make_shared<CudaNoseHooverThermostatIntegrator>(timeStep);
+    integrator->setCharmmContext(ctx);
+
+    auto dcdSubscriber =
+        std::make_shared<DcdSubscriber>("waterbox_3_s_new.dcd", 1);
+
+    integrator->subscribe(dcdSubscriber);
+
+    integrator->propagate(nsteps);
+
+    CudaContainer<double> averageOldTemperature =
+        integrator->getAverageOldTemperature();
+    CudaContainer<double> averageTemperature =
+        integrator->getAverageTemperature();
+    averageOldTemperature.transferToHost();
+    averageTemperature.transferToHost();
+    std::cout << "Average Old Temperature:  " << averageOldTemperature[0]
+              << std::endl;
+    std::cout << "Average Jung Temperature: " << averageTemperature[0]
+              << std::endl;
+  }
+}
+* */
