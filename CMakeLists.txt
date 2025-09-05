@@ -10,7 +10,7 @@ find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
 
 # set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type (default Debug)" FORCE)
 # set(CUDA_NVCC_FLAGS_DEBUG ${CUDA_NVCC_FLAGS_DEBUG} "-g -G -gencode arch=compute_60,code=sm_60" CACHE STRING "Debug flags for cuda" FORCE)
-set(CMAKE_CUDA_FLAGS_DEBUG ${CUDA_NVCC_FLAGS_DEBUG} "-g -G -O0 -gencode arch=compute_70,code=sm_70" CACHE STRING "Debug flags for cuda" FORCE)
+#set(CMAKE_CUDA_FLAGS_DEBUG ${CUDA_NVCC_FLAGS_DEBUG} "-g -G -O0 -gencode arch=compute_70,code=sm_70" CACHE STRING "Debug flags for cuda" FORCE)
 #set(CMAKE_CUDA_FLAGS_RELEASE ${CUDA_NVCC_FLAGS_RELEASE} "-O3 -lineinfo -gencode arch=compute_70,code=sm_70 -gencode arch=compute_80,code=sm_80" CACHE STRING "Release flags for cuda" FORCE)
 set(CMAKE_CUDA_FLAGS_RELEASE ${CUDA_NVCC_FLAGS_RELEASE} "-O3 -lineinfo  -gencode arch=compute_80,code=sm_80" CACHE STRING "Release flags for cuda" FORCE)
 
@@ -184,4 +184,5 @@ endif(BUILD_DOCS)
 
 # target_link_libraries(chcudalib ${_Python_LIBRARY_RELEASE})
 # target_link_libraries(chcudalib ${NVTX_LIBRARY}  ${CUDA_CUFFT_LIBRARIES} ${NETCDF_LIBRARIES})
+
 
