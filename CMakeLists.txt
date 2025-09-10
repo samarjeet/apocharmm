@@ -28,7 +28,7 @@ target_include_directories(chcudadynlib PUBLIC ${Python_SITEARCH}/nvidia/nvtx/in
 
 target_compile_features(chcudadynlib PUBLIC cxx_std_20 cuda_std_20)
 #target_compile_features(chcudadynlib PUBLIC cxx_std_20)
-set_property(TARGET chcudadynlib PROPERTY CUDA_ARCHITECTURES 70 80)
+set_property(TARGET chcudadynlib PROPERTY CUDA_ARCHITECTURES 80)
 
 target_compile_options(chcudadynlib PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:
 
@@ -59,7 +59,7 @@ if(PYTHON_FOUND)
   python_add_library(_core MODULE python/pywrapper_main.cu WITH_SOABI)
   target_link_libraries(_core PRIVATE pybind11::headers chcudadynlib)
 
-  set_property(TARGET _core PROPERTY CUDA_ARCHITECTURES 70 80)
+  set_property(TARGET _core PROPERTY CUDA_ARCHITECTURES 80)
   target_include_directories(_core PUBLIC include)
 
   # target_link_libraries(apocharmm PUBLIC chcudadynlib )
@@ -184,5 +184,6 @@ endif(BUILD_DOCS)
 
 # target_link_libraries(chcudalib ${_Python_LIBRARY_RELEASE})
 # target_link_libraries(chcudalib ${NVTX_LIBRARY}  ${CUDA_CUFFT_LIBRARIES} ${NETCDF_LIBRARIES})
+
 
 
