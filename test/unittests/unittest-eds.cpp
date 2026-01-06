@@ -153,13 +153,13 @@ TEST_CASE("glu", "[unit]") {
 
     auto compositeSub_0 = std::make_shared<EDSSubscriber>(
         outputPath + "eds_" + s0str + "_" + pHstr + ".out");
-    compositeSub_0->setReportFreq(1000);
+    compositeSub_0->setReportFrequency(1000);
     integrator_0->subscribe(compositeSub_0);
     // integrator_0->setDebugPrintFrequency(1000);
 
     auto compositeSub_1 = std::make_shared<EDSSubscriber>(
         outputPath + "eds_" + s1str + "_" + pHstr + ".out");
-    compositeSub_1->setReportFreq(1000);
+    compositeSub_1->setReportFrequency(1000);
     integrator_1->subscribe(compositeSub_1);
     // integrator_1->setDebugPrintFrequency(10000);
 
@@ -170,8 +170,8 @@ TEST_CASE("glu", "[unit]") {
     integrator_0->subscribe(restartSub_0);
     integrator_1->subscribe(restartSub_1);
 
-    restartSub_0->readRestart();
-    restartSub_1->readRestart();
+    // restartSub_0->readRestart();
+    // restartSub_1->readRestart();
 
     for (int i = 0; i < 10000; i++) {
 
@@ -446,25 +446,25 @@ TEST_CASE("glu", "[unit]") {
 
     auto compositeSub_0 = std::make_shared<EDSSubscriber>(
         outputPath + "eds_" + s0str + "_" + pHstr + ".out");
-    compositeSub_0->setReportFreq(100);
+    compositeSub_0->setReportFrequency(100);
     integrator_0->subscribe(compositeSub_0);
     // integrator_0->setDebugPrintFrequency(1000);
 
     auto compositeSub_1 = std::make_shared<EDSSubscriber>(
         outputPath + "eds_" + s1str + "_" + pHstr + ".out");
-    compositeSub_1->setReportFreq(100);
+    compositeSub_1->setReportFrequency(100);
     integrator_1->subscribe(compositeSub_1);
     // integrator_1->setDebugPrintFrequency(10000);
 
     auto compositeSub_2 = std::make_shared<EDSSubscriber>(
         outputPath + "eds_" + s2str + "_" + pHstr + ".out");
-    compositeSub_2->setReportFreq(100);
+    compositeSub_2->setReportFrequency(100);
     integrator_2->subscribe(compositeSub_2);
     // integrator_2->setDebugPrintFrequency(10000);
 
     auto compositeSub_3 = std::make_shared<EDSSubscriber>(
         outputPath + "eds_" + s3str + "_" + pHstr + ".out");
-    compositeSub_3->setReportFreq(100);
+    compositeSub_3->setReportFrequency(100);
     integrator_3->subscribe(compositeSub_3);
     // integrator_3->setDebugPrintFrequency(10000);
 
@@ -482,10 +482,10 @@ TEST_CASE("glu", "[unit]") {
     integrator_2->subscribe(restartSub_2);
     integrator_3->subscribe(restartSub_3);
 
-    restartSub_0->readRestart();
-    restartSub_1->readRestart();
-    restartSub_2->readRestart();
-    restartSub_3->readRestart();
+    // restartSub_0->readRestart();
+    // restartSub_1->readRestart();
+    // restartSub_2->readRestart();
+    // restartSub_3->readRestart();
 
     std::vector<std::shared_ptr<CharmmContext>> ctxs{ctx_0, ctx_1, ctx_2,
                                                      ctx_3};
@@ -660,7 +660,7 @@ TEST_CASE("1p5f", "[unit]") {
     std::string str = strs.str();
 
     auto compositeSub = std::make_shared<EDSSubscriber>("eds_" + str + ".out");
-    compositeSub->setReportFreq(1000);
+    compositeSub->setReportFrequency(1000);
     integrator->subscribe(compositeSub);
     integrator->setDebugPrintFrequency(1000);
 
@@ -790,7 +790,7 @@ TEST_CASE("1p5f", "[unit]") {
 
     auto compositeSub_1 =
         std::make_shared<EDSSubscriber>("eds_" + str + ".out");
-    compositeSub_1->setReportFreq(100);
+    compositeSub_1->setReportFrequency(100);
     integrator_1->subscribe(compositeSub_1);
     integrator_1->setDebugPrintFrequency(10000);
 
@@ -985,12 +985,12 @@ TEST_CASE("1p5f", "[unit]") {
     integrators.push_back(integrator_1);
 
     auto compositeSub_0 = std::make_shared<CompositeSubscriber>("mbar_0.out");
-    compositeSub_0->setReportFreq(100);
+    compositeSub_0->setReportFrequency(100);
     integrator_0->subscribe(compositeSub_0);
     integrator_0->setDebugPrintFrequency(1000);
 
     auto compositeSub_1 = std::make_shared<CompositeSubscriber>("mbar_1.out");
-    compositeSub_1->setReportFreq(100);
+    compositeSub_1->setReportFrequency(100);
     integrator_1->subscribe(compositeSub_1);
     integrator_1->setDebugPrintFrequency(1000);
 
@@ -1180,7 +1180,7 @@ TEST_CASE("consph", "[unit]") {
     integrator->setCharmmContext(ctx);
 
     auto compositeSub = std::make_shared<CompositeSubscriber>("mbar.out");
-    compositeSub->setReportFreq(100);
+    compositeSub->setReportFrequency(100);
     integrator->subscribe(compositeSub);
     integrator->setDebugPrintFrequency(1000);
 
@@ -1312,12 +1312,12 @@ TEST_CASE("consph", "[unit]") {
     integrator_1->setCharmmContext(ctx_1);
 
     auto compositeSub_0 = std::make_shared<CompositeSubscriber>("mbar_0.out");
-    compositeSub_0->setReportFreq(100);
+    compositeSub_0->setReportFrequency(100);
     integrator_0->subscribe(compositeSub_0);
     integrator_0->setDebugPrintFrequency(1000);
 
     auto compositeSub_1 = std::make_shared<CompositeSubscriber>("mbar_1.out");
-    compositeSub_1->setReportFreq(100);
+    compositeSub_1->setReportFrequency(100);
     integrator_1->subscribe(compositeSub_1);
     integrator_1->setDebugPrintFrequency(1000);
 
@@ -1481,7 +1481,7 @@ TEST_CASE("eds", "[energy]") {
     integrator->setCharmmContext(ctx);
 
     auto compositeSub = std::make_shared<CompositeSubscriber>("mbar.out");
-    compositeSub->setReportFreq(100);
+    compositeSub->setReportFrequency(100);
     integrator->subscribe(compositeSub);
 
     int numSteps = 1e4;

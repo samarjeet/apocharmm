@@ -24,72 +24,66 @@
  */
 class StateSubscriber : public Subscriber {
 public:
-  StateSubscriber(const std::string &fileNameIn, int reportFreq);
   StateSubscriber(const std::string &fileName);
-  void update() override;
+  StateSubscriber(const std::string &fileNameIn, const int reportFrequency);
   ~StateSubscriber();
 
-  void setReportPotentialEnergy(bool reportPotentialEnergyIn = true) { reportFlags["potentialenergy"] = reportPotentialEnergyIn; }
-  void setReportKineticEnergy(bool reportKineticEnergyIn = true) { reportFlags["kineticenergy"] = reportKineticEnergyIn; }
-  void setReportTotalEnergy(bool reportTotalEnergyIn = true) { reportFlags["totalenergy"] = reportTotalEnergyIn; }
-  void setReportTemperature(bool reportTemperatureIn = true) { reportFlags["temperature"] = reportTemperatureIn; }
-  void setReportPressureComponents(bool reportPressureComponentsIn = true) { reportFlags["pressurecomponents"] = reportPressureComponentsIn; }
-  void setReportPressureScalar(bool reportPressureScalarIn = true) { reportFlags["pressurescalar"] = reportPressureScalarIn; }
-  void setReportBoxSizeComponents(bool reportBoxSizeComponentsIn = true) { reportFlags["boxsizecomponents"] = reportBoxSizeComponentsIn; }
-  void setReportVolume(bool reportVolumeIn = true) { reportFlags["volume"] = reportVolumeIn; }
+public:
+  void update(void) override;
 
-  std::map<std::string, bool> getReportFlags() { return reportFlags; }
+  void setReportPotentialEnergy(const bool reportPotentialEnergy = true);
+  void setReportKineticEnergy(const bool reportKineticEnergy = true);
+  void setReportTotalEnergy(const bool reportTotalEnergy = true);
+  void setReportTemperature(const bool reportTemperature = true);
+  void setReportPressureComponents(const bool reportPressureComponents = true);
+  void setReportPressureScalar(const bool reportPressureScalar = true);
+  void setReportBoxSizeComponents(const bool reportBoxSizeComponents = true);
+  void setReportVolume(const bool reportVolume = true);
+
+  const std::map<std::string, bool> &getReportFlags(void) const;
+  std::map<std::string, bool> &getReportFlags(void);
 
   /** @brief Prepares a vector of strings to be used as flags, then sets the
    * flags */
-  void readReportFlags(std::vector<std::string> reportStrings);
-  /** @brief Splits a string into vector of strings, trimmed, then sets the flags */
-  void readReportFlags(std::string reportStringIn);
+  void readReportFlags(const std::vector<std::string> &reportStrings);
+  /** @brief Splits a string into vector of strings, trimmed, then sets the
+   * flags */
+  void readReportFlags(const std::string &reportString);
 
 private:
   /** @brief Sets up default report quantities, writes header.  */
-  void initialize();
-
-  /** @brief Write header depending on the reporting flags */
-  void writeHeader();
+  void initialize(void);
 
   /**
-   * @brief Compute time propagated 
+   * @brief Compute time propagated
    *
    * Computes the total propagated time based on the number of frames written
    * (numFramesWritten), the report frequency and the integrator timestep.
    */
-  float computeTime();
+  float computeTime(void);
 
+  /** @brief Given a list of strings, sets all report flags accordingly */
+  void setReportFlags(const std::vector<std::string> &reportFlags);
+
+  /** @brief Write header depending on the reporting flags */
+  void writeHeader(void);
+
+private:
   /**
    * @brief Number of updates done
    *
    * Counter-like int variable, incremented everytime the update() function is
    * called.
    */
-  int numFramesWritten;
+  int m_NumFramesWritten;
 
   /** @brief Map of all the possible report flags. keys are quantities names,
    * values are pointers to the corresponding bools. */
-  std::map<std::string, bool> reportFlags = {
-    {"potentialenergy",    false},
-    {"kineticenergy",      false},
-    {"totalenergy",        false},
-    {"temperature",        false},
-    {"pressurecomponents", false},
-    {"pressurescalar",     false},
-    {"boxsizecomponents",  false},
-    {"density",  false},
-    {"volume",             false}
-  };
+  std::map<std::string, bool> m_ReportFlags;
 
   // formatting options
-  int outwidth = 15 ;
-  std::string spacing;
+  int m_OutWidth;
+  std::string m_Spacing;
 
-  bool headerWritten = false;
-
-  /** @brief Given a list of strings, sets all report flags accordingly */
-  void setReportFlags(std::vector<std::string> reportStrings);
-
+  bool m_HeaderWritten;
 };

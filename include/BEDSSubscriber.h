@@ -16,13 +16,12 @@
 class BEDSSubscriber : public Subscriber {
 public:
   BEDSSubscriber(const std::string &fileName);
-  BEDSSubscriber(const std::string &fileName, int reportFreq);
-  void update() override;
-  ~BEDSSubscriber();
+  BEDSSubscriber(const std::string &fileName, int reportFrequency);
+  ~BEDSSubscriber(void);
+
+public:
+  void update(void) override;
 
 private:
-  void initialize();
-  std::ofstream fout;
-
-  int numFramesWritten;
+  int m_NumFramesWritten;
 };

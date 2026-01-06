@@ -9,22 +9,25 @@
 // ENDLICENSE
 
 #pragma once
+
+/* *
 #include <source_location>
 #include <string>
 #include <vector>
 
-// const std::string WHITESPACE = " \n\r\t\f\v";
+const std::string WHITESPACE = " \n\r\t\f\v";
 
-std::string ltrim(const std::string &s);
+// std::string ltrim(const std::string &s);
 
-std::string rtrim(const std::string &s);
+// std::string rtrim(const std::string &s);
 
-std::string trim(const std::string &s);
+// std::string trim(const std::string &s);
 
 std::string removeComments(std::string line);
 
-std::vector<std::string> split(const std::string &str);
+// std::vector<std::string> split(const std::string &str);
 
 void location(const std::string_view str);
 
-std::string toLower(const std::string &inpstr);
+// std::string toLower(const std::string &inpstr);
+* */

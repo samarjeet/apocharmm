@@ -9,8 +9,8 @@
 // ENDLICENSE
 
 #include "CharmmResidueTopology.h"
-#include "cpp_utils.h"
 
+#include "str_utils.h"
 #include <algorithm>
 #include <exception>
 #include <fstream>
@@ -23,12 +23,11 @@ CharmmResidueTopology::CharmmResidueTopology(std::string rtfFileName) {}
 std::string getCleanLine(std::ifstream &rtfFile) {
   std::string line;
   std::getline(rtfFile, line);
-  line = removeComments(line);
-  line = trim(line);
-  // line = std::toupper(line);
-  std::transform(line.begin(), line.end(), line.begin(),
-                 [](unsigned char c) { return std::toupper(c); });
-
+  apo::trimIP(line);
+  std::size_t pos = line.find_first_of('!');
+  line = line.substr(0, pos);
+  apo::trimIP(line);
+  apo::toUpperIP(line);
   return line;
 }
 void CharmmResidueTopology::readRTF(std::string fileName) {
@@ -70,7 +69,7 @@ void CharmmResidueTopology::readRTF(std::string fileName) {
     // std::cout << line << "\n";
     if (line.find("MASS") == 0) {
       // std::cout << line << "\n";
-      auto parts = split(line);
+      std::vector<std::string> parts = apo::split(line);
       atomicMasses[parts[2]] = std::stof(parts[3]);
       // continue;
     }
@@ -82,7 +81,7 @@ void CharmmResidueTopology::readRTF(std::string fileName) {
         // residues.push_back(std::move(residue));
       }
       ++residuesInFile;
-      auto parts = split(line);
+      std::vector<std::string> parts = apo::split(line);
       // std::cout << line << "\n";
       if (parts[0] == "PRES")
         residue.isPatch = true;
@@ -97,7 +96,7 @@ void CharmmResidueTopology::readRTF(std::string fileName) {
           break;
         if (line.find("ATOM") == 0) {
           // std::cout << "--" << line << "\n";
-          parts = split(line);
+          parts = apo::split(line);
           atom.atomName = parts[1];
           atom.atomType = parts[2];
           atom.charge = std::stof(parts[3]);
@@ -106,13 +105,13 @@ void CharmmResidueTopology::readRTF(std::string fileName) {
         }
 
         if (line.find("BOND") == 0 || line.find("DOUB") == 0) {
-          parts = split(line);
+          parts = apo::split(line);
           for (int i = 1; i < parts.size(); i += 2) {
             residue.bonds.push_back({parts[i], parts[i + 1]});
           }
         }
         if (line.find("DELE") == 0) {
-          parts = split(line);
+          parts = apo::split(line);
           if (parts[1] == "ATOM") {
             // Assuming only atoms are being deleteed
             // TODO : make it more general

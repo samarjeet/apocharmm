@@ -24,7 +24,7 @@
 
 CudaIntegrator::CudaIntegrator(void)
     : m_TimeStep(0.0), m_Timfac(0.0488882129), m_DebugPrintFrequency(0),
-      m_Context(nullptr), m_StepsSinceNeighborListUpdate(-1),
+      m_Context(nullptr), m_StepsSinceNeighborListUpdate(1),
       m_CurrentPropagatedStep(0), m_HolonomicConstraint(nullptr), m_CoordsRef(),
       m_CoordsDelta(), m_CoordsDeltaPrevious(), m_IntegratorStream(nullptr),
       m_IntegratorMemcpyStream(nullptr), m_UsingHolonomicConstraints(false),
@@ -56,10 +56,13 @@ void CudaIntegrator::setTimeStep(const double timeStep) {
   // Converting from ps to AKMA units ltm/consta_ltm
   m_TimeStep = timeStep / 0.0488882129;
 
-  // If a new time step is set, and there are Subscribers linked to the current
-  // integrator, the new timestep should be communicated to the subscribers.
-  for (std::size_t i = 0; i < m_Subscribers.size(); i++)
-    m_Subscribers[i]->setTimeStepFromIntegrator(timeStep);
+  // JEG250610: Subscribers can query integrator for time step. We don't need N
+  // copies floating around
+  // // If a new time step is set, and there are Subscribers linked to the
+  // current
+  // // integrator, the new timestep should be communicated to the subscribers.
+  // for (std::size_t i = 0; i < m_Subscribers.size(); i++)
+  //   m_Subscribers[i]->setTimeStepFromIntegrator(timeStep);
 
   return;
 }
@@ -143,10 +146,18 @@ void CudaIntegrator::propagate(const int numSteps) {
   std::chrono::steady_clock::time_point start =
       std::chrono::steady_clock::now();
 
-  m_StepsSinceNeighborListUpdate = 1;
+  m_StepsSinceNeighborListUpdate = 0;
+
+  int minReportFreq = 100000;
+
+  // if there are subscribers, find the smallest report freq instead
+  for (std::size_t i = 0; i < m_Subscribers.size(); i++) {
+    if (m_ReportFreqList[i] < minReportFreq)
+      minReportFreq = m_ReportFreqList[i];
+  }
 
   for (int step = 1; step <= numSteps; step++) {
-    m_CurrentPropagatedStep = step;
+    // m_CurrentPropagatedStep = step;
     // std::cout << "---\nStep " << step << " of " << numSteps << "\n";
 
     // Capture Ctrl-C SIGINT when running with the python interface
@@ -175,14 +186,8 @@ void CudaIntegrator::propagate(const int numSteps) {
     this->propagateOneStep();
 
     m_StepsSinceNeighborListUpdate++;
+    m_CurrentPropagatedStep++;
 
-    int minReportFreq = 100000;
-
-    // if there are subscribers, find the smallest report freq instead
-    for (std::size_t i = 0; i < m_Subscribers.size(); i++) {
-      if (m_ReportFreqList[i] < minReportFreq)
-        minReportFreq = m_ReportFreqList[i];
-    }
     // Check if we have nan-esque energy.
     if (step % minReportFreq == 0)
       this->checkForNanEnergy();
@@ -221,9 +226,12 @@ void CudaIntegrator::setNonbondedListUpdateFrequency(const int nfreq) {
 
 void CudaIntegrator::subscribe(std::shared_ptr<Subscriber> sub) {
   m_Subscribers.push_back(sub);
-  m_ReportFreqList.push_back(sub->getReportFreq());
+  m_ReportFreqList.push_back(sub->getReportFrequency());
   sub->setCharmmContext(m_Context);
-  sub->setTimeStepFromIntegrator(m_TimeStep * m_Timfac);
+
+  // JEG250610: Subscribers can query integrator for time step. We don't need N
+  // copies floating around sub->setTimeStepFromIntegrator(m_TimeStep *
+  // m_Timfac);
 
   try {
     sub->setIntegrator(this->shared_from_this());
@@ -252,8 +260,9 @@ void CudaIntegrator::unsubscribe(std::shared_ptr<Subscriber> sub) {
                                 sub->getFileName() + "\")");
   }
   // if you unsubscribe, you should also remove the corresponding freq
-  auto freqIterator = std::find(m_ReportFreqList.begin(),
-                                m_ReportFreqList.end(), sub->getReportFreq());
+  auto freqIterator =
+      std::find(m_ReportFreqList.begin(), m_ReportFreqList.end(),
+                sub->getReportFrequency());
   m_ReportFreqList.erase(freqIterator);
 
   return;
@@ -403,7 +412,7 @@ void CudaIntegrator::reportIfNeeded(const int istep) {
   // Loop over each report frequency. If modulo is 0, then update the
   // corresponding Subscriber
   for (std::size_t i = 0; i < m_ReportFreqList.size(); i++) {
-    if ((istep + 1) % m_ReportFreqList[i] == 0)
+    if (istep % m_ReportFreqList[i] == 0)
       m_Subscribers[i]->update();
   }
   return;

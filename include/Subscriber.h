@@ -4,7 +4,7 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author:  Samarjeet Prasad
+// Author:  Samarjeet Prasad, James E. Gonzales II
 //
 // ENDLICENSE
 
@@ -18,27 +18,25 @@ class CharmmContext;
 class CudaIntegrator;
 
 class Subscriber {
-  ////////////
-  // PUBLIC //
-  ////////////
 public:
+  Subscriber(void);
+  Subscriber(const std::string &fileName);
+
   /**
    * @param[in] fileName Name of the output file to which updates will be
    * printed.
-   * @param[in] reportFreq (opt) Report frequency (number of timestep between
-   * two updates). Optional.
+   * @param[in] reportFrequency (opt) Report frequency (number of timestep
+   * between two updates). Optional.
    */
-  Subscriber(const std::string &fileName, int reportFreq);
-  Subscriber(const std::string &fileName);
-  Subscriber() = default;
+  Subscriber(const std::string &fileName, const int reportFrequency);
 
+public:
   /**
-   * @brief Add an update to the output
+   * @brief Set frequency of reports
    *
-   * Query the system (CharmmContext) to update its target information, adds to
-   * the output file
+   * Set number of steps between two reports of the Subscriber
    */
-  virtual void update() = 0;
+  void setReportFrequency(const int reportFrequency);
 
   /**
    * @brief Sets name of output file
@@ -46,49 +44,14 @@ public:
    * Sets the name of the ouptut file to fileNameIn, after checking
    * that it is in an already existing path
    */
-  void setFileName(std::string fileNameIn);
+  void setFileName(const std::string &fileName);
 
-  /**
-   * @brief Check existence of output file dir
-   *
-   * Throws an error if the path to the output file given (fileNameIn) is
-   * incorrect/non-existing
-   */
-  void checkPath(std::string fileNameIn);
-
-  /**
-   * @brief Set frequency of reports
-   *
-   * Set number of steps between two reports of the Subscriber
-   */
-  void setReportFreq(int n) { reportFreq = n; }
-
-  /**
-   * @brief Returns report frequency
-   * @ return number of steps between two reports
-   */
-  int getReportFreq();
-
-  std::string getFileName() { return fileName; }
-
-  /**
-   * @brief Sets integratorTimeStep from CudaIntegrator.
-   *
-   * Should be called upon subscription.
-   */
-  void setTimeStepFromIntegrator(double ts);
-
-  /** @brief Add a comment section to the output file. Assumes the input string
-   * is formatted.
-   * @param[in] commentLines String to add.
-   *
-   * Checks that the final character of the given input is a line break.
-   */
-  void addCommentSection(std::string commentLines);
-
-  /** @brief Opens output file stream (checks path)
-   */
-  void openFile();
+  // /**
+  //  * @brief Sets integratorTimeStep from CudaIntegrator.
+  //  *
+  //  * Should be called upon subscription.
+  //  */
+  // void setTimeStepFromIntegrator(const double ts);
 
   /**
    * @brief Attaches Subscriber to a CharmmContext
@@ -97,37 +60,62 @@ public:
 
   /** @brief Attaches integrator to Subscriber. Should be done by the Integrator
    * itself upon calling ::subscribe function. */
-  void setIntegrator(std::shared_ptr<CudaIntegrator> integratorIn);
+  void setIntegrator(std::shared_ptr<CudaIntegrator> integrator);
 
-  ///////////////
-  // PROTECTED //
-  ///////////////
+public:
+  /**
+   * @brief Returns report frequency
+   * @ return number of steps between two reports
+   */
+  int getReportFrequency(void) const;
+
+  const std::string &getFileName(void) const;
+
+  std::string &getFileName(void);
+
+public:
+  /**
+   * @brief Add an update to the output
+   *
+   * Query the system (CharmmContext) to update its target information, adds to
+   * the output file
+   */
+  virtual void update(void) = 0;
+
+  /**
+   * @brief Check existence of output file dir
+   *
+   * Throws an error if the path to the output file given (fileNameIn) is
+   * incorrect/non-existing
+   */
+  void checkPath(const std::string &fileName);
+
+  /** @brief Opens output file stream (checks path)
+   */
+  void openFile(void);
+
+  /** @brief Add a comment section to the output file. Assumes the input string
+   * is formatted.
+   * @param[in] commentLines String to add.
+   *
+   * Checks that the final character of the given input is a line break.
+   */
+  void addCommentSection(const std::string &commentLines);
+
 protected:
-  std::string fileName;
-  std::shared_ptr<CharmmContext> charmmContext;
-  // std::ofstream fout;
-  std::fstream fout;
-
   /**
    * @brief Number of timestep between reports
    *
    * Subscriber's output will be updated every reportFreq steps [default:1000].
    */
-  int reportFreq;
+  int m_ReportFrequency;
 
-  /**
-   * @brief Tracks if CharmmContext has been set
-   */
-  bool hasCharmmContext = false;
+  std::string m_FileName;
 
-  /**
-   * @brief Timestep extracted from the CudaIntegrator
-   */
-  float integratorTimeStep;
+  std::fstream m_FileStream;
+
+  std::shared_ptr<CharmmContext> m_CharmmContext;
 
   /** @brief Integrator linked to this subscriber*/
-  std::shared_ptr<CudaIntegrator> integrator;
-
-  /** @brief Tracks if integrator has been set */
-  bool hasIntegrator = false;
+  std::shared_ptr<CudaIntegrator> m_Integrator;
 };

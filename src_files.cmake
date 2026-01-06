@@ -12,8 +12,9 @@ list(APPEND src_files
   src/DynaSubscriber.cu
   src/EnergyVirial.cpp
   src/CudaEnergyVirial.cu
-  src/cpp_utils.cu
-  src/cpp_utils.cpp
+  # src/cpp_utils.cu
+  # src/cpp_utils.cpp
+  src/str_utils.cpp
   src/cuda_utils.cu
   src/CudaEMap.cu
   src/CudaPMEDirectForce.cu

@@ -17,21 +17,8 @@
  */
 class DynaSubscriber : public Subscriber {
 public:
-  /** @brief Basic constructor, take output to fileName and uses default
-   * report frequency of 1/1000 steps.
-   * @param[in] _fileName Name (and possibly path) of the output file
-   */
-  DynaSubscriber(const std::string &_fileName);
-  /** @brief Basic constructor, takes output file name and report
-   * frequency as parameters
-   * report frequency of 1/1000 steps.
-   * @param[in] _fileName Name (and possibly path) of the output file
-   * @param[in] _reportFreq Number of steps between reports
-   */
-  DynaSubscriber(const std::string &_fileName,
-                 const int _reportFreq);
-  /** @brief Destructor, flushes output and closes file.
-   */
+  DynaSubscriber(const std::string &fileName);
+  DynaSubscriber(const std::string &fileName, const int reportFrequency);
   ~DynaSubscriber(void);
 
 public:

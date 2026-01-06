@@ -16,21 +16,19 @@
 
 BEDSSubscriber::BEDSSubscriber(const std::string &fileName)
     : Subscriber(fileName) {
-  initialize();
-  numFramesWritten = 0;
-}
-BEDSSubscriber::BEDSSubscriber(const std::string &fileName, int reportFreq)
-    : Subscriber(fileName, reportFreq) {
-  initialize();
-  numFramesWritten = 0;
+  m_NumFramesWritten = 0;
 }
 
-BEDSSubscriber::~BEDSSubscriber() { fout.close(); }
+BEDSSubscriber::BEDSSubscriber(const std::string &fileName, int reportFrequency)
+    : Subscriber(fileName, reportFrequency) {
+  m_NumFramesWritten = 0;
+}
 
-void BEDSSubscriber::initialize() { fout.open(fileName); }
+BEDSSubscriber::~BEDSSubscriber(void) {
+  if (m_FileStream.is_open())m_FileStream.close(); return;}
 
-void BEDSSubscriber::update() {
-  auto fm = charmmContext->getForceManager();
+void BEDSSubscriber::update(void) {
+  auto fm = m_CharmmContext->getForceManager();
   auto bridgeEDSForceManager = std::dynamic_pointer_cast<BEDSForceManager>(fm);
 
   if (fm->isComposite()) {
@@ -38,14 +36,15 @@ void BEDSSubscriber::update() {
 
     auto lambdaPotentialEnergies =
         bridgeEDSForceManager->getLambdaPotentialEnergies();
-    for (int i = 0; i < lambdaPotentialEnergies.size(); i++) {
-      fout << lambdaPotentialEnergies[i] << "\t";
-    }
-    fout << std::endl;
+    for (int i = 0; i < lambdaPotentialEnergies.size(); i++)
+      m_FileStream << lambdaPotentialEnergies[i] << "\t";
+    m_FileStream << std::endl;
 
-    ++numFramesWritten;
+    m_NumFramesWritten++;
   } else {
     std::cout << "WARNING -- You should not be using a BEDSSubscriber with a "
                  "non-composite ForceManager.\n";
   }
+
+  return;
 }

@@ -11,8 +11,9 @@
 #pragma once
 
 #include "Subscriber.h"
-#include <fstream>
+
 #include "ForceManager.h"
+#include <fstream>
 
 /** @brief Linked to several ForceManager objects. When reporting, asks each FM
  * to compute energy and reports it along with the actual CharmmContext FM. */
@@ -21,12 +22,12 @@
 class CompositeSubscriber : public Subscriber {
 public:
   CompositeSubscriber(const std::string &fileName);
-  CompositeSubscriber(const std::string &fileName, int reportFreq);
-  void update() override;
-  ~CompositeSubscriber();
+  CompositeSubscriber(const std::string &fileName, int reportFrequency);
+  ~CompositeSubscriber(void);
+
+public:
+  void update(void) override;
 
 private:
-  void initialize();
-  int numFramesWritten;
-  std::vector<std::shared_ptr<ForceManager>>  fmlist;
+  int m_NumFramesWritten;
 };

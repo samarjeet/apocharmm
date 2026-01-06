@@ -31,12 +31,6 @@
  */
 class MBARSubscriber : public Subscriber {
 public:
-  /** @brief Basic constructor. Specify output file name and report frequency.
-   * Will initialize its forceManagerList with
-   * this.charmmContext.getForceManager.
-   * @todo Do we need a header ? What info could we add in there ?
-   */
-  MBARSubscriber(const std::string &fileName, int reportFreqIn);
   /** @brief Basic constructor. Specify output file name. Default output
    * interval of 1000 steps will be used.
    * Will initialize its forceManagerList with
@@ -44,22 +38,32 @@ public:
    */
   MBARSubscriber(const std::string &fileName);
 
+  /** @brief Basic constructor. Specify output file name and report frequency.
+   * Will initialize its forceManagerList with
+   * this.charmmContext.getForceManager.
+   * @todo Do we need a header ? What info could we add in there ?
+   */
+  MBARSubscriber(const std::string &fileName, int reportFrequency);
+
+public:
   /** @brief Report to the output */
-  void update() override;
+  void update(void) override;
 
   /** @brief Add a ForceManager to the list. When updating, energy will be
    * computed using this ForceManager as well as all other previously added.
    */
-  void addForceManager(std::shared_ptr<ForceManager> fmIn);
+  void addForceManager(std::shared_ptr<ForceManager> forceManager);
 
   /** @brief Add a list of ForceManager obejcts */
-  void addForceManager(std::vector<std::shared_ptr<ForceManager>> fmlist);
+  void
+  addForceManager(std::vector<std::shared_ptr<ForceManager>> forceManagers);
 
   /** @brief Add all child ForceManager from a CompositeForceManager */
-  void addForceManager(std::shared_ptr<ForceManagerComposite> fmcomposite);
+  void
+  addForceManager(std::shared_ptr<ForceManagerComposite> forceManagerComposite);
 
   /** @brief Returns current list of ForceManager attached to MBARSubscriber */
-  std::vector<std::shared_ptr<ForceManager>> getForceManagerList();
+  std::vector<std::shared_ptr<ForceManager>> getForceManagerList(void);
 
   /** @brief Sets CharmmContext (usually called by Integrator.subscribe), adds
    * its ForceManager to the forceManagerList.
@@ -71,9 +75,10 @@ public:
   void setCharmmContext(std::shared_ptr<CharmmContext> ctx);
 
 private:
+  int m_NumFramesWritten;
+
   /** @brief Vector of all ForceManager objects to be used to compute energy at
    * each update
    */
-  std::vector<std::shared_ptr<ForceManager>> forceManagerList{};
-  int numFramesWritten = 0;
+  std::vector<std::shared_ptr<ForceManager>> m_ForceManagers;
 };

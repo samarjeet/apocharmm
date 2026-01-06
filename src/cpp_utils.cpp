@@ -9,6 +9,7 @@
 // ENDLICENSE
 
 #include "cpp_utils.h"
+/* *
 #include <iostream>
 #include <source_location>
 #include <string>
@@ -19,3 +20,4 @@ void location(std::string_view message, const std::source_location location =
             << " Function: " << location.function_name()
             << " Message: " << message << "\n";
 }
+* */

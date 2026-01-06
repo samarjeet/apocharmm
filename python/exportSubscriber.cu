@@ -119,7 +119,7 @@ void exportSubscriber(py::module &mod) {
                         :type reportFreq: int
                     )sitb")
       .def("setReportFlags",
-           static_cast<void (StateSubscriber::*)(std::string)>(
+           static_cast<void (StateSubscriber::*)(const std::string &)>(
                &StateSubscriber::readReportFlags),
            R"sitb(
             Set the output quantities for the StateSubscriber. Ex: "all", or "kineticEnergy, potentialenergy, VOLUME". 
@@ -127,7 +127,8 @@ void exportSubscriber(py::module &mod) {
             :type flags: str
             )sitb")
       .def("setReportFlags",
-           static_cast<void (StateSubscriber::*)(std::vector<std::string>)>(
+           static_cast<void (StateSubscriber::*)(
+               const std::vector<std::string> &)>(
                &StateSubscriber::readReportFlags),
            R"sitb(
             Set the output quantities for the StateSubscriber. Ex: ["kineticEnergy", "potentialenergy", "VOLUME"]. 
@@ -196,14 +197,14 @@ void exportSubscriber(py::module &mod) {
                 :param reportFileName: output file name
                 :type reportFileName: str
                 :param reportFreq: interval between two reports
-                :type reportFreq: int 
-            )sitb")
-      .def("readRestart", &RestartSubscriber::readRestart, R"sitb(
-            Read the restart file associated with the current subscriber and
-            sets the simulation parameters accordingly
-            :param restartFileName: name of the restart file 
-            :type restartFileName: str
+                :type reportFreq: int
             )sitb");
+  //  .def("readRestart", &RestartSubscriber::readRestart, R"sitb(
+  //        Read the restart file associated with the current subscriber and
+  //        sets the simulation parameters accordingly
+  //        :param restartFileName: name of the restart file
+  //        :type restartFileName: str
+  //        )sitb");
 
   // MBARSubscriber
   //===============

@@ -17,9 +17,9 @@
 // #include "boost/algorithm/string.hpp"
 #include "catch.hpp"
 #include "compare.h"
-#include "cpp_utils.h"
 #include "cuda_utils.h"
 #include "helper.h"
+#include "str_utils.h"
 #include "test_paths.h"
 #include <iostream>
 
@@ -91,7 +91,7 @@ std::vector<double4> getForcesFromRefFile(std::string fname) {
 
   int lineCount = 0;
   while (std::getline(refFile, line)) {
-    trim(line);
+    apo::trimIP(line);
     if (line[0] == '!') {
       continue;
     } // dont look at comments

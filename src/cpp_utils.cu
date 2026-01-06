@@ -14,6 +14,7 @@
 #include <sstream>
 #include <string>
 
+/* *
 const std::string WHITESPACE = " \n\r\t\f\v";
 
 std::string ltrim(const std::string &s) {
@@ -51,3 +52,4 @@ std::string toLower(const std::string &str) {
   std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
   return lower;
 }
+* */

@@ -4,7 +4,7 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author:  Samarjeet Prasad
+// Author:  Samarjeet Prasad, James E. Gonzales II
 //
 // ENDLICENSE
 
@@ -15,29 +15,33 @@
 
 /**
  * @brief CHARMM DCD output Subscriber
- * 
+ *
  * Should be initialized with a report frequency and a context.
  */
 class DcdSubscriber : public Subscriber {
 public:
   DcdSubscriber(const std::string &fileName);
-  DcdSubscriber(const std::string &fileName, int reportFreq);
-  /** @deprecated Constructor. CharmmContext dependency should be initialized upon subscription */
-  DcdSubscriber(const std::string &fileName, int reportFreq,
+  DcdSubscriber(const std::string &fileName, int reportFrequency);
+  /** @deprecated Constructor. CharmmContext dependency should be initialized
+   * upon subscription */
+  DcdSubscriber(const std::string &fileName, int reportFrequency,
                 std::shared_ptr<CharmmContext> ctx);
-  ~DcdSubscriber();
-  void update() override;
+  ~DcdSubscriber(void);
+
+public:
+  void update(void) override;
 
 private:
-  void initialize();
-  /**
-   * @brief Number of frames written in total
-   */
-  int numFramesWritten;
-  int numAtoms;
+  void writeHeader(void);
+  void writeXtalData(void);
+  void writeCoordData(void);
 
-  /** @brief Monitor if the subscriber has been initialized, e.g. if header has
-   * been written 
+  // void initialize(void);
+
+  /**
+   * @brief Number of frames written in total (NFILE)
    */
-  bool isInitialized;
+  int m_NumFramesWritten;
+
+  bool m_IsHeaderWritten;
 };

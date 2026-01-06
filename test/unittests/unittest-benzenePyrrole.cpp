@@ -129,7 +129,7 @@ TEST_CASE("benzene_pyrrole", "[free energy]") {
     */
 
     auto fepSub = std::make_shared<FEPSubscriber>("vfsw_fepEI_benz_ima.out");
-    fepSub->setReportFreq(1000);
+    fepSub->setReportFrequency(1000);
     integrator->subscribe(fepSub);
 
     int numEquilibrationSteps = 100;
@@ -218,7 +218,7 @@ TEST_CASE("sep_benzene_pyrrole", "[free energy]") {
 
       auto fepSub = std::make_shared<FEPSubscriber>(
           "win_" + std::to_string(iter) + "_vfsw_fepEI_benz_ima.out");
-      fepSub->setReportFreq(1000);
+      fepSub->setReportFrequency(1000);
       integrator.subscribe(fepSub);
       int numEquilibrationSteps = 100;
       int numProductionSteps = 1000;

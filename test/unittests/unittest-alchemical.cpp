@@ -89,7 +89,7 @@ TEST_CASE("TI-PI") {
     integrator->setCharmmContext(ctx);
 
     auto fepSub = std::make_shared<FEPSubscriber>("dbexp_fepEI_vdw.out");
-    fepSub->setReportFreq(1000);
+    fepSub->setReportFrequency(1000);
     integrator->subscribe(fepSub);
 
     int numEquilibrationSteps = 100;

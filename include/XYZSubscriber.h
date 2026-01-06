@@ -13,12 +13,12 @@
 #include "Subscriber.h"
 #include <fstream>
 
-/** @brief Reports atomic positions 
-*/
+/** @brief Reports atomic positions
+ */
 class XYZSubscriber : public Subscriber {
 public:
-  /** @brief Basic constructor, writes output to fileName and uses default report
-   * frequency of 1/1000 steps.
+  /** @brief Basic constructor, writes output to fileName and uses default
+   * report frequency of 1/1000 steps.
    */
   XYZSubscriber(const std::string &fileName);
   /** @brief XYZSubscriber constructor, takes output file name and report
@@ -26,16 +26,12 @@ public:
    * @param[in] fileName Name (and possibly path) of the output file
    * @param[in] reportFreq Number of steps between two reports
    */
-  XYZSubscriber(const std::string &fileName, int reportFreq);
-  void update() override;
-  ~XYZSubscriber();
+  XYZSubscriber(const std::string &fileName, const int reportFrequency);
+  ~XYZSubscriber(void);
+
+public:
+  void update(void) override;
 
 private:
-  void initialize();
-
-  int numFramesWritten;
-  //int numAtoms;
-
-  /** @brief Tracks if subscriber has been initialized (=numAtoms has been set) */
-  bool isInitialized;
+  int m_NumFramesWritten;
 };

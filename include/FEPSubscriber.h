@@ -16,13 +16,12 @@
 class FEPSubscriber : public Subscriber {
 public:
   FEPSubscriber(const std::string &fileName);
-  FEPSubscriber(const std::string &fileName, int reportFreq);
-  void update() override;
-  ~FEPSubscriber();
+  FEPSubscriber(const std::string &fileName, int reportFrequency);
+  ~FEPSubscriber(void);
+
+public:
+  void update(void) override;
 
 private:
-  void initialize();
-  std::ofstream fout;
-
-  int numFramesWritten;
+  int m_NumFramesWritten;
 };

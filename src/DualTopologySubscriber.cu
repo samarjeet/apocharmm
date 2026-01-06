@@ -15,36 +15,32 @@
 
 DualTopologySubscriber::DualTopologySubscriber(const std::string &fileName)
     : Subscriber(fileName) {
-  numFramesWritten = 0;
-}
-DualTopologySubscriber::DualTopologySubscriber(
-    const std::string &fileName,
-    int reportFreq) //, std::shared_ptr<CharmmContext> ctx)
-    : Subscriber(fileName, reportFreq) {
-  numFramesWritten = 0;
+  m_NumFramesWritten = 0;
 }
 
-DualTopologySubscriber::~DualTopologySubscriber() {
-  std::cout << "Trying to close the dual topology subscriber\n";
-  fout.close();
+DualTopologySubscriber::DualTopologySubscriber(const std::string &fileName,
+                                               int reportFrequency)
+    : Subscriber(fileName, reportFrequency) {
+  m_NumFramesWritten = 0;
 }
 
-void DualTopologySubscriber::update() {
+DualTopologySubscriber::~DualTopologySubscriber(void) {
+  if (m_FileStream.is_open())
+    m_FileStream.close();
+}
 
-  // std::cout << pe << "\t" << ke << "\n";
-  float pe = this->charmmContext->calculateForces(false, true, true);
+void DualTopologySubscriber::update(void) {
+  float pe = m_CharmmContext->calculateForces(false, true, true);
 
   // the previous command has calculated the energies as well
   // here we are just calling them. No force or energy is being calculated here
-  auto pes = this->charmmContext->getPotentialEnergies();
+  auto pes = m_CharmmContext->getPotentialEnergies();
 
-  // fout << pes[0] << "\t" << pes[1] << "\t" << pe << std::endl;
-  for (auto pesi : pes) {
-    fout << pesi << "\t";
-  }
-  fout << pe << std::endl;
-  // std::cout << pes[0] << "\t" << pes[1] << "\t" << pes[0] + pes[1] <<
-  // std::endl;
+  for (auto pesi : pes)
+    m_FileStream << pesi << "\t";
+  m_FileStream << pe << std::endl;
 
-  ++numFramesWritten;
+  m_NumFramesWritten++;
+
+  return;
 }

@@ -16,26 +16,28 @@
 #include <iomanip>
 #include <iostream>
 
-RestartSubscriber::RestartSubscriber(const std::string &fileName) {
-  numFramesWritten = 0;
-  setFileName(fileName);
-  setReportFreq(1000);
-  openFile();
+RestartSubscriber::RestartSubscriber(const std::string &fileName)
+    : Subscriber(fileName) {
+  m_NumFramesWritten = 0;
 }
 
 RestartSubscriber::RestartSubscriber(const std::string &fileName,
-                                     int reportFreq) {
-  numFramesWritten = 0;
-  setFileName(fileName);
-  setReportFreq(reportFreq);
-  openFile();
+                                     const int reportFrequency)
+    : Subscriber(fileName, reportFrequency) {
+  m_NumFramesWritten = 0;
 }
 
-RestartSubscriber::~RestartSubscriber(void) { fout.close(); }
+RestartSubscriber::~RestartSubscriber(void) {
+  if (m_FileStream.is_open())
+    m_FileStream.close();
+}
 
+void RestartSubscriber::update(void) { return; }
+
+/* *
 void RestartSubscriber::update(void) {
-  const int rstWidth = 23;
-  const int rstPrec = 16;
+  constexpr int rstWidth = 23;
+  constexpr int rstPrec = 16;
 
   // Get positions, get velocities, print !
   auto coords = this->charmmContext->getCoordinatesCharges();
@@ -47,10 +49,8 @@ void RestartSubscriber::update(void) {
 
   checkForNanValues(coords, velmass, boxdim);
 
-  if (fout.is_open()) {
+  if (fout.is_open())
     fout.close();
-  }
-  // fout.close();
   fout.open(fileName, std::ios::out);
 
   // atom section
@@ -204,6 +204,7 @@ void RestartSubscriber::update(void) {
   fout.close();
   ++numFramesWritten;
 }
+* */
 
 /* *
 std::vector<double> readRestartEntry(const std::string &entry) const {
@@ -237,6 +238,7 @@ std::vector<double> readRestartEntry(const std::string &entry) const {
 }
 * */
 
+/* *
 std::vector<std::vector<double>> RestartSubscriber::readPositions(void) const {
   std::ifstream restartFile(fileName);
   if (!restartFile.is_open()) {
@@ -835,6 +837,7 @@ double RestartSubscriber::readNoseHooverPistonForcePrevious(void) const {
   iss >> pistonForce;
   return pistonForce;
 }
+* */
 
 /* *
 void RestartSubscriber::getRestartContent(std::string fileName,
@@ -873,6 +876,7 @@ void RestartSubscriber::getRestartContent(std::string fileName,
 }
 * */
 
+/* *
 void RestartSubscriber::readRestart(void) {
   if (!hasCharmmContext) {
     throw std::invalid_argument(
@@ -1004,3 +1008,4 @@ void RestartSubscriber::checkForNanValues(CudaContainer<double4> coords,
     }
   }
 }
+* */

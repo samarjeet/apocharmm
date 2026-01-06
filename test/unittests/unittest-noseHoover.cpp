@@ -271,14 +271,18 @@ TEST_CASE("noseHooverThermostat", "[dynamics]") {
   }
 }
 
-/* *
+/* */
 TEST_CASE("optimalTemperature") {
   const std::string dataPath = getDataPath();
   const std::vector<double> boxDims(3, 50.0);
   const int randomSeed = 314159;
   const double temperature = 300.0;
-  const int nsteps = 100000;
-  const double timeStep = 0.003;
+  const int nsteps = 1000000;
+  // const double timeStep = 0.0005;
+  const double timeStep = 0.001;
+  // const double timeStep = 0.002;
+  // const double timeStep = 0.003;
+  // const double timeStep = 0.004;
   const bool useHolonomicConstraints = true;
 
   auto prm =
@@ -305,7 +309,7 @@ TEST_CASE("optimalTemperature") {
     integrator->useOldTemperature(true);
 
     auto dcdSubscriber =
-        std::make_shared<DcdSubscriber>("waterbox_3_s_old.dcd", 1);
+        std::make_shared<DcdSubscriber>("waterbox_1_s_old.dcd", 10);
 
     integrator->subscribe(dcdSubscriber);
 
@@ -330,7 +334,7 @@ TEST_CASE("optimalTemperature") {
     integrator->setCharmmContext(ctx);
 
     auto dcdSubscriber =
-        std::make_shared<DcdSubscriber>("waterbox_3_s_new.dcd", 1);
+        std::make_shared<DcdSubscriber>("waterbox_1_s_new.dcd", 10);
 
     integrator->subscribe(dcdSubscriber);
 
@@ -348,4 +352,4 @@ TEST_CASE("optimalTemperature") {
               << std::endl;
   }
 }
-* */
+/* */

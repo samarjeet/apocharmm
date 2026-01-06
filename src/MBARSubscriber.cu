@@ -18,21 +18,21 @@
 
 MBARSubscriber::MBARSubscriber(const std::string &fileName)
     : Subscriber(fileName) {
-  numFramesWritten = 0;
+  m_NumFramesWritten = 0;
 }
 
-MBARSubscriber::MBARSubscriber(const std::string &fileName, int reportFreq)
-    : Subscriber(fileName, reportFreq) {
-  numFramesWritten = 0;
+MBARSubscriber::MBARSubscriber(const std::string &fileName, int reportFrequency)
+    : Subscriber(fileName, reportFrequency) {
+  m_NumFramesWritten = 0;
 }
 
-void MBARSubscriber::update() {
-  auto fm = charmmContext->getForceManager();
+void MBARSubscriber::update(void) {
+  auto fm = m_CharmmContext->getForceManager();
   // auto tempfm = std::dynamic_pointer_cast<ForceManagerComposite>(
   auto tempfm = std::dynamic_pointer_cast<MBARForceManager>(
       fm); // dynamic cast to FMComposite in order to use its calc_force
 
-  XYZQ *xyzq = charmmContext->getXYZQ();
+  XYZQ *xyzq = m_CharmmContext->getXYZQ();
   xyzq->transferFromDevice();
   float4 *xyzqPointer = xyzq->xyzq;
   tempfm->ForceManagerComposite::calc_force(xyzqPointer, false, true, false);
@@ -40,34 +40,35 @@ void MBARSubscriber::update() {
   auto peCC = tempfm->getPotentialEnergy();
   peCC.transferFromDevice();
 
-  for (int i = 0; i < peCC.getHostArray().size(); i++) {
-    fout << std::setw(12) << peCC[i] << "\t";
-  }
-  fout << std::endl;
-}
+  for (std::size_t i = 0; i < peCC.getHostArray().size(); i++)
+    m_FileStream << std::setw(12) << peCC[i] << "\t";
+  m_FileStream << std::endl;
 
-void MBARSubscriber::addForceManager(std::shared_ptr<ForceManager> fmIn) {
-  forceManagerList.push_back(fmIn);
+  return;
 }
 
 void MBARSubscriber::addForceManager(
-    std::vector<std::shared_ptr<ForceManager>> fmlist) {
-  for (int i = 0; i < fmlist.size(); i++) {
-    forceManagerList.push_back(fmlist[i]);
-  }
+    std::shared_ptr<ForceManager> forceManager) {
+  m_ForceManagers.push_back(forceManager);
+  return;
 }
 
 void MBARSubscriber::addForceManager(
-    std::shared_ptr<ForceManagerComposite> fmcomposite) {
-  auto children = fmcomposite->getChildren();
-  for (int i = 0; i < children.size(); i++) {
-    forceManagerList.push_back(children[i]);
-  }
+    std::vector<std::shared_ptr<ForceManager>> forceManagers) {
+  for (std::size_t i = 0; i < forceManagers.size(); i++)
+    this->addForceManager(forceManagers[i]);
+  return;
+}
+
+void MBARSubscriber::addForceManager(
+    std::shared_ptr<ForceManagerComposite> forceManagerComposite) {
+  this->addForceManager(forceManagerComposite->getChildren());
+  return;
 }
 
 std::vector<std::shared_ptr<ForceManager>>
-MBARSubscriber::getForceManagerList() {
-  return forceManagerList;
+MBARSubscriber::getForceManagerList(void) {
+  return m_ForceManagers;
 }
 
 // This function is called upon subscription to an Integrator.
@@ -79,5 +80,6 @@ void MBARSubscriber::setCharmmContext(std::shared_ptr<CharmmContext> ctx) {
   std::cout << "The modified version of setCharmmContext runs\n";
   // add ctx's FM to forceManagerList
   // forceManagerList.push_front(ctx->getForceManager());
-  forceManagerList.insert(forceManagerList.begin(), ctx->getForceManager());
+  m_ForceManagers.insert(m_ForceManagers.begin(), ctx->getForceManager());
+  return;
 }

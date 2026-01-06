@@ -16,7 +16,7 @@
 #include <iostream>
 #include <sstream>
 
-#include "cpp_utils.h"
+#include "str_utils.h"
 
 CharmmParameters::CharmmParameters(const std::string &fileName) {
   prmFileNames.push_back(fileName);
@@ -53,6 +53,7 @@ std::vector<std::string> split(const std::string &str) {
   return tokens;
 }
 */
+
 void CharmmParameters::readCharmmParameterFile(std::string fileName) {
   enum State {
     NONE,
@@ -98,10 +99,11 @@ void CharmmParameters::readCharmmParameterFile(std::string fileName) {
     while (!prmFile.eof()) {
       std::getline(prmFile, line);
       // std::cout << "toppar --" << line << "\n";
-      line = removeComments(line);
-      line = trim(line);
-      std::transform(line.begin(), line.end(), line.begin(),
-                     [](unsigned char c) { return std::toupper(c); });
+      apo::trimIP(line);
+      std::size_t pos = line.find_first_of('!');
+      line = line.substr(0, pos);
+      apo::trimIP(line);
+      apo::toUpperIP(line);
       if (line.find_first_of('*') == 0 || line.find_first_of('!') == 0 ||
           line.size() == 0) {
         // Skip the line
@@ -117,12 +119,11 @@ void CharmmParameters::readCharmmParameterFile(std::string fileName) {
   const float pi_180 = std::acos(-1) / 180.0;
   while (!prmFile.eof()) {
     std::getline(prmFile, line);
-    // line = ltrim(line);
-    line = removeComments(line);
-    line = trim(line);
-    // line = std::toupper(line);
-    std::transform(line.begin(), line.end(), line.begin(),
-                   [](unsigned char c) { return std::toupper(c); });
+    apo::trimIP(line);
+    std::size_t pos = line.find_first_of('!');
+    line = line.substr(0, pos);
+    apo::trimIP(line);
+    apo::toUpperIP(line);
 
     // std::cout << line << "\n";
     if (line.find_first_of('*') == 0 || line.find_first_of('!') == 0 ||
@@ -151,7 +152,7 @@ void CharmmParameters::readCharmmParameterFile(std::string fileName) {
         state = NBFIX;
 
       if (state == BONDS) {
-        tokens = split(line);
+        tokens = apo::split(line);
         if (tokens.size() >= 4) {
           if (tokens[0] > tokens[1])
             std::swap(tokens[0], tokens[1]);
@@ -161,7 +162,7 @@ void CharmmParameters::readCharmmParameterFile(std::string fileName) {
         }
       }
       if (state == ANGLES) {
-        tokens = split(line);
+        tokens = apo::split(line);
         // std::cout << "Tokens size : " << tokens.size() << "\n";
         if (tokens.size() >= 5) {
           if (tokens[0] > tokens[2])
@@ -201,7 +202,7 @@ void CharmmParameters::readCharmmParameterFile(std::string fileName) {
       }
 
       if (state == DIHEDRALS) {
-        tokens = split(line);
+        tokens = apo::split(line);
         if (tokens.size() >= 7) {
           if (tokens[0] > tokens[3]) {
             std::swap(tokens[0], tokens[3]);
@@ -218,7 +219,7 @@ void CharmmParameters::readCharmmParameterFile(std::string fileName) {
       }
 
       if (state == IMPROPERS) {
-        tokens = split(line);
+        tokens = apo::split(line);
         if (tokens.size() >= 7) {
           if (tokens[0] > tokens[3]) {
             std::swap(tokens[0], tokens[3]);
@@ -232,17 +233,20 @@ void CharmmParameters::readCharmmParameterFile(std::string fileName) {
       }
 
       if (state == NONBONDED) {
-        tokens = split(line);
+        tokens = apo::split(line);
         if (tokens[0] == "NONBONDED") {
           while (*(tokens.end() - 1) == "-") {
             std::getline(prmFile, line);
-            line = ltrim(line);
-            auto tokens1 = split(line);
+            apo::ltrimIP(line);
+            std::vector<std::string> tokens1 = apo::split(line);
             tokens.insert(tokens.end(), tokens1.begin(), tokens1.end());
           }
         } else {
-          line = removeComments(line);
-          tokens = split(line);
+          apo::trimIP(line);
+          std::size_t pos = line.find_first_of('!');
+          line = line.substr(0, pos);
+          apo::trimIP(line);
+          tokens = apo::split(line);
           // if (tokens[0] == "HGA2")
           //   std::cout << line << " " << tokens.size() << "\n";
           //  std::cout << line << " " << tokens.size() << "\n";
@@ -303,7 +307,7 @@ void CharmmParameters::readCharmmParameterFile(std::string fileName) {
 
       if (state == NBFIX) {
         // std::cout << "NBFIX : " << line << "\t";
-        tokens = split(line);
+        tokens = apo::split(line);
         if (tokens.size() >= 4) {
           if (tokens[0] > tokens[1])
             std::swap(tokens[0], tokens[1]);

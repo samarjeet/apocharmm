@@ -86,7 +86,7 @@ TEST_CASE("eds", "[energy]") {
 
     integrator->propagate(50000);
     auto bedsSub = std::make_shared<BEDSSubscriber>("dbexp_bridgeEds_vdw.out");
-    bedsSub->setReportFreq(1000);
+    bedsSub->setReportFrequency(1000);
     integrator->subscribe(bedsSub);
     integrator->propagate(
         5000); // 500k ? You can propagate more when you'll assert something !

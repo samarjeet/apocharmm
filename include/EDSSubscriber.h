@@ -10,8 +10,9 @@
 
 #pragma once
 
-#include "ForceManager.h"
 #include "Subscriber.h"
+
+#include "ForceManager.h"
 #include <fstream>
 
 /** @brief Linked to several ForceManager objects. When reporting, asks each FM
@@ -21,12 +22,12 @@
 class EDSSubscriber : public Subscriber {
 public:
   EDSSubscriber(const std::string &fileName);
-  EDSSubscriber(const std::string &fileName, int reportFreq);
-  void update() override;
-  ~EDSSubscriber();
+  EDSSubscriber(const std::string &fileName, int reportFrequency);
+  ~EDSSubscriber(void);
+
+public:
+  void update(void) override;
 
 private:
-  void initialize();
-  int numFramesWritten;
-  std::vector<std::shared_ptr<ForceManager>> fmlist;
+  int m_NumFramesWritten;
 };

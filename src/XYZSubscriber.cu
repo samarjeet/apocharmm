@@ -8,47 +8,40 @@
 //
 // ENDLICENSE
 
-#include "CharmmContext.h"
 #include "XYZSubscriber.h"
+
+#include "CharmmContext.h"
 #include <iostream>
 
 XYZSubscriber::XYZSubscriber(const std::string &fileName)
     : Subscriber(fileName) {
-  numFramesWritten = 0;
-}
-XYZSubscriber::XYZSubscriber(const std::string &fileName, int reportFreq)
-    : Subscriber(fileName, reportFreq) {
-  numFramesWritten = 0;
+  m_NumFramesWritten = 0;
 }
 
-XYZSubscriber::~XYZSubscriber() { fout.close(); }
-
-void XYZSubscriber::initialize() {
-  if (!hasCharmmContext) {
-    throw std::invalid_argument(
-        "XYZSubscriber: Can't initialize without a CharmmContext.\n");
-  }
+XYZSubscriber::XYZSubscriber(const std::string &fileName,
+                             const int reportFrequency)
+    : Subscriber(fileName, reportFrequency) {
+  m_NumFramesWritten = 0;
 }
 
-void XYZSubscriber::update() {
-  if (!isInitialized) {
-    initialize();
-  }
-  int numAtoms = charmmContext->getNumAtoms();
+XYZSubscriber::~XYZSubscriber(void) {
+  if (m_FileStream.is_open())
+    m_FileStream.close();
+}
+
+void XYZSubscriber::update(void) {
+  if (m_CharmmContext == nullptr)
+    throw std::runtime_error("ERROR: XYZSubscriber has no CHARMM context.");
 
   // vector in the shared ptr
-  auto xyzq = *(this->charmmContext->getXYZQ()->getHostXYZQ());
+  std::vector<float4> xyzq = *(m_CharmmContext->getXYZQ()->getHostXYZQ());
 
-  // std::cout << xyzq[0].x << "\n";
-  for (int i = 0; i < numAtoms; ++i) {
-    // if (xyzq[i].x < -10.0)
-    // std::cout << i << "\t" << xyzq[i].x << "\t" << xyzq[i].y << "\t"
-    //           << xyzq[i].z << "\n";
-    fout << i << "\t" << xyzq[i].x << "\t" << xyzq[i].y << "\t" << xyzq[i].z
-         << std::endl;
+  for (int i = 0; i < m_CharmmContext->getNumAtoms(); i++) {
+    m_FileStream << i << "\t" << xyzq[i].x << "\t" << xyzq[i].y << "\t"
+                 << xyzq[i].z << std::endl;
   }
 
-  // int status = nc_put_vara_float(ncid, coordVariableId, start, count, xyzNC);
+  m_NumFramesWritten++;
 
-  ++numFramesWritten;
+  return;
 }

@@ -609,7 +609,7 @@ void CudaNoseHooverThermostatIntegrator::propagateOneStep(void) {
                            *m_IntegratorStream);
 
   if ((m_DebugPrintFrequency > 0) &&
-      ((m_CurrentPropagatedStep + 1) % m_DebugPrintFrequency == 0)) {
+      (m_CurrentPropagatedStep % m_DebugPrintFrequency == 0)) {
     m_Context->calculateForces(false, true, false);
   } else {
     m_Context->calculateForces(false, false, false);

@@ -8,261 +8,255 @@
 //
 // ENDLICENSE
 
-#include "CharmmContext.h"
 #include "NetCDFSubscriber.h"
+
+#include "CharmmContext.h"
 #include <iostream>
 
 NetCDFSubscriber::NetCDFSubscriber(const std::string &fileName)
     : Subscriber(fileName) {
-  ncid = -1;
-  initialize();
-  xyzNC = new float[this->charmmContext->getNumAtoms() * 3];
-  numFramesWritten = 0;
-}
-NetCDFSubscriber::NetCDFSubscriber(const std::string &fileName, int reportFreq)
-    : Subscriber(fileName, reportFreq) {
-  ncid = -1;
-  initialize();
-  xyzNC = new float[this->charmmContext->getNumAtoms() * 3];
-  numFramesWritten = 0;
+  m_NcId = -1;
+  this->initialize();
+  m_XYZ.resize(3 * m_CharmmContext->getNumAtoms());
+  m_NumFramesWritten = 0;
 }
 
-NetCDFSubscriber::~NetCDFSubscriber() {
+NetCDFSubscriber::NetCDFSubscriber(const std::string &fileName,
+                                   int reportFrequency)
+    : Subscriber(fileName, reportFrequency) {
+  m_NcId = -1;
+  this->initialize();
+  m_XYZ.resize(3 * m_CharmmContext->getNumAtoms());
+  m_NumFramesWritten = 0;
+}
+
+NetCDFSubscriber::~NetCDFSubscriber(void) {
   std::cout << "Trying to close the ncid\n";
-  int status = nc_close(ncid);
+  int status = nc_close(m_NcId);
   if (status != NC_NOERR)
     std::cerr << "Error: Can't close the netcdf file\n";
-    //throw std::invalid_argument("Error: Can't close the netcdf file\n");
-  if (xyzNC != 0)
-    delete[](xyzNC);
+  // throw std::invalid_argument("Error: Can't close the netcdf file\n");
 }
 
-void NetCDFSubscriber::initialize() {
-  int status;
+void NetCDFSubscriber::update() {
+  m_Start[0] = m_NumFramesWritten;
+  m_Start[1] = 0;
+  m_Start[2] = 0;
 
-  int dimensionID[NC_MAX_VAR_DIMS];
-  status = nc_create(fileName.c_str(), NC_64BIT_OFFSET, &ncid);
+  m_Count[0] = 1;
+  m_Count[1] = m_CharmmContext->getNumAtoms();
+  m_Count[2] = 3;
+
+  this->formatDataForInput(*(m_CharmmContext->getXYZQ()->getHostXYZQ()));
+
+  int status = nc_put_vara_float(m_NcId, m_CoordVariableId, m_Start.data(),
+                                 m_Count.data(), m_XYZ.data());
   if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't create the netcdf file\n";
+    throw std::invalid_argument("ERROR : Can't write the frame\n");
+
+  nc_sync(m_NcId);
+  m_NumFramesWritten++;
+
+  return;
+}
+
+void NetCDFSubscriber::initialize(void) {
+  int status;
+  int dimensionID[NC_MAX_VAR_DIMS];
+
+  status = nc_create(m_FileName.c_str(), NC_64BIT_OFFSET, &m_NcId);
+  if (status != NC_NOERR)
     throw std::invalid_argument("ERROR : Can't create the netcdf file\n");
 
   // Dimensions
-  status = nc_def_dim(ncid, "frame", NC_UNLIMITED, &frameDimId);
+  status = nc_def_dim(m_NcId, "frame", NC_UNLIMITED, &m_FrameDimId);
   if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't define frame dimension.\n";
     throw std::invalid_argument("ERROR : Can't define frame dimension.\n");
 
-  status = nc_def_dim(ncid, "spatial", 3, &spatialDimId);
+  status = nc_def_dim(m_NcId, "spatial", 3, &m_SpatialDimId);
   if (status != NC_NOERR)
-    //std::cerr << "Can't define frame dimension.\n";
     throw std::invalid_argument("Can't define frame dimension.\n");
 
   status =
-      nc_def_dim(ncid, "atom", this->charmmContext->getNumAtoms(), &atomDimId);
+      nc_def_dim(m_NcId, "atom", m_CharmmContext->getNumAtoms(), &m_AtomDimId);
   if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't define frame dimension.\n";
     throw std::invalid_argument("ERROR : Can't define frame dimension.\n");
-  status = nc_def_dim(ncid, "cell_spatial", 3, &cellSpatialDimId);
-  if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't define cell spatial dimension.\n";
-    throw std::invalid_argument("ERROR : Can't define cell spatial dimension.\n");
 
-  status = nc_def_dim(ncid, "cell_angular", 3, &cellAngularDimId);
+  status = nc_def_dim(m_NcId, "cell_spatial", 3, &m_CellSpatialDimId);
   if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't define cell angular dimension.\n";
-    throw std::invalid_argument("ERROR : Can't define cell angular dimension.\n");
+    throw std::invalid_argument(
+        "ERROR : Can't define cell spatial dimension.\n");
 
-  status = nc_def_dim(ncid, "label", 5, &labelDimId);
-  if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't define cell angular dimension.\n";
-    throw std::invalid_argument("ERROR : Can't define cell angular dimension.\n");
+  status = nc_def_dim(m_NcId, "cell_angular", 3, &m_CellAngularDimId);
+  if (status != NC_NOERR) {
+    throw std::invalid_argument(
+        "ERROR : Can't define cell angular dimension.\n");
+  }
+
+  status = nc_def_dim(m_NcId, "label", 5, &m_LabelDimId);
+  if (status != NC_NOERR) {
+    throw std::invalid_argument(
+        "ERROR : Can't define cell angular dimension.\n");
+  }
 
   // Variables
-  dimensionID[0] = frameDimId;
-  status = nc_def_var(ncid, "time", NC_FLOAT, 1, dimensionID, &timeVariableId);
-  if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't define time variable.\n";
-    throw std::invalid_argument("ERROR : Can't define time variable.\n");
-  status = nc_put_att_text(ncid, timeVariableId, "units", 10, "picosecond");
-  if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't put time variable unit attributes.\n";
-    throw std::invalid_argument("ERROR : Can't put time variable unit attributes.\n");
-
-  dimensionID[0] = spatialDimId;
+  dimensionID[0] = m_FrameDimId;
   status =
-      nc_def_var(ncid, "spatial", NC_CHAR, 1, dimensionID, &spatialVariableId);
+      nc_def_var(m_NcId, "time", NC_FLOAT, 1, dimensionID, &m_TimeVariableId);
   if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't define spatial variable.\n";
+    throw std::invalid_argument("ERROR : Can't define time variable.\n");
+
+  status = nc_put_att_text(m_NcId, m_TimeVariableId, "units", 10, "picosecond");
+  if (status != NC_NOERR) {
+    throw std::invalid_argument(
+        "ERROR : Can't put time variable unit attributes.\n");
+  }
+
+  dimensionID[0] = m_SpatialDimId;
+  status = nc_def_var(m_NcId, "spatial", NC_CHAR, 1, dimensionID,
+                      &m_SpatialVariableId);
+  if (status != NC_NOERR)
     throw std::invalid_argument("ERROR : Can't define spatial variable.\n");
 
-  dimensionID[0] = frameDimId;
-  dimensionID[1] = cellSpatialDimId;
-  status = nc_def_var(ncid, "cell_lengths", NC_FLOAT, 2, dimensionID,
-                      &cellLengthsVariableId);
-  if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't define cell_lengths variable.\n";
-    throw std::invalid_argument("ERROR : Can't define cell_lengths variable.\n");
-  status = nc_put_att_text(ncid, cellLengthsVariableId, "units", 8, "angstrom");
-  if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't cell_lengths units attribute.\n";
-    throw std::invalid_argument("ERROR : Can't cell_lengths units attribute.\n");
+  dimensionID[0] = m_FrameDimId;
+  dimensionID[1] = m_CellSpatialDimId;
+  status = nc_def_var(m_NcId, "cell_lengths", NC_FLOAT, 2, dimensionID,
+                      &m_CellLengthsVariableId);
+  if (status != NC_NOERR) {
+    throw std::invalid_argument(
+        "ERROR : Can't define cell_lengths variable.\n");
+  }
 
-  dimensionID[0] = frameDimId;
-  dimensionID[1] = cellAngularDimId;
-  status = nc_def_var(ncid, "cell_angles", NC_FLOAT, 2, dimensionID,
-                      &cellAnglesVariableId);
+  status =
+      nc_put_att_text(m_NcId, m_CellLengthsVariableId, "units", 8, "angstrom");
+  if (status != NC_NOERR) {
+    throw std::invalid_argument(
+        "ERROR : Can't cell_lengths units attribute.\n");
+  }
+
+  dimensionID[0] = m_FrameDimId;
+  dimensionID[1] = m_CellAngularDimId;
+  status = nc_def_var(m_NcId, "cell_angles", NC_FLOAT, 2, dimensionID,
+                      &m_CellAnglesVariableId);
   if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't define cell_angles variable.\n";
     throw std::invalid_argument("ERROR : Can't define cell_angles variable.\n");
-  status = nc_put_att_text(ncid, cellAnglesVariableId, "units", 6, "degree");
+
+  status =
+      nc_put_att_text(m_NcId, m_CellAnglesVariableId, "units", 6, "degree");
   if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't cell_angles units attribute.\n";
     throw std::invalid_argument("ERROR : Can't cell_angles units attribute.\n");
 
-  dimensionID[0] = cellSpatialDimId;
-  status = nc_def_var(ncid, "cell_spatial", NC_CHAR, 1, dimensionID,
-                      &cellSpatialVariableId);
-  if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't define cell spatial variable.\n";
-    throw std::invalid_argument("ERROR : Can't define cell spatial variable.\n");
+  dimensionID[0] = m_CellSpatialDimId;
+  status = nc_def_var(m_NcId, "cell_spatial", NC_CHAR, 1, dimensionID,
+                      &m_CellSpatialVariableId);
+  if (status != NC_NOERR) {
+    throw std::invalid_argument(
+        "ERROR : Can't define cell spatial variable.\n");
+  }
 
-  dimensionID[0] = frameDimId;
-  dimensionID[1] = atomDimId;
-  dimensionID[2] = spatialDimId;
-  status = nc_def_var(ncid, "coordinates", NC_FLOAT, 3, dimensionID,
-                      &coordVariableId);
+  dimensionID[0] = m_FrameDimId;
+  dimensionID[1] = m_AtomDimId;
+  dimensionID[2] = m_SpatialDimId;
+  status = nc_def_var(m_NcId, "coordinates", NC_FLOAT, 3, dimensionID,
+                      &m_CoordVariableId);
   if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't define coordinates variable.\n";
     throw std::invalid_argument("ERROR : Can't define coordinates variable.\n");
-  status = nc_put_att_text(ncid, coordVariableId, "units", 8, "angstrom");
-  if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't put coordinates variable unit attributes.\n";
-    throw std::invalid_argument("ERROR : Can't put coordinates variable unit attributes.\n");
 
-  dimensionID[0] = cellAngularDimId;
-  dimensionID[1] = labelDimId;
-  status = nc_def_var(ncid, "cell_angular", NC_CHAR, 2, dimensionID,
-                      &cellAngularVariableId);
-  if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't define cell angular variable.\n";
-    throw std::invalid_argument("ERROR : Can't define cell angular variable.\n");
+  status = nc_put_att_text(m_NcId, m_CoordVariableId, "units", 8, "angstrom");
+  if (status != NC_NOERR) {
+    throw std::invalid_argument(
+        "ERROR : Can't put coordinates variable unit attributes.\n");
+  }
+
+  dimensionID[0] = m_CellAngularDimId;
+  dimensionID[1] = m_LabelDimId;
+  status = nc_def_var(m_NcId, "cell_angular", NC_CHAR, 2, dimensionID,
+                      &m_CellAngularVariableId);
+  if (status != NC_NOERR) {
+    throw std::invalid_argument(
+        "ERROR : Can't define cell angular variable.\n");
+  }
 
   std::string title = "NetCDF title string";
   status =
-      nc_put_att_text(ncid, NC_GLOBAL, "title", title.size(), title.c_str());
+      nc_put_att_text(m_NcId, NC_GLOBAL, "title", title.size(), title.c_str());
   if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't write title.\n";
     throw std::invalid_argument("ERROR : Can't write title.\n");
 
-  status = nc_put_att_text(ncid, NC_GLOBAL, "application", 6, "CHARMM");
+  status = nc_put_att_text(m_NcId, NC_GLOBAL, "application", 6, "CHARMM");
   if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't write application.\n";
     throw std::invalid_argument("ERROR : Can't write application.\n");
 
-  status = nc_put_att_text(ncid, NC_GLOBAL, "program", 6, "CHARMM");
+  status = nc_put_att_text(m_NcId, NC_GLOBAL, "program", 6, "CHARMM");
   if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't write program.\n";
     throw std::invalid_argument("ERROR : Can't write program.\n");
 
   std::string programVersion = "0.1";
-  status = nc_put_att_text(ncid, NC_GLOBAL, "programVersion",
+  status = nc_put_att_text(m_NcId, NC_GLOBAL, "programVersion",
                            programVersion.size(), programVersion.c_str());
   if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't write programVersion.\n";
     throw std::invalid_argument("ERROR : Can't write programVersion.\n");
 
   std::string conventions = "AMBER";
-  status = nc_put_att_text(ncid, NC_GLOBAL, "Conventions", conventions.size(),
+  status = nc_put_att_text(m_NcId, NC_GLOBAL, "Conventions", conventions.size(),
                            conventions.c_str());
   if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't write conventions.\n";
     throw std::invalid_argument("ERROR : Can't write conventions.\n");
 
-  status = nc_put_att_text(ncid, NC_GLOBAL, "ConventionVersion", 3, "1.0");
+  status = nc_put_att_text(m_NcId, NC_GLOBAL, "ConventionVersion", 3, "1.0");
   if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't write convention version.\n";
     throw std::invalid_argument("ERROR : Can't write convention version.\n");
 
-  status = nc_enddef(ncid);
+  status = nc_enddef(m_NcId);
   if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't end definitions.\n";
     throw std::invalid_argument("ERROR : Can't end definitions.\n");
 
-  start[0] = 0;
-  count[0] = 3;
+  m_Start[0] = 0;
+  m_Count[0] = 3;
   char op[3];
   op[0] = 'x';
   op[1] = 'y';
   op[2] = 'z';
-  status = nc_put_vara_text(ncid, spatialVariableId, start, count, op);
-  if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't write to spatial variable id.\n";
-    throw std::invalid_argument("ERROR : Can't write to spatial variable id.\n");
+  status = nc_put_vara_text(m_NcId, m_SpatialVariableId, m_Start.data(),
+                            m_Count.data(), op);
+  if (status != NC_NOERR) {
+    throw std::invalid_argument(
+        "ERROR : Can't write to spatial variable id.\n");
+  }
 
-  start[0] = 0;
-  count[0] = 3;
+  m_Start[0] = 0;
+  m_Count[0] = 3;
   op[0] = 'a';
   op[1] = 'b';
   op[2] = 'c';
-  status = nc_put_vara_text(ncid, cellSpatialVariableId, start, count, op);
-  if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't write to abc to cell spatial variable id.\n";
-    throw std::invalid_argument("ERROR : Can't write to abc to cell spatial variable id.\n");
+  status = nc_put_vara_text(m_NcId, m_CellSpatialVariableId, m_Start.data(),
+                            m_Count.data(), op);
+  if (status != NC_NOERR) {
+    throw std::invalid_argument(
+        "ERROR : Can't write to abc to cell spatial variable id.\n");
+  }
 
   char opAng[15] = {'a', 'l', 'p', 'h', 'a', 'b', 'e',
                     't', 'a', 'g', 'a', 'm', 'm', 'a'};
-  start[0] = 0;
-  start[1] = 0;
-  count[0] = 3;
-  count[1] = 5;
-  status = nc_put_vara_text(ncid, cellAngularVariableId, start, count, opAng);
-  if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't write to abc to cell angular variable id.\n";
-    throw std::invalid_argument("ERROR : Can't write to abc to cell angular variable id.\n");
+  m_Start[0] = 0;
+  m_Start[1] = 0;
+  m_Count[0] = 3;
+  m_Count[1] = 5;
+  status = nc_put_vara_text(m_NcId, m_CellAngularVariableId, m_Start.data(),
+                            m_Count.data(), opAng);
+  if (status != NC_NOERR) {
+    throw std::invalid_argument(
+        "ERROR : Can't write to abc to cell angular variable id.\n");
+  }
+
+  return;
 }
 
 void NetCDFSubscriber::formatDataForInput(const std::vector<float4> &xyzq) {
-  for (int atomId = 0; atomId < this->charmmContext->getNumAtoms(); ++atomId) {
-    xyzNC[3 * atomId] = xyzq[atomId].x;
-    xyzNC[3 * atomId + 1] = xyzq[atomId].y;
-    xyzNC[3 * atomId + 2] = xyzq[atomId].z;
+  for (int i = 0; i < m_CharmmContext->getNumAtoms(); i++) {
+    m_XYZ[3 * i + 0] = xyzq[i].x;
+    m_XYZ[3 * i + 1] = xyzq[i].y;
+    m_XYZ[3 * i + 2] = xyzq[i].z;
   }
-}
-
-void convertDataFormat(int numAtoms, const std::vector<float4> &xyzq_in,
-                       float *xyz) {
-  for (int i = 0; i < numAtoms; ++i) {
-    xyz[3 * i] = xyzq_in[i].x;
-    xyz[3 * i + 1] = xyzq_in[i].y;
-    xyz[3 * i + 2] = xyzq_in[i].z;
-  }
-}
-
-void NetCDFSubscriber::update() {
-  // std::cout << "In ncdf update\n";
-
-  // vector in the shared ptr
-  auto xyzq = *(this->charmmContext->getXYZQ()->getHostXYZQ());
-
-  // should I just store numAtoms here, probably ok
-  int numAtoms = this->charmmContext->getNumAtoms();
-
-  start[0] = numFramesWritten;
-  start[1] = 0;
-  start[2] = 0;
-
-  count[0] = 1;
-  count[1] = numAtoms;
-  count[2] = 3;
-
-  // std::cout << xyzq[0].x << "\n";
-  convertDataFormat(numAtoms, xyzq, xyzNC);
-
-  int status = nc_put_vara_float(ncid, coordVariableId, start, count, xyzNC);
-  if (status != NC_NOERR)
-    //std::cerr << "ERROR : Can't write the frame\n";
-    throw std::invalid_argument("ERROR : Can't write the frame\n");
-
-  nc_sync(ncid);
-  ++numFramesWritten;
+  return;
 }

@@ -11,28 +11,40 @@
 #pragma once
 
 #include "Subscriber.h"
+#include <array>
 #include <netcdf.h>
+#include <vector>
 
 class NetCDFSubscriber : public Subscriber {
 public:
   NetCDFSubscriber(const std::string &fileName);
-  NetCDFSubscriber(const std::string &fileName, int reportFreq);
-  void update() override;
-  ~NetCDFSubscriber();
+  NetCDFSubscriber(const std::string &fileName, int reportFrequency);
+  ~NetCDFSubscriber(void);
+
+public:
+  void update(void) override;
 
 private:
-  void initialize();
-  int ncid;
-  int frameDimId;
-  int spatialDimId;
-  int atomDimId, cellSpatialDimId, cellAngularDimId, labelDimId;
-  int timeVariableId, spatialVariableId, cellLengthsVariableId,
-      cellAnglesVariableId, coordVariableId, cellSpatialVariableId,
-      cellAngularVariableId;
+  void initialize(void);
   void formatDataForInput(const std::vector<float4> &xyzq);
-  float *xyzNC;
-  size_t start[3];
-  size_t count[3];
 
-  int numFramesWritten;
+private:
+  int m_NcId;
+  int m_FrameDimId;
+  int m_SpatialDimId;
+  int m_AtomDimId;
+  int m_CellSpatialDimId;
+  int m_CellAngularDimId;
+  int m_LabelDimId;
+  int m_TimeVariableId;
+  int m_SpatialVariableId;
+  int m_CellLengthsVariableId;
+  int m_CellAnglesVariableId;
+  int m_CoordVariableId;
+  int m_CellSpatialVariableId;
+  int m_CellAngularVariableId;
+  std::vector<float> m_XYZ;
+  std::array<std::size_t, 3> m_Start;
+  std::array<std::size_t, 3> m_Count;
+  int m_NumFramesWritten;
 };

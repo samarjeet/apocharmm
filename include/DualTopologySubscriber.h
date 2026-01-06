@@ -16,11 +16,12 @@
 class DualTopologySubscriber : public Subscriber {
 public:
   DualTopologySubscriber(const std::string &fileName);
-  DualTopologySubscriber(const std::string &fileName, int reportFreq);
-  void update() override;
-  ~DualTopologySubscriber();
+  DualTopologySubscriber(const std::string &fileName, int reportFrequency);
+  ~DualTopologySubscriber(void);
+
+public:
+  void update(void) override;
 
 private:
-  void initialize();
-  int numFramesWritten;
+  int m_NumFramesWritten;
 };

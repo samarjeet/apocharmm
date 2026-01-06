@@ -17,21 +17,20 @@
 
 FEPSubscriber::FEPSubscriber(const std::string &fileName)
     : Subscriber(fileName) {
-  initialize();
-  numFramesWritten = 0;
+  m_NumFramesWritten = 0;
 }
-FEPSubscriber::FEPSubscriber(const std::string &fileName, int reportFreq)
-    : Subscriber(fileName, reportFreq) {
-  initialize();
-  numFramesWritten = 0;
+FEPSubscriber::FEPSubscriber(const std::string &fileName, int reportFrequency)
+    : Subscriber(fileName, reportFrequency) {
+  m_NumFramesWritten = 0;
 }
 
-FEPSubscriber::~FEPSubscriber() { fout.close(); }
+FEPSubscriber::~FEPSubscriber(void) {
+  if (m_FileStream.is_open())
+    m_FileStream.close();
+}
 
-void FEPSubscriber::initialize() { fout.open(fileName); }
-
-void FEPSubscriber::update() {
-  auto fm = charmmContext->getForceManager();
+void FEPSubscriber::update(void) {
+  auto fm = m_CharmmContext->getForceManager();
   auto bridgeEDSForceManager = std::dynamic_pointer_cast<FEPEIForceManager>(fm);
 
   if (fm->isComposite()) {
@@ -39,14 +38,15 @@ void FEPSubscriber::update() {
 
     auto lambdaPotentialEnergies =
         bridgeEDSForceManager->getLambdaPotentialEnergies();
-    for (int i = 0; i < lambdaPotentialEnergies.size(); i++) {
-      fout << lambdaPotentialEnergies[i] << "\t";
-    }
-    fout << std::endl;
+    for (int i = 0; i < lambdaPotentialEnergies.size(); i++)
+      m_FileStream << lambdaPotentialEnergies[i] << "\t";
+    m_FileStream << std::endl;
 
-    ++numFramesWritten;
+    m_NumFramesWritten++;
   } else {
     std::cout << "WARNING -- You should not be using a FEPSubscriber with a "
                  "non-composite ForceManager.\n";
   }
+
+  return;
 }
