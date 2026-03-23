@@ -3,7 +3,7 @@
 <html class="light" lang="en"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>apoCHARMM | Benchmarks &amp; Performance</title>
+<title>Cookbooks | apoCHARMM</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;900&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
@@ -84,278 +84,190 @@
         }
     </style>
 </head>
-<body class="bg-surface font-body text-on-surface min-h-screen flex flex-col">
+<body class="bg-background text-on-background font-body selection:bg-primary-fixed selection:text-on-primary-fixed">
 <!-- TopNavBar -->
-<header class="w-full sticky top-0 z-50 bg-[#f7f9ff] dark:bg-[#141c25]">
-<nav class="max-w-7xl mx-auto px-8 py-4 flex justify-between items-center">
+<nav class="w-full sticky top-0 z-50 bg-[#f7f9ff] dark:bg-[#141c25]">
+<div class="max-w-7xl mx-auto px-8 py-4 flex justify-between items-center">
 <div class="flex items-center gap-8">
 <span class="text-2xl font-black text-[#141c25] dark:text-[#f7f9ff] tracking-tighter font-['Space_Grotesk']">apoCHARMM</span>
-<div class="hidden md:flex gap-6 items-center">
-<a class="text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] transition-all duration-200 ease-in-out hover:opacity-80 font-['Space_Grotesk'] font-bold tracking-tight" href="#">Tutorials</a>
-<a class="text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] transition-all duration-200 ease-in-out hover:opacity-80 font-['Space_Grotesk'] font-bold tracking-tight" href="#">Cookbooks</a>
-<a class="text-[#0366D6] dark:text-[#2ddbde] border-b-2 border-[#0366D6] dark:border-[#2ddbde] pb-1 font-['Space_Grotesk'] font-bold tracking-tight" href="#">Benchmarks</a>
-<a class="text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] transition-all duration-200 ease-in-out hover:opacity-80 font-['Space_Grotesk'] font-bold tracking-tight" href="#">GitHub</a>
+<div class="hidden md:flex gap-6">
+<a class="text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] font-['Space_Grotesk'] font-bold tracking-tight transition-all duration-200 ease-in-out hover:opacity-80" href="#">Tutorials</a>
+<a class="text-[#0366D6] dark:text-[#2ddbde] border-b-2 border-[#0366D6] dark:border-[#2ddbde] pb-1 font-['Space_Grotesk'] font-bold tracking-tight transition-all duration-200 ease-in-out hover:opacity-80" href="#">Cookbooks</a>
+<a class="text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] font-['Space_Grotesk'] font-bold tracking-tight transition-all duration-200 ease-in-out hover:opacity-80" href="#">Benchmarks</a>
+<a class="text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] font-['Space_Grotesk'] font-bold tracking-tight transition-all duration-200 ease-in-out hover:opacity-80" href="#">GitHub</a>
 </div>
 </div>
 <div class="flex items-center gap-4">
 <button class="transition-all duration-200 ease-in-out hover:opacity-80 active:scale-95 duration-100">
-<span class="material-symbols-outlined text-[#5a6473] dark:text-[#c2c6d6] text-2xl">account_circle</span>
+<span class="material-symbols-outlined text-[#0366D6] dark:text-[#2ddbde]">account_circle</span>
 </button>
 </div>
+</div>
 </nav>
-</header>
-<main class="flex-grow">
-<!-- Hero Section -->
-<section class="relative overflow-hidden pt-20 pb-32 px-8">
-<div class="max-w-7xl mx-auto relative z-10">
-<div class="flex flex-col md:flex-row items-center gap-16">
-<div class="flex-1">
-<span class="inline-block text-tertiary font-label text-xs tracking-widest uppercase mb-4 bg-tertiary/10 px-3 py-1 rounded-full">v3.1 Stable Performance</span>
-<h1 class="text-display-lg font-headline text-6xl md:text-7xl font-black text-on-background leading-tight mb-6 tracking-tighter">
-                            Unrivaled <br/>
-<span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-container">GPU Performance.</span>
+<main class="max-w-7xl mx-auto px-8 py-12">
+<!-- Hero & Header -->
+<header class="mb-16">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-8">
+<div class="max-w-2xl">
+<h1 class="font-headline font-black text-6xl tracking-tighter text-on-background mb-4">
+                        Molecular <span class="text-primary italic">Cookbooks</span>
 </h1>
-<p class="text-body-lg text-on-surface-variant max-w-xl mb-10 leading-relaxed">
-                            Engineered for massive-scale molecular dynamics. apoCHARMM leverages hardware-intrinsic kernels to deliver record-breaking ns/day on modern NVIDIA architectures.
-                        </p>
-<div class="flex gap-4">
-<button class="bg-gradient-to-br from-primary to-primary-container text-on-primary px-8 py-4 font-headline font-bold rounded-md hover:opacity-90 transition-all">
-                                View Full Data
-                            </button>
-<button class="bg-surface-container-high text-on-surface px-8 py-4 font-headline font-bold rounded-md hover:bg-surface-container-highest transition-all">
-                                Hardware Guide
-                            </button>
-</div>
-</div>
-<div class="flex-1 w-full relative">
-<!-- Abstract Visual Representing Molecular Speed -->
-<div class="aspect-square glass-panel rounded-full relative flex items-center justify-center border border-outline-variant/10">
-<div class="absolute inset-0 bg-gradient-to-tr from-primary/5 to-tertiary/10 rounded-full animate-pulse"></div>
-<div class="relative z-20 text-center">
-<span class="block text-primary text-8xl font-black font-headline tracking-tighter">450+</span>
-<span class="block text-on-surface-variant font-label text-sm tracking-widest uppercase">ns/day (DHFR)</span>
-</div>
-<!-- Orbiting decorative elements -->
-<div class="absolute w-4 h-4 bg-tertiary rounded-full top-1/4 right-0 shadow-[0_0_20px_rgba(45,219,222,0.6)]"></div>
-<div class="absolute w-3 h-3 bg-primary rounded-full bottom-1/4 left-4"></div>
-</div>
-</div>
-</div>
-</div>
-<!-- Background Decorative Blur -->
-<div class="absolute -top-24 -right-24 w-96 h-96 bg-primary/5 rounded-full blur-[120px]"></div>
-<div class="absolute bottom-0 -left-24 w-64 h-64 bg-tertiary/5 rounded-full blur-[80px]"></div>
-</section>
-<!-- Metrics Dashboard -->
-<section class="bg-surface-container-low py-24 px-8">
-<div class="max-w-7xl mx-auto">
-<div class="flex justify-between items-end mb-12">
-<div>
-<h2 class="text-headline-md font-headline text-3xl font-bold mb-2">Performance Benchmarks</h2>
-<p class="text-on-surface-variant">Real-world production simulation rates across key molecular systems.</p>
-</div>
-<div class="flex gap-2 text-xs font-mono bg-surface-container px-4 py-2 rounded-lg">
-<span class="text-on-surface-variant">Last Updated:</span>
-<span class="text-primary font-bold">2024.11.02</span>
-</div>
-</div>
-<!-- Bento Grid Layout -->
-<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-<!-- DHFR Comparison -->
-<div class="md:col-span-8 bg-surface-container-lowest p-8 rounded-xl relative overflow-hidden">
-<div class="relative z-10">
-<h3 class="font-headline font-bold text-xl mb-6 flex items-center gap-2">
-<span class="material-symbols-outlined text-primary">analytics</span>
-                                DHFR (23,558 atoms)
-                            </h3>
-<div class="space-y-6">
-<div>
-<div class="flex justify-between text-sm mb-2 font-label">
-<span class="font-bold">NVIDIA H100 (80GB)</span>
-<span class="text-primary font-mono">482.4 ns/day</span>
-</div>
-<div class="h-3 bg-surface-container rounded-full overflow-hidden">
-<div class="h-full bg-gradient-to-r from-primary to-primary-container w-[96%]"></div>
-</div>
-</div>
-<div>
-<div class="flex justify-between text-sm mb-2 font-label">
-<span class="font-bold">NVIDIA A100 (40GB)</span>
-<span class="text-primary font-mono">312.8 ns/day</span>
-</div>
-<div class="h-3 bg-surface-container rounded-full overflow-hidden">
-<div class="h-full bg-primary/60 w-[62%]"></div>
-</div>
-</div>
-<div>
-<div class="flex justify-between text-sm mb-2 font-label">
-<span class="font-bold">NVIDIA RTX 4090</span>
-<span class="text-primary font-mono">395.1 ns/day</span>
-</div>
-<div class="h-3 bg-surface-container rounded-full overflow-hidden">
-<div class="h-full bg-primary/80 w-[79%]"></div>
-</div>
-</div>
-</div>
-</div>
-<div class="absolute bottom-0 right-0 p-4 opacity-10">
-<span class="material-symbols-outlined text-9xl">matter</span>
-</div>
-</div>
-<!-- STMV Summary -->
-<div class="md:col-span-4 bg-inverse-surface text-on-primary-container p-8 rounded-xl flex flex-col justify-between">
-<div>
-<span class="text-tertiary-fixed-dim font-label text-xs uppercase tracking-widest mb-2 block">Large System Analysis</span>
-<h3 class="font-headline font-bold text-xl text-surface-container-lowest mb-4">STMV (1.1M atoms)</h3>
-<p class="text-sm opacity-80 leading-relaxed">
-                                Satellite Tobacco Mosaic Virus benchmarks demonstrate linear scaling on multi-GPU nodes with NVLink.
-                            </p>
-</div>
-<div class="mt-8">
-<div class="text-4xl font-headline font-black text-tertiary-fixed">24.5 <span class="text-sm font-normal">ns/day</span></div>
-<div class="text-xs opacity-60 mt-1">Measured on 4x A100 NVLink Node</div>
-</div>
-</div>
-<!-- Detailed Data Table -->
-<div class="md:col-span-12 bg-surface-container-lowest rounded-xl overflow-hidden">
-<div class="p-8 pb-4">
-<h3 class="font-headline font-bold text-xl">Technical Breakdown</h3>
-</div>
-<div class="overflow-x-auto">
-<table class="w-full text-left border-collapse">
-<thead>
-<tr class="bg-surface-container text-secondary text-[11px] font-label uppercase tracking-wider">
-<th class="px-8 py-4 font-bold">System Name</th>
-<th class="px-8 py-4 font-bold">Atom Count</th>
-<th class="px-8 py-4 font-bold">Hardware</th>
-<th class="px-8 py-4 font-bold">Steps/sec</th>
-<th class="px-8 py-4 font-bold text-right">Performance (ns/day)</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-outline-variant/10">
-<tr class="hover:bg-surface transition-colors">
-<td class="px-8 py-5 font-mono text-sm">DHFR</td>
-<td class="px-8 py-5 text-sm">23,558</td>
-<td class="px-8 py-5 text-sm">RTX 6000 Ada</td>
-<td class="px-8 py-5 text-sm">2,150</td>
-<td class="px-8 py-5 text-sm font-bold text-primary text-right">412.30</td>
-</tr>
-<tr class="bg-surface-container-low/30 hover:bg-surface transition-colors">
-<td class="px-8 py-5 font-mono text-sm">ApoA1</td>
-<td class="px-8 py-5 text-sm">92,224</td>
-<td class="px-8 py-5 text-sm">A100 (80GB)</td>
-<td class="px-8 py-5 text-sm">512</td>
-<td class="px-8 py-5 text-sm font-bold text-primary text-right">98.45</td>
-</tr>
-<tr class="hover:bg-surface transition-colors">
-<td class="px-8 py-5 font-mono text-sm">STMV</td>
-<td class="px-8 py-5 text-sm">1,066,628</td>
-<td class="px-8 py-5 text-sm">8x H100 Node</td>
-<td class="px-8 py-5 text-sm">48</td>
-<td class="px-8 py-5 text-sm font-bold text-primary text-right">42.18</td>
-</tr>
-<tr class="bg-surface-container-low/30 hover:bg-surface transition-colors">
-<td class="px-8 py-5 font-mono text-sm">JAC</td>
-<td class="px-8 py-5 text-sm">23,558</td>
-<td class="px-8 py-5 text-sm">RTX 3090 Ti</td>
-<td class="px-8 py-5 text-sm">1,420</td>
-<td class="px-8 py-5 text-sm font-bold text-primary text-right">278.90</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-</div>
-</section>
-<!-- Hardware Recommendations -->
-<section class="py-24 px-8 max-w-7xl mx-auto">
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
-<div>
-<h2 class="text-headline-md font-headline text-3xl font-bold mb-6">Optimal Hardware Configurations</h2>
-<p class="text-on-surface-variant mb-8 text-lg">
-                        Maximize your simulation throughput with our validated hardware stacks. apoCHARMM is tuned specifically for the CUDA unified memory architecture.
+<p class="text-body text-lg text-on-surface-variant leading-relaxed">
+                        A curated library of production-ready recipes for diverse biological systems. Standardized protocols optimized for CHARMM force fields.
                     </p>
-<div class="space-y-4">
-<div class="group flex items-start gap-4 p-6 rounded-lg transition-all hover:bg-surface-container">
-<div class="mt-1 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-<span class="material-symbols-outlined">memory</span>
 </div>
-<div>
-<h4 class="font-bold text-lg mb-1">Compute Unified Architecture</h4>
-<p class="text-sm text-on-surface-variant">Recommended: NVIDIA Ada Lovelace or Hopper series for maximum FP32 throughput.</p>
+<button class="bg-gradient-to-br from-primary to-primary-container text-on-primary px-8 py-4 rounded-md font-bold flex items-center gap-2 transition-all hover:opacity-90 active:scale-95">
+<span class="material-symbols-outlined">add_circle</span>
+                    Submit a Recipe
+                </button>
 </div>
+</header>
+<!-- Filters & Search Shell -->
+<section class="mb-12 sticky top-24 z-40">
+<div class="bg-surface-container-low p-2 rounded-xl flex flex-wrap items-center gap-4 shadow-sm">
+<div class="flex-1 min-w-[300px] relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full bg-surface-container-lowest border-none rounded-lg pl-12 py-3 focus:ring-2 focus:ring-primary-container text-on-surface" placeholder="Search systems or keywords..." type="text"/>
 </div>
-<div class="group flex items-start gap-4 p-6 rounded-lg transition-all hover:bg-surface-container">
-<div class="mt-1 w-10 h-10 rounded-full bg-tertiary/10 flex items-center justify-center text-tertiary">
-<span class="material-symbols-outlined">settings_input_component</span>
+<div class="flex items-center gap-2 p-1 bg-surface-container rounded-lg">
+<button class="px-4 py-2 rounded-md bg-surface-container-lowest text-primary font-semibold shadow-sm text-sm">All Systems</button>
+<button class="px-4 py-2 rounded-md text-on-surface-variant hover:bg-surface-container-lowest transition-colors text-sm">Lipids</button>
+<button class="px-4 py-2 rounded-md text-on-surface-variant hover:bg-surface-container-lowest transition-colors text-sm">Proteins</button>
+<button class="px-4 py-2 rounded-md text-on-surface-variant hover:bg-surface-container-lowest transition-colors text-sm">Nucleic Acids</button>
 </div>
-<div>
-<h4 class="font-bold text-lg mb-1">Interconnect Speed</h4>
-<p class="text-sm text-on-surface-variant">Dual-GPU setups require PCIe Gen 4/5. 4+ GPU setups must utilize NVLink for P2P memory access.</p>
-</div>
-</div>
-<div class="group flex items-start gap-4 p-6 rounded-lg transition-all hover:bg-surface-container">
-<div class="mt-1 w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
-<span class="material-symbols-outlined">developer_board</span>
-</div>
-<div>
-<h4 class="font-bold text-lg mb-1">Host Memory</h4>
-<p class="text-sm text-on-surface-variant">Minimum 32GB ECC DDR5. 128GB+ recommended for large system setup and trajectory analysis.</p>
-</div>
-</div>
-</div>
-</div>
-<div class="relative">
-<!-- Asymmetric Image Placement -->
-<div class="relative z-10 rounded-xl overflow-hidden shadow-2xl transform lg:translate-y-12 rotate-1">
-<img class="w-full grayscale contrast-125 hover:grayscale-0 transition-all duration-700" data-alt="Close up of high-end NVIDIA server GPU hardware" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCNdAuvkrx6yZ4jecri5KxgOAPanIJxapyWc3xSUw5t-vzSVEgvPl5-DvoOVBXmyD31NGTH7ZUpa2qRvKLdfCw7tRQh0K2jQpCo5yGC2BsIfVkhzCjLYLZdDxpSdUrX-vFg_0pkgL1wi-GIAwpt2h8I1UQ8to6550Q5rqbL24G9Bwbj2P3o5Mxjk3_Upk3r05jySP61FLd3sgQqyPAUoPq7hZawCHQ0pgT9eydwv8qby1ytpczaeNLwPT280xU5euGCWn5PHpj3yzam"/>
-<div class="absolute inset-0 bg-gradient-to-t from-on-background/80 to-transparent flex items-end p-8">
-<div class="text-white">
-<span class="text-tertiary-fixed text-xs font-bold uppercase tracking-widest">Validated System</span>
-<p class="font-headline text-xl font-bold">apoCHARMM Pro Node v4</p>
-</div>
-</div>
-</div>
-<!-- Decorative Element -->
-<div class="absolute -top-10 -left-10 w-40 h-40 border-t-2 border-l-2 border-primary/20 rounded-tl-3xl"></div>
-<div class="absolute -bottom-10 -right-10 w-40 h-40 border-b-2 border-r-2 border-tertiary/20 rounded-br-3xl"></div>
-<div class="mt-20 lg:mt-32 p-8 bg-surface-container-high rounded-xl border-l-4 border-primary">
-<h4 class="font-headline font-bold text-lg mb-2">Technical Note: Precision Models</h4>
-<p class="text-sm text-on-surface-variant italic">
-                            "apoCHARMM utilizes a mixed-precision model where force calculations are performed in single precision (FP32) while integration is performed in double precision (FP64), ensuring both speed and numerical stability."
-                        </p>
-</div>
+<div class="h-8 w-[1px] bg-outline-variant/30 hidden lg:block"></div>
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold uppercase tracking-widest text-secondary pl-2">Ensemble:</span>
+<select class="bg-transparent border-none text-sm font-semibold text-primary focus:ring-0 cursor-pointer">
+<option>Any</option>
+<option>NVT</option>
+<option>NPT</option>
+</select>
 </div>
 </div>
 </section>
-<!-- CTA Section -->
-<section class="max-w-7xl mx-auto px-8 mb-24">
-<div class="bg-gradient-to-br from-inverse-surface to-[#141c25] rounded-2xl p-12 text-center relative overflow-hidden">
-<div class="relative z-10">
-<h2 class="text-headline-md font-headline text-4xl font-black text-surface-container-lowest mb-6">Ready to accelerate your research?</h2>
-<p class="text-on-primary-container max-w-2xl mx-auto mb-10 opacity-80 text-lg">
-                        Join hundreds of labs using apoCHARMM to run billion-step simulations in days, not months.
-                    </p>
-<div class="flex justify-center gap-6">
-<button class="bg-tertiary-fixed text-on-tertiary-fixed px-10 py-4 font-headline font-black rounded-md hover:brightness-110 transition-all">
-                            GET STARTED
-                        </button>
-<button class="border border-outline-variant/30 text-surface-container-lowest px-10 py-4 font-headline font-black rounded-md hover:bg-white/10 transition-all">
-                            VIEW DOCS
-                        </button>
+<!-- Gallery Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- Card 1: Lipid Bilayers -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-2">
+<div class="h-48 relative overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Abstract 3D rendering of a lipid bilayer membrane" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA33rx3RwGrK63cVJIP3Wn4URptbwkm43BLcRCRUkzur6LzqClp3NzAM0BQQ05nXbeUIvFZU0pk5oI_IapROAvBr1rBa5GkLnauRwHifDhbEoDD7HkLoUpEcPMRq6jjaNhKrDTRciTD1UiuJVb9WBJnsarEib5TBUqYKyddiPUGNiQ9BB17JYX6LK_G4xXShamSECv8ooWf8VOoKgAwLz5h2-tV2ZsjUuP3QsfvWKKknSUXS0Hgym-vgIWiOb_oi7nlJK5iTHHHOjBT"/>
+<div class="absolute inset-0 bg-gradient-to-t from-on-background/60 to-transparent"></div>
+<span class="absolute bottom-4 left-4 bg-tertiary-fixed text-on-tertiary-fixed text-xs font-bold px-3 py-1 rounded-full">LIPIDS</span>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<h3 class="font-headline font-bold text-2xl mb-2 text-on-surface">DPPC/POPC Bilayer</h3>
+<p class="text-on-surface-variant text-sm mb-6 flex-1">Standard 1:1 mixture for eukaryotic membrane mimics. Includes hydration parameters and equilibrated CHARMM36m topology.</p>
+<div class="flex items-center justify-between mt-auto pt-6 border-t border-outline-variant/15">
+<div class="flex items-center gap-4 text-xs font-mono text-secondary">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">settings_input_component</span> NPT</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">history</span> 500ns</span>
+</div>
+<button class="text-primary font-bold text-sm flex items-center group-hover:underline">View Recipe <span class="material-symbols-outlined text-sm ml-1">arrow_forward</span></button>
 </div>
 </div>
-<!-- Abstract coding background -->
-<div class="absolute inset-0 opacity-5 pointer-events-none font-mono text-[8px] leading-tight text-left p-4">
-                    apo_kernel_v3&lt;&lt;<grid, block="">&gt;&gt;(d_coords, d_forces, d_params);<br/>
-                    cudaDeviceSynchronize();<br/>
-                    integration_step_double&lt;&lt;<grid, block="">&gt;&gt;(d_vel, d_forces, d_mass);<br/>
-                    // Repeat 100,000,000 times<br/>
-                    apo_kernel_v3&lt;&lt;<grid, block="">&gt;&gt;(d_coords, d_forces, d_params);<br/>
-                    cudaDeviceSynchronize();<br/>
-                    integration_step_double&lt;&lt;<grid, block="">&gt;&gt;(d_vel, d_forces, d_mass);<br/>
-</grid,></grid,></grid,></grid,></div>
+</div>
+<!-- Card 2: Protein Complexes -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-2">
+<div class="h-48 relative overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Molecular protein structure visualization with colorful ribbon diagram" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3ZTlfW0BhpX9os7KDFM-UlNrpgV5PMf7EHnKqsyxUg74i_KiK0bYnL7912nEySo6OVGZVPp9BkrnUTXNWKUYgE2jrhWWNm3dxkU6AN7S4hfmgfD31JFKfi0psNn2OB9UNs5c2habIZa-5j7Xa3im2PV3SA8J3OFrKya8eTGBRQ0XpvC_O_lMPP_EwRz_28Rq8BkmWVAqhOyrRCG3qAXRzkFfANegysSisYzSyu9fnT6S3tVcK2UNi7CwFXM32u2SfjmNPp4CH1rZv"/>
+<div class="absolute inset-0 bg-gradient-to-t from-on-background/60 to-transparent"></div>
+<span class="absolute bottom-4 left-4 bg-primary-fixed text-on-primary-fixed text-xs font-bold px-3 py-1 rounded-full">PROTEINS</span>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<h3 class="font-headline font-bold text-2xl mb-2 text-on-surface">T4 Lysozyme L99A</h3>
+<p class="text-on-surface-variant text-sm mb-6 flex-1">Benchmark system for alchemical free energy calculations. Includes binding site configuration and ligand force fields.</p>
+<div class="flex items-center justify-between mt-auto pt-6 border-t border-outline-variant/15">
+<div class="flex items-center gap-4 text-xs font-mono text-secondary">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">settings_input_component</span> NVT</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">history</span> 1μs</span>
+</div>
+<button class="text-primary font-bold text-sm flex items-center group-hover:underline">View Recipe <span class="material-symbols-outlined text-sm ml-1">arrow_forward</span></button>
+</div>
+</div>
+</div>
+<!-- Card 3: DNA/RNA -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-2">
+<div class="h-48 relative overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Microscopic view of DNA double helix structure" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1Ln1by1Q6tpDEawT5GX3N_vce4Yh0_r9gwmp8cOghkHkQk2v3KDhI8v1zndj0NlJ_OWjEJtlLdkIOHloDe83MJ4zYvV9_3xIqNNRsMm4bXYjR5Bv9XAuoDOMaHewzgQzV3ykdW9XIrsez-rsYzQbZXCW7ELcixI61mou8ovvgNs7_VPdoiSeV_pXujtJoHT9h1oI2LG4yP8ZYF8HGZpTH11jw1qJEwhTnIuYKZeOZlR4jDxt78Qq_kUBF5DICzJ2es5FQbbq34neC"/>
+<div class="absolute inset-0 bg-gradient-to-t from-on-background/60 to-transparent"></div>
+<span class="absolute bottom-4 left-4 bg-on-tertiary-container text-on-tertiary text-xs font-bold px-3 py-1 rounded-full">NUCLEIC ACIDS</span>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<h3 class="font-headline font-bold text-2xl mb-2 text-on-surface">B-DNA Dodecamer</h3>
+<p class="text-on-surface-variant text-sm mb-6 flex-1">Drew-Dickerson dodecamer (CGCGAATTCGCG) in high salt concentration. Optimized ion placement script included.</p>
+<div class="flex items-center justify-between mt-auto pt-6 border-t border-outline-variant/15">
+<div class="flex items-center gap-4 text-xs font-mono text-secondary">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">settings_input_component</span> NPT</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">history</span> 200ns</span>
+</div>
+<button class="text-primary font-bold text-sm flex items-center group-hover:underline">View Recipe <span class="material-symbols-outlined text-sm ml-1">arrow_forward</span></button>
+</div>
+</div>
+</div>
+<!-- Card 4: Aqueous Solutions -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-2">
+<div class="h-48 relative overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Close up of water droplets showing molecular surface tension" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6CQLPgkXH5nzzeY9k1wQdHquQUGjNQB4ldzrJP7D8yF_EBHLGwFnFb_2X4j10NrVmOJmeWy2eSQp9pqX2Ea9iSHn0p4AEwB8mp0c9M9sMR2AqRFgRRheej07u8Wp03Qv0ut-WBL5Yj92YsiY_6XpXxBbHV4Ek6BK2Oxk7Lvxsz7D7KJSjebIry3PfmypNDBWsNWDgGzn8oG7N_Ggfo1MQllOb8KHZQgBU5xEnA1pdQkP0mIbJ6Mi8Owvs1kYE7ukBbQq9I6tNrf_e"/>
+<div class="absolute inset-0 bg-gradient-to-t from-on-background/60 to-transparent"></div>
+<span class="absolute bottom-4 left-4 bg-secondary-fixed text-on-secondary-fixed text-xs font-bold px-3 py-1 rounded-full">SOLUTIONS</span>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<h3 class="font-headline font-bold text-2xl mb-2 text-on-surface">TIP3P Box with NaCl</h3>
+<p class="text-on-surface-variant text-sm mb-6 flex-1">Standard solvent environment for biological simulations. Pre-equilibrated at various molarities (0.15M to 1.0M).</p>
+<div class="flex items-center justify-between mt-auto pt-6 border-t border-outline-variant/15">
+<div class="flex items-center gap-4 text-xs font-mono text-secondary">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">settings_input_component</span> NPT</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">history</span> 50ns</span>
+</div>
+<button class="text-primary font-bold text-sm flex items-center group-hover:underline">View Recipe <span class="material-symbols-outlined text-sm ml-1">arrow_forward</span></button>
+</div>
+</div>
+</div>
+<!-- Card 5: Custom Complex -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-2">
+<div class="h-48 relative overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Scientist working with chemical flasks in a bright lab" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOIq4n6fevY5spXSwrhAFRh1ao5ACltWfySvM33P9f-gqUbWavvrP2ECytlCh6if4uUuKUofDCU0eoKlSnDhK-UVB011Ms9yxxBOIoNxsL8TbF38LSpGRwRpxTHqtaSoTP5O-q6_o-W0bdIokdYj4IqVVKDGbStw91ivx0cOHLrU2YHi6AfEQGkHDLD_oG6jN8UG-OtVGWYi2sTJoRhmSyZ1EanirUg22rkp-0NywxqMxyXMnqYBmcNEFkn6o0r8rt9mxTauBhAmPU"/>
+<div class="absolute inset-0 bg-gradient-to-t from-on-background/60 to-transparent"></div>
+<span class="absolute bottom-4 left-4 bg-tertiary-container text-on-tertiary-container text-xs font-bold px-3 py-1 rounded-full">COMPLEXES</span>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<h3 class="font-headline font-bold text-2xl mb-2 text-on-surface">GPCR in Nanodisc</h3>
+<p class="text-on-surface-variant text-sm mb-6 flex-1">Membrane protein in a scaffold-protein-defined nanodisc. Advanced setup for cryo-EM matching simulations.</p>
+<div class="flex items-center justify-between mt-auto pt-6 border-t border-outline-variant/15">
+<div class="flex items-center gap-4 text-xs font-mono text-secondary">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">settings_input_component</span> NPT</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">history</span> 2μs</span>
+</div>
+<button class="text-primary font-bold text-sm flex items-center group-hover:underline">View Recipe <span class="material-symbols-outlined text-sm ml-1">arrow_forward</span></button>
+</div>
+</div>
+</div>
+<!-- Submit Placeholder -->
+<div class="border-2 border-dashed border-outline-variant flex flex-col items-center justify-center p-12 text-center rounded-xl hover:bg-surface-container-low transition-colors cursor-pointer group">
+<div class="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl text-primary">add</span>
+</div>
+<h3 class="font-headline font-bold text-xl mb-2">Have a recipe?</h3>
+<p class="text-on-surface-variant text-sm">Contribute your validated system to the community library.</p>
+</div>
+</section>
+<!-- Newsletter / Community Section -->
+<section class="mt-24 mb-12 p-12 rounded-2xl bg-on-background text-on-primary-container relative overflow-hidden">
+<div class="absolute top-0 right-0 w-1/2 h-full opacity-10 pointer-events-none">
+<svg class="w-full h-full" viewbox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+<path d="M47.7,-63.3C61.4,-54.1,71.8,-39.1,76.5,-23.1C81.1,-7.1,80,9.9,73.5,24.9C67,39.9,55.1,52.8,40.9,62.1C26.6,71.3,10.1,76.9,-7.1,75.4C-24.3,73.9,-42.2,65.4,-55.1,52.3C-68,39.3,-75.8,21.6,-76.3,4.1C-76.8,-13.4,-70.1,-30.7,-58.5,-40.8C-47,-50.9,-30.6,-53.8,-15.5,-61.8C-0.3,-69.8,13.6,-83,28.6,-82.4C43.5,-81.7,34,-67.2,47.7,-63.3Z" fill="#2ddbde" transform="translate(200 200)"></path>
+</svg>
+</div>
+<div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
+<div class="max-w-xl">
+<h2 class="font-headline font-bold text-4xl mb-4 text-surface-container-lowest">Get Monthly Updates</h2>
+<p class="text-primary-fixed-dim text-lg">New recipes, performance benchmarks, and force field improvements delivered to your inbox.</p>
+</div>
+<div class="w-full md:w-auto flex gap-2">
+<input class="bg-surface-container-high/10 border-outline-variant/30 rounded-lg px-6 py-3 text-on-primary-container focus:ring-2 focus:ring-tertiary-fixed w-full md:w-64" placeholder="Researcher email" type="email"/>
+<button class="bg-tertiary-fixed text-on-tertiary-fixed font-bold px-8 py-3 rounded-lg hover:bg-tertiary-fixed-dim transition-colors">Join</button>
+</div>
 </div>
 </section>
 </main>
@@ -363,14 +275,14 @@
 <footer class="w-full mt-auto bg-[#ecf4ff] dark:bg-[#141c25] border-t border-[#c2c6d6]/15">
 <div class="max-w-7xl mx-auto px-8 py-12 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
 <div class="space-y-4">
-<div class="font-['Space_Grotesk'] font-bold text-[#141c25] dark:text-[#f7f9ff] text-xl">apoCHARMM</div>
+<span class="font-['Space_Grotesk'] font-bold text-[#141c25] dark:text-[#f7f9ff] text-xl">apoCHARMM</span>
 <p class="text-[#5a6473] dark:text-[#c2c6d6] font-['Inter'] text-sm tracking-normal">© 2024 apoCHARMM Team. Open-source molecular dynamics.</p>
 </div>
-<div class="flex flex-wrap justify-end gap-x-8 gap-y-4">
-<a class="text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] dark:hover:text-[#2ddbde] underline decoration-2 underline-offset-4 font-['Inter'] text-sm tracking-normal transition-all duration-200" href="#">Documentation</a>
-<a class="text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] dark:hover:text-[#2ddbde] underline decoration-2 underline-offset-4 font-['Inter'] text-sm tracking-normal transition-all duration-200" href="#">Team</a>
-<a class="text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] dark:hover:text-[#2ddbde] underline decoration-2 underline-offset-4 font-['Inter'] text-sm tracking-normal transition-all duration-200" href="#">Contact</a>
-<a class="text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] dark:hover:text-[#2ddbde] underline decoration-2 underline-offset-4 font-['Inter'] text-sm tracking-normal transition-all duration-200" href="#">License</a>
+<div class="flex flex-wrap md:justify-end gap-x-8 gap-y-4">
+<a class="text-[#5a6473] dark:text-[#c2c6d6] font-['Inter'] text-sm tracking-normal hover:text-[#0366D6] dark:hover:text-[#2ddbde] underline decoration-2 underline-offset-4 transition-all duration-200" href="#">Documentation</a>
+<a class="text-[#5a6473] dark:text-[#c2c6d6] font-['Inter'] text-sm tracking-normal hover:text-[#0366D6] dark:hover:text-[#2ddbde] underline decoration-2 underline-offset-4 transition-all duration-200" href="#">Team</a>
+<a class="text-[#5a6473] dark:text-[#c2c6d6] font-['Inter'] text-sm tracking-normal hover:text-[#0366D6] dark:hover:text-[#2ddbde] underline decoration-2 underline-offset-4 transition-all duration-200" href="#">Contact</a>
+<a class="text-[#5a6473] dark:text-[#c2c6d6] font-['Inter'] text-sm tracking-normal hover:text-[#0366D6] dark:hover:text-[#2ddbde] underline decoration-2 underline-offset-4 transition-all duration-200" href="#">License</a>
 </div>
 </div>
 </footer>
