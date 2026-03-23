@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>apoCHARMM | Benchmarks &amp; Performance</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;900&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-fixed": "#171c22",
+              "on-primary-fixed": "#001a41",
+              "tertiary-fixed": "#5af8fb",
+              "tertiary-container": "#007678",
+              "on-tertiary-fixed": "#002020",
+              "surface-container-low": "#ecf4ff",
+              "on-tertiary-fixed-variant": "#004f51",
+              "secondary-fixed-dim": "#c2c7cf",
+              "primary-fixed": "#d8e2ff",
+              "primary": "#004fa8",
+              "secondary": "#5a5f66",
+              "secondary-fixed": "#dee3eb",
+              "on-background": "#141c25",
+              "inverse-surface": "#29313a",
+              "on-tertiary": "#ffffff",
+              "error-container": "#ffdad6",
+              "tertiary-fixed-dim": "#2ddbde",
+              "on-surface": "#141c25",
+              "background": "#f7f9ff",
+              "surface-container-lowest": "#ffffff",
+              "surface": "#f7f9ff",
+              "primary-fixed-dim": "#adc6ff",
+              "primary-container": "#0366d6",
+              "error": "#ba1a1a",
+              "outline-variant": "#c2c6d6",
+              "on-error-container": "#93000a",
+              "secondary-container": "#dee3eb",
+              "surface-container-highest": "#dae3ef",
+              "on-secondary-fixed-variant": "#42474e",
+              "inverse-primary": "#adc6ff",
+              "on-primary": "#ffffff",
+              "surface-tint": "#005bc0",
+              "surface-container": "#e6effa",
+              "on-secondary-container": "#60656c",
+              "on-error": "#ffffff",
+              "inverse-on-surface": "#e9f2fd",
+              "surface-bright": "#f7f9ff",
+              "on-primary-container": "#e5ebff",
+              "on-tertiary-container": "#89fdff",
+              "on-primary-fixed-variant": "#004493",
+              "surface-dim": "#d2dbe6",
+              "tertiary": "#005b5d",
+              "surface-variant": "#dae3ef",
+              "outline": "#727785",
+              "on-surface-variant": "#424753",
+              "on-secondary": "#ffffff",
+              "surface-container-high": "#e0e9f5"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-panel {
+            background: rgba(230, 239, 250, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="w-full sticky top-0 z-50 bg-[#f7f9ff] dark:bg-[#141c25]">
+<nav class="max-w-7xl mx-auto px-8 py-4 flex justify-between items-center">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-black text-[#141c25] dark:text-[#f7f9ff] tracking-tighter font-['Space_Grotesk']">apoCHARMM</span>
+<div class="hidden md:flex gap-6 items-center">
+<a class="text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] transition-all duration-200 ease-in-out hover:opacity-80 font-['Space_Grotesk'] font-bold tracking-tight" href="#">Tutorials</a>
+<a class="text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] transition-all duration-200 ease-in-out hover:opacity-80 font-['Space_Grotesk'] font-bold tracking-tight" href="#">Cookbooks</a>
+<a class="text-[#0366D6] dark:text-[#2ddbde] border-b-2 border-[#0366D6] dark:border-[#2ddbde] pb-1 font-['Space_Grotesk'] font-bold tracking-tight" href="#">Benchmarks</a>
+<a class="text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] transition-all duration-200 ease-in-out hover:opacity-80 font-['Space_Grotesk'] font-bold tracking-tight" href="#">GitHub</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="transition-all duration-200 ease-in-out hover:opacity-80 active:scale-95 duration-100">
+<span class="material-symbols-outlined text-[#5a6473] dark:text-[#c2c6d6] text-2xl">account_circle</span>
+</button>
+</div>
+</nav>
+</header>
+<main class="flex-grow">
+<!-- Hero Section -->
+<section class="relative overflow-hidden pt-20 pb-32 px-8">
+<div class="max-w-7xl mx-auto relative z-10">
+<div class="flex flex-col md:flex-row items-center gap-16">
+<div class="flex-1">
+<span class="inline-block text-tertiary font-label text-xs tracking-widest uppercase mb-4 bg-tertiary/10 px-3 py-1 rounded-full">v3.1 Stable Performance</span>
+<h1 class="text-display-lg font-headline text-6xl md:text-7xl font-black text-on-background leading-tight mb-6 tracking-tighter">
+                            Unrivaled <br/>
+<span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-container">GPU Performance.</span>
+</h1>
+<p class="text-body-lg text-on-surface-variant max-w-xl mb-10 leading-relaxed">
+                            Engineered for massive-scale molecular dynamics. apoCHARMM leverages hardware-intrinsic kernels to deliver record-breaking ns/day on modern NVIDIA architectures.
+                        </p>
+<div class="flex gap-4">
+<button class="bg-gradient-to-br from-primary to-primary-container text-on-primary px-8 py-4 font-headline font-bold rounded-md hover:opacity-90 transition-all">
+                                View Full Data
+                            </button>
+<button class="bg-surface-container-high text-on-surface px-8 py-4 font-headline font-bold rounded-md hover:bg-surface-container-highest transition-all">
+                                Hardware Guide
+                            </button>
+</div>
+</div>
+<div class="flex-1 w-full relative">
+<!-- Abstract Visual Representing Molecular Speed -->
+<div class="aspect-square glass-panel rounded-full relative flex items-center justify-center border border-outline-variant/10">
+<div class="absolute inset-0 bg-gradient-to-tr from-primary/5 to-tertiary/10 rounded-full animate-pulse"></div>
+<div class="relative z-20 text-center">
+<span class="block text-primary text-8xl font-black font-headline tracking-tighter">450+</span>
+<span class="block text-on-surface-variant font-label text-sm tracking-widest uppercase">ns/day (DHFR)</span>
+</div>
+<!-- Orbiting decorative elements -->
+<div class="absolute w-4 h-4 bg-tertiary rounded-full top-1/4 right-0 shadow-[0_0_20px_rgba(45,219,222,0.6)]"></div>
+<div class="absolute w-3 h-3 bg-primary rounded-full bottom-1/4 left-4"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Background Decorative Blur -->
+<div class="absolute -top-24 -right-24 w-96 h-96 bg-primary/5 rounded-full blur-[120px]"></div>
+<div class="absolute bottom-0 -left-24 w-64 h-64 bg-tertiary/5 rounded-full blur-[80px]"></div>
+</section>
+<!-- Metrics Dashboard -->
+<section class="bg-surface-container-low py-24 px-8">
+<div class="max-w-7xl mx-auto">
+<div class="flex justify-between items-end mb-12">
+<div>
+<h2 class="text-headline-md font-headline text-3xl font-bold mb-2">Performance Benchmarks</h2>
+<p class="text-on-surface-variant">Real-world production simulation rates across key molecular systems.</p>
+</div>
+<div class="flex gap-2 text-xs font-mono bg-surface-container px-4 py-2 rounded-lg">
+<span class="text-on-surface-variant">Last Updated:</span>
+<span class="text-primary font-bold">2024.11.02</span>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- DHFR Comparison -->
+<div class="md:col-span-8 bg-surface-container-lowest p-8 rounded-xl relative overflow-hidden">
+<div class="relative z-10">
+<h3 class="font-headline font-bold text-xl mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">analytics</span>
+                                DHFR (23,558 atoms)
+                            </h3>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between text-sm mb-2 font-label">
+<span class="font-bold">NVIDIA H100 (80GB)</span>
+<span class="text-primary font-mono">482.4 ns/day</span>
+</div>
+<div class="h-3 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container w-[96%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-sm mb-2 font-label">
+<span class="font-bold">NVIDIA A100 (40GB)</span>
+<span class="text-primary font-mono">312.8 ns/day</span>
+</div>
+<div class="h-3 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary/60 w-[62%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-sm mb-2 font-label">
+<span class="font-bold">NVIDIA RTX 4090</span>
+<span class="text-primary font-mono">395.1 ns/day</span>
+</div>
+<div class="h-3 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary/80 w-[79%]"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="absolute bottom-0 right-0 p-4 opacity-10">
+<span class="material-symbols-outlined text-9xl">matter</span>
+</div>
+</div>
+<!-- STMV Summary -->
+<div class="md:col-span-4 bg-inverse-surface text-on-primary-container p-8 rounded-xl flex flex-col justify-between">
+<div>
+<span class="text-tertiary-fixed-dim font-label text-xs uppercase tracking-widest mb-2 block">Large System Analysis</span>
+<h3 class="font-headline font-bold text-xl text-surface-container-lowest mb-4">STMV (1.1M atoms)</h3>
+<p class="text-sm opacity-80 leading-relaxed">
+                                Satellite Tobacco Mosaic Virus benchmarks demonstrate linear scaling on multi-GPU nodes with NVLink.
+                            </p>
+</div>
+<div class="mt-8">
+<div class="text-4xl font-headline font-black text-tertiary-fixed">24.5 <span class="text-sm font-normal">ns/day</span></div>
+<div class="text-xs opacity-60 mt-1">Measured on 4x A100 NVLink Node</div>
+</div>
+</div>
+<!-- Detailed Data Table -->
+<div class="md:col-span-12 bg-surface-container-lowest rounded-xl overflow-hidden">
+<div class="p-8 pb-4">
+<h3 class="font-headline font-bold text-xl">Technical Breakdown</h3>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container text-secondary text-[11px] font-label uppercase tracking-wider">
+<th class="px-8 py-4 font-bold">System Name</th>
+<th class="px-8 py-4 font-bold">Atom Count</th>
+<th class="px-8 py-4 font-bold">Hardware</th>
+<th class="px-8 py-4 font-bold">Steps/sec</th>
+<th class="px-8 py-4 font-bold text-right">Performance (ns/day)</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<tr class="hover:bg-surface transition-colors">
+<td class="px-8 py-5 font-mono text-sm">DHFR</td>
+<td class="px-8 py-5 text-sm">23,558</td>
+<td class="px-8 py-5 text-sm">RTX 6000 Ada</td>
+<td class="px-8 py-5 text-sm">2,150</td>
+<td class="px-8 py-5 text-sm font-bold text-primary text-right">412.30</td>
+</tr>
+<tr class="bg-surface-container-low/30 hover:bg-surface transition-colors">
+<td class="px-8 py-5 font-mono text-sm">ApoA1</td>
+<td class="px-8 py-5 text-sm">92,224</td>
+<td class="px-8 py-5 text-sm">A100 (80GB)</td>
+<td class="px-8 py-5 text-sm">512</td>
+<td class="px-8 py-5 text-sm font-bold text-primary text-right">98.45</td>
+</tr>
+<tr class="hover:bg-surface transition-colors">
+<td class="px-8 py-5 font-mono text-sm">STMV</td>
+<td class="px-8 py-5 text-sm">1,066,628</td>
+<td class="px-8 py-5 text-sm">8x H100 Node</td>
+<td class="px-8 py-5 text-sm">48</td>
+<td class="px-8 py-5 text-sm font-bold text-primary text-right">42.18</td>
+</tr>
+<tr class="bg-surface-container-low/30 hover:bg-surface transition-colors">
+<td class="px-8 py-5 font-mono text-sm">JAC</td>
+<td class="px-8 py-5 text-sm">23,558</td>
+<td class="px-8 py-5 text-sm">RTX 3090 Ti</td>
+<td class="px-8 py-5 text-sm">1,420</td>
+<td class="px-8 py-5 text-sm font-bold text-primary text-right">278.90</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Hardware Recommendations -->
+<section class="py-24 px-8 max-w-7xl mx-auto">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+<div>
+<h2 class="text-headline-md font-headline text-3xl font-bold mb-6">Optimal Hardware Configurations</h2>
+<p class="text-on-surface-variant mb-8 text-lg">
+                        Maximize your simulation throughput with our validated hardware stacks. apoCHARMM is tuned specifically for the CUDA unified memory architecture.
+                    </p>
+<div class="space-y-4">
+<div class="group flex items-start gap-4 p-6 rounded-lg transition-all hover:bg-surface-container">
+<div class="mt-1 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">memory</span>
+</div>
+<div>
+<h4 class="font-bold text-lg mb-1">Compute Unified Architecture</h4>
+<p class="text-sm text-on-surface-variant">Recommended: NVIDIA Ada Lovelace or Hopper series for maximum FP32 throughput.</p>
+</div>
+</div>
+<div class="group flex items-start gap-4 p-6 rounded-lg transition-all hover:bg-surface-container">
+<div class="mt-1 w-10 h-10 rounded-full bg-tertiary/10 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined">settings_input_component</span>
+</div>
+<div>
+<h4 class="font-bold text-lg mb-1">Interconnect Speed</h4>
+<p class="text-sm text-on-surface-variant">Dual-GPU setups require PCIe Gen 4/5. 4+ GPU setups must utilize NVLink for P2P memory access.</p>
+</div>
+</div>
+<div class="group flex items-start gap-4 p-6 rounded-lg transition-all hover:bg-surface-container">
+<div class="mt-1 w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">developer_board</span>
+</div>
+<div>
+<h4 class="font-bold text-lg mb-1">Host Memory</h4>
+<p class="text-sm text-on-surface-variant">Minimum 32GB ECC DDR5. 128GB+ recommended for large system setup and trajectory analysis.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="relative">
+<!-- Asymmetric Image Placement -->
+<div class="relative z-10 rounded-xl overflow-hidden shadow-2xl transform lg:translate-y-12 rotate-1">
+<img class="w-full grayscale contrast-125 hover:grayscale-0 transition-all duration-700" data-alt="Close up of high-end NVIDIA server GPU hardware" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCNdAuvkrx6yZ4jecri5KxgOAPanIJxapyWc3xSUw5t-vzSVEgvPl5-DvoOVBXmyD31NGTH7ZUpa2qRvKLdfCw7tRQh0K2jQpCo5yGC2BsIfVkhzCjLYLZdDxpSdUrX-vFg_0pkgL1wi-GIAwpt2h8I1UQ8to6550Q5rqbL24G9Bwbj2P3o5Mxjk3_Upk3r05jySP61FLd3sgQqyPAUoPq7hZawCHQ0pgT9eydwv8qby1ytpczaeNLwPT280xU5euGCWn5PHpj3yzam"/>
+<div class="absolute inset-0 bg-gradient-to-t from-on-background/80 to-transparent flex items-end p-8">
+<div class="text-white">
+<span class="text-tertiary-fixed text-xs font-bold uppercase tracking-widest">Validated System</span>
+<p class="font-headline text-xl font-bold">apoCHARMM Pro Node v4</p>
+</div>
+</div>
+</div>
+<!-- Decorative Element -->
+<div class="absolute -top-10 -left-10 w-40 h-40 border-t-2 border-l-2 border-primary/20 rounded-tl-3xl"></div>
+<div class="absolute -bottom-10 -right-10 w-40 h-40 border-b-2 border-r-2 border-tertiary/20 rounded-br-3xl"></div>
+<div class="mt-20 lg:mt-32 p-8 bg-surface-container-high rounded-xl border-l-4 border-primary">
+<h4 class="font-headline font-bold text-lg mb-2">Technical Note: Precision Models</h4>
+<p class="text-sm text-on-surface-variant italic">
+                            "apoCHARMM utilizes a mixed-precision model where force calculations are performed in single precision (FP32) while integration is performed in double precision (FP64), ensuring both speed and numerical stability."
+                        </p>
+</div>
+</div>
+</div>
+</section>
+<!-- CTA Section -->
+<section class="max-w-7xl mx-auto px-8 mb-24">
+<div class="bg-gradient-to-br from-inverse-surface to-[#141c25] rounded-2xl p-12 text-center relative overflow-hidden">
+<div class="relative z-10">
+<h2 class="text-headline-md font-headline text-4xl font-black text-surface-container-lowest mb-6">Ready to accelerate your research?</h2>
+<p class="text-on-primary-container max-w-2xl mx-auto mb-10 opacity-80 text-lg">
+                        Join hundreds of labs using apoCHARMM to run billion-step simulations in days, not months.
+                    </p>
+<div class="flex justify-center gap-6">
+<button class="bg-tertiary-fixed text-on-tertiary-fixed px-10 py-4 font-headline font-black rounded-md hover:brightness-110 transition-all">
+                            GET STARTED
+                        </button>
+<button class="border border-outline-variant/30 text-surface-container-lowest px-10 py-4 font-headline font-black rounded-md hover:bg-white/10 transition-all">
+                            VIEW DOCS
+                        </button>
+</div>
+</div>
+<!-- Abstract coding background -->
+<div class="absolute inset-0 opacity-5 pointer-events-none font-mono text-[8px] leading-tight text-left p-4">
+                    apo_kernel_v3&lt;&lt;<grid, block="">&gt;&gt;(d_coords, d_forces, d_params);<br/>
+                    cudaDeviceSynchronize();<br/>
+                    integration_step_double&lt;&lt;<grid, block="">&gt;&gt;(d_vel, d_forces, d_mass);<br/>
+                    // Repeat 100,000,000 times<br/>
+                    apo_kernel_v3&lt;&lt;<grid, block="">&gt;&gt;(d_coords, d_forces, d_params);<br/>
+                    cudaDeviceSynchronize();<br/>
+                    integration_step_double&lt;&lt;<grid, block="">&gt;&gt;(d_vel, d_forces, d_mass);<br/>
+</grid,></grid,></grid,></grid,></div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full mt-auto bg-[#ecf4ff] dark:bg-[#141c25] border-t border-[#c2c6d6]/15">
+<div class="max-w-7xl mx-auto px-8 py-12 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+<div class="space-y-4">
+<div class="font-['Space_Grotesk'] font-bold text-[#141c25] dark:text-[#f7f9ff] text-xl">apoCHARMM</div>
+<p class="text-[#5a6473] dark:text-[#c2c6d6] font-['Inter'] text-sm tracking-normal">© 2024 apoCHARMM Team. Open-source molecular dynamics.</p>
+</div>
+<div class="flex flex-wrap justify-end gap-x-8 gap-y-4">
+<a class="text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] dark:hover:text-[#2ddbde] underline decoration-2 underline-offset-4 font-['Inter'] text-sm tracking-normal transition-all duration-200" href="#">Documentation</a>
+<a class="text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] dark:hover:text-[#2ddbde] underline decoration-2 underline-offset-4 font-['Inter'] text-sm tracking-normal transition-all duration-200" href="#">Team</a>
+<a class="text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] dark:hover:text-[#2ddbde] underline decoration-2 underline-offset-4 font-['Inter'] text-sm tracking-normal transition-all duration-200" href="#">Contact</a>
+<a class="text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] dark:hover:text-[#2ddbde] underline decoration-2 underline-offset-4 font-['Inter'] text-sm tracking-normal transition-all duration-200" href="#">License</a>
+</div>
+</div>
+</footer>
+</body></html>
