@@ -103,6 +103,6 @@ std::shared_ptr<Force<double>> MBARForceManager::getForces() {
   return children[nonZeroLambdaIndex]->getForces();
 }
 
-CudaContainer<double> MBARForceManager::getVirial() {
+CudaContainer<double> &MBARForceManager::getVirial() {
   return children[nonZeroLambdaIndex]->getVirial();
 }

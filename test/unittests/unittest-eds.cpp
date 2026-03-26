@@ -645,10 +645,10 @@ TEST_CASE("1p5f", "[unit]") {
     }
 
     auto langevinPiston = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
-    langevinPiston->setPistonFriction(5.0);
-    langevinPiston->setCharmmContext(ctx);
     langevinPiston->setCrystalType(CRYSTAL::CUBIC);
-    langevinPiston->setPistonMass({500.0});
+    langevinPiston->setLangevinPistonFriction(5.0);
+    langevinPiston->setCharmmContext(ctx);
+    langevinPiston->setLangevinPistonMass({500.0});
     langevinPiston->propagate(10000);
 
     auto integrator = std::make_shared<CudaLangevinThermostatIntegrator>(0.002);

@@ -234,9 +234,9 @@ __global__ void CUDA_KERNEL_NAME(
         }
         */
 
-        sh_fix[ii] += fxij;
-        sh_fiy[ii] += fyij;
-        sh_fiz[ii] += fzij;
+        sh_fix[ii] = sh_fix[ii] + fxij;
+        sh_fiy[ii] = sh_fiy[ii] + fyij;
+        sh_fiz[ii] = sh_fiz[ii] + fzij;
       } // if (!(excl & 1) && r2 < d_setup.roff2)
 
       // Advance exclusion mask
@@ -279,15 +279,30 @@ __global__ void CUDA_KERNEL_NAME(
 
       for (int d = 16; d >= 1; d /= 2) {
         if (wid < d) {
-          sh_sfix[wid] += sh_sfix[wid + d];
-          sh_sfiy[wid] += sh_sfiy[wid + d];
-          sh_sfiz[wid] += sh_sfiz[wid + d];
+          sh_sfix[wid] = sh_sfix[wid] + sh_sfix[wid + d];
+          sh_sfiy[wid] = sh_sfiy[wid] + sh_sfiy[wid + d];
+          sh_sfiz[wid] = sh_sfiz[wid] + sh_sfiz[wid + d];
         }
       }
       if (wid == 0) {
+#ifdef USE_DP_SFORCE
         atomicAdd(&virial->sforce_dp[ish][0], sh_sfix[0]);
         atomicAdd(&virial->sforce_dp[ish][1], sh_sfiy[0]);
         atomicAdd(&virial->sforce_dp[ish][2], sh_sfiz[0]);
+#else
+        AT tmpx = (long long int)(sh_sfix[0] * FORCE_SCALE);
+        AT tmpy = (long long int)(sh_sfiy[0] * FORCE_SCALE);
+        AT tmpz = (long long int)(sh_sfiz[0] * FORCE_SCALE);
+        tmpx /= CONVERT_TO_VIR;
+        tmpy /= CONVERT_TO_VIR;
+        tmpz /= CONVERT_TO_VIR;
+        atomicAdd((unsigned long long int *)&virial->sforce_fp[ish][0],
+                  llitoulli(tmpx));
+        atomicAdd((unsigned long long int *)&virial->sforce_fp[ish][1],
+                  llitoulli(tmpy));
+        atomicAdd((unsigned long long int *)&virial->sforce_fp[ish][2],
+                  llitoulli(tmpz));
+#endif
       }
     }
   }

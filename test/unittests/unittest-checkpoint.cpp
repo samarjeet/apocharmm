@@ -44,7 +44,7 @@ TEST_CASE("checkpint", "[basic][extra]") {
     // Setup integrator
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
     integrator->setCrystalType(CRYSTAL::CUBIC);
-    integrator->setPistonFriction(12.0);
+    integrator->setLangevinPistonFriction(12.0);
     integrator->setCharmmContext(ctx);
 
     // Create checkpoint object and checkpoint the current state of the

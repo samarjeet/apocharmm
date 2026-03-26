@@ -914,7 +914,7 @@ std::shared_ptr<Force<double>> ForceManagerComposite::getForces() {
   return totalForceValues;
 }
 
-CudaContainer<double> ForceManagerComposite::getVirial() {
+CudaContainer<double> &ForceManagerComposite::getVirial() {
   std::cout
       << "Don't call me. Instead call getVirialInChild with <int> childId\n"
       << "For now, returns child[0]'s virial.";
@@ -973,7 +973,7 @@ std::vector<double> &ForceManagerComposite::getBoxDimensions(void) {
 
 int ForceManagerComposite::getCompositeSize() { return children.size(); }
 
-CudaContainer<double> ForceManager::getVirial() {
+CudaContainer<double> &ForceManager::getVirial() {
   directEnergyVirial.getVirial(directVirial);
   bondedEnergyVirial.getVirial(bondedVirial);
   reciprocalEnergyVirial.getVirial(reciprocalVirial);

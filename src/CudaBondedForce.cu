@@ -35,7 +35,7 @@ __forceinline__ __device__ void reduce_energy(const double epot,
     int t = threadIdx.x + i;
     double epot_val = (t < blockDim.x) ? sh_epot[t] : 0.0;
     __syncthreads();
-    sh_epot[threadIdx.x] += epot_val;
+    sh_epot[threadIdx.x] = sh_epot[threadIdx.x] + epot_val;
     __syncthreads();
   }
   if (threadIdx.x == 0)
@@ -1838,13 +1838,6 @@ void CudaBondedForce<AT, CT>::calc_force(const float4 *xyzq, bool calcEnergy,
   calc_force(xyzq, boxDimensions[0], boxDimensions[1], boxDimensions[2],
              calcEnergy, calcVirial, forceVal->stride(), forceVal->xyz(), true,
              true, true, true, true, false, *bondedStream);
-
-  /*if (calcVirial) {
-    energyVirial.calcVirial(10000, xyzq, boxDimensions[0], boxDimensions[1],
-                            boxDimensions[2], forceVal->stride(),
-                            forceVal->xyz(), *bondedStream);
-  }
-  */
 }
 
 template <typename AT, typename CT>

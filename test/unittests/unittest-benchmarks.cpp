@@ -416,7 +416,6 @@ TEST_CASE("namd_benchmark", "[dynamics]") {
     std::vector<std::string> prmFiles{dataPath + "par_all27_prot_na.inp"};
     auto prm = std::make_shared<CharmmParameters>(prmFiles);
 
-
     std::cout << "Read the prm file\n";
     auto psf = std::make_shared<CharmmPSF>(dataPath + "stmv.psf");
 
@@ -657,7 +656,6 @@ TEST_CASE("benchmark", "[dynamics]") {
 }
 */
 
-
 TEST_CASE("waterbox", "[dynamics]") {
   std::string dataPath = getDataPath();
   SECTION("waterbox") {
@@ -684,7 +682,7 @@ TEST_CASE("waterbox", "[dynamics]") {
     double timeStep = 0.002;
     double numSteps = 1000;
 
-        auto langevinThermostat =
+    auto langevinThermostat =
         std::make_shared<CudaLangevinThermostatIntegrator>(timeStep);
     // CudaVelocityVerletIntegrator langevinThermostat(0.002);
     langevinThermostat->setFriction(0.0);
@@ -692,17 +690,16 @@ TEST_CASE("waterbox", "[dynamics]") {
     langevinThermostat->setCharmmContext(ctx);
 
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(timeStep);
-    integrator->setPistonFriction(12.);
-    integrator->setCharmmContext(ctx);
     integrator->setCrystalType(CRYSTAL::CUBIC);
-
+    integrator->setLangevinPistonFriction(12.0);
+    integrator->setCharmmContext(ctx);
 
     auto start = std::chrono::high_resolution_clock::now();
     integrator->propagate(numSteps);
-    //langevinThermostat->propagate(numSteps);
+    // langevinThermostat->propagate(numSteps);
 
     auto end = std::chrono::high_resolution_clock::now();
-        // time in seconds
+    // time in seconds
     std::chrono::duration<double> elapsed_seconds = end - start;
     std::cout << "Elapsed time: " << elapsed_seconds.count() << "s\n";
 

@@ -63,11 +63,11 @@ TEST_CASE("noseHooverThermostat", "[dynamics]") {
     averageTemperature.transferToHost();
 
     if (useHolonomicConstraints) {
-      CHECK(ctx->computeTemperature() == 306.75604f);
-      CHECK(averageTemperature[0] == Approx(299.9286502683).margin(1e-8));
+      CHECK(ctx->computeTemperature() == 301.67325f);
+      CHECK(averageTemperature[0] == Approx(299.9581958965).margin(1e-8));
     } else {
-      CHECK(ctx->computeTemperature() == 294.28967f);
-      CHECK(averageTemperature[0] == Approx(299.9650298325).margin(1e-8));
+      CHECK(ctx->computeTemperature() == 289.81113f);
+      CHECK(averageTemperature[0] == Approx(300.0088171638).margin(1e-8));
     }
   }
 

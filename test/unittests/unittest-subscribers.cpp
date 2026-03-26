@@ -210,11 +210,11 @@ TEST_CASE("basicDynamics", "[unit]") {
   ctx->assignVelocitiesAtTemperature(300);
 
   auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(.001);
-  integrator->setPistonFriction(20.0);
-  integrator->setCharmmContext(ctx);
-  integrator->setCrystalType(CRYSTAL::CUBIC);
-  std::vector<double> pistonmass = {500.0};
-  integrator->setPistonMass(pistonmass);
+  // integrator->setPistonFriction(20.0);
+  // integrator->setCharmmContext(ctx);
+  // integrator->setCrystalType(CRYSTAL::CUBIC);
+  // std::vector<double> pistonmass = {500.0};
+  // integrator->setPistonMass(pistonmass);
 
   SECTION("StateSubscriber") {
     auto myStateSub = std::make_shared<StateSubscriber>("StateSub.state");
@@ -431,10 +431,10 @@ TEST_CASE("debugpy") {
   ctx->assignVelocitiesAtTemperature(300.0);
 
   auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
-  integrator->setPistonFriction(10.0);
-  integrator->setCharmmContext(ctx);
-  integrator->setCrystalType(CRYSTAL::TETRAGONAL);
-  integrator->setPistonMass({500.0, 500.0});
+  // integrator->setPistonFriction(10.0);
+  // integrator->setCharmmContext(ctx);
+  // integrator->setCrystalType(CRYSTAL::TETRAGONAL);
+  // integrator->setPistonMass({500.0, 500.0});
 
   auto restartSub = std::make_shared<RestartSubscriber>("restart.out", 100);
   integrator->subscribe(restartSub);

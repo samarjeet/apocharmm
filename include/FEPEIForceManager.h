@@ -39,7 +39,7 @@ public:
    * @return CudaContainer<double>
    */
   CudaContainer<double> getLambdaPotentialEnergies();
-  CudaContainer<double> getVirial() override;
+  CudaContainer<double> &getVirial() override;
 
 protected:
   /**

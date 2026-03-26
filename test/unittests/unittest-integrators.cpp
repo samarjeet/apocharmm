@@ -42,10 +42,10 @@ std::shared_ptr<CudaLangevinPistonIntegrator>
 setupLangevinPistonIntegrator(std::shared_ptr<CharmmContext> ctx) {
   std::shared_ptr<CudaLangevinPistonIntegrator> integrator =
       std::make_shared<CudaLangevinPistonIntegrator>(0.001);
-  integrator->setPistonFriction(10.0);
-  integrator->setCharmmContext(ctx);
   integrator->setCrystalType(CRYSTAL::CUBIC);
-  integrator->setPistonMass({500.0});
+  integrator->setLangevinPistonFriction(10.0);
+  integrator->setLangevinPistonMass({500.0});
+  integrator->setCharmmContext(ctx);
   return integrator;
 }
 
@@ -175,28 +175,32 @@ TEST_CASE("Basic functions", "[unittest]") {
     auto crd = std::make_shared<CharmmCrd>(dataPath + "waterbox.crd");
     ctx->setCoordinates(crd);
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
-    integrator->setPistonFriction(12.0);
-    integrator->setCharmmContext(ctx);
     integrator->setCrystalType(CRYSTAL::CUBIC);
-    integrator->setPistonMass({500.0});
+    integrator->setLangevinPistonFriction(12.0);
+    integrator->setLangevinPistonMass({500.0});
+    integrator->setCharmmContext(ctx);
     integrator->propagate(100);
     // internal variables are now messed up
 
     integrator->initialize();
     // internal variables for the pistons (Nose-Hoover and langevin) should now
     // be zeroed out
-    CHECK(integrator->getNoseHooverPistonForce() == 0.0);
-    CHECK(integrator->getNoseHooverPistonForcePrevious() == 0.0);
-    CHECK(integrator->getNoseHooverPistonVelocity() == 0.0);
-    CHECK(integrator->getNoseHooverPistonVelocityPrevious() == 0.0);
-    integrator->getOnStepPistonVelocity().transferFromDevice();
-    CHECK(integrator->getOnStepPistonVelocity()[0] == 0.0);
-    integrator->getHalfStepPistonVelocity().transferFromDevice();
-    CHECK(integrator->getHalfStepPistonVelocity()[0] == 0.0);
-    integrator->getOnStepPistonPosition().transferFromDevice();
-    CHECK(integrator->getOnStepPistonPosition()[0] == 0.0);
-    integrator->getHalfStepPistonPosition().transferFromDevice();
-    CHECK(integrator->getHalfStepPistonPosition()[0] == 0.0);
+    integrator->getNoseHooverPistonForce().transferToHost();
+    CHECK(integrator->getNoseHooverPistonForce()[0] == 0.0);
+    integrator->getNoseHooverPistonForcePrevious().transferToHost();
+    CHECK(integrator->getNoseHooverPistonForcePrevious()[0] == 0.0);
+    integrator->getNoseHooverPistonVelocity().transferToHost();
+    CHECK(integrator->getNoseHooverPistonVelocity()[0] == 0.0);
+    integrator->getNoseHooverPistonVelocityPrevious().transferToHost();
+    CHECK(integrator->getNoseHooverPistonVelocityPrevious()[0] == 0.0);
+    integrator->getLangevinPistonOnStepVelocity().transferToHost();
+    CHECK(integrator->getLangevinPistonOnStepVelocity()[0] == 0.0);
+    integrator->getLangevinPistonHalfStepVelocity().transferToHost();
+    CHECK(integrator->getLangevinPistonHalfStepVelocity()[0] == 0.0);
+    integrator->getLangevinPistonOnStepPosition().transferToHost();
+    CHECK(integrator->getLangevinPistonOnStepPosition()[0] == 0.0);
+    integrator->getLangevinPistonHalfStepPosition().transferToHost();
+    CHECK(integrator->getLangevinPistonHalfStepPosition()[0] == 0.0);
   }
 }
 
@@ -232,10 +236,10 @@ TEST_CASE("waterbox") {
     // auto integrator = setupLangevinPistonIntegrator(ctx);
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
     integrator->setCrystalType(CRYSTAL::CUBIC);
-    integrator->setPistonMass({500.0});
-    integrator->setPistonFriction(12.0);
-    integrator->setSeedForPistonFriction(randomSeed);
-    integrator->setNoseHooverFlag(true);
+    integrator->setLangevinPistonMass({500.0});
+    integrator->setLangevinPistonFriction(12.0);
+    integrator->setLangevinPistonFrictionSeed(randomSeed);
+    integrator->useNoseHooverThermostat(true);
     integrator->setCharmmContext(ctx);
     CHECK_NOTHROW(integrator->propagate(nsteps));
 

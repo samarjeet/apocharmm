@@ -54,8 +54,9 @@ template int Checkpoint::get<int>(const std::string &field); // { return -1; }
 void Checkpoint::writeCheckpoint(std::shared_ptr<CudaIntegrator> integrator) {
   std::ofstream fout;
   auto lp = std::dynamic_pointer_cast<CudaLangevinPistonIntegrator>(integrator);
-  int pistonDegreesOfFreedom =
-      (lp != nullptr) ? lp->getPistonDegreesOfFreedom() : -1;
+  // int pistonDegreesOfFreedom =
+  //     (lp != nullptr) ? lp->getPistonDegreesOfFreedom() : -1;
+  int pistonDegreesOfFreedom = 1;
 
   if (this->doesFileExist()) {
     // Append to existing checkpoint file
@@ -141,62 +142,76 @@ void Checkpoint::writeCheckpoint(std::shared_ptr<CudaIntegrator> integrator) {
                sizeof(int));
 
     // Write onStepPistonPosition
-    CudaContainer<double> onStepPistonPosition = lp->getOnStepPistonPosition();
+    // CudaContainer<double> onStepPistonPosition =
+    // lp->getOnStepPistonPosition();
+    CudaContainer<double> onStepPistonPosition(9);
     onStepPistonPosition.transferFromDevice();
     fout.write(reinterpret_cast<const char *>(
                    onStepPistonPosition.getHostArray().data()),
                pistonDegreesOfFreedom * sizeof(double));
 
     // Write halfStepPistonPosition
-    CudaContainer<double> halfStepPistonPosition =
-        lp->getHalfStepPistonPosition();
+    // CudaContainer<double> halfStepPistonPosition =
+    //     lp->getHalfStepPistonPosition();
+    CudaContainer<double> halfStepPistonPosition(9);
     halfStepPistonPosition.transferFromDevice();
     fout.write(reinterpret_cast<const char *>(
                    halfStepPistonPosition.getHostArray().data()),
                pistonDegreesOfFreedom * sizeof(double));
 
     // Write onStepPistonVelocity
-    CudaContainer<double> onStepPistonVelocity = lp->getOnStepPistonVelocity();
+    // CudaContainer<double> onStepPistonVelocity =
+    // lp->getOnStepPistonVelocity();
+    CudaContainer<double> onStepPistonVelocity(9);
     onStepPistonVelocity.transferFromDevice();
     fout.write(reinterpret_cast<const char *>(
                    onStepPistonVelocity.getHostArray().data()),
                pistonDegreesOfFreedom * sizeof(double));
 
     // Write halfStepPistonVelocity
-    CudaContainer<double> halfStepPistonVelocity =
-        lp->getHalfStepPistonVelocity();
+    // CudaContainer<double> halfStepPistonVelocity =
+    //     lp->getHalfStepPistonVelocity();
+    CudaContainer<double> halfStepPistonVelocity(9);
     halfStepPistonVelocity.transferFromDevice();
     fout.write(reinterpret_cast<const char *>(
                    halfStepPistonVelocity.getHostArray().data()),
                pistonDegreesOfFreedom * sizeof(double));
 
-    // Write pistonNoseHooverPosition
-    double pistonNoseHooverPosition = lp->getNoseHooverPistonPosition();
-    fout.write(reinterpret_cast<const char *>(&pistonNoseHooverPosition),
+    // Write noseHooverPistonPosition
+    // double noseHooverPistonrPosition = lp->getNoseHooverPistonPosition();
+    double noseHooverPistonPosition = 0.0;
+    fout.write(reinterpret_cast<const char *>(&noseHooverPistonPosition),
                sizeof(double));
 
-    // Write pistonNoseHooverVelocity
-    double pistonNoseHooverVelocity = lp->getNoseHooverPistonVelocity();
-    fout.write(reinterpret_cast<const char *>(&pistonNoseHooverVelocity),
+    // Write noseHooverPistonVelocity
+    CudaContainer<double> noseHooverPistonVelocity =
+        lp->getNoseHooverPistonVelocity();
+    noseHooverPistonVelocity.transferToHost();
+    fout.write(reinterpret_cast<const char *>(&noseHooverPistonVelocity[0]),
                sizeof(double));
 
-    // Write pistonNoseHooverVelocityPrevious
-    double pistonNoseHooverVelocityPrevious =
+    // Write noseHooverPistonVelocityPrevious
+    CudaContainer<double> noseHooverPistonVelocityPrevious =
         lp->getNoseHooverPistonVelocityPrevious();
+    noseHooverPistonVelocityPrevious.transferToHost();
     fout.write(
-        reinterpret_cast<const char *>(&pistonNoseHooverVelocityPrevious),
+        reinterpret_cast<const char *>(&noseHooverPistonVelocityPrevious[0]),
         sizeof(double));
 
-    // Write pistonNoseHooverForce
-    double pistonNoseHooverForce = lp->getNoseHooverPistonForce();
-    fout.write(reinterpret_cast<const char *>(&pistonNoseHooverForce),
+    // Write noseHooverPistonForce
+    CudaContainer<double> noseHooverPistonForce =
+        lp->getNoseHooverPistonForce();
+    noseHooverPistonForce.transferToHost();
+    fout.write(reinterpret_cast<const char *>(&noseHooverPistonForce[0]),
                sizeof(double));
 
-    // Write pistonNoseHooverForcePrevious
-    double pistonNoseHooverForcePrevious =
+    // Write noseHooverPistonForcePrevious
+    CudaContainer<double> noseHooverPistonForcePrevious =
         lp->getNoseHooverPistonForcePrevious();
-    fout.write(reinterpret_cast<const char *>(&pistonNoseHooverForcePrevious),
-               sizeof(double));
+    noseHooverPistonForcePrevious.transferToHost();
+    fout.write(
+        reinterpret_cast<const char *>(&noseHooverPistonForcePrevious[0]),
+        sizeof(double));
   }
 
   fout.close();

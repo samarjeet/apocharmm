@@ -338,7 +338,7 @@ public:
   /**
    * @brief Returns the virial (as a CudaContainer) from the ForceManager
    */
-  CudaContainer<double> getVirial();
+  CudaContainer<double> &getVirial();
   /**
    * @brief Get water molecules for setting up SETTLE constraints
    *

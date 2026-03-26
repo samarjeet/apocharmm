@@ -29,6 +29,7 @@ public:
   void
   setMaxPredictorCorrectorIterations(const int maxPredictorCorrectorIterations);
   void useOldTemperature(const bool useJungTemperature);
+  void resetAverageTemperature(void);
 
 public:
   double getReferenceTemperature(void) const;
@@ -73,6 +74,8 @@ protected:
 
   CudaContainer<double> m_KineticEnergy;
   CudaContainer<double> m_AverageTemperature;
+
+  int m_AverageWindowSize;
 
   bool m_UseOldTemperature;
   CudaContainer<double> m_AverageOldTemperature;

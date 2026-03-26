@@ -165,7 +165,7 @@ void exportIntegrator(py::module &mod) {
       mod, "LangevinPistonIntegrator", R"sitb(
           Langevin Piston integrator. 
           Default bath temperature value: 300K. 
-          Default piston mass value: 500 AU.
+          Default piston mass value: 2% of total system mass AU.
           )sitb")
       .def(py::init<float>(),
            "Langevin piston integrator. Takes timestep (in ps) as arg")
@@ -174,40 +174,42 @@ void exportIntegrator(py::module &mod) {
       .def("setSimulationContext",
            &CudaLangevinPistonIntegrator::setCharmmContext,
            "set the charmm context ")
-      //      .def("setPistonMass",
-      //           py::overload_cast<double>(
-      //               &CudaLangevinPistonIntegrator::setPistonMass),
-      //           "set the piston mass. Default: 500. DO NOT GIVE A SINGLE
-      //           FLOAT " "VALUE 0. (worst case give a list [0.]) (this should
-      //           be fixed in " "the cuda code)")
-      .def("setPistonMass", &CudaLangevinPistonIntegrator::setPistonMass,
-           "set the piston mass using an array. Default: 500., 500.")
-      .def("getPistonMass", &CudaLangevinPistonIntegrator::getPistonMass,
-           "get the pressure piston mass")
-      .def("setPistonFriction",
-           &CudaLangevinPistonIntegrator::setPistonFriction,
-           "set the friction coefficient. Has to be set. Default: 0.0 ps^-1")
-      .def("setBathTemperature",
-           &CudaLangevinPistonIntegrator::setBathTemperature,
-           "set the bath temperature. Default: 300.0")
+      //  .def("setPistonMass",
+      //       py::overload_cast<double>(
+      //           &CudaLangevinPistonIntegrator::setPistonMass),
+      //       "set the piston mass. Default: 500. DO NOT GIVE A SINGLE
+      //       FLOAT " "VALUE 0. (worst case give a list [0.]) (this should
+      //       be fixed in " "the cuda code)")
+      .def("setLangevinPistonMass",
+           &CudaLangevinPistonIntegrator::setLangevinPistonMass,
+           "set the piston mass using an array. Default: 2% of total system "
+           "mass.")
+      //  .def("getPistonMass", &CudaLangevinPistonIntegrator::getPistonMass,
+      //       "get the pressure piston mass")
+      .def("setLangevinPistonFriction",
+           &CudaLangevinPistonIntegrator::setLangevinPistonFriction,
+           "set the friction coefficient. Default: 0.0 ps^-1")
+      .def("setReferenceTemperature",
+           &CudaLangevinPistonIntegrator::setReferenceTemperature,
+           "set the reference temperature. Default: 300.0")
       .def("setCrystalType", &CudaLangevinPistonIntegrator::setCrystalType,
            "set the crystal type. Default: CRYSTAL.ORTHORHOMBIC")
       .def("setNoseHooverPistonMass",
            &CudaLangevinPistonIntegrator::setNoseHooverPistonMass,
-           "set the Nose-Hoover piston mass. Default: 500.0")
-      .def("setNoseHooverFlag",
-           &CudaLangevinPistonIntegrator::setNoseHooverFlag,
-           "set the Nose-Hoover flag. Default: true")
-      .def("setSurfaceTension",
-           &CudaLangevinPistonIntegrator::setSurfaceTension,
-           "set the surface tension. Default: 0.0")
-      .def("getNoseHooverPistonMass",
-           &CudaLangevinPistonIntegrator::getNoseHooverPistonMass,
-           "get the Nose-Hoover piston mass")
-      .def("setNoseHooverFlag",
-           &CudaLangevinPistonIntegrator::setNoseHooverFlag,
-           "set the Nose-Hoover flag. Set it to False to run NPH rather than "
-           "NPT. Default: true")
+           "set the Nose-Hoover piston mass. Default: 20% of total systen mass")
+      .def("useNoseHooverThermostat",
+           &CudaLangevinPistonIntegrator::useNoseHooverThermostat,
+           "turn on or off using the Nose-Hoover thermostat. Default: true")
+      //  .def("setSurfaceTension",
+      //       &CudaLangevinPistonIntegrator::setSurfaceTension,
+      //       "set the surface tension. Default: 0.0")
+      //  .def("getNoseHooverPistonMass",
+      //       &CudaLangevinPistonIntegrator::getNoseHooverPistonMass,
+      //       "get the Nose-Hoover piston mass");
+      //  .def("setNoseHooverFlag",
+      //       &CudaLangevinPistonIntegrator::setNoseHooverFlag,
+      //       "set the Nose-Hoover flag. Set it to False to run NPH rather than
+      //       " "NPT. Default: true")
       .def("initialize", &CudaLangevinPistonIntegrator::initialize,
            "initialize the integrator variables. Should be used when starting a"
            " simulation of another system using the same integrator. ");

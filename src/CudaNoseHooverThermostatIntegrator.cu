@@ -46,6 +46,8 @@ CudaNoseHooverThermostatIntegrator::CudaNoseHooverThermostatIntegrator(
   m_UseOldTemperature = false;
   m_AverageOldTemperature.resize(1);
   m_AverageOldTemperature.setToValue(0.0);
+
+  m_AverageWindowSize = 0;
 }
 
 void CudaNoseHooverThermostatIntegrator::setReferenceTemperature(
@@ -94,6 +96,13 @@ void CudaNoseHooverThermostatIntegrator::setMaxPredictorCorrectorIterations(
 void CudaNoseHooverThermostatIntegrator::useOldTemperature(
     const bool useOldTemperature) {
   m_UseOldTemperature = useOldTemperature;
+  return;
+}
+
+void CudaNoseHooverThermostatIntegrator::resetAverageTemperature(void) {
+  m_AverageTemperature.setToValue(0.0);
+  m_AverageOldTemperature.setToValue(0.0);
+  m_AverageWindowSize = 0;
   return;
 }
 
@@ -200,11 +209,12 @@ __global__ static void UpdateSinglePrecisionCoordinatesKernel(
     float4 *__restrict__ xyzq, const double4 *__restrict__ coordsCharges,
     const int numAtoms) {
   const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  const int stride = gridDim.x * blockDim.x;
 
-  if (idx < numAtoms) {
-    xyzq[idx].x = static_cast<float>(coordsCharges[idx].x);
-    xyzq[idx].y = static_cast<float>(coordsCharges[idx].y);
-    xyzq[idx].z = static_cast<float>(coordsCharges[idx].z);
+  for (int i = idx; i < numAtoms; i += stride) {
+    xyzq[i].x = static_cast<float>(coordsCharges[i].x);
+    xyzq[i].y = static_cast<float>(coordsCharges[i].y);
+    xyzq[i].z = static_cast<float>(coordsCharges[i].z);
   }
 
   return;
@@ -217,20 +227,22 @@ InitializationKernel(double4 *__restrict__ coordsDelta,
                      const double *__restrict__ forces, const int forceStride,
                      const double timeStep) {
   const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  const int stride = gridDim.x * blockDim.x;
+  const double timeStep2 = timeStep * timeStep;
 
-  if (idx < numAtoms) {
-    const double fx = forces[0 * forceStride + idx];
-    const double fy = forces[1 * forceStride + idx];
-    const double fz = forces[2 * forceStride + idx];
-    const double fact = 0.5 * timeStep * timeStep * velMass[idx].w;
+  for (int i = idx; i < numAtoms; i += stride) {
+    const double fx = forces[0 * forceStride + i];
+    const double fy = forces[1 * forceStride + i];
+    const double fz = forces[2 * forceStride + i];
+    const double fact = 0.5 * timeStep2 * velMass[i].w;
 
-    coordsDelta[idx].x = timeStep * velMass[idx].x - fact * fx;
-    coordsDelta[idx].y = timeStep * velMass[idx].y - fact * fy;
-    coordsDelta[idx].z = timeStep * velMass[idx].z - fact * fz;
+    coordsDelta[i].x = timeStep * velMass[i].x - fact * fx;
+    coordsDelta[i].y = timeStep * velMass[i].y - fact * fy;
+    coordsDelta[i].z = timeStep * velMass[i].z - fact * fz;
 
-    coordsDeltaPrevious[idx].x = timeStep * velMass[idx].x + fact * fx;
-    coordsDeltaPrevious[idx].y = timeStep * velMass[idx].y + fact * fy;
-    coordsDeltaPrevious[idx].z = timeStep * velMass[idx].z + fact * fz;
+    coordsDeltaPrevious[i].x = timeStep * velMass[i].x + fact * fx;
+    coordsDeltaPrevious[i].y = timeStep * velMass[i].y + fact * fy;
+    coordsDeltaPrevious[i].z = timeStep * velMass[i].z + fact * fz;
   }
 
   return;
@@ -241,11 +253,12 @@ BackStepInitializationKernel1(double4 *__restrict__ coordsCharges,
                               const double4 *__restrict__ coordsDeltaPrevious,
                               const int numAtoms) {
   const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  const int stride = gridDim.x * blockDim.x;
 
-  if (idx < numAtoms) {
-    coordsCharges[idx].x -= coordsDeltaPrevious[idx].x;
-    coordsCharges[idx].y -= coordsDeltaPrevious[idx].y;
-    coordsCharges[idx].z -= coordsDeltaPrevious[idx].z;
+  for (int i = idx; i < numAtoms; i += stride) {
+    coordsCharges[i].x -= coordsDeltaPrevious[i].x;
+    coordsCharges[i].y -= coordsDeltaPrevious[i].y;
+    coordsCharges[i].z -= coordsDeltaPrevious[i].z;
   }
 
   return;
@@ -257,15 +270,16 @@ BackStepInitializationKernel2(double4 *__restrict__ coordsCharges,
                               const double4 *__restrict__ coordsRef,
                               const int numAtoms) {
   const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  const int stride = gridDim.x * blockDim.x;
 
-  if (idx < numAtoms) {
-    coordsDeltaPrevious[idx].x = coordsRef[idx].x - coordsCharges[idx].x;
-    coordsDeltaPrevious[idx].y = coordsRef[idx].y - coordsCharges[idx].y;
-    coordsDeltaPrevious[idx].z = coordsRef[idx].z - coordsCharges[idx].z;
+  for (int i = idx; i < numAtoms; i += stride) {
+    coordsDeltaPrevious[i].x = coordsRef[i].x - coordsCharges[i].x;
+    coordsDeltaPrevious[i].y = coordsRef[i].y - coordsCharges[i].y;
+    coordsDeltaPrevious[i].z = coordsRef[i].z - coordsCharges[i].z;
 
-    coordsCharges[idx].x = coordsRef[idx].x;
-    coordsCharges[idx].y = coordsRef[idx].y;
-    coordsCharges[idx].z = coordsRef[idx].z;
+    coordsCharges[i].x = coordsRef[i].x;
+    coordsCharges[i].y = coordsRef[i].y;
+    coordsCharges[i].z = coordsRef[i].z;
   }
 
   return;
@@ -340,24 +354,25 @@ __global__ static void InvertDeltaAsymmetricKernel(
     double4 *__restrict__ coordsDeltaPrevious, const float4 *__restrict__ xyzq,
     const int2 *__restrict__ groups, const int numGroups, const float boxDimX) {
   const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  const int stride = gridDim.x * blockDim.x;
 
-  if (idx < numGroups) {
-    const int2 group = groups[idx];
+  for (int i = idx; i < numGroups; i += stride) {
+    const int2 group = groups[i];
 
     float gx = 0.0f, gy = 0.0f, gz = 0.0f;
-    for (int i = group.x; i <= group.y; i++) {
-      gx += xyzq[i].x;
-      gy += xyzq[i].y;
-      gz += xyzq[i].z;
+    for (int j = group.x; j <= group.y; j++) {
+      gx += xyzq[j].x;
+      gy += xyzq[j].y;
+      gz += xyzq[j].z;
     }
     gx /= static_cast<float>(group.y - group.x + 1);
     gy /= static_cast<float>(group.y - group.x + 1);
     gz /= static_cast<float>(group.y - group.x + 1);
 
     if ((gx > 0.5 * boxDimX) || (gx < -0.5 * boxDimX)) {
-      for (int i = group.x; i <= group.y; i++) {
-        coordsDeltaPrevious[i].y *= -1.0;
-        coordsDeltaPrevious[i].z *= -1.0;
+      for (int j = group.x; j <= group.y; j++) {
+        coordsDeltaPrevious[j].y *= -1.0;
+        coordsDeltaPrevious[j].z *= -1.0;
       }
     }
   }
@@ -373,20 +388,22 @@ HalfStepVelocityKernel(double4 *__restrict__ coordsCharges,
                        const double *__restrict__ forces, const int forceStride,
                        const double timeStep) {
   const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  const int stride = gridDim.x * blockDim.x;
+  const double timeStep2 = timeStep * timeStep;
 
-  if (idx < numAtoms) {
-    const double fx = forces[0 * forceStride + idx];
-    const double fy = forces[1 * forceStride + idx];
-    const double fz = forces[2 * forceStride + idx];
-    const double fact = timeStep * timeStep * velMass[idx].w;
+  for (int i = idx; i < numAtoms; i += stride) {
+    const double fx = forces[0 * forceStride + i];
+    const double fy = forces[1 * forceStride + i];
+    const double fz = forces[2 * forceStride + i];
+    const double fact = timeStep2 * velMass[i].w;
 
-    coordsDelta[idx].x = coordsDeltaPrevious[idx].x - fact * fx;
-    coordsDelta[idx].y = coordsDeltaPrevious[idx].y - fact * fy;
-    coordsDelta[idx].z = coordsDeltaPrevious[idx].z - fact * fz;
+    coordsDelta[i].x = coordsDeltaPrevious[i].x - fact * fx;
+    coordsDelta[i].y = coordsDeltaPrevious[i].y - fact * fy;
+    coordsDelta[i].z = coordsDeltaPrevious[i].z - fact * fz;
 
-    coordsCharges[idx].x += coordsDelta[idx].x;
-    coordsCharges[idx].y += coordsDelta[idx].y;
-    coordsCharges[idx].z += coordsDelta[idx].z;
+    coordsCharges[i].x += coordsDelta[i].x;
+    coordsCharges[i].y += coordsDelta[i].y;
+    coordsCharges[i].z += coordsDelta[i].z;
   }
 
   return;
@@ -397,51 +414,13 @@ __global__ static void UpdateCoordsDeltaAfterHolonomicConstraintKernel(
     const double4 *__restrict__ coordsCharges,
     const double4 *__restrict__ coordsRef, const int numAtoms) {
   const int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-  if (idx < numAtoms) {
-    coordsDelta[idx].x = coordsCharges[idx].x - coordsRef[idx].x;
-    coordsDelta[idx].y = coordsCharges[idx].y - coordsRef[idx].y;
-    coordsDelta[idx].z = coordsCharges[idx].z - coordsRef[idx].z;
-  }
-
-  return;
-}
-
-__global__ static void
-ComputeKineticEnergyKernel(double *__restrict__ kineticEnergy,
-                           const double4 *__restrict__ velMass,
-                           const double4 *__restrict__ coordsDelta,
-                           const double4 *__restrict__ coordsDeltaPrevious,
-                           const int numAtoms, const double timeStep) {
-  constexpr double oneThird = 1.0 / 3.0;
-  const int idx = blockIdx.x * blockDim.x + threadIdx.x;
   const int stride = gridDim.x * blockDim.x;
 
-  double ke = 0.0;
   for (int i = idx; i < numAtoms; i += stride) {
-    const double4 u1 = make_double4(coordsDeltaPrevious[i].x / timeStep,
-                                    coordsDeltaPrevious[i].y / timeStep,
-                                    coordsDeltaPrevious[i].z / timeStep, 0.0);
-    const double4 v = velMass[i];
-    const double4 u2 =
-        make_double4(coordsDelta[i].x / timeStep, coordsDelta[i].y / timeStep,
-                     coordsDelta[i].z / timeStep, 0.0);
-
-    const double oldHalfStepKineticEnergy =
-        0.5 * ((u1.x * u1.x) + (u1.y * u1.y) + (u1.z * u1.z)) / v.w;
-    const double onStepKineticEnergy =
-        0.5 * ((v.x * v.x) + (v.y * v.y) + (v.z * v.z)) / v.w;
-    const double newHalfStepKineticEnergy =
-        0.5 * ((u2.x * u2.x) + (u2.y * u2.y) + (u2.z * u2.z)) / v.w;
-
-    ke += oneThird * (oldHalfStepKineticEnergy + onStepKineticEnergy +
-                      newHalfStepKineticEnergy);
+    coordsDelta[i].x = coordsCharges[i].x - coordsRef[i].x;
+    coordsDelta[i].y = coordsCharges[i].y - coordsRef[i].y;
+    coordsDelta[i].z = coordsCharges[i].z - coordsRef[i].z;
   }
-
-  ke = BlockReduceSum<double>(ke);
-
-  if (threadIdx.x == 0)
-    atomicAdd(kineticEnergy, ke);
 
   return;
 }
@@ -459,6 +438,47 @@ ComputeOldKineticEnergyKernel(double *__restrict__ kineticEnergy,
           ((velMass[i].x * velMass[i].x) + (velMass[i].y * velMass[i].y) +
            (velMass[i].z * velMass[i].z)) /
           velMass[i].w;
+  }
+
+  ke = BlockReduceSum<double>(ke);
+
+  if (threadIdx.x == 0)
+    atomicAdd(kineticEnergy, ke);
+
+  return;
+}
+
+__global__ static void
+ComputeKineticEnergyKernel(double *__restrict__ kineticEnergy,
+                           const double4 *__restrict__ velMass,
+                           const double4 *__restrict__ coordsDelta,
+                           const double4 *__restrict__ coordsDeltaPrevious,
+                           const int numAtoms, const double timeStep) {
+  constexpr double oneThird = 1.0 / 3.0;
+  const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  const int stride = gridDim.x * blockDim.x;
+  const double invTimeStep = 1.0 / timeStep;
+
+  double ke = 0.0;
+  for (int i = idx; i < numAtoms; i += stride) {
+    const double4 u1 =
+        make_double4(coordsDeltaPrevious[i].x * invTimeStep,
+                     coordsDeltaPrevious[i].y * invTimeStep,
+                     coordsDeltaPrevious[i].z * invTimeStep, 0.0);
+    const double4 v = velMass[i];
+    const double4 u2 = make_double4(coordsDelta[i].x * invTimeStep,
+                                    coordsDelta[i].y * invTimeStep,
+                                    coordsDelta[i].z * invTimeStep, 0.0);
+
+    const double oldHalfStepKineticEnergy =
+        0.5 * ((u1.x * u1.x) + (u1.y * u1.y) + (u1.z * u1.z)) / v.w;
+    const double onStepKineticEnergy =
+        0.5 * ((v.x * v.x) + (v.y * v.y) + (v.z * v.z)) / v.w;
+    const double newHalfStepKineticEnergy =
+        0.5 * ((u2.x * u2.x) + (u2.y * u2.y) + (u2.z * u2.z)) / v.w;
+
+    ke += oneThird * (oldHalfStepKineticEnergy + onStepKineticEnergy +
+                      newHalfStepKineticEnergy);
   }
 
   ke = BlockReduceSum<double>(ke);
@@ -503,28 +523,29 @@ __global__ static void PredictorCorrectorKernel(
     const double *__restrict__ noseHooverPistonVelocity,
     const double timeStep) {
   const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  const int stride = gridDim.x * blockDim.x;
 
-  if (idx < numAtoms) {
+  for (int i = idx; i < numAtoms; i += stride) {
     const double fact = 0.5 / timeStep;
     const double onStepVelocityX =
-        fact * (coordsDeltaPrevious[idx].x + coordsDeltaPredicted[idx].x);
+        fact * (coordsDeltaPrevious[i].x + coordsDeltaPredicted[i].x);
     const double onStepVelocityY =
-        fact * (coordsDeltaPrevious[idx].y + coordsDeltaPredicted[idx].y);
+        fact * (coordsDeltaPrevious[i].y + coordsDeltaPredicted[i].y);
     const double onStepVelocityZ =
-        fact * (coordsDeltaPrevious[idx].z + coordsDeltaPredicted[idx].z);
+        fact * (coordsDeltaPrevious[i].z + coordsDeltaPredicted[i].z);
     const double nhFact = timeStep * timeStep * noseHooverPistonVelocity[0];
 
-    coordsDeltaPredicted[idx].x = coordsDelta[idx].x - nhFact * onStepVelocityX;
-    coordsDeltaPredicted[idx].y = coordsDelta[idx].y - nhFact * onStepVelocityY;
-    coordsDeltaPredicted[idx].z = coordsDelta[idx].z - nhFact * onStepVelocityZ;
+    coordsDeltaPredicted[i].x = coordsDelta[i].x - nhFact * onStepVelocityX;
+    coordsDeltaPredicted[i].y = coordsDelta[i].y - nhFact * onStepVelocityY;
+    coordsDeltaPredicted[i].z = coordsDelta[i].z - nhFact * onStepVelocityZ;
 
-    velMass[idx].x = onStepVelocityX;
-    velMass[idx].y = onStepVelocityY;
-    velMass[idx].z = onStepVelocityZ;
+    velMass[i].x = onStepVelocityX;
+    velMass[i].y = onStepVelocityY;
+    velMass[i].z = onStepVelocityZ;
 
-    coordsCharges[idx].x = coordsRef[idx].x + coordsDeltaPredicted[idx].x;
-    coordsCharges[idx].y = coordsRef[idx].y + coordsDeltaPredicted[idx].y;
-    coordsCharges[idx].z = coordsRef[idx].z + coordsDeltaPredicted[idx].z;
+    coordsCharges[i].x = coordsRef[i].x + coordsDeltaPredicted[i].x;
+    coordsCharges[i].y = coordsRef[i].y + coordsDeltaPredicted[i].y;
+    coordsCharges[i].z = coordsRef[i].z + coordsDeltaPredicted[i].z;
   }
 
   return;
@@ -532,18 +553,17 @@ __global__ static void PredictorCorrectorKernel(
 
 __global__ static void
 OnStepVelocityKernel(double4 *__restrict__ velMass,
-                     const double4 *__restrict__ coordDelta,
-                     const double4 *__restrict__ coordDeltaPrevious,
+                     const double4 *__restrict__ coordsDelta,
+                     const double4 *__restrict__ coordsDeltaPrevious,
                      const int numAtoms, const double timeStep) {
   const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  const int stride = gridDim.x * blockDim.x;
+  const double fact = 0.5 / timeStep;
 
-  if (idx < numAtoms) {
-    velMass[idx].x =
-        0.5 * (coordDelta[idx].x + coordDeltaPrevious[idx].x) / timeStep;
-    velMass[idx].y =
-        0.5 * (coordDelta[idx].y + coordDeltaPrevious[idx].y) / timeStep;
-    velMass[idx].z =
-        0.5 * (coordDelta[idx].z + coordDeltaPrevious[idx].z) / timeStep;
+  for (int i = idx; i < numAtoms; i += stride) {
+    velMass[i].x = fact * (coordsDelta[i].x + coordsDeltaPrevious[i].x);
+    velMass[i].y = fact * (coordsDelta[i].y + coordsDeltaPrevious[i].y);
+    velMass[i].z = fact * (coordsDelta[i].z + coordsDeltaPrevious[i].z);
   }
 
   return;
@@ -555,12 +575,13 @@ UpdateAverageTemperatureKernel(double *__restrict__ averageTemperature,
                                const int numDegreesOfFreedom,
                                const double kBoltz, const int step) {
   if (threadIdx.x == 0) {
-    const double s = static_cast<double>(step);
-    const double temperature =
-        kineticEnergy[0] /
-        (0.5 * static_cast<double>(numDegreesOfFreedom) * kBoltz);
-    averageTemperature[0] = (s / (s + 1.0)) * averageTemperature[0] +
-                            (1.0 / (s + 1.0)) * temperature;
+    const double s = static_cast<double>(step + 1);
+    const double ndegf = static_cast<double>(numDegreesOfFreedom);
+    const double temperature = kineticEnergy[0] / (0.5 * ndegf * kBoltz);
+    const double delta0 = temperature - averageTemperature[0];
+    averageTemperature[0] += delta0 / s;
+    // const double delta1 = temperature - averageTemperature[0];
+    // varianceTemperature[0] += delta0 * delta1;
   }
   return;
 }
@@ -718,7 +739,7 @@ void CudaNoseHooverThermostatIntegrator::propagateOneStep(void) {
     UpdateAverageTemperatureKernel<<<1, 32, 0, *m_IntegratorStream>>>(
         m_AverageOldTemperature.getDeviceData(),
         m_KineticEnergy.getDeviceData(), numDegreesOfFreedom,
-        charmm::constants::kBoltz, m_CurrentPropagatedStep);
+        charmm::constants::kBoltz, m_AverageWindowSize);
 
     cudaCheck(
         cudaMemsetAsync(static_cast<void *>(m_KineticEnergy.getDeviceData()), 0,
@@ -730,13 +751,11 @@ void CudaNoseHooverThermostatIntegrator::propagateOneStep(void) {
 
     UpdateAverageTemperatureKernel<<<1, 32, 0, *m_IntegratorStream>>>(
         m_AverageTemperature.getDeviceData(), m_KineticEnergy.getDeviceData(),
-        numDegreesOfFreedom, charmm::constants::kBoltz,
-        m_CurrentPropagatedStep);
+        numDegreesOfFreedom, charmm::constants::kBoltz, m_AverageWindowSize);
   } else {
     UpdateAverageTemperatureKernel<<<1, 32, 0, *m_IntegratorStream>>>(
         m_AverageTemperature.getDeviceData(), m_KineticEnergy.getDeviceData(),
-        numDegreesOfFreedom, charmm::constants::kBoltz,
-        m_CurrentPropagatedStep);
+        numDegreesOfFreedom, charmm::constants::kBoltz, m_AverageWindowSize);
 
     cudaCheck(
         cudaMemsetAsync(static_cast<void *>(m_KineticEnergy.getDeviceData()), 0,
@@ -748,8 +767,10 @@ void CudaNoseHooverThermostatIntegrator::propagateOneStep(void) {
     UpdateAverageTemperatureKernel<<<1, 32, 0, *m_IntegratorStream>>>(
         m_AverageOldTemperature.getDeviceData(),
         m_KineticEnergy.getDeviceData(), numDegreesOfFreedom,
-        charmm::constants::kBoltz, m_CurrentPropagatedStep);
+        charmm::constants::kBoltz, m_AverageWindowSize);
   }
+
+  m_AverageWindowSize++;
 
   UpdateSinglePrecisionCoordinatesKernel<<<numBlocks, numThreads, 0,
                                            *m_IntegratorStream>>>(

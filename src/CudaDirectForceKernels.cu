@@ -680,20 +680,25 @@ calc_ex14_force_device(const int pos, const xx14list_t *ex14list,
   write_force<AT>(-fxij, -fyij, -fzij, j, stride, force);
   // Store shifted forces
   if (calc_virial) {
+#ifdef USE_DP_SFORCE
     if (ish != 13) {
       atomicAdd(&virial->sforce_dp[ish][0], (double)(fij * dx));
       atomicAdd(&virial->sforce_dp[ish][1], (double)(fij * dy));
       atomicAdd(&virial->sforce_dp[ish][2], (double)(fij * dz));
+    }
+#else
+    if (ish != 13) {
       fxij /= CONVERT_TO_VIR;
       fyij /= CONVERT_TO_VIR;
       fzij /= CONVERT_TO_VIR;
-      // atomicAdd((unsigned long long int
-      // *)&energy_virial->sforce_fp[ish-1], llitoulli(fxij));
-      // atomicAdd((unsigned long long int
-      // *)&energy_virial->sforce_fp[ish], llitoulli(fyij));
-      // atomicAdd((unsigned long long int
-      // *)&energy_virial->sforce_fp[ish+1], llitoulli(fzij));
+      atomicAdd((unsigned long long int *)&virial->sforce_fp[ish][0],
+                llitoulli(fxij));
+      atomicAdd((unsigned long long int *)&virial->sforce_fp[ish][1],
+                llitoulli(fyij));
+      atomicAdd((unsigned long long int *)&virial->sforce_fp[ish][2],
+                llitoulli(fzij));
     }
+#endif
     // sforce(is)   = sforce(is)   + fijx
     // sforce(is+1) = sforce(is+1) + fijy
     // sforce(is+2) = sforce(is+2) + fijz
@@ -828,6 +833,7 @@ __device__ void calc_in14_force_device(
 
   // Store shifted forces
   if (calc_virial) {
+#ifdef USE_DP_SFORCE
     if (ish != 13) {
       atomicAdd(&virial->sforce_dp[ish][0], (double)(fij * dx));
       atomicAdd(&virial->sforce_dp[ish][1], (double)(fij * dy));
@@ -844,6 +850,22 @@ __device__ void calc_in14_force_device(
       // = sforce(is)   + fijx sforce(is+1) = sforce(is+1) + fijy
       // sforce(is+2) = sforce(is+2) + fijz
     }
+#else
+    if (ish != 13) {
+      fxij /= CONVERT_TO_VIR;
+      fyij /= CONVERT_TO_VIR;
+      fzij /= CONVERT_TO_VIR;
+      atomicAdd((unsigned long long int *)&virial->sforce_fp[ish][0],
+                llitoulli(fxij));
+      atomicAdd((unsigned long long int *)&virial->sforce_fp[ish][1],
+                llitoulli(fyij));
+      atomicAdd((unsigned long long int *)&virial->sforce_fp[ish][2],
+                llitoulli(fzij));
+      // sforce(is)   = sforce(is)   + fijx
+      // sforce(is+1) = sforce(is+1) + fijy
+      // sforce(is+2) = sforce(is+2) + fijz
+    }
+#endif
   }
 }
 

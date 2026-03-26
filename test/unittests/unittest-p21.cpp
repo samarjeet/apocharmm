@@ -94,10 +94,10 @@ TEST_CASE("waterbox", "[all]") {
     std::cout << "\n";
 
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
-    integrator->setPistonFriction(5.0);
-    integrator->setCharmmContext(ctx);
     integrator->setCrystalType(CRYSTAL::CUBIC);
-    integrator->setPistonMass({500.0});
+    integrator->setLangevinPistonFriction(5.0);
+    integrator->setCharmmContext(ctx);
+    integrator->setLangevinPistonMass({500.0});
 
     std::string subfile = "p21_waterbox_npt.dcd";
     auto subscriber = std::make_shared<DcdSubscriber>(subfile, 1000);
@@ -162,16 +162,15 @@ TEST_CASE("bilayer", "[all]") {
     auto subscriber = std::make_shared<DcdSubscriber>(subfile, 1000);
     // subscriber->setCharmmContext(ctx);
     langevinThermostat->subscribe(subscriber);
-    langevinThermostat->propagate(nSteps*10);
+    langevinThermostat->propagate(nSteps * 10);
   }
 
   SECTION("npt") {
 
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
     integrator->setCrystalType(CRYSTAL::TETRAGONAL);
-    integrator->setPistonMass({500.0, 500.0});
-    integrator->setNoseHooverFlag(false);
-    integrator->setPistonFriction(0.0);
+    integrator->setLangevinPistonMass({500.0, 500.0});
+    integrator->useNoseHooverThermostat(false);
     integrator->setCharmmContext(ctx);
 
     integrator->propagate(nSteps);
@@ -183,7 +182,7 @@ TEST_CASE("bilayer", "[all]") {
     // fm->setPrintEnergyDecomposition(true);
 
     // integrator->setDebugPrintFrequency(100);
-    integrator->propagate(nSteps*100);
+    integrator->propagate(nSteps * 100);
   }
   SECTION("nvt_npt") {
 
@@ -194,10 +193,10 @@ TEST_CASE("bilayer", "[all]") {
 
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
     integrator->setCrystalType(CRYSTAL::TETRAGONAL);
-    integrator->setPistonMass({5000.0, 5000.0});
-    integrator->setBathTemperature(300.0);
+    integrator->setLangevinPistonMass({5000.0, 5000.0});
+    integrator->setReferenceTemperature(300.0);
     // integrator.setNoseHooverFlag(false);
-    integrator->setPistonFriction(20.0);
+    integrator->setLangevinPistonFriction(20.0);
     integrator->setCharmmContext(ctx);
 
     integrator->propagate(nSteps);
@@ -273,9 +272,8 @@ TEST_CASE("sooh", "[all]") {
 
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
     integrator->setCrystalType(CRYSTAL::TETRAGONAL);
-    integrator->setPistonMass({500.0, 500.0});
-    integrator->setNoseHooverFlag(false);
-    integrator->setPistonFriction(0.0);
+    integrator->setLangevinPistonMass({500.0, 500.0});
+    integrator->useNoseHooverThermostat(false);
     integrator->setCharmmContext(ctx);
 
     integrator->propagate(nSteps);
@@ -298,10 +296,10 @@ TEST_CASE("sooh", "[all]") {
 
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(0.002);
     integrator->setCrystalType(CRYSTAL::TETRAGONAL);
-    integrator->setPistonMass({5000.0, 5000.0});
-    integrator->setBathTemperature(300.0);
+    integrator->setLangevinPistonMass({5000.0, 5000.0});
+    integrator->setReferenceTemperature(300.0);
     // integrator.setNoseHooverFlag(false);
-    integrator->setPistonFriction(20.0);
+    integrator->setLangevinPistonFriction(20.0);
     integrator->setCharmmContext(ctx);
 
     integrator->propagate(nSteps);

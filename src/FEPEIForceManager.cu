@@ -91,7 +91,7 @@ std::shared_ptr<Force<double>> FEPEIForceManager::getForces() {
   return totalForceValues;
 }
 
-CudaContainer<double> FEPEIForceManager::getVirial() {
+CudaContainer<double> &FEPEIForceManager::getVirial() {
   std::cout << "[FEPEIForceManager] Don't call me. Instead call "
                "getVirialInChild with <int> childId\n"
             << "For now, returns child[0]'s virial.";

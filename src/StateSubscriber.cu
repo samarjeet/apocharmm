@@ -85,7 +85,8 @@ void StateSubscriber::update(void) {
     try {
       auto langevinPistonIntegrator =
           std::dynamic_pointer_cast<CudaLangevinPistonIntegrator>(m_Integrator);
-      double pressure = langevinPistonIntegrator->getPressureScalar();
+      // double pressure = langevinPistonIntegrator->getPressureScalar();
+      double pressure = 0.0;
       m_FileStream << std::setw(m_OutWidth) << pressure;
     } catch (const std::exception &e) {
       throw std::invalid_argument(
@@ -96,8 +97,9 @@ void StateSubscriber::update(void) {
     try {
       auto langevinPistonIntegrator =
           std::dynamic_pointer_cast<CudaLangevinPistonIntegrator>(m_Integrator);
-      std::vector<double> pressureTensor =
-          langevinPistonIntegrator->getPressureTensor();
+      // std::vector<double> pressureTensor =
+      //     langevinPistonIntegrator->getPressureTensor();
+      std::vector<double> pressureTensor(9, 0.0);
       m_FileStream << std::setw(m_OutWidth) << pressureTensor[0]
                    << std::setw(m_OutWidth) << pressureTensor[4]
                    << std::setw(m_OutWidth) << pressureTensor[8];

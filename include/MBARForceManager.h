@@ -30,7 +30,7 @@ public:
   float calc_force(const float4 *xyzq, bool reset = false,
                    bool calcEnergy = false, bool calcVirial = false) override;
   std::shared_ptr<Force<double>> getForces() override;
-  CudaContainer<double> getVirial() override;
+  CudaContainer<double> &getVirial() override;
   // void storePotentialEnergy();
 protected:
   int storePECounter, storePotentialEnergyFrequency;

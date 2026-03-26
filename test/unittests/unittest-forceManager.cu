@@ -156,7 +156,7 @@ TEST_CASE("ForceManager", "[unit]") {
     auto prm = std::make_shared<CharmmParameters>(dataPath + "argon.prm");
     auto psf = std::make_shared<CharmmPSF>(dataPath + "argon_10.psf");
     auto fm = std::make_shared<ForceManager>(psf, prm);
-    float a = 44.44, b = 55.55, c = 66.66;
+    float a = 44.44; //, b = 55.55, c = 66.66;
     int nfft = 48;
     std::vector<int> nfftvec = {nfft, nfft, nfft};
     std::vector<int> nfftbis;

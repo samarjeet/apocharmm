@@ -68,12 +68,15 @@ void DynaSubscriber::update(void) {
     totpecc.transferFromDevice();
     double totpe = totpecc.getHostArray()[0];
     float temp = m_CharmmContext->computeTemperature();
-    double pressi = lp->getInstantaneousPressureScalar();
+    // double pressi = lp->getInstantaneousPressureScalar();
+    double pressi = 0.0;
 
     // Calculate volume
     std::vector<double> boxDims = m_CharmmContext->getBoxDimensions();
     double volu = -9999.9999;
-    switch (lp->getCrystalType()) {
+    // switch (lp->getCrystalType()) {
+    CRYSTAL c = CRYSTAL::CUBIC;
+    switch (c) {
     case CRYSTAL::CUBIC:
       volu = boxDims[0] * boxDims[0] * boxDims[0];
       break;

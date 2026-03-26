@@ -340,7 +340,7 @@ public:
    * @brief Sums all three components of the virial (direct, bonded,
    * reciprocal), transfers back to device, returns as a CudaContainer
    */
-  virtual CudaContainer<double> getVirial();
+  virtual CudaContainer<double> &getVirial();
 
   virtual CudaContainer<double> &getPotentialEnergy(void);
 
@@ -753,7 +753,7 @@ public:
 
   virtual std::shared_ptr<Force<double>> getForces() override;
 
-  virtual CudaContainer<double> getVirial() override;
+  virtual CudaContainer<double> &getVirial() override;
 
   /**
    * @brief Returns the Force (*i.e.* force values) of a children, given its

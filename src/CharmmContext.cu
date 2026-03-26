@@ -718,7 +718,7 @@ calculateKineticKernel(int numAtoms, const double4 *__restrict__ velMass,
   for (int i = index; i < numAtoms; i += blockDim.x)
     if (index < numAtoms) {
       double rvc = 0.5 / velMass[index].w;
-      sdata[threadId] = rvc * velMass[i].x * velMass[i].x;
+      sdata[threadId + 0] = rvc * velMass[i].x * velMass[i].x;
       sdata[threadId + 1] = rvc * velMass[i].x * velMass[i].y;
       sdata[threadId + 2] = rvc * velMass[i].x * velMass[i].z;
       sdata[threadId + 3] = rvc * velMass[i].y * velMass[i].x;
@@ -732,7 +732,7 @@ calculateKineticKernel(int numAtoms, const double4 *__restrict__ velMass,
   for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1) {
     __syncthreads();
     if (threadId < s) {
-      sdata[threadId] += sdata[threadId + s * 9];
+      sdata[threadId + 0] += sdata[threadId + s * 9 + 0];
       sdata[threadId + 1] += sdata[threadId + s * 9 + 1];
       sdata[threadId + 2] += sdata[threadId + s * 9 + 2];
       sdata[threadId + 3] += sdata[threadId + s * 9 + 3];
@@ -745,27 +745,19 @@ calculateKineticKernel(int numAtoms, const double4 *__restrict__ velMass,
   }
 
   if (threadId == 0) {
-    atomicAdd(&accumulant[0], sdata[0]);
-    atomicAdd(&accumulant[1], sdata[1]);
-    atomicAdd(&accumulant[2], sdata[2]);
-    atomicAdd(&accumulant[3], sdata[3]);
-    atomicAdd(&accumulant[4], sdata[4]);
-    atomicAdd(&accumulant[5], sdata[5]);
-    atomicAdd(&accumulant[6], sdata[6]);
-    atomicAdd(&accumulant[7], sdata[7]);
-    atomicAdd(&accumulant[8], sdata[8]);
+#pragma unroll
+    for (int i = 0; i < 9; i++)
+      atomicAdd(accumulant + i, sdata[i]);
   }
 }
 
 void CharmmContext::computePressure() {
   auto ke = getKineticEnergy();
-  int numBlocks = 64;
-  int numThreads = 128;
 
   // TODO : put this a separate stream
   // TODO: the kinetic component computed here is wrong (accumulates over
   // time.)
-  calculateKineticKernel<<<numBlocks, numThreads>>>(
+  calculateKineticKernel<<<1, 1024>>>(
       numAtoms, velocityMass.getDeviceArray().data(),
       virialKineticEnergyTensor.getDeviceArray().data());
 
@@ -819,9 +811,11 @@ void CharmmContext::computePressure() {
   */
 
   pressure.transferToDevice();
+
+  return;
 }
 
-CudaContainer<double> CharmmContext::getVirial() {
+CudaContainer<double> &CharmmContext::getVirial() {
   return forceManager->getVirial();
 }
 
