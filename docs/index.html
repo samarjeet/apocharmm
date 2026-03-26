@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;900&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-fixed": "#171c22",
+              "on-primary-fixed": "#001a41",
+              "tertiary-fixed": "#5af8fb",
+              "tertiary-container": "#007678",
+              "on-tertiary-fixed": "#002020",
+              "surface-container-low": "#ecf4ff",
+              "on-tertiary-fixed-variant": "#004f51",
+              "secondary-fixed-dim": "#c2c7cf",
+              "primary-fixed": "#d8e2ff",
+              "primary": "#004fa8",
+              "secondary": "#5a5f66",
+              "secondary-fixed": "#dee3eb",
+              "on-background": "#141c25",
+              "inverse-surface": "#29313a",
+              "on-tertiary": "#ffffff",
+              "error-container": "#ffdad6",
+              "tertiary-fixed-dim": "#2ddbde",
+              "on-surface": "#141c25",
+              "background": "#f7f9ff",
+              "surface-container-lowest": "#ffffff",
+              "surface": "#f7f9ff",
+              "primary-fixed-dim": "#adc6ff",
+              "primary-container": "#0366d6",
+              "error": "#ba1a1a",
+              "outline-variant": "#c2c6d6",
+              "on-error-container": "#93000a",
+              "secondary-container": "#dee3eb",
+              "surface-container-highest": "#dae3ef",
+              "on-secondary-fixed-variant": "#42474e",
+              "inverse-primary": "#adc6ff",
+              "on-primary": "#ffffff",
+              "surface-tint": "#005bc0",
+              "surface-container": "#e6effa",
+              "on-secondary-container": "#60656c",
+              "on-error": "#ffffff",
+              "inverse-on-surface": "#e9f2fd",
+              "surface-bright": "#f7f9ff",
+              "on-primary-container": "#e5ebff",
+              "on-tertiary-container": "#89fdff",
+              "on-primary-fixed-variant": "#004493",
+              "surface-dim": "#d2dbe6",
+              "tertiary": "#005b5d",
+              "surface-variant": "#dae3ef",
+              "outline": "#727785",
+              "on-surface-variant": "#424753",
+              "on-secondary": "#ffffff",
+              "surface-container-high": "#e0e9f5"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-effect {
+        background: rgba(230, 239, 250, 0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- TopNavBar -->
+<nav class="w-full sticky top-0 z-50 bg-[#f7f9ff] dark:bg-[#141c25]">
+<div class="max-w-7xl mx-auto px-8 py-4 flex justify-between items-center">
+<div class="text-2xl font-black text-[#141c25] dark:text-[#f7f9ff] tracking-tighter font-['Space_Grotesk']">
+                apoCHARMM
+            </div>
+<div class="hidden md:flex items-center space-x-8">
+<a class="font-['Space_Grotesk'] font-bold tracking-tight transition-all duration-200 ease-in-out hover:opacity-80 text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6]" href="tutorials.html">Tutorials</a>
+<a class="font-['Space_Grotesk'] font-bold tracking-tight transition-all duration-200 ease-in-out hover:opacity-80 text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6]" href="cookbooks.html">Cookbooks</a>
+<a class="font-['Space_Grotesk'] font-bold tracking-tight transition-all duration-200 ease-in-out hover:opacity-80 text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6]" href="benchmarks.html">Benchmarks</a>
+<a class="font-['Space_Grotesk'] font-bold tracking-tight transition-all duration-200 ease-in-out hover:opacity-80 text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6]" href="#">GitHub</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="transition-all duration-200 ease-in-out hover:opacity-80 text-[#0366D6] dark:text-[#2ddbde]">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</div>
+</nav>
+<main>
+<!-- Hero Section -->
+<section class="relative min-h-[870px] flex items-center overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-br from-primary to-primary-container opacity-95"></div>
+<div class="absolute inset-0 overflow-hidden">
+<div class="absolute -right-20 -top-20 w-[600px] h-[600px] bg-tertiary-fixed-dim rounded-full blur-[120px] opacity-20"></div>
+<div class="absolute -left-20 -bottom-20 w-[400px] h-[400px] bg-secondary-fixed rounded-full blur-[100px] opacity-10"></div>
+</div>
+<div class="max-w-7xl mx-auto px-8 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">
+<div class="space-y-8">
+<div class="space-y-4">
+<span class="text-tertiary-fixed-dim font-headline font-bold tracking-widest text-sm uppercase">Next-Generation GPU Dynamics</span>
+<h1 class="text-on-primary font-headline font-black text-6xl md:text-7xl leading-[1.1] tracking-tight">
+                            apoCHARMM <span class="block text-tertiary-fixed"> Molecular Dynamics </span>
+</h1>
+<p class="text-on-primary-container text-xl max-w-lg font-light leading-relaxed">
+                            A GPU-only Molecular Dynamics package. Backend is written in highly optimized CUDA/C++. User interface in Python.
+                        </p>
+</div>
+<div class="flex items-center gap-6">
+<button class="bg-surface-container-lowest text-primary font-headline font-bold py-4 px-10 rounded-lg transition-transform active:scale-95 duration-100 flex items-center gap-2">
+                            Get Started
+                            <span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<button class="text-on-primary font-headline font-bold py-4 px-6 hover:underline underline-offset-8 transition-all">
+                            View Documentation
+                        </button>
+</div>
+</div>
+<div class="relative group">
+<div class="absolute -inset-4 bg-tertiary-fixed/10 blur-2xl rounded-full group-hover:bg-tertiary-fixed/20 transition-all"></div>
+<div class="relative bg-surface-container-lowest/10 backdrop-blur-xl p-4 rounded-xl border border-on-primary/10">
+<img alt="Molecular Visualization" class="rounded-lg shadow-2xl w-full aspect-video object-cover" data-alt="3D visualization of a complex protein structure with molecular bonds" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpxyVUnPfZjfeK-NwKGl1ZI-dP3zLm6fpZOvA0bgIzYef14pJ2i7Z7smj-cfg2FxlicWdos9oqPRqNEtwVv1Q5u7wRb86w-asleXZuxdTJFuhHEGRE5-vnfIdWXND4oPICNhVHt5dwLsEh-zrefnDRXSXEnz_sIDjaIL3DBZBs7h7D5-487Dgkwa6dOCaFU8G2L_-JpeeanpwAv4aEuQ3wjmSfOEp6Os2nMjlNbWCWvSYi5SePjrPIN599JIRAqvCS1l-R225771ov"/>
+<div class="absolute bottom-8 left-8 right-8 glass-effect p-6 rounded-lg flex justify-between items-center">
+<div class="space-y-1">
+<p class="text-xs font-bold text-primary tracking-tighter uppercase">Simulation Active</p>
+<p class="text-on-surface font-headline font-black text-lg"> STMV 1M atoms System</p>
+</div>
+<div class="text-right">
+<p class="text-2xl font-black text-primary font-headline">33 ns/day</p>
+<p class="text-xs text-on-surface-variant">on NVIDIA H100</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Tutorials Section -->
+<section class="py-32 bg-surface">
+<div class="max-w-7xl mx-auto px-8">
+<div class="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
+<div class="space-y-4 max-w-2xl">
+<h2 class="text-on-background font-headline font-black text-5xl tracking-tighter">Tutorials</h2>
+<p class="text-on-surface-variant text-lg">Master the art of molecular dynamics with our curated step-by-step guides, designed for both novice researchers and seasoned experts.</p>
+</div>
+<a class="text-primary font-bold flex items-center gap-2 group" href="#">
+                        Browse all guides
+                        <span class="material-symbols-outlined transition-transform group-hover:translate-x-1" data-icon="east">east</span>
+</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- Tutorial 01 -->
+<div class="relative group bg-surface-container-low p-8 rounded-xl transition-all hover:bg-surface-container-lowest">
+<div class="absolute top-4 right-8 text-7xl font-headline font-black text-tertiary-fixed-dim/30 pointer-events-none">01</div>
+<span class="material-symbols-outlined text-tertiary-container mb-6 text-4xl" data-icon="settings_input_component">settings_input_component</span>
+<h3 class="text-2xl font-headline font-black text-on-surface mb-3">Simulation Setup</h3>
+<p class="text-on-surface-variant mb-8 font-light">Prepare your molecular systems with optimized force-field parameters for pure GPU execution.</p>
+<button class="w-full py-3 bg-surface-container-high text-on-surface font-bold rounded hover:bg-primary hover:text-on-primary transition-colors">Start Tutorial</button>
+</div>
+<!-- Tutorial 02 -->
+<div class="relative group bg-surface-container-low p-8 rounded-xl transition-all hover:bg-surface-container-lowest">
+<div class="absolute top-4 right-8 text-7xl font-headline font-black text-tertiary-fixed-dim/30 pointer-events-none">02</div>
+<span class="material-symbols-outlined text-tertiary-container mb-6 text-4xl" data-icon="bolt">bolt</span>
+<h3 class="text-2xl font-headline font-black text-on-surface mb-3">Free Energy</h3>
+<p class="text-on-surface-variant mb-8 font-light">Advanced thermodynamic integration and FEP workflows for high-precision binding affinity calculations.</p>
+<button class="w-full py-3 bg-surface-container-high text-on-surface font-bold rounded hover:bg-primary hover:text-on-primary transition-colors">Start Tutorial</button>
+</div>
+<!-- Tutorial 03 -->
+<div class="relative group bg-surface-container-low p-8 rounded-xl transition-all hover:bg-surface-container-lowest">
+<div class="absolute top-4 right-8 text-7xl font-headline font-black text-tertiary-fixed-dim/30 pointer-events-none">03</div>
+<span class="material-symbols-outlined text-tertiary-container mb-6 text-4xl" data-icon="speed">speed</span>
+<h3 class="text-2xl font-headline font-black text-on-surface mb-3">Optimization</h3>
+<p class="text-on-surface-variant mb-8 font-light">Fine-tune your hardware utilization to extract maximum throughput from multi-GPU clusters.</p>
+<button class="w-full py-3 bg-surface-container-high text-on-surface font-bold rounded hover:bg-primary hover:text-on-primary transition-colors">Start Tutorial</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Cookbooks Section -->
+<section class="py-32 bg-surface-container-low">
+<div class="max-w-7xl mx-auto px-8">
+<div class="mb-20">
+<h2 class="text-on-background font-headline font-black text-5xl tracking-tighter mb-4">The Cookbook</h2>
+<p class="text-on-surface-variant text-lg">Plug-and-play recipes for common biological systems.</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+<!-- Recipe 1 -->
+<div class="flex flex-col md:flex-row bg-surface-container-lowest rounded-xl overflow-hidden group">
+<div class="md:w-1/2 overflow-hidden">
+<img alt="Lipid Bilayer" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Abstract microscopic view of a cell membrane lipid bilayer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOemrRK1CDL4HUYiopqKlUrW9Q9G5NV1FEDW-6MC65xPepk5Mc8Ebi9msrXG--TAeUKfAb8cOFyMW95YWPQgTjyQ1V5i8n7l9WrEnZw6UQbs0b9OoFHlLjMV3-TdeEaykup6o09IRB69kEjHcAgY5jpHwsTRYARkWFDYLlYxHON_qpvpJaRBrYBqolO2ASInBjEVJjjMHD4k2cIUiaMdEFCq1U7fiS66fSZyF732c8yuj9L0eyLzfbLkPFjQgKHf9COWb_Sg8eG65R"/>
+</div>
+<div class="md:w-1/2 p-10 flex flex-col justify-center space-y-4">
+<h4 class="text-primary text-xs font-black tracking-[0.2em] uppercase">Membrane Dynamics</h4>
+<h3 class="text-3xl font-headline font-black text-on-surface">Lipid Bilayer</h3>
+<p class="text-on-surface-variant font-light text-sm">Self-assembly protocol for DPPC membranes with integrated solvent modeling.</p>
+<div class="pt-6">
+<a class="inline-flex items-center gap-2 font-bold text-on-surface border-b-2 border-primary pb-1 group" href="#">
+                                    View Recipe
+                                    <span class="material-symbols-outlined text-sm" data-icon="open_in_new">open_in_new</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Recipe 2 -->
+<div class="flex flex-col md:flex-row bg-surface-container-lowest rounded-xl overflow-hidden group">
+<div class="md:w-1/2 overflow-hidden">
+<img alt="Protein Ligand" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Digital representation of protein binding pockets with molecular spheres" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIOs7tGfhFg191NzXV2egOqnhpMrW_iNy48NdG-NUis93X-8I4oIdhof8M_oPgFLrt8c8u4YpbUkXBEEm5jIf2OdcYz1SWIEMtkU9SR4HssRd3MKMIbdbFNCNXoxTNZJEqLf824UiZ04xKV1d0mYnH-Cn13tk9SvKQlFiB_TioNJmAQcIjUAWSs7sVlO0b5XapfXOqWXkDCzdvkgtL_jOhUM8frpZPMTzzxI6RNG0qlZH4VkcVRF-XH3LQZbkQyTjDXtKGpTUWYSP-"/>
+</div>
+<div class="md:w-1/2 p-10 flex flex-col justify-center space-y-4">
+<h4 class="text-primary text-xs font-black tracking-[0.2em] uppercase">Drug Discovery</h4>
+<h3 class="text-3xl font-headline font-black text-on-surface">Protein-Ligand Binding</h3>
+<p class="text-on-surface-variant font-light text-sm">Automated workflow for ligand equilibration and binding pose verification.</p>
+<div class="pt-6">
+<a class="inline-flex items-center gap-2 font-bold text-on-surface border-b-2 border-primary pb-1 group" href="#">
+                                    View Recipe
+                                    <span class="material-symbols-outlined text-sm" data-icon="open_in_new">open_in_new</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Benchmarks Section -->
+<section class="py-32 bg-surface">
+<div class="max-w-7xl mx-auto px-8">
+<div class="mb-20 text-center space-y-4">
+<h2 class="text-on-background font-headline font-black text-5xl tracking-tighter">Performance Benchmarks</h2>
+<p class="text-on-surface-variant text-lg max-w-2xl mx-auto">Standard DHFR 24k Atom system performance measured in nanoseconds per day.</p>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-1 shadow-[0_20px_40px_rgba(20,28,37,0.06)] overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="px-8 py-6 font-label text-secondary font-bold text-xs uppercase tracking-widest">NVIDIA GPU Model</th>
+<th class="px-8 py-6 font-label text-secondary font-bold text-xs uppercase tracking-widest text-center">Architecture</th>
+<th class="px-8 py-6 font-label text-secondary font-bold text-xs uppercase tracking-widest text-right">Throughput (ns/day)</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<tr class="hover:bg-primary-fixed/5 transition-colors">
+<td class="px-8 py-6 font-headline font-bold text-on-surface text-lg">NVIDIA H100</td>
+<td class="px-8 py-6 text-center text-on-surface-variant font-mono">Hopper</td>
+<td class="px-8 py-6 text-right font-headline font-black text-primary text-2xl">1,240.4</td>
+</tr>
+<tr class="bg-surface-container-low/30 hover:bg-primary-fixed/5 transition-colors">
+<td class="px-8 py-6 font-headline font-bold text-on-surface text-lg">NVIDIA A100</td>
+<td class="px-8 py-6 text-center text-on-surface-variant font-mono">Ampere</td>
+<td class="px-8 py-6 text-right font-headline font-black text-primary text-2xl">895.2</td>
+</tr>
+<tr class="hover:bg-primary-fixed/5 transition-colors">
+<td class="px-8 py-6 font-headline font-bold text-on-surface text-lg">RTX 4090</td>
+<td class="px-8 py-6 text-center text-on-surface-variant font-mono">Ada Lovelace</td>
+<td class="px-8 py-6 text-right font-headline font-black text-primary text-2xl">712.8</td>
+</tr>
+<tr class="bg-surface-container-low/30 hover:bg-primary-fixed/5 transition-colors">
+<td class="px-8 py-6 font-headline font-bold text-on-surface text-lg">RTX 3080</td>
+<td class="px-8 py-6 text-center text-on-surface-variant font-mono">Ampere</td>
+<td class="px-8 py-6 text-right font-headline font-black text-primary text-2xl">388.5</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="mt-12 flex items-center justify-center gap-4 text-sm text-on-surface-variant font-mono bg-surface-container-low py-4 rounded-lg">
+<span class="material-symbols-outlined text-sm" data-icon="info">info</span>
+                    Benchmark system: DHFR in water (24,892 atoms), PME, 2fs timestep, NPT.
+                </div>
+</div>
+</section>
+<!-- CTA Section -->
+<section class="py-24 max-w-7xl mx-auto px-8">
+<div class="bg-inverse-surface rounded-2xl p-16 relative overflow-hidden text-center">
+<div class="absolute inset-0 bg-gradient-to-r from-primary/20 to-tertiary-container/20 pointer-events-none"></div>
+<div class="relative z-10 space-y-8">
+<h2 class="text-surface font-headline font-black text-5xl tracking-tighter">Ready to accelerate your research?</h2>
+<p class="text-on-primary-container text-lg max-w-xl mx-auto opacity-80">Join the apoCHARMM ecosystem and experience the next generation of molecular dynamics simulation performance.</p>
+<div class="flex flex-wrap justify-center gap-4">
+<button class="bg-primary-container text-on-primary font-headline font-bold py-4 px-12 rounded-lg transition-all hover:scale-105 active:scale-95">Download apoCHARMM</button>
+<button class="bg-surface-container-low/10 text-surface font-headline font-bold py-4 px-12 rounded-lg backdrop-blur-md border border-surface/20 hover:bg-surface-container-low/20 transition-all">Join Discord</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full mt-auto bg-[#ecf4ff] dark:bg-[#141c25] border-t border-[#c2c6d6]/15">
+<div class="max-w-7xl mx-auto px-8 py-12 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+<div class="space-y-4">
+<div class="font-['Space_Grotesk'] font-bold text-[#141c25] dark:text-[#f7f9ff] text-xl">apoCHARMM</div>
+<p class="font-['Inter'] text-sm tracking-normal text-[#5a6473] dark:text-[#c2c6d6]">
+                    © 2024 apoCHARMM Team. Open-source molecular dynamics.
+                </p>
+</div>
+<div class="flex flex-wrap gap-8 md:justify-end">
+<a class="font-['Inter'] text-sm tracking-normal text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] dark:hover:text-[#2ddbde] underline decoration-2 underline-offset-4" href="#">Documentation</a>
+<a class="font-['Inter'] text-sm tracking-normal text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] dark:hover:text-[#2ddbde] underline decoration-2 underline-offset-4" href="#">Team</a>
+<a class="font-['Inter'] text-sm tracking-normal text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] dark:hover:text-[#2ddbde] underline decoration-2 underline-offset-4" href="#">Contact</a>
+<a class="font-['Inter'] text-sm tracking-normal text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] dark:hover:text-[#2ddbde] underline decoration-2 underline-offset-4" href="#">License</a>
+</div>
+</div>
+</footer>
+</body></html>

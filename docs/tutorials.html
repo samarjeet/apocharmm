@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;900&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-secondary-fixed": "#171c22",
+            "on-primary-fixed": "#001a41",
+            "tertiary-fixed": "#5af8fb",
+            "tertiary-container": "#007678",
+            "on-tertiary-fixed": "#002020",
+            "surface-container-low": "#ecf4ff",
+            "on-tertiary-fixed-variant": "#004f51",
+            "secondary-fixed-dim": "#c2c7cf",
+            "primary-fixed": "#d8e2ff",
+            "primary": "#004fa8",
+            "secondary": "#5a5f66",
+            "secondary-fixed": "#dee3eb",
+            "on-background": "#141c25",
+            "inverse-surface": "#29313a",
+            "on-tertiary": "#ffffff",
+            "error-container": "#ffdad6",
+            "tertiary-fixed-dim": "#2ddbde",
+            "on-surface": "#141c25",
+            "background": "#f7f9ff",
+            "surface-container-lowest": "#ffffff",
+            "surface": "#f7f9ff",
+            "primary-fixed-dim": "#adc6ff",
+            "primary-container": "#0366d6",
+            "error": "#ba1a1a",
+            "outline-variant": "#c2c6d6",
+            "on-error-container": "#93000a",
+            "secondary-container": "#dee3eb",
+            "surface-container-highest": "#dae3ef",
+            "on-secondary-fixed-variant": "#42474e",
+            "inverse-primary": "#adc6ff",
+            "on-primary": "#ffffff",
+            "surface-tint": "#005bc0",
+            "surface-container": "#e6effa",
+            "on-secondary-container": "#60656c",
+            "on-error": "#ffffff",
+            "inverse-on-surface": "#e9f2fd",
+            "surface-bright": "#f7f9ff",
+            "on-primary-container": "#e5ebff",
+            "on-tertiary-container": "#89fdff",
+            "on-primary-fixed-variant": "#004493",
+            "surface-dim": "#d2dbe6",
+            "tertiary": "#005b5d",
+            "surface-variant": "#dae3ef",
+            "outline": "#727785",
+            "on-surface-variant": "#424753",
+            "on-secondary": "#ffffff",
+            "surface-container-high": "#e0e9f5"
+          },
+          fontFamily: {
+            "headline": ["Space Grotesk"],
+            "body": ["Inter"],
+            "label": ["Inter"]
+          },
+          borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+        },
+      },
+    }
+  </script>
+<style>
+    .glass-effect {
+      backdrop-filter: blur(12px);
+      background: rgba(230, 239, 250, 0.7);
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      vertical-align: middle;
+    }
+    .step-number-bg {
+      font-family: 'Space Grotesk';
+      font-weight: 900;
+      color: #2ddbde;
+      opacity: 0.15;
+    }
+  </style>
+</head>
+<body class="bg-surface font-body text-on-surface">
+<!-- Top Navigation Shell -->
+<nav class="w-full sticky top-0 z-50 bg-[#f7f9ff] dark:bg-[#141c25]">
+<div class="max-w-7xl mx-auto px-8 py-4 flex justify-between items-center">
+<div class="text-2xl font-black text-[#141c25] dark:text-[#f7f9ff] tracking-tighter font-headline">
+        apoCHARMM
+      </div>
+<div class="hidden md:flex gap-8 items-center font-headline font-bold tracking-tight">
+<a class="text-[#0366D6] dark:text-[#2ddbde] border-b-2 border-[#0366D6] dark:border-[#2ddbde] pb-1 transition-all duration-200 ease-in-out hover:opacity-80" href="#">Tutorials</a>
+<a class="text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] transition-all duration-200 ease-in-out hover:opacity-80" href="#">Cookbooks</a>
+<a class="text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] transition-all duration-200 ease-in-out hover:opacity-80" href="#">Benchmarks</a>
+<a class="text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] transition-all duration-200 ease-in-out hover:opacity-80" href="#">GitHub</a>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer transition-all duration-200 ease-in-out hover:opacity-80">account_circle</span>
+</div>
+</div>
+</nav>
+<main class="max-w-7xl mx-auto px-8 py-12 flex gap-12">
+<!-- Sidebar Navigation -->
+<aside class="hidden lg:block w-64 flex-shrink-0 space-y-10">
+<div class="space-y-4">
+<h3 class="font-headline text-label-md uppercase tracking-[0.1em] text-secondary font-bold text-xs">Categories</h3>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-container-lowest text-primary font-semibold transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]">school</span>
+<span>Basic</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-low transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]">bolt</span>
+<span>Advanced</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-low transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]">science</span>
+<span>Specialized</span>
+</a>
+</nav>
+</div>
+<div class="p-6 rounded-xl bg-surface-container-low relative overflow-hidden group">
+<div class="absolute -right-4 -bottom-4 text-6xl opacity-10 font-headline font-black transform group-hover:scale-110 transition-transform">
+          H2O
+        </div>
+<h4 class="font-headline text-sm font-bold mb-2">Need help?</h4>
+<p class="text-xs text-on-surface-variant leading-relaxed mb-4">Join our developer community for real-time support on complex parameterization.</p>
+<button class="text-xs font-bold text-primary flex items-center gap-1 group-hover:gap-2 transition-all">
+          Join Discord <span class="material-symbols-outlined text-xs">arrow_forward</span>
+</button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<section class="flex-grow">
+<header class="mb-12">
+<span class="font-headline text-tertiary font-bold tracking-[0.2em] uppercase text-xs mb-2 block">Learning Path</span>
+<h1 class="font-headline text-5xl font-black text-on-background tracking-tight mb-4">Molecular Tutorials</h1>
+<p class="text-on-surface-variant text-lg max-w-2xl leading-relaxed">
+          Master the art of molecular dynamics with our curated modules. From basic water boxes to complex protein-ligand binding analysis.
+        </p>
+</header>
+<!-- Tutorial Modules Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<!-- Module 1: Simulation Setup -->
+<article class="bg-surface-container-lowest p-8 rounded-xl relative group transition-all duration-300 hover:translate-y-[-4px]">
+<div class="absolute top-4 right-8 step-number-bg text-7xl select-none">01</div>
+<div class="relative z-10">
+<div class="flex gap-3 mb-6">
+<span class="px-3 py-1 rounded-full bg-surface-container text-primary font-bold text-[10px] uppercase tracking-wider">Beginner</span>
+<span class="px-3 py-1 rounded-full bg-surface-container text-secondary font-bold text-[10px] uppercase tracking-wider flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">schedule</span> 45m
+              </span>
+</div>
+<h2 class="font-headline text-2xl font-bold mb-3 text-on-background">Simulation Setup</h2>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-8 pr-12">
+              Learn the foundational steps of solvating proteins and generating correct topology files for CHARMM36 force fields.
+            </p>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest bg-primary-container flex items-center justify-center text-[10px] text-on-primary-container font-bold">JD</div>
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest bg-tertiary-container flex items-center justify-center text-[10px] text-on-tertiary-container font-bold">ML</div>
+</div>
+<button class="flex items-center gap-2 bg-gradient-to-br from-primary to-primary-container text-on-primary px-6 py-3 rounded-lg font-bold text-sm shadow-xl shadow-primary/10 hover:opacity-90 transition-all">
+                Start Tutorial <span class="material-symbols-outlined text-sm">play_arrow</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Module 2: Force Field Parameterization -->
+<article class="bg-surface-container-lowest p-8 rounded-xl relative group transition-all duration-300 hover:translate-y-[-4px]">
+<div class="absolute top-4 right-8 step-number-bg text-7xl select-none">02</div>
+<div class="relative z-10">
+<div class="flex gap-3 mb-6">
+<span class="px-3 py-1 rounded-full bg-tertiary-container/10 text-tertiary font-bold text-[10px] uppercase tracking-wider">Advanced</span>
+<span class="px-3 py-1 rounded-full bg-surface-container text-secondary font-bold text-[10px] uppercase tracking-wider flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">schedule</span> 120m
+              </span>
+</div>
+<h2 class="font-headline text-2xl font-bold mb-3 text-on-background">Force Field Parameterization</h2>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-8 pr-12">
+              Deep dive into CGenFF for small molecules. Optimize dihedral parameters using quantum mechanical calculations.
+            </p>
+<div class="flex items-center justify-between">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-surface-container-lowest bg-secondary-container flex items-center justify-center text-[10px] text-on-secondary-container font-bold">AS</div>
+</div>
+<button class="flex items-center gap-2 bg-surface-container-high text-on-surface px-6 py-3 rounded-lg font-bold text-sm hover:bg-surface-container-highest transition-all">
+                Start Tutorial <span class="material-symbols-outlined text-sm">play_arrow</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Module 3: Analysis Pipelines -->
+<article class="bg-surface-container-lowest p-8 rounded-xl relative group transition-all duration-300 hover:translate-y-[-4px] md:col-span-2 overflow-hidden">
+<div class="absolute top-4 right-8 step-number-bg text-7xl select-none">03</div>
+<div class="flex flex-col md:flex-row gap-8 relative z-10">
+<div class="md:w-1/3">
+<div class="aspect-video rounded-lg overflow-hidden relative">
+<img alt="Molecular Analysis Visualization" class="w-full h-full object-cover" data-alt="Abstract 3D molecular structures with energy lines" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1glBIiiL6hrAqeO28KrzqmcepMmtfz1KyY4Q6EHRELnJ8DMA_mWiZV05rzPOPznTzX4cMnqEdXr0IS8SxHW7uBALhNUvicNSXs9hYkva0IeXrbZB2e8vh9LBzIwU-VpYFkStyPzLXOxiVSk7M9xT-HJsSEPMK_edz9rEILEV-vAPhPLOJb-ygjScTnmVI8kngDNgFVwgCfrEk9TqshhQY7IWylJXqtv-b_x9vf3gNCFGjsnM7o_XdohM_HWXhFX4S5CzxBakCY9P0"/>
+<div class="absolute inset-0 bg-primary/20 mix-blend-multiply"></div>
+</div>
+</div>
+<div class="md:w-2/3 flex flex-col justify-between">
+<div>
+<div class="flex gap-3 mb-4">
+<span class="px-3 py-1 rounded-full bg-surface-container text-secondary font-bold text-[10px] uppercase tracking-wider flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">schedule</span> 60m
+                  </span>
+</div>
+<h2 class="font-headline text-2xl font-bold mb-3 text-on-background">Analysis Pipelines</h2>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-6">
+                  Automation scripts for RMSD, RMSF, and hydrogen bond analysis using Python-integrated apoCHARMM libraries. Learn how to generate publication-quality figures directly from trajectory data.
+                </p>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 bg-gradient-to-br from-primary to-primary-container text-on-primary px-6 py-3 rounded-lg font-bold text-sm shadow-xl shadow-primary/10 hover:opacity-90 transition-all">
+                  Start Tutorial <span class="material-symbols-outlined text-sm">play_arrow</span>
+</button>
+<button class="px-6 py-3 text-sm font-bold text-primary hover:underline underline-offset-4 decoration-2">View Prerequisites</button>
+</div>
+</div>
+</div>
+</article>
+</div>
+</section>
+</main>
+<!-- Footer Shell -->
+<footer class="w-full mt-auto bg-[#ecf4ff] dark:bg-[#141c25] border-t border-[#c2c6d6]/15">
+<div class="max-w-7xl mx-auto px-8 py-12 grid grid-cols-1 md:grid-cols-2 gap-8 items-center font-body text-sm tracking-normal">
+<div class="space-y-2">
+<div class="font-headline font-bold text-[#141c25] dark:text-[#f7f9ff] text-xl">apoCHARMM</div>
+<p class="text-[#5a6473] dark:text-[#c2c6d6]">© 2024 apoCHARMM Team. Open-source molecular dynamics.</p>
+</div>
+<div class="flex flex-wrap gap-8 md:justify-end">
+<a class="text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] dark:hover:text-[#2ddbde] underline decoration-2 underline-offset-4 transition-all opacity-100 hover:opacity-100" href="#">Documentation</a>
+<a class="text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] dark:hover:text-[#2ddbde] underline decoration-2 underline-offset-4 transition-all opacity-100 hover:opacity-100" href="#">Team</a>
+<a class="text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] dark:hover:text-[#2ddbde] underline decoration-2 underline-offset-4 transition-all opacity-100 hover:opacity-100" href="#">Contact</a>
+<a class="text-[#5a6473] dark:text-[#c2c6d6] hover:text-[#0366D6] dark:hover:text-[#2ddbde] underline decoration-2 underline-offset-4 transition-all opacity-100 hover:opacity-100" href="#">License</a>
+</div>
+</div>
+</footer>
+</body></html>
