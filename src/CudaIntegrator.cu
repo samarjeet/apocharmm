@@ -25,8 +25,9 @@
 CudaIntegrator::CudaIntegrator(void)
     : m_TimeStep(0.0), m_Timfac(0.0488882129), m_DebugPrintFrequency(0),
       m_Context(nullptr), m_StepsSinceNeighborListUpdate(1),
-      m_CurrentPropagatedStep(0), m_HolonomicConstraint(nullptr), m_CoordsRef(),
-      m_CoordsDelta(), m_CoordsDeltaPrevious(), m_IntegratorStream(nullptr),
+      m_CurrentPropagatedStep(0), m_TotNumSteps(0), m_NumSteps(0),
+      m_HolonomicConstraint(nullptr), m_CoordsRef(), m_CoordsDelta(),
+      m_CoordsDeltaPrevious(), m_IntegratorStream(nullptr),
       m_IntegratorMemcpyStream(nullptr), m_UsingHolonomicConstraints(false),
       m_Subscribers(), m_ReportFreqList(), m_IsCharmmContextSet(false),
       m_NonbondedListUpdateFrequency(20), m_RemoveCenterOfMassFrequency(1000),
@@ -112,7 +113,15 @@ void CudaIntegrator::initialize(void) {
   return;
 }
 
-void CudaIntegrator::propagateOneStep() {
+void CudaIntegrator::initializeFromRestartFile(const std::string &rstFileName) {
+  std::cerr << "CudaIntegrator::initializeFromRestartFile(const std::string "
+               "&rstFileName) : override me!"
+            << std::endl;
+  exit(1);
+  return;
+}
+
+void CudaIntegrator::propagateOneStep(void) {
   std::cout << "CudaIntegrator::propagateOneStep() : override me!" << std::endl;
   exit(1);
   return;
@@ -155,6 +164,9 @@ void CudaIntegrator::propagate(const int numSteps) {
     if (m_ReportFreqList[i] < minReportFreq)
       minReportFreq = m_ReportFreqList[i];
   }
+
+  m_NumSteps = numSteps;
+  m_TotNumSteps += static_cast<unsigned long long int>(numSteps);
 
   for (int step = 1; step <= numSteps; step++) {
     // m_CurrentPropagatedStep = step;
@@ -298,29 +310,29 @@ void CudaIntegrator::setRemoveCenterOfMassFrequency(const int freq) {
 }
 
 const CudaContainer<double4> &CudaIntegrator::getCoordsDelta(void) const {
-  std::cerr << "CudaIntegrator::getCoordsDelta() : override me!" << std::endl;
-  exit(1);
+  // std::cerr << "CudaIntegrator::getCoordsDelta() : override me!" <<
+  // std::endl; exit(1);
   return m_CoordsDelta;
 }
 
 CudaContainer<double4> &CudaIntegrator::getCoordsDelta(void) {
-  std::cerr << "CudaIntegrator::getCoordsDelta() : override me!" << std::endl;
-  exit(1);
+  // std::cerr << "CudaIntegrator::getCoordsDelta() : override me!" <<
+  // std::endl; exit(1);
   return m_CoordsDelta;
 }
 
 const CudaContainer<double4> &
 CudaIntegrator::getCoordsDeltaPrevious(void) const {
-  std::cerr << "CudaIntegrator::getCoordsDeltaPrevious() : override me!"
-            << std::endl;
-  exit(1);
+  // std::cerr << "CudaIntegrator::getCoordsDeltaPrevious() : override me!"
+  //           << std::endl;
+  // exit(1);
   return m_CoordsDeltaPrevious;
 }
 
 CudaContainer<double4> &CudaIntegrator::getCoordsDeltaPrevious(void) {
-  std::cerr << "CudaIntegrator::getCoordsDeltaPrevious() : override me!"
-            << std::endl;
-  exit(1);
+  // std::cerr << "CudaIntegrator::getCoordsDeltaPrevious() : override me!"
+  //           << std::endl;
+  // exit(1);
   return m_CoordsDeltaPrevious;
 }
 
@@ -407,6 +419,12 @@ CudaIntegrator::getIntegratorDescriptors(void) {
 int CudaIntegrator::getCurrentPropagatedStep(void) const {
   return m_CurrentPropagatedStep;
 }
+
+unsigned long long int CudaIntegrator::getTotNumSteps(void) const {
+  return m_TotNumSteps;
+}
+
+int CudaIntegrator::getNumSteps(void) const { return m_NumSteps; }
 
 void CudaIntegrator::reportIfNeeded(const int istep) {
   // Loop over each report frequency. If modulo is 0, then update the

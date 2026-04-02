@@ -46,13 +46,6 @@ public:
    */
   void setFileName(const std::string &fileName);
 
-  // /**
-  //  * @brief Sets integratorTimeStep from CudaIntegrator.
-  //  *
-  //  * Should be called upon subscription.
-  //  */
-  // void setTimeStepFromIntegrator(const double ts);
-
   /**
    * @brief Attaches Subscriber to a CharmmContext
    */

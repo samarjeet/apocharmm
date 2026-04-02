@@ -4,1008 +4,392 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author:  Samarjeet Prasad, James E. Gonzales II
+// Author:  James E. Gonzales II, Samarjeet Prasad
 //
 // ENDLICENSE
 
 #include "CharmmContext.h"
 #include "CudaLangevinPistonIntegrator.h"
-#include "CudaLangevinThermostatIntegrator.h"
+#include "CudaNoseHooverThermostatIntegrator.h"
+// #include "CudaLangevinThermostatIntegrator.h"
+#include "PBC.h"
 #include "RestartSubscriber.h"
-#include <fstream>
+#include "str_utils.h"
 #include <iomanip>
 #include <iostream>
+#include <memory>
+#include <sstream>
+
+RestartSubscriber::RestartSubscriber(void) : Subscriber() {}
 
 RestartSubscriber::RestartSubscriber(const std::string &fileName)
-    : Subscriber(fileName) {
-  m_NumFramesWritten = 0;
-}
+    : Subscriber(fileName) {}
 
 RestartSubscriber::RestartSubscriber(const std::string &fileName,
                                      const int reportFrequency)
-    : Subscriber(fileName, reportFrequency) {
-  m_NumFramesWritten = 0;
-}
+    : Subscriber(fileName, reportFrequency) {}
 
 RestartSubscriber::~RestartSubscriber(void) {
   if (m_FileStream.is_open())
     m_FileStream.close();
 }
 
-void RestartSubscriber::update(void) { return; }
-
-/* *
 void RestartSubscriber::update(void) {
-  constexpr int rstWidth = 23;
-  constexpr int rstPrec = 16;
+  constexpr int rstDoubleWidth = 22;
+  constexpr int rstDoublePrecision = 15;
+  constexpr int VERSION = 50;
+  constexpr int LENENP = 60;
+  constexpr int LENENT = 128;
+  constexpr int LENENV = 50;
 
-  // Get positions, get velocities, print !
-  auto coords = this->charmmContext->getCoordinatesCharges();
-  auto velmass = this->charmmContext->getVelocityMass();
-  auto boxdim = this->charmmContext->getBoxDimensions();
+  if (m_FileStream.is_open())
+    m_FileStream.close();
+  m_FileStream.open(m_FileName, std::ios::out);
 
-  coords.transferFromDevice();
-  velmass.transferFromDevice();
+  // Attempt to cast to supported integrators to determine how we set some
+  // values
+  auto nh = std::dynamic_pointer_cast<CudaNoseHooverThermostatIntegrator>(
+      m_Integrator);
+  auto lp =
+      std::dynamic_pointer_cast<CudaLangevinPistonIntegrator>(m_Integrator);
 
-  checkForNanValues(coords, velmass, boxdim);
+  std::string crystalString = "NONE";
+  const std::vector<double> boxDimensions = m_CharmmContext->getBoxDimensions();
 
-  if (fout.is_open())
-    fout.close();
-  fout.open(fileName, std::ios::out);
-
-  // atom section
-  int numAtoms = this->charmmContext->getNumAtoms();
-  int numSteps = this->integrator->getCurrentPropagatedStep();
-  fout << "!NATOM,NSTEP\n";
-  fout << std::setw(12) << numAtoms << std::setw(12) << numSteps << "\n";
-
-  // position section
-  fout << "!X, Y, Z\n";
-  for (int i = 0; i < this->charmmContext->getNumAtoms(); ++i) {
-    fout << std::setw(rstWidth) << std::scientific << std::setprecision(rstPrec)
-         << coords[i].x << " " << std::setw(rstWidth) << std::scientific
-         << std::setprecision(rstPrec) << coords[i].y << " "
-         << std::setw(rstWidth) << std::scientific << std::setprecision(rstPrec)
-         << coords[i].z << "\n";
-  }
-  fout << "\n";
-
-  // velocities section
-  fout << "!VX, VY, VZ\n";
-  for (int i = 0; i < this->charmmContext->getNumAtoms(); ++i) {
-    fout << std::setw(rstWidth) << std::scientific << std::setprecision(rstPrec)
-         << velmass[i].x << " " << std::setw(rstWidth) << std::scientific
-         << std::setprecision(rstPrec) << velmass[i].y << " "
-         << std::setw(rstWidth) << std::scientific << std::setprecision(rstPrec)
-         << velmass[i].z << "\n";
-  }
-  fout << "\n";
-
-  fout << "!BOXX, BOXY, BOXZ\n";
-  fout << std::setw(rstWidth) << std::scientific << std::setprecision(rstPrec)
-       << boxdim[0] << " " << std::setw(rstWidth) << std::scientific
-       << std::setprecision(rstPrec) << boxdim[1] << " " << std::setw(rstWidth)
-       << std::scientific << std::setprecision(rstPrec) << boxdim[2] << "\n\n";
-
-  // Try downcasting to LP, check if nullptr to continue
-  auto langevinPistonIntegrator =
-      std::dynamic_pointer_cast<CudaLangevinPistonIntegrator>(this->integrator);
-
-  auto langevinThermostatIntegrator =
-      std::dynamic_pointer_cast<CudaLangevinThermostatIntegrator>(
-          this->integrator);
-
-  if ((langevinPistonIntegrator != nullptr) ||
-      (langevinThermostatIntegrator != nullptr)) {
-    auto coordsDeltaPrevious = this->integrator->getCoordsDeltaPrevious();
-    coordsDeltaPrevious.transferFromDevice();
-    fout << "!XOLD, YOLD, ZOLD\n";
-    for (int i = 0; i < this->charmmContext->getNumAtoms(); ++i) {
-      fout << std::setw(rstWidth) << std::scientific
-           << std::setprecision(rstPrec) << coordsDeltaPrevious[i].x << " "
-           << std::setw(rstWidth) << std::scientific
-           << std::setprecision(rstPrec) << coordsDeltaPrevious[i].y << " "
-           << std::setw(rstWidth) << std::scientific
-           << std::setprecision(rstPrec) << coordsDeltaPrevious[i].z << "\n";
-    }
-    fout << "\n";
-  }
-
-  if (langevinPistonIntegrator != nullptr) {
-    // Let's also add langevin piston related information
-    auto pistonDegreesOfFreedom =
-        langevinPistonIntegrator->getPistonDegreesOfFreedom();
-
-    auto onStepPistonPosition =
-        langevinPistonIntegrator->getOnStepPistonPosition();
-    // onStepPistonPosition.transferFromDevice();
-    fout << "!onStepPistonPosition\n";
-    for (int i = 0; i < pistonDegreesOfFreedom; ++i) {
-      fout << std::setw(rstWidth) << std::scientific
-           << std::setprecision(rstPrec) << onStepPistonPosition[i];
-      if (i < pistonDegreesOfFreedom - 1)
-        fout << " ";
-    }
-    fout << "\n\n";
-
-    auto halfStepPistonPosition =
-        langevinPistonIntegrator->getHalfStepPistonPosition();
-    // halfStepPistonPosition.transferFromDevice();
-    fout << "!halfStepPistonPosition\n";
-    for (int i = 0; i < pistonDegreesOfFreedom; ++i) {
-      fout << std::setw(rstWidth) << std::scientific
-           << std::setprecision(rstPrec) << halfStepPistonPosition[i];
-      if (i < pistonDegreesOfFreedom - 1)
-        fout << " ";
-    }
-    fout << "\n\n";
-
-    auto onStepPistonVelocity =
-        langevinPistonIntegrator->getOnStepPistonVelocity();
-    // onStepPistonVelocity.transferFromDevice();
-    fout << "!onStepPistonVelocity\n";
-    for (int i = 0; i < pistonDegreesOfFreedom; ++i) {
-      fout << std::setw(rstWidth) << std::scientific
-           << std::setprecision(rstPrec) << onStepPistonVelocity[i];
-      if (i < pistonDegreesOfFreedom - 1)
-        fout << " ";
-    }
-    fout << "\n\n";
-
-    auto halfStepPistonVelocity =
-        langevinPistonIntegrator->getHalfStepPistonVelocity();
-    // halfStepPistonVelocity.transferFromDevice();
-    fout << "!halfStepPistonVelocity" << std::endl;
-    for (int i = 0; i < pistonDegreesOfFreedom; ++i) {
-      fout << std::setw(rstWidth) << std::scientific
-           << std::setprecision(rstPrec) << halfStepPistonVelocity[i];
-      if (i < pistonDegreesOfFreedom - 1)
-        fout << " ";
-    }
-    fout << "\n\n";
-
-    auto noseHooverPistonMass =
-        langevinPistonIntegrator->getNoseHooverPistonMass();
-    fout << "!noseHooverPistonMass\n";
-    fout << std::setw(rstWidth) << std::scientific << std::setprecision(rstPrec)
-         << noseHooverPistonMass << "\n\n";
-
-    auto noseHooverPistonPosition =
-        langevinPistonIntegrator->getNoseHooverPistonPosition();
-    fout << "!noseHooverPistonPosition\n";
-    fout << std::setw(rstWidth) << std::scientific << std::setprecision(rstPrec)
-         << noseHooverPistonPosition << "\n\n";
-
-    auto noseHooverPistonVelocity =
-        langevinPistonIntegrator->getNoseHooverPistonVelocity();
-    fout << "!noseHooverPistonVelocity\n";
-    fout << std::setw(rstWidth) << std::scientific << std::setprecision(rstPrec)
-         << noseHooverPistonVelocity << "\n\n";
-
-    auto noseHooverPistonVelocityPrevious =
-        langevinPistonIntegrator->getNoseHooverPistonVelocityPrevious();
-    fout << "!noseHooverPistonVelocityPrevious\n";
-    fout << std::setw(rstWidth) << std::scientific << std::setprecision(rstPrec)
-         << noseHooverPistonVelocityPrevious << "\n\n";
-
-    auto noseHooverPistonForce =
-        langevinPistonIntegrator->getNoseHooverPistonForce();
-    fout << "!noseHooverPistonForce\n";
-    fout << std::setw(rstWidth) << std::scientific << std::setprecision(rstPrec)
-         << noseHooverPistonForce << "\n\n";
-
-    auto noseHooverPistonForcePrevious =
-        langevinPistonIntegrator->getNoseHooverPistonForcePrevious();
-    fout << "!noseHooverPistonForcePrevious\n";
-    fout << std::setw(rstWidth) << std::scientific << std::setprecision(rstPrec)
-         << noseHooverPistonForcePrevious << "\n\n";
-  }
-  // fout << std::flush;
-  fout.close();
-  ++numFramesWritten;
-}
-* */
-
-/* *
-std::vector<double> readRestartEntry(const std::string &entry) const {
-  std::vector<double> data;
-
-  std::ifstream fin(fileName);
-  if (!fin.is_open()) {
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot open file \"" + fileName +
-        "\"\nExiting\n");
-  }
-
-  // Find the line containing the section title
-  bool found = false;
-  while (!fin.eof()) {
-    std::string line = "";
-    std::getline(fin, line);
-    if (line.find(entry) != std : string::npos) {
-      found = true;
-      break;
-    }
-  }
-
-  if (!found) {
+  if (nh != nullptr) {
+    // JEG260330: Get box dimensions and compare lengths to determine crystal
+    // type. This should be fixed so that the CharmmContext always stores the
+    // crystal type.
+    if ((boxDimensions[0] == boxDimensions[1]) &&
+        (boxDimensions[0] == boxDimensions[2]))
+      crystalString = "CUBI";
+    else if (boxDimensions[0] == boxDimensions[1])
+      crystalString = "TETR";
+    else
+      crystalString = "ORTH";
+  } else if (lp != nullptr) {
+    if (lp->getCrystalType() == CRYSTAL::CUBIC)
+      crystalString = "CUBI";
+    else if (lp->getCrystalType() == CRYSTAL::TETRAGONAL)
+      crystalString = "TETR";
+    else if (lp->getCrystalType() == CRYSTAL::ORTHORHOMBIC)
+      crystalString = "ORTH";
+  } else {
     throw std::runtime_error(
-        "ERROR(RestartSubscriber): Could not find entry \"" + entry +
-        "\" in the file \"" + fileName + "\"\nExiting\n");
+        "Unknown integrator detected. Cannot write restart file.");
   }
 
-  return data;
+  // Write formatted header
+  m_FileStream << "REST" << std::setw(6) << VERSION << std::setw(6) << 1 << "  "
+               << std::setw(4) << crystalString << "  " << "    " << "  "
+               << "APO" << '\n';
+  m_FileStream << '\n';
+
+  // Write TITLE section
+  // JEG260330: Dummy title for now. We should make this something.
+  m_FileStream << std::setw(8) << 2 << " !NTITLE followed by title\n";
+  m_FileStream << "* APOCHARMM RESTART FILE                                    "
+                  "                    \n";
+  m_FileStream << "* USED FOR CONTINUING MOLECULAR DYNAMICS TRAJECTORY         "
+                  "                    \n";
+  m_FileStream << '\n';
+
+  // Write CRYSTAL PARAMETERS section
+  std::vector<double> HDOT(6, 0.0);
+  double PNH = 0.0, PNHV = 0.0, PNHF = 0.0;
+  std::vector<double> UC1A(6, 0.0), UC2A(6, 0.0), UC1B(6, 0.0), UC2B(6, 0.0);
+  constexpr double GRAD1A = 0.0;
+  constexpr double GRAD1B = 0.0;
+  constexpr double GRAD2A = 0.0;
+  constexpr double GRAD2B = 0.0;
+
+  if (nh != nullptr) {
+    nh->getNoseHooverPistonVelocity().transferToHost();
+    nh->getNoseHooverPistonForce().transferToHost();
+    PNHV = nh->getNoseHooverPistonVelocity()[0];
+    PNHF = nh->getNoseHooverPistonForce()[0];
+  } else if (lp != nullptr) {
+    lp->getNoseHooverPistonVelocity().transferToHost();
+    lp->getNoseHooverPistonForce().transferToHost();
+    PNHV = lp->getNoseHooverPistonVelocity()[0];
+    PNHF = lp->getNoseHooverPistonForce()[0];
+    lp->getLangevinPistonDeltaPosition().transferToHost();
+    if (crystalString == "CUBI") {
+      HDOT[0] = lp->getLangevinPistonDeltaPosition()[0];
+    } else if (crystalString == "TETR") {
+      HDOT[0] = lp->getLangevinPistonDeltaPosition()[0];
+      HDOT[1] = lp->getLangevinPistonDeltaPosition()[1];
+    } else if (crystalString == "ORTH") {
+      HDOT[0] = lp->getLangevinPistonDeltaPosition()[0];
+      HDOT[1] = lp->getLangevinPistonDeltaPosition()[1];
+      HDOT[2] = lp->getLangevinPistonDeltaPosition()[2];
+    }
+  }
+
+  m_FileStream << " !CRYSTAL PARAMETERS\n";
+  m_FileStream << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(boxDimensions[0], rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(0.0, rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(boxDimensions[1], rstDoublePrecision)
+               << '\n';
+  m_FileStream << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(0.0, rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(0.0, rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(boxDimensions[2], rstDoublePrecision)
+               << '\n';
+  m_FileStream << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(HDOT[0], rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(HDOT[1], rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(HDOT[2], rstDoublePrecision) << '\n';
+  m_FileStream << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(HDOT[3], rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(HDOT[4], rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(HDOT[5], rstDoublePrecision) << '\n';
+  m_FileStream << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(PNH, rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(PNHV, rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(PNHF, rstDoublePrecision) << '\n';
+  m_FileStream << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(UC1A[0], rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(UC1A[1], rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(UC1A[2], rstDoublePrecision) << '\n';
+  m_FileStream << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(UC1A[3], rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(UC1A[4], rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(UC1A[5], rstDoublePrecision) << '\n';
+  m_FileStream << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(UC2A[0], rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(UC2A[1], rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(UC2A[2], rstDoublePrecision) << '\n';
+  m_FileStream << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(UC2A[3], rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(UC2A[4], rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(UC2A[5], rstDoublePrecision) << '\n';
+  m_FileStream << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(UC1B[0], rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(UC1B[1], rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(UC1B[2], rstDoublePrecision) << '\n';
+  m_FileStream << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(UC1B[3], rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(UC1B[4], rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(UC1B[5], rstDoublePrecision) << '\n';
+  m_FileStream << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(UC2B[0], rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(UC2B[1], rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(UC2B[2], rstDoublePrecision) << '\n';
+  m_FileStream << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(UC2B[3], rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(UC2B[4], rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(UC2B[5], rstDoublePrecision) << '\n';
+  m_FileStream << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(GRAD1A, rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(GRAD1B, rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(GRAD2A, rstDoublePrecision) << '\n';
+  m_FileStream << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(GRAD2B, rstDoublePrecision) << '\n';
+  m_FileStream << '\n';
+
+  // Write integer section
+  const int NATOM = m_CharmmContext->getNumAtoms();
+  const unsigned long long int NPRIV = m_Integrator->getTotNumSteps();
+  const int NSTEP = m_Integrator->getNumSteps();
+  // JEG260330: This is technically wrong and should be the saving frequency for
+  // coordinates being written to the DCD file.
+  const int NSAVC = m_ReportFrequency;
+  // JEG260330: This is technically wrong and should be the saving frequency for
+  // velocities being written to the DCD file.
+  const int NSAVV = 0;
+  const int JHSTRT = 0;
+  const int NDEGF = m_CharmmContext->getDegreesOfFreedom();
+  std::uint64_t SEED = 0;
+  std::string RNGSTATE = "";
+  if (lp != nullptr) {
+    SEED = lp->getLangevinPistonFrictionSeed();
+    std::stringstream ss;
+    ss << lp->getRng();
+    RNGSTATE = ss.str();
+  }
+
+  m_FileStream << " !NATOM,NPRIV,NSTEP,NSAVC,NSAVV,JHSTRT,NDEGF,SEED,NSAVL\n";
+  m_FileStream << std::setw(12) << NATOM << std::setw(12) << NPRIV
+               << std::setw(12) << NSTEP << std::setw(12) << NSAVC
+               << std::setw(12) << NSAVV << std::setw(12) << JHSTRT
+               << std::setw(12) << NDEGF << std::setw(22) << SEED << "  "
+               << RNGSTATE << '\n';
+  m_FileStream << '\n';
+
+  // Write ENERGIES and STATISTICS section
+  // JEG260330: As of now all of these are being set to 0. We don't calculate A
+  // LOT of the energy terms that CHARMM does. They are set to 0 instead of
+  // -999.999 (or something similar) to avoid causing any issues if they are
+  // read and used by CHARMM at some point.
+  const std::string QEPROP(LENENP, 'T');
+  const std::string QETERM(LENENT, 'T');
+  constexpr int ISTPSA = 0;
+  constexpr double FITA = 0.0;
+  constexpr double FITP = 0.0;
+  double AVETEM = 0.0;
+  std::vector<double> EPROP(LENENP, 0.0), EPRPP(LENENP, 0.0),
+      EPRP2P(LENENP, 0.0);
+  std::vector<double> EPRPA(LENENP, 0.0), EPRP2A(LENENP, 0.0);
+  std::vector<double> ETERM(LENENT, 0.0), ETRMP(LENENT, 0.0),
+      ETRM2P(LENENT, 0.0);
+  std::vector<double> ETRMA(LENENT, 0.0), ETRM2A(LENENT, 0.0);
+  std::vector<double> EPRESS(LENENV, 0.0), EPRSP(LENENV, 0.0),
+      EPRS2P(LENENV, 0.0);
+  std::vector<double> EPRSA(LENENV, 0.0), EPRS2A(LENENV, 0.0);
+
+  if (nh != nullptr) {
+    nh->getAverageTemperature().transferToHost();
+    AVETEM = nh->getAverageTemperature()[0];
+  } else if (lp != nullptr) {
+    lp->getAverageTemperature().transferToHost();
+    AVETEM = lp->getAverageTemperature()[0];
+  }
+
+  m_FileStream << " !ENERGIES and STATISTICS\n";
+  m_FileStream << QEPROP << '\n';
+  m_FileStream << QETERM << '\n';
+  m_FileStream << std::setw(8) << ISTPSA << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(FITA, rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(FITP, rstDoublePrecision)
+               << std::setw(rstDoubleWidth)
+               << apo::cDoubleToFortSciStr(AVETEM, rstDoublePrecision) << '\n';
+  for (int i = 0; i < LENENP; i++) {
+    m_FileStream << std::setw(rstDoubleWidth)
+                 << apo::cDoubleToFortSciStr(EPROP[i], rstDoublePrecision)
+                 << std::setw(rstDoubleWidth)
+                 << apo::cDoubleToFortSciStr(EPRP2P[i], rstDoublePrecision)
+                 << std::setw(rstDoubleWidth)
+                 << apo::cDoubleToFortSciStr(EPRPP[i], rstDoublePrecision)
+                 << '\n';
+  }
+  for (int i = 0; i < LENENP; i++) {
+    m_FileStream << std::setw(rstDoubleWidth)
+                 << apo::cDoubleToFortSciStr(EPRPA[i], rstDoublePrecision)
+                 << std::setw(rstDoubleWidth)
+                 << apo::cDoubleToFortSciStr(EPRP2A[i], rstDoublePrecision)
+                 << '\n';
+  }
+  for (int i = 0; i < LENENT; i++) {
+    m_FileStream << std::setw(rstDoubleWidth)
+                 << apo::cDoubleToFortSciStr(ETERM[i], rstDoublePrecision)
+                 << std::setw(rstDoubleWidth)
+                 << apo::cDoubleToFortSciStr(ETRMP[i], rstDoublePrecision)
+                 << std::setw(rstDoubleWidth)
+                 << apo::cDoubleToFortSciStr(ETRM2P[i], rstDoublePrecision)
+                 << '\n';
+  }
+  for (int i = 0; i < LENENT; i++) {
+    m_FileStream << std::setw(rstDoubleWidth)
+                 << apo::cDoubleToFortSciStr(ETRMA[i], rstDoublePrecision)
+                 << std::setw(rstDoubleWidth)
+                 << apo::cDoubleToFortSciStr(ETRM2A[i], rstDoublePrecision)
+                 << '\n';
+  }
+  for (int i = 0; i < LENENV; i++) {
+    m_FileStream << std::setw(rstDoubleWidth)
+                 << apo::cDoubleToFortSciStr(EPRESS[i], rstDoublePrecision)
+                 << std::setw(rstDoubleWidth)
+                 << apo::cDoubleToFortSciStr(EPRSP[i], rstDoublePrecision)
+                 << std::setw(rstDoubleWidth)
+                 << apo::cDoubleToFortSciStr(EPRS2P[i], rstDoublePrecision)
+                 << '\n';
+  }
+  for (int i = 0; i < LENENV; i++) {
+    m_FileStream << std::setw(rstDoubleWidth)
+                 << apo::cDoubleToFortSciStr(EPRSA[i], rstDoublePrecision)
+                 << std::setw(rstDoubleWidth)
+                 << apo::cDoubleToFortSciStr(EPRS2A[i], rstDoublePrecision)
+                 << '\n';
+  }
+  m_FileStream << '\n';
+
+  // Write XOLD, YOLD, ZOLD section
+  m_FileStream << " !XOLD, YOLD, ZOLD\n";
+  m_Integrator->getCoordsDeltaPrevious().transferToHost();
+  for (int i = 0; i < NATOM; i++) {
+    m_FileStream
+        << std::setw(rstDoubleWidth)
+        << apo::cDoubleToFortSciStr(m_Integrator->getCoordsDeltaPrevious()[i].x,
+                                    rstDoublePrecision)
+        << std::setw(rstDoubleWidth)
+        << apo::cDoubleToFortSciStr(m_Integrator->getCoordsDeltaPrevious()[i].y,
+                                    rstDoublePrecision)
+        << std::setw(rstDoubleWidth)
+        << apo::cDoubleToFortSciStr(m_Integrator->getCoordsDeltaPrevious()[i].z,
+                                    rstDoublePrecision)
+        << '\n';
+  }
+  m_FileStream << '\n';
+
+  // Write VX, VY, VZ section
+  m_FileStream << " !VX, VY, VZ\n";
+  m_CharmmContext->getVelocityMass().transferToHost();
+  for (int i = 0; i < NATOM; i++) {
+    m_FileStream
+        << std::setw(rstDoubleWidth)
+        << apo::cDoubleToFortSciStr(m_CharmmContext->getVelocityMass()[i].x,
+                                    rstDoublePrecision)
+        << std::setw(rstDoubleWidth)
+        << apo::cDoubleToFortSciStr(m_CharmmContext->getVelocityMass()[i].y,
+                                    rstDoublePrecision)
+        << std::setw(rstDoubleWidth)
+        << apo::cDoubleToFortSciStr(m_CharmmContext->getVelocityMass()[i].z,
+                                    rstDoublePrecision)
+        << '\n';
+  }
+  m_FileStream << '\n';
+
+  // Write X, Y, Z section
+  m_FileStream << " !X, Y, Z\n";
+  m_CharmmContext->getCoordinatesCharges().transferToHost();
+  for (int i = 0; i < NATOM; i++) {
+    m_FileStream << std::setw(rstDoubleWidth)
+                 << apo::cDoubleToFortSciStr(
+                        m_CharmmContext->getCoordinatesCharges()[i].x,
+                        rstDoublePrecision)
+                 << std::setw(rstDoubleWidth)
+                 << apo::cDoubleToFortSciStr(
+                        m_CharmmContext->getCoordinatesCharges()[i].y,
+                        rstDoublePrecision)
+                 << std::setw(rstDoubleWidth)
+                 << apo::cDoubleToFortSciStr(
+                        m_CharmmContext->getCoordinatesCharges()[i].z,
+                        rstDoublePrecision)
+                 << '\n';
+  }
+
+  m_FileStream.close();
+
+  return;
 }
-* */
-
-/* *
-std::vector<std::vector<double>> RestartSubscriber::readPositions(void) const {
-  std::ifstream restartFile(fileName);
-  if (!restartFile.is_open()) {
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot open the file \"" + fileName +
-        "\"\nExiting\n");
-    exit(1);
-  }
-
-  // Find line containing the section title
-  std::string line;
-  std::string sectionName = "!X, Y, Z";
-  bool found = false;
-  while (std::getline(restartFile, line)) {
-    if (line.find(sectionName) != std::string::npos) {
-      found = true;
-      break;
-    }
-  }
-  if (!found) {
-    throw std::invalid_argument("ERROR(RestartSubscriber): Cannot find the "
-                                "positions section (!X, Y, Z) in the file " +
-                                fileName + "\nExiting\n");
-    exit(1);
-  }
-  // Read and store the section content
-  std::vector<std::string> sectionContent;
-  while (std::getline(restartFile, line)) {
-    if (line.empty()) {
-      break;
-    }
-    sectionContent.push_back(line);
-  }
-  std::vector<std::vector<double>> positions;
-  std::vector<double> position;
-  for (auto &line : sectionContent) {
-    std::istringstream iss(line);
-    double x, y, z;
-    iss >> x >> y >> z;
-    position = {x, y, z};
-    positions.push_back(position);
-  }
-  return positions;
-}
-
-std::vector<std::vector<double>> RestartSubscriber::readVelocities(void) const {
-  std::ifstream restartFile(fileName);
-  if (!restartFile.is_open()) {
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot open the file " + fileName +
-        "\nExiting\n");
-    exit(1);
-  }
-
-  // Find line containing the section title
-  std::string line;
-  std::string sectionName = "!VX, VY, VZ";
-  bool found = false;
-  while (std::getline(restartFile, line)) {
-    if (line.find(sectionName) != std::string::npos) {
-      found = true;
-      break;
-    }
-  }
-  if (!found) {
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot find the velocities section (!VX, "
-        "VY, VZ) in the file " +
-        fileName + "\nExiting\n");
-    exit(1);
-  }
-  // Read and store the section content
-  std::vector<std::string> sectionContent;
-  while (std::getline(restartFile, line)) {
-    if (line.empty()) {
-      break;
-    }
-    sectionContent.push_back(line);
-  }
-  std::vector<std::vector<double>> velocities;
-  std::vector<double> velocity;
-  for (auto &line : sectionContent) {
-    std::istringstream iss(line);
-    double x, y, z;
-    iss >> x >> y >> z;
-    velocity = {x, y, z};
-    velocities.push_back(velocity);
-  }
-  return velocities;
-}
-
-std::vector<double> RestartSubscriber::readBoxDimensions(void) const {
-  std::ifstream restartFile(fileName);
-  if (!restartFile.is_open()) {
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot open the file " + fileName +
-        "\nExiting\n");
-    exit(1);
-  }
-
-  // Find line containing the section title
-  std::string line;
-  std::string sectionName = "!BOXX, BOXY, BOXZ";
-  bool found = false;
-  while (std::getline(restartFile, line)) {
-    if (line.find(sectionName) != std::string::npos) {
-      found = true;
-      break;
-    }
-  }
-  if (!found) {
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot find the box "
-        "dimension section (!BOXX, BOXY, BOXZ) in the file " +
-        fileName + "\nExiting\n");
-    exit(1);
-  }
-  // Read and store the section content
-  std::vector<std::string> sectionContent;
-  std::getline(restartFile, line);
-  double x = 0.0, y = 0.0, z = 0.0;
-  std::istringstream iss(line);
-  iss >> x >> y >> z;
-  std::vector<double> boxdim = {x, y, z};
-  return boxdim;
-}
-
-std::vector<int> RestartSubscriber::readFFTGridDimensions(void) const {
-  std::ifstream restartFile(fileName);
-  if (!restartFile.is_open()) {
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot open the file " + fileName +
-        "\nExiting\n");
-    exit(1);
-  }
-
-  // Find line containing the section title
-  std::string line;
-  std::string sectionName = "!FFTGRID";
-  bool found = false;
-  while (std::getline(restartFile, line)) {
-    if (line.find(sectionName) != std::string::npos) {
-      found = true;
-      break;
-    }
-  }
-  if (!found) {
-    std::vector<int> fftGrid;
-    fftGrid.push_back(0);
-    fftGrid.push_back(0);
-    fftGrid.push_back(0);
-    return fftGrid;
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot find the FFT grid section (!FFTGRID) "
-        "in the file " +
-        fileName + "\nExiting\n");
-    exit(1);
-  }
-  // Read and store the section content
-  std::vector<std::string> sectionContent;
-  std::getline(restartFile, line);
-  std::istringstream iss(line);
-  std::vector<int> fftGrid;
-  int x;
-  while (iss >> x) {
-    fftGrid.push_back(x);
-  }
-  return fftGrid;
-}
-
-std::vector<std::vector<double>>
-RestartSubscriber::readCoordsDeltaPrevious(void) const {
-  std::ifstream restartFile(fileName);
-  if (!restartFile.is_open()) {
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot open the file " + fileName +
-        "\nExiting\n");
-    exit(1);
-  }
-
-  // Find line containing the section title
-  std::string line;
-  std::string sectionName = "!XOLD, YOLD, ZOLD";
-  bool found = false;
-  while (std::getline(restartFile, line)) {
-    if (line.find(sectionName) != std::string::npos) {
-      found = true;
-      break;
-    }
-  }
-  if (!found) {
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot find the coordsDelta section (!XOLD, "
-        "YOLD, ZOLD) in the file " +
-        fileName + "\nExiting\n");
-    exit(1);
-  }
-  // Read and store the section content
-  std::vector<std::string> sectionContent;
-  while (std::getline(restartFile, line)) {
-    if (line.empty()) {
-      break;
-    }
-    sectionContent.push_back(line);
-  }
-  std::vector<std::vector<double>> coordsDeltaPrevious;
-  std::vector<double> coordDeltaPrevious;
-  for (auto &line : sectionContent) {
-    std::istringstream iss(line);
-    double x, y, z;
-    iss >> x >> y >> z;
-    coordDeltaPrevious = {x, y, z};
-    coordsDeltaPrevious.push_back(coordDeltaPrevious);
-  }
-  return coordsDeltaPrevious;
-}
-
-std::vector<double> RestartSubscriber::readOnStepPistonPosition(void) const {
-  std::ifstream restartFile(fileName);
-  if (!restartFile.is_open()) {
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot open the file " + fileName +
-        "\nExiting\n");
-    exit(1);
-  }
-
-  // Find line containing the section title
-  std::string line;
-  std::string sectionName = "!onStepPistonPosition";
-  bool found = false;
-  while (std::getline(restartFile, line)) {
-    if (line.find(sectionName) != std::string::npos) {
-      found = true;
-      break;
-    }
-  }
-  if (!found) {
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot find the "
-        "on-step piston position (!onStepPistonPosition) in the file " +
-        fileName + "\nExiting\n");
-    exit(1);
-  }
-  // Read and store the section content
-  std::vector<std::string> sectionContent;
-  std::getline(restartFile, line);
-  std::istringstream iss(line);
-  std::vector<double> onStepPistonPosition;
-  double x;
-  while (iss >> x) {
-    onStepPistonPosition.push_back(x);
-  }
-  return onStepPistonPosition;
-}
-
-std::vector<double> RestartSubscriber::readHalfStepPistonPosition(void) const {
-  std::ifstream restartFile(fileName);
-  if (!restartFile.is_open()) {
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot open the file " + fileName +
-        "\nExiting\n");
-    exit(1);
-  }
-
-  // Find line containing the section title
-  std::string line;
-  std::string sectionName = "!halfStepPistonPosition";
-  bool found = false;
-  while (std::getline(restartFile, line)) {
-    if (line.find(sectionName) != std::string::npos) {
-      found = true;
-      break;
-    }
-  }
-  if (!found) {
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot find the "
-        "half-step piston position (!halfStepPistonPosition) in the file " +
-        fileName + "\nExiting\n");
-    exit(1);
-  }
-  // Read and store the section content
-  std::vector<std::string> sectionContent;
-  std::getline(restartFile, line);
-  std::istringstream iss(line);
-  std::vector<double> halfStepPistonPosition;
-  double x;
-  while (iss >> x) {
-    halfStepPistonPosition.push_back(x);
-  }
-  return halfStepPistonPosition;
-}
-
-std::vector<double> RestartSubscriber::readOnStepPistonVelocity(void) const {
-  std::ifstream restartFile(fileName);
-  if (!restartFile.is_open()) {
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot open the file " + fileName +
-        "\nExiting\n");
-    exit(1);
-  }
-
-  // Find line containing the section title
-  std::string line;
-  std::string sectionName = "!onStepPistonVelocity";
-  bool found = false;
-  while (std::getline(restartFile, line)) {
-    if (line.find(sectionName) != std::string::npos) {
-      found = true;
-      break;
-    }
-  }
-  if (!found) {
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot find the "
-        "on-step piston velocity (!onStepPistonVelocity) in the file " +
-        fileName + "\nExiting\n");
-    exit(1);
-  }
-  // Read and store the section content
-  std::vector<std::string> sectionContent;
-  std::getline(restartFile, line);
-  std::istringstream iss(line);
-  std::vector<double> onStepPistonVelocity;
-  double x;
-  while (iss >> x) {
-    onStepPistonVelocity.push_back(x);
-  }
-  return onStepPistonVelocity;
-}
-
-std::vector<double> RestartSubscriber::readHalfStepPistonVelocity(void) const {
-  std::ifstream restartFile(fileName);
-  if (!restartFile.is_open()) {
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot open the file " + fileName +
-        "\nExiting\n");
-    exit(1);
-  }
-
-  // Find line containing the section title
-  std::string line;
-  std::string sectionName = "!halfStepPistonVelocity";
-  bool found = false;
-  while (std::getline(restartFile, line)) {
-    if (line.find(sectionName) != std::string::npos) {
-      found = true;
-      break;
-    }
-  }
-  if (!found) {
-    std::vector<double> halfStepPistonVelocity;
-    halfStepPistonVelocity.push_back(0.0);
-    halfStepPistonVelocity.push_back(0.0);
-    return halfStepPistonVelocity;
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot find the "
-        "half-step piston velocity (!halfStepPistonVelocity) in the file " +
-        fileName + "\nExiting\n");
-    exit(1);
-  }
-  // Read and store the section content
-  std::vector<std::string> sectionContent;
-  std::getline(restartFile, line);
-  std::istringstream iss(line);
-  std::vector<double> halfStepPistonVelocity;
-  double x;
-  while (iss >> x) {
-    halfStepPistonVelocity.push_back(x);
-  }
-  return halfStepPistonVelocity;
-}
-
-double RestartSubscriber::readNoseHooverPistonMass(void) const {
-  std::ifstream restartFile(fileName);
-  if (!restartFile.is_open()) {
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot open the file " + fileName +
-        "\nExiting\n");
-    exit(1);
-  }
-  // Find line containing the section title
-  std::string line;
-  std::string sectionName = "!noseHooverPistonMass";
-  bool found = false;
-  while (std::getline(restartFile, line)) {
-    if (line.find(sectionName) != std::string::npos) {
-      found = true;
-      break;
-    }
-  }
-
-  if (!found) {
-    auto lp = std::dynamic_pointer_cast<CudaLangevinPistonIntegrator>(
-        this->integrator);
-    return lp->computeNoseHooverPistonMass();
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot find the Nose Hoover piston mass "
-        "section (!noseHooverPistonMass) in the file " +
-        fileName + "\nExiting\n");
-    exit(1);
-  }
-
-  // Read and store the section content
-  std::vector<std::string> sectionContent;
-  std::getline(restartFile, line);
-  std::istringstream iss(line);
-  double pistonPosition;
-  iss >> pistonPosition;
-  return pistonPosition;
-}
-
-double RestartSubscriber::readNoseHooverPistonPosition(void) const {
-  std::ifstream restartFile(fileName);
-  if (!restartFile.is_open()) {
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot open the file " + fileName +
-        "\nExiting\n");
-    exit(1);
-  }
-  // Find line containing the section title
-  std::string line;
-  std::string sectionName = "!noseHooverPistonPosition";
-  bool found = false;
-  while (std::getline(restartFile, line)) {
-    if (line.find(sectionName) != std::string::npos) {
-      found = true;
-      break;
-    }
-  }
-
-  if (!found) {
-    return 0.0;
-    throw std::invalid_argument("ERROR(RestartSubscriber): Cannot find the "
-                                "Nose Hoover piston position section "
-                                "(!noseHooverPistonPosition) in the file " +
-                                fileName + "\nExiting\n");
-    exit(1);
-  }
-
-  // Read and store the section content
-  std::vector<std::string> sectionContent;
-  std::getline(restartFile, line);
-  std::istringstream iss(line);
-  double pistonPosition;
-  iss >> pistonPosition;
-  return pistonPosition;
-}
-
-double RestartSubscriber::readNoseHooverPistonVelocity(void) const {
-  std::ifstream restartFile(fileName);
-  if (!restartFile.is_open()) {
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot open the file " + fileName +
-        "\nExiting\n");
-    exit(1);
-  }
-  // Find line containing the section title
-  std::string line;
-  std::string sectionName = "!noseHooverPistonVelocity";
-  bool found = false;
-  while (std::getline(restartFile, line)) {
-    if (line.find(sectionName) != std::string::npos) {
-      found = true;
-      break;
-    }
-  }
-
-  if (!found) {
-    return 0.0;
-    throw std::invalid_argument("ERROR(RestartSubscriber): Cannot find the "
-                                "Nose Hoover piston velocity section "
-                                "(!noseHooverPistonVelocity) in the file " +
-                                fileName + "\nExiting\n");
-    exit(1);
-  }
-
-  // Read and store the section content
-  std::vector<std::string> sectionContent;
-  std::getline(restartFile, line);
-  std::istringstream iss(line);
-  double pistonVelocity;
-  iss >> pistonVelocity;
-  return pistonVelocity;
-}
-
-double RestartSubscriber::readNoseHooverPistonVelocityPrevious(void) const {
-  std::ifstream restartFile(fileName);
-  if (!restartFile.is_open()) {
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot open the file " + fileName +
-        "\nExiting\n");
-    exit(1);
-  }
-  // Find line containing the section title
-  std::string line;
-  std::string sectionName = "!noseHooverPistonVelocityPrevious";
-  bool found = false;
-  while (std::getline(restartFile, line)) {
-    if (line.find(sectionName) != std::string::npos) {
-      found = true;
-      break;
-    }
-  }
-
-  if (!found) {
-    return 0.0;
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot find the "
-        "Nose Hoover piston previous velocity section "
-        "(!noseHooverPistonVelocityPrevious) in the file " +
-        fileName + "\nExiting\n");
-    exit(1);
-  }
-
-  // Read and store the section content
-  std::vector<std::string> sectionContent;
-  std::getline(restartFile, line);
-  std::istringstream iss(line);
-  double pistonVelocity;
-  iss >> pistonVelocity;
-  return pistonVelocity;
-}
-
-double RestartSubscriber::readNoseHooverPistonForce(void) const {
-  std::ifstream restartFile(fileName);
-  if (!restartFile.is_open()) {
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot open the file " + fileName +
-        "\nExiting\n");
-    exit(1);
-  }
-  // Find line containing the section title
-  std::string line;
-  std::string sectionName = "!noseHooverPistonForce";
-  bool found = false;
-  while (std::getline(restartFile, line)) {
-    if (line.find(sectionName) != std::string::npos) {
-      found = true;
-      break;
-    }
-  }
-
-  if (!found) {
-    return 0.0;
-    throw std::invalid_argument("ERROR(RestartSubscriber): Cannot find the "
-                                "Nose Hoover piston force section "
-                                "(!noseHooverPistonForce) in the file " +
-                                fileName + "\nExiting\n");
-    exit(1);
-  }
-
-  // Read and store the section content
-  std::vector<std::string> sectionContent;
-  std::getline(restartFile, line);
-  std::istringstream iss(line);
-  double pistonForce;
-  iss >> pistonForce;
-  return pistonForce;
-}
-
-double RestartSubscriber::readNoseHooverPistonForcePrevious(void) const {
-  std::ifstream restartFile(fileName);
-  if (!restartFile.is_open()) {
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot open the file " + fileName +
-        "\nExiting\n");
-    exit(1);
-  }
-  // Find line containing the section title
-  std::string line;
-  std::string sectionName = "!noseHooverPistonForcePrevious";
-  bool found = false;
-  while (std::getline(restartFile, line)) {
-    if (line.find(sectionName) != std::string::npos) {
-      found = true;
-      break;
-    }
-  }
-
-  if (!found) {
-    return 0.0;
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot find the "
-        "Nose Hoover piston previous force section "
-        "(!noseHooverPistonForcePrevious) in the file " +
-        fileName + "\nExiting\n");
-    exit(1);
-  }
-
-  // Read and store the section content
-  std::vector<std::string> sectionContent;
-  std::getline(restartFile, line);
-  std::istringstream iss(line);
-  double pistonForce;
-  iss >> pistonForce;
-  return pistonForce;
-}
-* */
-
-/* *
-void RestartSubscriber::getRestartContent(std::string fileName,
-                                          std::string sectionName) {
-  std::fstream restartFile(fileName, std::ios::in);
-  if (!restartFile.is_open()) {
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot open the file " + fileName +
-        "\nExiting\n");
-    exit(1);
-  }
-
-  // Find line containing the section title
-  std::string line;
-  bool found = false;
-  while (std::getline(restartFile, line)) {
-    if (line.find(sectionName) != std::string::npos) {
-      found = true;
-      break;
-    }
-  }
-  if (!found) {
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): Cannot find the section " + sectionName +
-        " in the file " + fileName + "\nExiting\n");
-    exit(1);
-  }
-  // Read and store the section content
-  std::vector<std::string> sectionContent;
-  while (std::getline(restartFile, line)) {
-    if (line.empty()) {
-      break;
-      sectionContent.push_back(line);
-    }
-  }
-}
-* */
-
-/* *
-void RestartSubscriber::readRestart(void) {
-  if (!hasCharmmContext) {
-    throw std::invalid_argument(
-        "ERROR(RestartSubscriber): To read a restart file, "
-        "RestartSubscriber needs to be linked to a CharmmContext object\n");
-    exit(1);
-  }
-  if (!hasIntegrator) {
-    throw std::invalid_argument("ERROR(RestartSubscriber): To read a restart "
-                                "file, RestartSubscriber needs to be linked "
-                                "to an Integrator object\n");
-    exit(1);
-  }
-
-  charmmContext->setBoxDimensions(readBoxDimensions());
-  charmmContext->setCoordinates(readPositions());
-  charmmContext->assignVelocities(readVelocities());
-
-  // Try downcasting to Langevin thermostat, check if nullptr to know if
-  // pertinent or not
-  auto langevinThermostatIntegrator =
-      std::dynamic_pointer_cast<CudaLangevinThermostatIntegrator>(
-          this->integrator);
-
-  // Try downcasting to LP, check if nullptr to continue
-  auto langevinPistonIntegrator =
-      std::dynamic_pointer_cast<CudaLangevinPistonIntegrator>(this->integrator);
-
-  // If LP or LT, need coords deltaprevious
-  if ((langevinPistonIntegrator != nullptr) ||
-      (langevinThermostatIntegrator != nullptr)) {
-    integrator->setCoordsDeltaPrevious(readCoordsDeltaPrevious());
-  }
-
-  if (langevinPistonIntegrator != nullptr) {
-    // Langevin Piston : piston variables. Verify they are the right size.
-    // Also, box dim
-    int nPistonDofs = langevinPistonIntegrator->getPistonDegreesOfFreedom();
-    std::vector<double> ospp = readOnStepPistonPosition(),
-                        hspp = readHalfStepPistonPosition(),
-                        ospv = readOnStepPistonVelocity(),
-                        hspv = readHalfStepPistonVelocity();
-    if (ospp.size() != nPistonDofs) {
-      throw std::invalid_argument(
-          "ERROR(RestartSubscriber): Langevin-piston variable sizes (for "
-          "on-step piston position) read do not correspond to the Crystal type "
-          "chosen. dof read: " +
-          std::to_string(ospp.size()) +
-          ", dof expected: " + std::to_string(nPistonDofs));
-    }
-    if (hspp.size() != nPistonDofs) {
-      throw std::invalid_argument(
-          "ERROR(RestartSubscriber): Langevin-piston variable sizes (for "
-          "half-step piston position) read do not correspond to the Crystal "
-          "type chosen. dof read: " +
-          std::to_string(hspp.size()) +
-          ", dof expected: " + std::to_string(nPistonDofs));
-    }
-    if (ospv.size() != nPistonDofs) {
-      throw std::invalid_argument(
-          "ERROR(RestartSubscriber): Langevin-piston variable sizes (for "
-          "on-step piston velocity) read do not correspond to the Crystal "
-          "type chosen. dof read: " +
-          std::to_string(ospv.size()) +
-          ", dof expected: " + std::to_string(nPistonDofs));
-    }
-    if (hspv.size() != nPistonDofs) {
-      throw std::invalid_argument(
-          "ERROR(RestartSubscriber): Langevin-piston variable sizes (for "
-          "half-step piston velocity) read do not correspond to the Crystal "
-          "type chosen. dof read: " +
-          std::to_string(ospv.size()) +
-          ", dof expected: " + std::to_string(nPistonDofs));
-    }
-    langevinPistonIntegrator->setOnStepPistonPosition(ospp);
-    langevinPistonIntegrator->setHalfStepPistonPosition(hspp);
-    langevinPistonIntegrator->setOnStepPistonVelocity(ospv);
-    langevinPistonIntegrator->setHalfStepPistonVelocity(hspv);
-
-    // Nose-Hoover thermostat piston variables
-    langevinPistonIntegrator->setNoseHooverPistonMass(
-        readNoseHooverPistonMass());
-    langevinPistonIntegrator->setNoseHooverPistonPosition(
-        readNoseHooverPistonPosition());
-    langevinPistonIntegrator->setNoseHooverPistonVelocity(
-        readNoseHooverPistonVelocity());
-    langevinPistonIntegrator->setNoseHooverPistonVelocityPrevious(
-        readNoseHooverPistonVelocityPrevious());
-    langevinPistonIntegrator->setNoseHooverPistonForce(
-        readNoseHooverPistonForce());
-    langevinPistonIntegrator->setNoseHooverPistonForcePrevious(
-        readNoseHooverPistonForcePrevious());
-  }
-}
-
-void RestartSubscriber::openFile() {
-  checkPath(fileName);
-  // If the file already exists, open in read mode.
-  // If not, open in write mode.
-  std::fstream ifile(fileName);
-  if (ifile) { // file opened -> exists
-    fout.open(fileName, std::ios::in | std::ios::out);
-  } else { // ifile not opened -> does not exist previously -> write mode
-    fout.open(fileName, std::ios::out);
-  }
-}
-
-void RestartSubscriber::checkForNanValues(CudaContainer<double4> coords,
-                                          CudaContainer<double4> velmass,
-                                          std::vector<double> boxdim) {
-  if (std::isnan(boxdim[0]) || std::isnan(boxdim[1]) || std::isnan(boxdim[2])) {
-    std::cout << "Nan value found in box dimensions" << std::endl;
-    std::cout << "Exiting..." << std::endl;
-    exit(1);
-  }
-  for (int i = 0; i < this->charmmContext->getNumAtoms(); i++) {
-    if (std::isnan(coords[i].x) || std::isnan(coords[i].y) ||
-        std::isnan(coords[i].z)) {
-      std::cout << "Nan value found in coordinates at index " << i << std::endl;
-      std::cout << "Exiting..." << std::endl;
-      exit(1);
-    }
-
-    if (std::isnan(velmass[i].x) || std::isnan(velmass[i].y) ||
-        std::isnan(velmass[i].z)) {
-      std::cout << "Nan value found in velocities at index " << i << std::endl;
-      std::cout << "Exiting..." << std::endl;
-      exit(1);
-    }
-  }
-}
-* */

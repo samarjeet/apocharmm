@@ -13,6 +13,7 @@
 #include <chrono>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 
 /**
  * @brief Uses the BBK algorithm to update crystal dimensions for pressure
@@ -247,6 +248,12 @@ void CudaLangevinPistonIntegrator::setLangevinPistonFrictionSeed(
   m_Rng.seed(seed);
 }
 
+void CudaLangevinPistonIntegrator::setRng(const std::string &state) {
+  std::stringstream ss(state);
+  ss >> m_Rng;
+  return;
+}
+
 void CudaLangevinPistonIntegrator::setLangevinPistonFriction(
     const double pgamma) {
   if (m_LangevinPistonDegreesOfFreedom == -1) {
@@ -326,6 +333,19 @@ CudaLangevinPistonIntegrator::getAverageTemperature(void) const {
 const CudaContainer<double> &
 CudaLangevinPistonIntegrator::getAverageOldTemperature(void) const {
   return m_AverageOldTemperature;
+}
+
+CRYSTAL CudaLangevinPistonIntegrator::getCrystalType(void) const {
+  return m_CrystalType;
+}
+
+std::uint64_t
+CudaLangevinPistonIntegrator::getLangevinPistonFrictionSeed(void) const {
+  return m_Seed;
+}
+
+const std::mt19937 &CudaLangevinPistonIntegrator::getRng(void) const {
+  return m_Rng;
 }
 
 const CudaContainer<double> &
@@ -616,12 +636,6 @@ void CudaLangevinPistonIntegrator::initialize(void) {
   if (m_NoseHooverPistonMass[0] == -9999.9999)
     m_NoseHooverPistonMass.setToValue(this->computeNoseHooverPistonMass());
 
-  if (m_LangevinPistonMass[0] == -9999.9999) {
-    double m = this->computeLangevinPistonMass();
-    std::vector<double> mass(m_LangevinPistonDegreesOfFreedom, m);
-    this->setLangevinPistonMass(mass);
-  }
-
   // JEG260112: setCrystalType initializes all of the default values for the
   // Langevin piston, so we shouldn't need to do any other initialization
   if (m_LangevinPistonDegreesOfFreedom == -1) {
@@ -629,6 +643,12 @@ void CudaLangevinPistonIntegrator::initialize(void) {
         "CudaLangevinPistonIntegrator::initialize: CrystalType must be set "
         "before initialization (try setting the crystal type before setting "
         "the Charmm Context)");
+  }
+
+  if (m_LangevinPistonMass[0] == -9999.9999) {
+    double m = this->computeLangevinPistonMass();
+    std::vector<double> mass(m_LangevinPistonDegreesOfFreedom, m);
+    this->setLangevinPistonMass(mass);
   }
 
   double4 *coordsCharges = m_Context->getCoordinatesCharges().getDeviceData();
@@ -684,6 +704,318 @@ void CudaLangevinPistonIntegrator::initialize(void) {
   }
 
   cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
+
+  return;
+}
+
+void CudaLangevinPistonIntegrator::initializeFromRestartFile(
+    const std::string &rstFileName) {
+  // Ensure that the CharmmContext has been set before we try to initialize
+  if (m_Context == nullptr) {
+    throw std::runtime_error(
+        "CharmmContext must be set before initializing from a restart file");
+  }
+
+  std::ifstream fin(rstFileName);
+  if (!fin.is_open())
+    throw std::runtime_error("Could not open file \"" + rstFileName + "\"");
+
+  std::string line = "";
+
+  // Get crystal type and check if we need to use the RNG state
+  std::string crystalString = "NONE";
+  bool isApoRstFile = false;
+  line.clear();
+  std::getline(fin, line);
+  crystalString = line.substr(18, 4);
+  if (line.length() >= 33) // Check for APO flag
+    isApoRstFile = (line.substr(30, 3) == "APO");
+
+  if (crystalString == "CUBI")
+    this->setCrystalType(CRYSTAL::CUBIC);
+  else if (crystalString == "TETR")
+    this->setCrystalType(CRYSTAL::TETRAGONAL);
+  else if (crystalString == "ORTH")
+    this->setCrystalType(CRYSTAL::ORTHORHOMBIC);
+
+  bool foundSection = false;
+
+  // Find CRYSTAL PARAMETERS section
+  while (!fin.eof()) {
+    line.clear();
+    std::getline(fin, line);
+    if (line == " !CRYSTAL PARAMETERS") {
+      foundSection = true;
+      break;
+    }
+  }
+  if (!foundSection)
+    throw std::runtime_error("Could not find !CRYSTAL PARAMETERS section");
+
+  // Parse CRYSTAL PARAMETERS section
+  std::vector<double> XTLABC(6, 0.0);
+  std::vector<double> HDOT(6, 0.0);
+  // double PNH = 0.0,
+  double PNHV = 0.0, PNHF = 0.0;
+  // std::vector<double> UC1A(6, 0.0), UC2A(6, 0.0), UC1B(6, 0.0), UC2B(6, 0.0);
+  // double GRAD1A = 0.0, GRAD1B = 0.0, GRAD2A = 0.0, GRAD2B = 0.0;
+
+  line.clear();
+  std::getline(fin, line);
+  XTLABC[0] = apo::fortSciStrToCDouble(line.substr(0, 22));
+  XTLABC[1] = apo::fortSciStrToCDouble(line.substr(22, 22));
+  XTLABC[2] = apo::fortSciStrToCDouble(line.substr(44, 22));
+  line.clear();
+  std::getline(fin, line);
+  XTLABC[3] = apo::fortSciStrToCDouble(line.substr(0, 22));
+  XTLABC[4] = apo::fortSciStrToCDouble(line.substr(22, 22));
+  XTLABC[5] = apo::fortSciStrToCDouble(line.substr(44, 22));
+
+  line.clear();
+  std::getline(fin, line);
+  HDOT[0] = apo::fortSciStrToCDouble(line.substr(0, 22));
+  HDOT[1] = apo::fortSciStrToCDouble(line.substr(22, 22));
+  HDOT[2] = apo::fortSciStrToCDouble(line.substr(44, 22));
+  line.clear();
+  std::getline(fin, line);
+  HDOT[3] = apo::fortSciStrToCDouble(line.substr(0, 22));
+  HDOT[4] = apo::fortSciStrToCDouble(line.substr(22, 22));
+  HDOT[5] = apo::fortSciStrToCDouble(line.substr(44, 22));
+
+  line.clear();
+  std::getline(fin, line);
+  // PNH = apo::fortSciStrToCDouble(line.substr(0, 22)); // Not needed for LP
+  PNHV = apo::fortSciStrToCDouble(line.substr(22, 22));
+  PNHF = apo::fortSciStrToCDouble(line.substr(44, 22));
+
+  // Not needed for Langevin-Piston
+  line.clear();
+  std::getline(fin, line);
+  // UC1A[0] = apo::fortSciStrToCDouble(line.substr(0, 22));
+  // UC1A[1] = apo::fortSciStrToCDouble(line.substr(22, 22));
+  // UC1A[2] = apo::fortSciStrToCDouble(line.substr(44, 22));
+  line.clear();
+  std::getline(fin, line);
+  // UC1A[3] = apo::fortSciStrToCDouble(line.substr(0, 22));
+  // UC1A[4] = apo::fortSciStrToCDouble(line.substr(22, 22));
+  // UC1A[5] = apo::fortSciStrToCDouble(line.substr(44, 22));
+
+  // Not needed for Langevin-Piston
+  line.clear();
+  std::getline(fin, line);
+  // UC2A[0] = apo::fortSciStrToCDouble(line.substr(0, 22));
+  // UC2A[1] = apo::fortSciStrToCDouble(line.substr(22, 22));
+  // UC2A[2] = apo::fortSciStrToCDouble(line.substr(44, 22));
+  line.clear();
+  std::getline(fin, line);
+  // UC2A[3] = apo::fortSciStrToCDouble(line.substr(0, 22));
+  // UC2A[4] = apo::fortSciStrToCDouble(line.substr(22, 22));
+  // UC2A[5] = apo::fortSciStrToCDouble(line.substr(44, 22));
+
+  // // Not needed for Langevin-Piston
+  line.clear();
+  std::getline(fin, line);
+  // UC1B[0] = apo::fortSciStrToCDouble(line.substr(0, 22));
+  // UC1B[1] = apo::fortSciStrToCDouble(line.substr(22, 22));
+  // UC1B[2] = apo::fortSciStrToCDouble(line.substr(44, 22));
+  line.clear();
+  std::getline(fin, line);
+  // UC1B[3] = apo::fortSciStrToCDouble(line.substr(0, 22));
+  // UC1B[4] = apo::fortSciStrToCDouble(line.substr(22, 22));
+  // UC1B[5] = apo::fortSciStrToCDouble(line.substr(44, 22));
+
+  // Not needed for Langevin-Piston
+  line.clear();
+  std::getline(fin, line);
+  // UC2B[0] = apo::fortSciStrToCDouble(line.substr(0, 22));
+  // UC2B[1] = apo::fortSciStrToCDouble(line.substr(22, 22));
+  // UC2B[2] = apo::fortSciStrToCDouble(line.substr(44, 22));
+  line.clear();
+  std::getline(fin, line);
+  // UC2B[3] = apo::fortSciStrToCDouble(line.substr(0, 22));
+  // UC2B[4] = apo::fortSciStrToCDouble(line.substr(22, 22));
+  // UC2B[5] = apo::fortSciStrToCDouble(line.substr(44, 22));
+
+  // Not needed for Langevin-Piston
+  line.clear();
+  std::getline(fin, line);
+  // GRAD1A = apo::fortSciStrToCDouble(line.substr(0, 22));
+  // GRAD1B = apo::fortSciStrToCDouble(line.substr(22, 22));
+  // GRAD2A = apo::fortSciStrToCDouble(line.substr(44, 22));
+  line.clear();
+  std::getline(fin, line);
+  // GRAD2B = apo::fortSciStrToCDouble(line.substr(0, 22));
+
+  m_Context->setBoxDimensions({XTLABC[0], XTLABC[2], XTLABC[5]});
+
+  switch (m_CrystalType) {
+  case CRYSTAL::CUBIC:
+    m_LangevinPistonDeltaPosition[0] = HDOT[0];
+    break;
+
+  case CRYSTAL::TETRAGONAL:
+    m_LangevinPistonDeltaPosition[0] = HDOT[0];
+    m_LangevinPistonDeltaPosition[1] = HDOT[1];
+    break;
+
+  case CRYSTAL::ORTHORHOMBIC:
+    m_LangevinPistonDeltaPosition[0] = HDOT[0];
+    m_LangevinPistonDeltaPosition[1] = HDOT[1];
+    m_LangevinPistonDeltaPosition[2] = HDOT[2];
+    break;
+
+  default:
+    throw std::invalid_argument(
+        "Unable to use HDOT data for unknown CRYSTAL type");
+    break;
+  }
+  m_LangevinPistonDeltaPosition.transferToDevice();
+
+  m_NoseHooverPistonVelocity[0] = PNHV;
+  m_NoseHooverPistonVelocity.transferToDevice();
+
+  m_NoseHooverPistonForce[0] = PNHF;
+  m_NoseHooverPistonForce.transferToDevice();
+
+  // Find integer section
+  foundSection = false;
+  while (!fin.eof()) {
+    line.clear();
+    std::getline(fin, line);
+    if (line == " !NATOM,NPRIV,NSTEP,NSAVC,NSAVV,JHSTRT,NDEGF,SEED,NSAVL") {
+      foundSection = true;
+      break;
+    }
+  }
+  if (!foundSection) {
+    throw std::runtime_error(
+        "Could not find !NATOM,NPRIV,NSTEP,NSAVC,NSAVV,JHSTRT,NDEGF,SEED,NSAVL "
+        "section");
+  }
+
+  int NATOM = 0;
+  unsigned long long int NPRIV = 0;
+  int NSTEP = 0;
+  // int NSAVC = 0; // Not needed for Langevin-Piston
+  // int NSAVV = 0;  // Not needed for Langevin-Piston
+  // int JHSTRT = 0; // Not needed for Langevin-Piston
+  int NDEGF = 0;
+  std::uint64_t SEED = 0;
+  std::string RNGSTATE = "";
+
+  line.clear();
+  std::getline(fin, line);
+  NATOM = std::stoi(line.substr(0, 12));
+  NPRIV = std::stoull(line.substr(12, 12));
+  NSTEP = std::stoi(line.substr(24, 12));
+  // NSAVC = std::stoi(line.substr(36, 12));
+  // NSAVV = std::stoi(line.substr(48, 12));
+  // JHSTRT = std::stoi(line.substr(60, 12));
+  NDEGF = std::stoi(line.substr(72, 12));
+  SEED = std::stoull(line.substr(84, 22));
+  RNGSTATE = line.substr(106, std::string::npos);
+
+  if (NATOM != m_Context->getNumAtoms()) {
+    throw std::invalid_argument("NATOM mismatch in restart file \"" +
+                                rstFileName + "\"");
+  }
+  m_TotNumSteps = NPRIV;
+  m_NumSteps = NSTEP;
+  if (NDEGF != m_Context->getDegreesOfFreedom()) {
+    throw std::invalid_argument("NDEGF mismatch in restart file \"" +
+                                rstFileName + "\"");
+  }
+  this->setLangevinPistonFrictionSeed(SEED);
+  if (isApoRstFile)
+    this->setRng(RNGSTATE);
+
+  // Skip ENERGIES and STATISTICS section
+
+  // Find XOLD, YOLD, ZOLD section
+  foundSection = false;
+  while (!fin.eof()) {
+    line.clear();
+    std::getline(fin, line);
+    if (line == " !XOLD, YOLD, ZOLD") {
+      foundSection = true;
+      break;
+    }
+  }
+  if (!foundSection)
+    throw std::runtime_error("Could not find !XOLD, YOLD, ZOLD section");
+
+  // Parse XOLD, YOLD, ZOLD section
+  for (int i = 0; i < NATOM; i++) {
+    line.clear();
+    std::getline(fin, line);
+    m_CoordsDeltaPrevious[i].x = apo::fortSciStrToCDouble(line.substr(0, 22));
+    m_CoordsDeltaPrevious[i].y = apo::fortSciStrToCDouble(line.substr(22, 22));
+    m_CoordsDeltaPrevious[i].z = apo::fortSciStrToCDouble(line.substr(44, 22));
+  }
+  m_CoordsDeltaPrevious.transferToDevice();
+
+  // Find VX, VY, VZ section
+  foundSection = false;
+  while (!fin.eof()) {
+    line.clear();
+    std::getline(fin, line);
+    if (line == " !VX, VY, VZ") {
+      foundSection = true;
+      break;
+    }
+  }
+  if (!foundSection)
+    throw std::runtime_error("Could not find !VX, VY, VZ section");
+
+  for (int i = 0; i < NATOM; i++) {
+    line.clear();
+    std::getline(fin, line);
+    m_Context->getVelocityMass()[i].x =
+        apo::fortSciStrToCDouble(line.substr(0, 22));
+    m_Context->getVelocityMass()[i].y =
+        apo::fortSciStrToCDouble(line.substr(22, 22));
+    m_Context->getVelocityMass()[i].z =
+        apo::fortSciStrToCDouble(line.substr(44, 22));
+  }
+  m_Context->getVelocityMass().transferToDevice();
+
+  // Find X, Y, Z section
+  foundSection = false;
+  while (!fin.eof()) {
+    line.clear();
+    std::getline(fin, line);
+    if (line == " !X, Y, Z") {
+      foundSection = true;
+      break;
+    }
+  }
+  if (!foundSection)
+    throw std::runtime_error("Could not find !X, Y, Z section");
+
+  // Parse X, Y, Z section
+  for (int i = 0; i < NATOM; i++) {
+    line.clear();
+    std::getline(fin, line);
+    m_Context->getCoordinatesCharges()[i].x =
+        apo::fortSciStrToCDouble(line.substr(0, 22));
+    m_Context->getCoordinatesCharges()[i].y =
+        apo::fortSciStrToCDouble(line.substr(22, 22));
+    m_Context->getCoordinatesCharges()[i].z =
+        apo::fortSciStrToCDouble(line.substr(44, 22));
+  }
+  m_Context->getCoordinatesCharges().transferToDevice();
+
+  {
+    double4 *dptr = m_Context->getCoordinatesCharges().getDeviceData();
+    float4 *fptr = m_Context->getXYZQ()->getDeviceXYZQ();
+
+    constexpr int numThreads = 256;
+    const int numBlocks = (NATOM + numThreads - 1) / numThreads;
+    UpdateSinglePrecisionCoordinatesKernel<<<numBlocks, numThreads, 0,
+                                             *m_IntegratorStream>>>(fptr, dptr,
+                                                                    NATOM);
+    cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
+  }
 
   return;
 }
@@ -895,7 +1227,7 @@ __global__ static void UpdatePressureKernel(
   __syncthreads();
 
   if (threadIdx.x == 0) {
-    pressureScalar[0] =
+    *pressureScalar =
         (pressureTensor[0] + pressureTensor[4] + pressureTensor[8]) / 3.0;
 
     if (constantSurfaceTensionFlag == true) {
@@ -1185,16 +1517,16 @@ __global__ static void UpdateNoseHooverPistonKernel(
     const double referenceKineticEnergy, const double timeStep) {
   if (threadIdx.x == 0) {
     // Acutally store the change in velocity (not the force)
-    noseHooverPistonForce[0] = 2.0 * timeStep *
-                               (kineticEnergy[0] - referenceKineticEnergy) /
-                               noseHooverPistonMass[0];
+    *noseHooverPistonForce = 2.0 * timeStep *
+                             (*kineticEnergy - referenceKineticEnergy) /
+                             *noseHooverPistonMass;
 
-    if (noseHooverPistonForcePrevious[0] == 0.0)
-      noseHooverPistonForcePrevious[0] = noseHooverPistonForce[0];
+    if (*noseHooverPistonForcePrevious == 0.0)
+      *noseHooverPistonForcePrevious = *noseHooverPistonForce;
 
-    noseHooverPistonVelocity[0] =
-        noseHooverPistonVelocityPrevious[0] +
-        0.5 * (noseHooverPistonForce[0] + noseHooverPistonForcePrevious[0]);
+    *noseHooverPistonVelocity =
+        *noseHooverPistonVelocityPrevious +
+        0.5 * (*noseHooverPistonForce + *noseHooverPistonForcePrevious);
   }
 
   return;
@@ -1212,6 +1544,7 @@ __global__ static void PredictorCorrectorKernel(
     const double *__restrict__ halfStepCrystalFactor, const double timeStep) {
   const int idx = blockIdx.x * blockDim.x + threadIdx.x;
   const int stride = gridDim.x * blockDim.x;
+  const double fact = 0.5 / timeStep;
 
   const double lpFactX = timeStep * onStepCrystalFactor[0];
   const double lpFactY = timeStep * onStepCrystalFactor[1];
@@ -1221,7 +1554,6 @@ __global__ static void PredictorCorrectorKernel(
     nhFact = timeStep * timeStep * noseHooverPistonVelocity[0];
 
   for (int i = idx; i < numAtoms; i += stride) {
-    const double fact = 0.5 / timeStep;
     const double onStepVelocityX =
         fact * (coordsDeltaPrevious[i].x + coordsDeltaPredicted[i].x);
     const double onStepVelocityY =
@@ -1332,11 +1664,11 @@ UpdateAverageTemperatureKernel(double *__restrict__ averageTemperature,
   if (threadIdx.x == 0) {
     const double s = static_cast<double>(step + 1);
     const double ndegf = static_cast<double>(numDegreesOfFreedom);
-    const double temperature = kineticEnergy[0] / (0.5 * ndegf * kBoltz);
-    const double delta0 = temperature - averageTemperature[0];
-    averageTemperature[0] += delta0 / s;
-    // const double delta1 = temperature - averageTemperature[0];
-    // varianceTemperature[0] += delta0 * delta1;
+    const double temperature = *kineticEnergy / (0.5 * ndegf * kBoltz);
+    const double delta0 = temperature - *averageTemperature;
+    *averageTemperature += delta0 / s;
+    // const double delta1 = temperature - *averageTemperature;
+    // *varianceTemperature += delta0 * delta1;
   }
   return;
 }
@@ -1366,12 +1698,12 @@ UpdateAveragePressureKernel(double *__restrict__ pressureTensor,
   __syncthreads();
 
   if (threadIdx.x == 0) {
-    pressureScalar[0] =
+    *pressureScalar =
         (pressureTensor[0] + pressureTensor[4] + pressureTensor[8]) / 3.0;
-    const double delta0 = pressureScalar[0] - averagePressureScalar[0];
-    averagePressureScalar[0] += delta0 / s;
-    // const double delta1 = pressureScalar[0] - averagePressureScalar[0];
-    // variancePressureScalar[i] += delta0 * delta1;
+    const double delta0 = *pressureScalar - *averagePressureScalar;
+    *averagePressureScalar += delta0 / s;
+    // const double delta1 = *pressureScalar - *averagePressureScalar;
+    // *variancePressureScalar += delta0 * delta1;
   }
 
   return;
@@ -1431,14 +1763,13 @@ void CudaLangevinPistonIntegrator::propagateOneStep(void) {
                           m_NoseHooverPistonForcePrevious.getDeviceData(), 1,
                           *m_IntegratorStream);
 
-  {
-    constexpr int numThreads = 256;
-    const int numBlocks = (numAtoms + numThreads - 1) / numThreads;
-    HalfStepVelocityKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
-        coordsCharges, m_CoordsDelta.getDeviceData(),
-        m_CoordsDeltaPrevious.getDeviceData(), velMass, numAtoms, forces,
-        forceStride, m_TimeStep);
-  }
+  constexpr int numThreads = 256;
+  const int numBlocks = (numAtoms + numThreads - 1) / numThreads;
+
+  HalfStepVelocityKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
+      coordsCharges, m_CoordsDelta.getDeviceData(),
+      m_CoordsDeltaPrevious.getDeviceData(), velMass, numAtoms, forces,
+      forceStride, m_TimeStep);
 
   // JEG260114: This needs to be called after calculateForces becuase getVirial
   // actually updates the virial in the forceManager
@@ -1452,43 +1783,30 @@ void CudaLangevinPistonIntegrator::propagateOneStep(void) {
     m_HolonomicConstraint->handleHolonomicConstraints(
         m_CoordsRef.getDeviceData());
 
-    {
-      constexpr int numThreads = 256;
-      const int numBlocks = (numAtoms + numThreads - 1) / numThreads;
-      ComputeHolonomicConstraintForcesKernel<<<numBlocks, numThreads, 0,
-                                               *m_IntegratorStream>>>(
-          m_HolonomicConstraintForces.getDeviceData(), coordsCharges,
-          m_CoordsRef.getDeviceData(), m_CoordsDelta.getDeviceData(), velMass,
-          numAtoms, m_TimeStep);
-    }
+    ComputeHolonomicConstraintForcesKernel<<<numBlocks, numThreads, 0,
+                                             *m_IntegratorStream>>>(
+        m_HolonomicConstraintForces.getDeviceData(), coordsCharges,
+        m_CoordsRef.getDeviceData(), m_CoordsDelta.getDeviceData(), velMass,
+        numAtoms, m_TimeStep);
 
     cudaCheck(cudaMemsetAsync(
         static_cast<void *>(m_HolonomicConstraintVirial.getDeviceData()), 0,
         9 * sizeof(double), *m_IntegratorStream));
 
-    // ComputeHolonomicConstraintVirialKernel<<<1, 1024, 0,
-    // *m_IntegratorStream>>>(
+    ComputeHolonomicConstraintVirialKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
+        m_HolonomicConstraintVirial.getDeviceData(),
+        m_CoordsRef.getDeviceData(),
+        m_HolonomicConstraintForces.getDeviceData(), numAtoms);
+    // ComputeHolonomicConstraintVirialKernel<<<numBlocks, numThreads, 0,
+    //                                          *m_IntegratorStream>>>(
     //     m_HolonomicConstraintVirial.getDeviceData(),
     //     m_CoordsRef.getDeviceData(),
     //     m_HolonomicConstraintForces.getDeviceData(), numAtoms);
-    {
-      constexpr int numThreads = 256;
-      const int numBlocks = (numAtoms + numThreads - 1) / numThreads;
-      ComputeHolonomicConstraintVirialKernel<<<numBlocks, numThreads, 0,
-                                               *m_IntegratorStream>>>(
-          m_HolonomicConstraintVirial.getDeviceData(),
-          m_CoordsRef.getDeviceData(),
-          m_HolonomicConstraintForces.getDeviceData(), numAtoms);
-    }
 
-    {
-      constexpr int numThreads = 256;
-      const int numBlocks = (numAtoms + numThreads - 1) / numThreads;
-      UpdateCoordsDeltaAfterHolonomicConstraintKernel<<<
-          numBlocks, numThreads, 0, *m_IntegratorStream>>>(
-          m_CoordsDelta.getDeviceData(), coordsCharges,
-          m_CoordsRef.getDeviceData(), numAtoms);
-    }
+    UpdateCoordsDeltaAfterHolonomicConstraintKernel<<<numBlocks, numThreads, 0,
+                                                      *m_IntegratorStream>>>(
+        m_CoordsDelta.getDeviceData(), coordsCharges,
+        m_CoordsRef.getDeviceData(), numAtoms);
 
     UpdateVirialWithHolonomicConstraintVirialKernel<<<1, 32, 0,
                                                       *m_IntegratorStream>>>(
@@ -1499,19 +1817,15 @@ void CudaLangevinPistonIntegrator::propagateOneStep(void) {
       static_cast<void *>(m_KineticPressureTensor.getDeviceData()), 0,
       9 * sizeof(double), *m_IntegratorStream));
 
-  // ComputeAverageKineticPressureKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
+  ComputeAverageKineticPressureKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
+      m_KineticPressureTensor.getDeviceData(), velMass,
+      m_CoordsDelta.getDeviceData(), m_CoordsDeltaPrevious.getDeviceData(),
+      numAtoms, m_TimeStep);
+  // ComputeAverageKineticPressureKernel<<<numBlocks, numThreads, 0,
+  //                                       *m_IntegratorStream>>>(
   //     m_KineticPressureTensor.getDeviceData(), velMass,
   //     m_CoordsDelta.getDeviceData(), m_CoordsDeltaPrevious.getDeviceData(),
   //     numAtoms, m_TimeStep);
-  {
-    constexpr int numThreads = 256;
-    const int numBlocks = (numAtoms + numThreads - 1) / numThreads;
-    ComputeAverageKineticPressureKernel<<<numBlocks, numThreads, 0,
-                                          *m_IntegratorStream>>>(
-        m_KineticPressureTensor.getDeviceData(), velMass,
-        m_CoordsDelta.getDeviceData(), m_CoordsDeltaPrevious.getDeviceData(),
-        numAtoms, m_TimeStep);
-  }
 
   UpdatePressureKernel<<<1, 32, 0, *m_IntegratorStream>>>(
       m_PressureTensor.getDeviceData(), m_PressureScalar.getDeviceData(),
@@ -1526,19 +1840,15 @@ void CudaLangevinPistonIntegrator::propagateOneStep(void) {
       static_cast<void *>(m_DeltaKineticPressureTensor.getDeviceData()), 0,
       9 * sizeof(double), *m_IntegratorStream));
 
-  // ComputeDeltaKineticPressureKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
+  ComputeDeltaKineticPressureKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
+      m_DeltaKineticPressureTensor.getDeviceData(), velMass,
+      m_CoordsDelta.getDeviceData(), numAtoms,
+      0.5 * charmm::constants::patmos / volume, m_TimeStep);
+  // ComputeDeltaKineticPressureKernel<<<numBlocks, numThreads, 0,
+  //                                     *m_IntegratorStream>>>(
   //     m_DeltaKineticPressureTensor.getDeviceData(), velMass,
   //     m_CoordsDelta.getDeviceData(), numAtoms,
   //     0.5 * charmm::constants::patmos / volume, m_TimeStep);
-  {
-    constexpr int numThreads = 256;
-    const int numBlocks = (numAtoms + numThreads - 1) / numThreads;
-    ComputeDeltaKineticPressureKernel<<<numBlocks, numThreads, 0,
-                                        *m_IntegratorStream>>>(
-        m_DeltaKineticPressureTensor.getDeviceData(), velMass,
-        m_CoordsDelta.getDeviceData(), numAtoms,
-        0.5 * charmm::constants::patmos / volume, m_TimeStep);
-  }
 
   ComputeStaticDeltaPressureKernel<<<1, 32, 0, *m_IntegratorStream>>>(
       m_StaticDeltaPressureTensor.getDeviceData(),
@@ -1593,22 +1903,10 @@ void CudaLangevinPistonIntegrator::propagateOneStep(void) {
                         sizeof(double), *m_IntegratorStream));
 
     if (m_UsingOldTemperature) {
-      // ComputeOldKineticEnergyKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
-      //     m_KineticEnergy.getDeviceData(), velMass, numAtoms);
-      constexpr int numThreads = 256;
-      const int numBlocks = (numAtoms + numThreads - 1) / numThreads;
-      ComputeOldKineticEnergyKernel<<<numBlocks, numThreads, 0,
-                                      *m_IntegratorStream>>>(
+      ComputeOldKineticEnergyKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
           m_KineticEnergy.getDeviceData(), velMass, numAtoms);
     } else {
-      // ComputeKineticEnergyKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
-      //     m_KineticEnergy.getDeviceData(), velMass,
-      //     m_CoordsDeltaPredicted.getDeviceData(),
-      //     m_CoordsDeltaPrevious.getDeviceData(), numAtoms, m_TimeStep);
-      constexpr int numThreads = 256;
-      const int numBlocks = (numAtoms + numThreads - 1) / numThreads;
-      ComputeKineticEnergyKernel<<<numBlocks, numThreads, 0,
-                                   *m_IntegratorStream>>>(
+      ComputeKineticEnergyKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
           m_KineticEnergy.getDeviceData(), velMass,
           m_CoordsDeltaPredicted.getDeviceData(),
           m_CoordsDeltaPrevious.getDeviceData(), numAtoms, m_TimeStep);
@@ -1622,36 +1920,27 @@ void CudaLangevinPistonIntegrator::propagateOneStep(void) {
         m_NoseHooverPistonMass.getDeviceData(), m_KineticEnergy.getDeviceData(),
         referenceKineticEnergy, m_TimeStep);
 
-    {
-      constexpr int numThreads = 256;
-      const int numBlocks = (numAtoms + numThreads - 1) / numThreads;
-      PredictorCorrectorKernel<<<numBlocks, numThreads, 0,
-                                 *m_IntegratorStream>>>(
-          coordsCharges, velMass, m_CoordsDeltaPredicted.getDeviceData(),
-          m_CoordsDelta.getDeviceData(), m_CoordsDeltaPrevious.getDeviceData(),
-          m_CoordsRef.getDeviceData(), numAtoms,
-          m_NoseHooverPistonVelocity.getDeviceData(),
-          m_UsingNoseHooverThermostat, m_OnStepCrystalFactor.getDeviceData(),
-          m_HalfStepCrystalFactor.getDeviceData(), m_TimeStep);
-    }
+    PredictorCorrectorKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
+        coordsCharges, velMass, m_CoordsDeltaPredicted.getDeviceData(),
+        m_CoordsDelta.getDeviceData(), m_CoordsDeltaPrevious.getDeviceData(),
+        m_CoordsRef.getDeviceData(), numAtoms,
+        m_NoseHooverPistonVelocity.getDeviceData(), m_UsingNoseHooverThermostat,
+        m_OnStepCrystalFactor.getDeviceData(),
+        m_HalfStepCrystalFactor.getDeviceData(), m_TimeStep);
 
     cudaCheck(cudaMemsetAsync(
         static_cast<void *>(m_DeltaKineticPressureTensor.getDeviceData()), 0,
         9 * sizeof(double), *m_IntegratorStream));
 
-    // ComputeDeltaKineticPressureKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
+    ComputeDeltaKineticPressureKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
+        m_DeltaKineticPressureTensor.getDeviceData(), velMass,
+        m_CoordsDeltaPredicted.getDeviceData(), numAtoms,
+        0.5 * charmm::constants::patmos / volume, m_TimeStep);
+    // ComputeDeltaKineticPressureKernel<<<numBlocks, numThreads, 0,
+    //                                     *m_IntegratorStream>>>(
     //     m_DeltaKineticPressureTensor.getDeviceData(), velMass,
     //     m_CoordsDeltaPredicted.getDeviceData(), numAtoms,
     //     0.5 * charmm::constants::patmos / volume, m_TimeStep);
-    {
-      constexpr int numThreads = 256;
-      const int numBlocks = (numAtoms + numThreads - 1) / numThreads;
-      ComputeDeltaKineticPressureKernel<<<numBlocks, numThreads, 0,
-                                          *m_IntegratorStream>>>(
-          m_DeltaKineticPressureTensor.getDeviceData(), velMass,
-          m_CoordsDeltaPredicted.getDeviceData(), numAtoms,
-          0.5 * charmm::constants::patmos / volume, m_TimeStep);
-    }
 
     UpdateDeltaPressureKernel<<<1, 32, 0, *m_IntegratorStream>>>(
         m_DeltaPressureTensor.getDeviceData(),
@@ -1672,14 +1961,10 @@ void CudaLangevinPistonIntegrator::propagateOneStep(void) {
     m_HolonomicConstraint->handleHolonomicConstraints(
         m_CoordsRef.getDeviceData());
 
-    {
-      constexpr int numThreads = 256;
-      const int numBlocks = (numAtoms + numThreads - 1) / numThreads;
-      ApplyBarostatToReferenceCoordsKernel<<<numBlocks, numThreads, 0,
-                                             *m_IntegratorStream>>>(
-          m_CoordsRef.getDeviceData(), coordsCharges, numAtoms,
-          m_HalfStepCrystalFactor.getDeviceData());
-    }
+    ApplyBarostatToReferenceCoordsKernel<<<numBlocks, numThreads, 0,
+                                           *m_IntegratorStream>>>(
+        m_CoordsRef.getDeviceData(), coordsCharges, numAtoms,
+        m_HalfStepCrystalFactor.getDeviceData());
 
     double4 *tmp = m_CoordsRef.getDeviceData();
     m_Context->getCoordinatesCharges().getDeviceArray().assignData(tmp);
@@ -1690,8 +1975,6 @@ void CudaLangevinPistonIntegrator::propagateOneStep(void) {
     m_Context->getCoordinatesCharges().getDeviceArray().assignData(
         coordsCharges);
 
-    constexpr int numThreads = 256;
-    const int numBlocks = (numAtoms + numThreads - 1) / numThreads;
     UpdateCoordsDeltaAfterHolonomicConstraintKernel<<<numBlocks, numThreads, 0,
                                                       *m_IntegratorStream>>>(
         m_CoordsDeltaPredicted.getDeviceData(), coordsCharges,
@@ -1702,35 +1985,19 @@ void CudaLangevinPistonIntegrator::propagateOneStep(void) {
                            m_CoordsDelta.getDeviceData(), numAtoms,
                            *m_IntegratorStream);
 
-  {
-    constexpr int numThreads = 256;
-    const int numBlocks = (numAtoms + numThreads - 1) / numThreads;
-    OnStepVelocityKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
-        velMass, m_CoordsDelta.getDeviceData(),
-        m_CoordsDeltaPrevious.getDeviceData(), numAtoms, m_TimeStep);
-  }
+  OnStepVelocityKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
+      velMass, m_CoordsDelta.getDeviceData(),
+      m_CoordsDeltaPrevious.getDeviceData(), numAtoms, m_TimeStep);
 
   cudaCheck(
       cudaMemsetAsync(static_cast<void *>(m_KineticEnergy.getDeviceData()), 0,
                       sizeof(double), *m_IntegratorStream));
 
   if (m_UsingOldTemperature) {
-    // ComputeOldKineticEnergyKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
-    //     m_KineticEnergy.getDeviceData(), velMass, numAtoms);
-    constexpr int numThreads = 256;
-    const int numBlocks = (numAtoms + numThreads - 1) / numThreads;
-    ComputeOldKineticEnergyKernel<<<numBlocks, numThreads, 0,
-                                    *m_IntegratorStream>>>(
+    ComputeOldKineticEnergyKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
         m_KineticEnergy.getDeviceData(), velMass, numAtoms);
   } else {
-    // ComputeKineticEnergyKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
-    //     m_KineticEnergy.getDeviceData(), velMass,
-    //     m_CoordsDelta.getDeviceData(), m_CoordsDeltaPrevious.getDeviceData(),
-    //     numAtoms, m_TimeStep);
-    constexpr int numThreads = 256;
-    const int numBlocks = (numAtoms + numThreads - 1) / numThreads;
-    ComputeKineticEnergyKernel<<<numBlocks, numThreads, 0,
-                                 *m_IntegratorStream>>>(
+    ComputeKineticEnergyKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
         m_KineticEnergy.getDeviceData(), velMass, m_CoordsDelta.getDeviceData(),
         m_CoordsDeltaPrevious.getDeviceData(), numAtoms, m_TimeStep);
   }
@@ -1753,14 +2020,7 @@ void CudaLangevinPistonIntegrator::propagateOneStep(void) {
         cudaMemsetAsync(static_cast<void *>(m_KineticEnergy.getDeviceData()), 0,
                         sizeof(double), *m_IntegratorStream));
 
-    // ComputeKineticEnergyKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
-    //     m_KineticEnergy.getDeviceData(), velMass,
-    //     m_CoordsDelta.getDeviceData(), m_CoordsDeltaPrevious.getDeviceData(),
-    //     numAtoms, m_TimeStep);
-    constexpr int numThreads = 256;
-    const int numBlocks = (numAtoms + numThreads - 1) / numThreads;
-    ComputeKineticEnergyKernel<<<numBlocks, numThreads, 0,
-                                 *m_IntegratorStream>>>(
+    ComputeKineticEnergyKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
         m_KineticEnergy.getDeviceData(), velMass, m_CoordsDelta.getDeviceData(),
         m_CoordsDeltaPrevious.getDeviceData(), numAtoms, m_TimeStep);
 
@@ -1776,12 +2036,7 @@ void CudaLangevinPistonIntegrator::propagateOneStep(void) {
         cudaMemsetAsync(static_cast<void *>(m_KineticEnergy.getDeviceData()), 0,
                         sizeof(double), *m_IntegratorStream));
 
-    // ComputeOldKineticEnergyKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
-    //     m_KineticEnergy.getDeviceData(), velMass, numAtoms);
-    constexpr int numThreads = 256;
-    const int numBlocks = (numAtoms + numThreads - 1) / numThreads;
-    ComputeOldKineticEnergyKernel<<<numBlocks, numThreads, 0,
-                                    *m_IntegratorStream>>>(
+    ComputeOldKineticEnergyKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
         m_KineticEnergy.getDeviceData(), velMass, numAtoms);
 
     UpdateAverageTemperatureKernel<<<1, 32, 0, *m_IntegratorStream>>>(
@@ -1794,19 +2049,15 @@ void CudaLangevinPistonIntegrator::propagateOneStep(void) {
       static_cast<void *>(m_KineticPressureTensor.getDeviceData()), 0,
       9 * sizeof(double), *m_IntegratorStream));
 
-  // ComputeAverageKineticPressureKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
+  ComputeAverageKineticPressureKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
+      m_KineticPressureTensor.getDeviceData(), velMass,
+      m_CoordsDelta.getDeviceData(), m_CoordsDeltaPrevious.getDeviceData(),
+      numAtoms, m_TimeStep);
+  // ComputeAverageKineticPressureKernel<<<numBlocks, numThreads, 0,
+  //                                       *m_IntegratorStream>>>(
   //     m_KineticPressureTensor.getDeviceData(), velMass,
   //     m_CoordsDelta.getDeviceData(), m_CoordsDeltaPrevious.getDeviceData(),
   //     numAtoms, m_TimeStep);
-  {
-    constexpr int numThreads = 256;
-    const int numBlocks = (numAtoms + numThreads - 1) / numThreads;
-    ComputeAverageKineticPressureKernel<<<numBlocks, numThreads, 0,
-                                          *m_IntegratorStream>>>(
-        m_KineticPressureTensor.getDeviceData(), velMass,
-        m_CoordsDelta.getDeviceData(), m_CoordsDeltaPrevious.getDeviceData(),
-        numAtoms, m_TimeStep);
-  }
 
   UpdateAveragePressureKernel<<<1, 32, 0, *m_IntegratorStream>>>(
       m_PressureTensor.getDeviceData(), m_PressureScalar.getDeviceData(),
@@ -1817,13 +2068,9 @@ void CudaLangevinPistonIntegrator::propagateOneStep(void) {
 
   m_AverageWindowSize++;
 
-  {
-    constexpr int numThreads = 256;
-    const int numBlocks = (numAtoms + numThreads - 1) / numThreads;
-    UpdateSinglePrecisionCoordinatesKernel<<<numBlocks, numThreads, 0,
-                                             *m_IntegratorStream>>>(
-        xyzq, coordsCharges, numAtoms);
-  }
+  UpdateSinglePrecisionCoordinatesKernel<<<numBlocks, numThreads, 0,
+                                           *m_IntegratorStream>>>(
+      xyzq, coordsCharges, numAtoms);
 
   copy_DtoD_async<double4>(m_CoordsDelta.getDeviceData(),
                            m_CoordsDeltaPrevious.getDeviceData(), numAtoms,

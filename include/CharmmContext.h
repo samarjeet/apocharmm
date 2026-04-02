@@ -85,7 +85,7 @@ public:
    * ForceManager CharmmPSF object.  Also resets the neighborlist
    * @param crd  vector of vector (dimensions N,3) of atom coordinates
    */
-  void setCoordinates(const std::vector<std::vector<double>> coords);
+  void setCoordinates(const std::vector<std::vector<double>> &coords);
 
   /**
    * @brief Returns the coordinates as a vector of vector of double

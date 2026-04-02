@@ -32,4 +32,8 @@ std::string toUpper(const std::string &str);
 std::vector<std::string> split(const std::string &str,
                                const std::string &delimiter = " ");
 
+std::string cDoubleToFortSciStr(const double val, const int prec);
+
+double fortSciStrToCDouble(const std::string &str);
+
 } // namespace apo

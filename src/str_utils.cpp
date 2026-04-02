@@ -11,6 +11,8 @@
 #include "str_utils.h"
 
 #include <algorithm>
+#include <iomanip>
+#include <sstream>
 
 void apo::ltrimIP(std::string &str) {
   str.erase(str.begin(),
@@ -89,4 +91,18 @@ std::vector<std::string> apo::split(const std::string &str,
   tokens.push_back(s);
 
   return tokens;
+}
+
+std::string apo::cDoubleToFortSciStr(const double val, const int prec) {
+  std::ostringstream oss;
+  oss << std::scientific << std::setprecision(prec) << val;
+  std::string str = oss.str();
+  std::replace(str.begin(), str.end(), 'e', 'D');
+  return str;
+}
+
+double apo::fortSciStrToCDouble(const std::string &str) {
+  std::string s = str;
+  std::replace(s.begin(), s.end(), 'D', 'e');
+  return std::stod(s);
 }

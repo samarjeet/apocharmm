@@ -38,6 +38,7 @@ public:
   void setCrystalType(const CRYSTAL crystalType);
   void setLangevinPistonMass(const std::vector<double> &mass);
   void setLangevinPistonFrictionSeed(const std::uint64_t seed);
+  void setRng(const std::string &state);
   void setLangevinPistonFriction(const double pgamma);
   void resetAverages(void);
 
@@ -53,6 +54,7 @@ public:
   const CudaContainer<double> &getAverageTemperature(void) const;
   const CudaContainer<double> &getAverageOldTemperature(void) const;
 
+  CRYSTAL getCrystalType(void) const;
   const CudaContainer<double> &getReferencePressureTensor(void) const;
   const CudaContainer<double> &getLangevinPistonMass(void) const;
   const CudaContainer<double> &getLangevinPistonOnStepPosition(void) const;
@@ -80,6 +82,8 @@ public:
   CudaContainer<double> &getAverageOldTemperature(void);
   double getInstantaneousTemperature(void);
 
+  std::uint64_t getLangevinPistonFrictionSeed(void) const;
+  const std::mt19937 &getRng(void) const;
   CudaContainer<double> &getReferencePressureTensor(void);
   CudaContainer<double> &getLangevinPistonMass(void);
   CudaContainer<double> &getLangevinPistonOnStepPosition(void);
@@ -98,6 +102,7 @@ public:
 
 public:
   void initialize(void) override;
+  void initializeFromRestartFile(const std::string &rstFileName) override;
   void propagateOneStep(void) override;
 
 protected:

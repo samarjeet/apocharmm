@@ -13,6 +13,9 @@
 #include "gpu_utils.h"
 #include <chrono>
 #include <iostream>
+#include <stdexcept>
+
+#include <iomanip> // TMP
 
 CudaNoseHooverThermostatIntegrator::CudaNoseHooverThermostatIntegrator(
     const double timeStep)
@@ -350,6 +353,276 @@ void CudaNoseHooverThermostatIntegrator::initialize(void) {
   return;
 }
 
+void CudaNoseHooverThermostatIntegrator::initializeFromRestartFile(
+    const std::string &rstFileName) {
+  // Ensure that the CharmmContext has been set before we try to initialize
+  if (m_Context == nullptr) {
+    throw std::runtime_error(
+        "CharmmContext must be set before initializing from a restart file");
+  }
+
+  std::ifstream fin(rstFileName);
+  if (!fin.is_open())
+    throw std::runtime_error("Could not open file \"" + rstFileName + "\"");
+
+  std::string line = "";
+  bool foundSection = false;
+
+  // Find CRYSTAL PARAMETERS section
+  while (!fin.eof()) {
+    line.clear();
+    std::getline(fin, line);
+    if (line == " !CRYSTAL PARAMETERS") {
+      foundSection = true;
+      break;
+    }
+  }
+  if (!foundSection)
+    throw std::runtime_error("Could not find !CRYSTAL PARAMETERS section");
+
+  // Parse CRYSTAL PARAMETERS section
+  std::vector<double> XTLABC(6, 0.0);
+  // std::vector<double> HDOT(6, 0.0);
+  // double PNH = 0.0,
+  double PNHV = 0.0, PNHF = 0.0;
+  // std::vector<double> UC1A(6, 0.0), UC2A(6, 0.0), UC1B(6, 0.0), UC2B(6, 0.0);
+  // double GRAD1A = 0.0, GRAD1B = 0.0, GRAD2A = 0.0, GRAD2B = 0.0;
+
+  line.clear();
+  std::getline(fin, line);
+  XTLABC[0] = apo::fortSciStrToCDouble(line.substr(0, 22));
+  XTLABC[1] = apo::fortSciStrToCDouble(line.substr(22, 22));
+  XTLABC[2] = apo::fortSciStrToCDouble(line.substr(44, 22));
+  line.clear();
+  std::getline(fin, line);
+  XTLABC[3] = apo::fortSciStrToCDouble(line.substr(0, 22));
+  XTLABC[4] = apo::fortSciStrToCDouble(line.substr(22, 22));
+  XTLABC[5] = apo::fortSciStrToCDouble(line.substr(44, 22));
+
+  // Not needed for Nose-Hoover thermostat
+  line.clear();
+  std::getline(fin, line);
+  // HDOT[0] = apo::fortSciStrToCDouble(line.substr(0, 22));
+  // HDOT[1] = apo::fortSciStrToCDouble(line.substr(22, 22));
+  // HDOT[2] = apo::fortSciStrToCDouble(line.substr(44, 22));
+  line.clear();
+  std::getline(fin, line);
+  // HDOT[3] = apo::fortSciStrToCDouble(line.substr(0, 22));
+  // HDOT[4] = apo::fortSciStrToCDouble(line.substr(22, 22));
+  // HDOT[5] = apo::fortSciStrToCDouble(line.substr(44, 22));
+
+  line.clear();
+  std::getline(fin, line);
+  // PNH = apo::fortSciStrToCDouble(line.substr(0, 22)); // Not needed for NHT
+  PNHV = apo::fortSciStrToCDouble(line.substr(22, 22));
+  PNHF = apo::fortSciStrToCDouble(line.substr(44, 22));
+
+  // Not needed for Nose-Hoover thermostat
+  line.clear();
+  std::getline(fin, line);
+  // UC1A[0] = apo::fortSciStrToCDouble(line.substr(0, 22));
+  // UC1A[1] = apo::fortSciStrToCDouble(line.substr(22, 22));
+  // UC1A[2] = apo::fortSciStrToCDouble(line.substr(44, 22));
+  line.clear();
+  std::getline(fin, line);
+  // UC1A[3] = apo::fortSciStrToCDouble(line.substr(0, 22));
+  // UC1A[4] = apo::fortSciStrToCDouble(line.substr(22, 22));
+  // UC1A[5] = apo::fortSciStrToCDouble(line.substr(44, 22));
+
+  // Not needed for Nose-Hoover thermostat
+  line.clear();
+  std::getline(fin, line);
+  // UC2A[0] = apo::fortSciStrToCDouble(line.substr(0, 22));
+  // UC2A[1] = apo::fortSciStrToCDouble(line.substr(22, 22));
+  // UC2A[2] = apo::fortSciStrToCDouble(line.substr(44, 22));
+  line.clear();
+  std::getline(fin, line);
+  // UC2A[3] = apo::fortSciStrToCDouble(line.substr(0, 22));
+  // UC2A[4] = apo::fortSciStrToCDouble(line.substr(22, 22));
+  // UC2A[5] = apo::fortSciStrToCDouble(line.substr(44, 22));
+
+  // // Not needed for Nose-Hoover thermostat
+  line.clear();
+  std::getline(fin, line);
+  // UC1B[0] = apo::fortSciStrToCDouble(line.substr(0, 22));
+  // UC1B[1] = apo::fortSciStrToCDouble(line.substr(22, 22));
+  // UC1B[2] = apo::fortSciStrToCDouble(line.substr(44, 22));
+  line.clear();
+  std::getline(fin, line);
+  // UC1B[3] = apo::fortSciStrToCDouble(line.substr(0, 22));
+  // UC1B[4] = apo::fortSciStrToCDouble(line.substr(22, 22));
+  // UC1B[5] = apo::fortSciStrToCDouble(line.substr(44, 22));
+
+  // Not needed for Nose-Hoover thermostat
+  line.clear();
+  std::getline(fin, line);
+  // UC2B[0] = apo::fortSciStrToCDouble(line.substr(0, 22));
+  // UC2B[1] = apo::fortSciStrToCDouble(line.substr(22, 22));
+  // UC2B[2] = apo::fortSciStrToCDouble(line.substr(44, 22));
+  line.clear();
+  std::getline(fin, line);
+  // UC2B[3] = apo::fortSciStrToCDouble(line.substr(0, 22));
+  // UC2B[4] = apo::fortSciStrToCDouble(line.substr(22, 22));
+  // UC2B[5] = apo::fortSciStrToCDouble(line.substr(44, 22));
+
+  // Not needed for Nose-Hoover thermostat
+  line.clear();
+  std::getline(fin, line);
+  // GRAD1A = apo::fortSciStrToCDouble(line.substr(0, 22));
+  // GRAD1B = apo::fortSciStrToCDouble(line.substr(22, 22));
+  // GRAD2A = apo::fortSciStrToCDouble(line.substr(44, 22));
+  line.clear();
+  std::getline(fin, line);
+  // GRAD2B = apo::fortSciStrToCDouble(line.substr(0, 22));
+
+  m_Context->setBoxDimensions({XTLABC[0], XTLABC[2], XTLABC[5]});
+
+  m_NoseHooverPistonVelocity[0] = PNHV;
+  m_NoseHooverPistonVelocity.transferToDevice();
+
+  m_NoseHooverPistonForce[0] = PNHF;
+  m_NoseHooverPistonForce.transferToDevice();
+
+  // Find integer section
+  foundSection = false;
+  while (!fin.eof()) {
+    line.clear();
+    std::getline(fin, line);
+    if (line == " !NATOM,NPRIV,NSTEP,NSAVC,NSAVV,JHSTRT,NDEGF,SEED,NSAVL") {
+      foundSection = true;
+      break;
+    }
+  }
+  if (!foundSection) {
+    throw std::runtime_error(
+        "Could not find !NATOM,NPRIV,NSTEP,NSAVC,NSAVV,JHSTRT,NDEGF,SEED,NSAVL "
+        "section");
+  }
+
+  int NATOM = 0;
+  unsigned long long int NPRIV = 0;
+  int NSTEP = 0;
+  // int NSAVC = 0; // Not needed for Nose-Hoover Thermostat
+  // int NSAVV = 0;  // Not needed for Nose-Hoover Thermostat
+  // int JHSTRT = 0; // Not needed for Nose-Hoover Thermostat
+  int NDEGF = 0;
+  // std::uint64_t SEED = 0;    // Not needed for Nose-Hoover Thermostat
+  // std::string RNGSTATE = ""; // Not needed for Nose-Hoover Thermostat
+
+  line.clear();
+  std::getline(fin, line);
+  NATOM = std::stoi(line.substr(0, 12));
+  NPRIV = std::stoull(line.substr(12, 12));
+  NSTEP = std::stoi(line.substr(24, 12));
+  // NSAVC = std::stoi(line.substr(36, 12));
+  // NSAVV = std::stoi(line.substr(48, 12));
+  // JHSTRT = std::stoi(line.substr(60, 12));
+  NDEGF = std::stoi(line.substr(72, 12));
+  // SEED = std::stoull(line.substr(84, 22));
+  // RNGSTATE = line.substr(106, std::string::npos);
+
+  if (NATOM != m_Context->getNumAtoms()) {
+    throw std::invalid_argument("NATOM mismatch in restart file \"" +
+                                rstFileName + "\"");
+  }
+  m_TotNumSteps = NPRIV;
+  m_NumSteps = NSTEP;
+  if (NDEGF != m_Context->getDegreesOfFreedom()) {
+    throw std::invalid_argument("NDEGF mismatch in restart file \"" +
+                                rstFileName + "\"");
+  }
+
+  // Skip ENERGIES and STATISTICS section
+
+  // Find XOLD, YOLD, ZOLD section
+  foundSection = false;
+  while (!fin.eof()) {
+    line.clear();
+    std::getline(fin, line);
+    if (line == " !XOLD, YOLD, ZOLD") {
+      foundSection = true;
+      break;
+    }
+  }
+  if (!foundSection)
+    throw std::runtime_error("Could not find !XOLD, YOLD, ZOLD section");
+
+  // Parse XOLD, YOLD, ZOLD section
+  for (int i = 0; i < NATOM; i++) {
+    line.clear();
+    std::getline(fin, line);
+    m_CoordsDeltaPrevious[i].x = apo::fortSciStrToCDouble(line.substr(0, 22));
+    m_CoordsDeltaPrevious[i].y = apo::fortSciStrToCDouble(line.substr(22, 22));
+    m_CoordsDeltaPrevious[i].z = apo::fortSciStrToCDouble(line.substr(44, 22));
+  }
+  m_CoordsDeltaPrevious.transferToDevice();
+
+  // Find VX, VY, VZ section
+  foundSection = false;
+  while (!fin.eof()) {
+    line.clear();
+    std::getline(fin, line);
+    if (line == " !VX, VY, VZ") {
+      foundSection = true;
+      break;
+    }
+  }
+  if (!foundSection)
+    throw std::runtime_error("Could not find !VX, VY, VZ section");
+
+  for (int i = 0; i < NATOM; i++) {
+    line.clear();
+    std::getline(fin, line);
+    m_Context->getVelocityMass()[i].x =
+        apo::fortSciStrToCDouble(line.substr(0, 22));
+    m_Context->getVelocityMass()[i].y =
+        apo::fortSciStrToCDouble(line.substr(22, 22));
+    m_Context->getVelocityMass()[i].z =
+        apo::fortSciStrToCDouble(line.substr(44, 22));
+  }
+  m_Context->getVelocityMass().transferToDevice();
+
+  // Find X, Y, Z section
+  foundSection = false;
+  while (!fin.eof()) {
+    line.clear();
+    std::getline(fin, line);
+    if (line == " !X, Y, Z") {
+      foundSection = true;
+      break;
+    }
+  }
+  if (!foundSection)
+    throw std::runtime_error("Could not find !X, Y, Z section");
+
+  // Parse X, Y, Z section
+  for (int i = 0; i < NATOM; i++) {
+    line.clear();
+    std::getline(fin, line);
+    m_Context->getCoordinatesCharges()[i].x =
+        apo::fortSciStrToCDouble(line.substr(0, 22));
+    m_Context->getCoordinatesCharges()[i].y =
+        apo::fortSciStrToCDouble(line.substr(22, 22));
+    m_Context->getCoordinatesCharges()[i].z =
+        apo::fortSciStrToCDouble(line.substr(44, 22));
+  }
+  m_Context->getCoordinatesCharges().transferToDevice();
+
+  {
+    double4 *dptr = m_Context->getCoordinatesCharges().getDeviceData();
+    float4 *fptr = m_Context->getXYZQ()->getDeviceXYZQ();
+
+    constexpr int numThreads = 256;
+    const int numBlocks = (NATOM + numThreads - 1) / numThreads;
+    UpdateSinglePrecisionCoordinatesKernel<<<numBlocks, numThreads, 0,
+                                             *m_IntegratorStream>>>(fptr, dptr,
+                                                                    NATOM);
+    cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
+  }
+
+  return;
+}
+
 __global__ static void InvertDeltaAsymmetricKernel(
     double4 *__restrict__ coordsDeltaPrevious, const float4 *__restrict__ xyzq,
     const int2 *__restrict__ groups, const int numGroups, const float boxDimX) {
@@ -499,16 +772,16 @@ __global__ static void UpdateNoseHooverPistonKernel(
     const double referenceKineticEnergy, const double timeStep) {
   if (threadIdx.x == 0) {
     // Actually store the change in velocity (not the force)
-    noseHooverPistonForce[0] = 2.0 * timeStep *
-                               (kineticEnergy[0] - referenceKineticEnergy) /
-                               noseHooverPistonMass[0];
+    *noseHooverPistonForce = 2.0 * timeStep *
+                             (*kineticEnergy - referenceKineticEnergy) /
+                             *noseHooverPistonMass;
 
-    if (noseHooverPistonForcePrevious[0] == 0.0)
-      noseHooverPistonForcePrevious[0] = noseHooverPistonForce[0];
+    if (*noseHooverPistonForcePrevious == 0.0)
+      *noseHooverPistonForcePrevious = *noseHooverPistonForce;
 
-    noseHooverPistonVelocity[0] =
-        noseHooverPistonVelocityPrevious[0] +
-        0.5 * (noseHooverPistonForce[0] + noseHooverPistonForcePrevious[0]);
+    *noseHooverPistonVelocity =
+        *noseHooverPistonVelocityPrevious +
+        0.5 * (*noseHooverPistonForce + *noseHooverPistonForcePrevious);
   }
 
   return;
@@ -524,9 +797,9 @@ __global__ static void PredictorCorrectorKernel(
     const double timeStep) {
   const int idx = blockIdx.x * blockDim.x + threadIdx.x;
   const int stride = gridDim.x * blockDim.x;
+  const double fact = 0.5 / timeStep;
 
   for (int i = idx; i < numAtoms; i += stride) {
-    const double fact = 0.5 / timeStep;
     const double onStepVelocityX =
         fact * (coordsDeltaPrevious[i].x + coordsDeltaPredicted[i].x);
     const double onStepVelocityY =
@@ -577,11 +850,11 @@ UpdateAverageTemperatureKernel(double *__restrict__ averageTemperature,
   if (threadIdx.x == 0) {
     const double s = static_cast<double>(step + 1);
     const double ndegf = static_cast<double>(numDegreesOfFreedom);
-    const double temperature = kineticEnergy[0] / (0.5 * ndegf * kBoltz);
-    const double delta0 = temperature - averageTemperature[0];
-    averageTemperature[0] += delta0 / s;
-    // const double delta1 = temperature - averageTemperature[0];
-    // varianceTemperature[0] += delta0 * delta1;
+    const double temperature = *kineticEnergy / (0.5 * ndegf * kBoltz);
+    const double delta0 = temperature - *averageTemperature;
+    *averageTemperature += delta0 / s;
+    // const double delta1 = temperature - *averageTemperature;
+    // *varianceTemperature += delta0 * delta1;
   }
   return;
 }
@@ -599,9 +872,6 @@ void CudaNoseHooverThermostatIntegrator::propagateOneStep(void) {
   const int forceStride = m_Context->getForceStride();
   double *forces = m_Context->getForces()->xyz();
 
-  constexpr int numThreads = 256;
-  const int numBlocks = numAtoms / numThreads + 1;
-
   if (m_StepsSinceNeighborListUpdate % m_NonbondedListUpdateFrequency == 0) {
     if (m_Context->getForceManager()->getPeriodicBoundaryCondition() ==
         PBC::P21) {
@@ -612,8 +882,8 @@ void CudaNoseHooverThermostatIntegrator::propagateOneStep(void) {
           m_Context->getForceManager()->getPSF()->getGroups().getDeviceData();
       float boxDimX = static_cast<float>(m_Context->getBoxDimensions()[0]);
 
-      const int numThreads = 256;
-      const int numBlocks = numGroups / numThreads + 1;
+      constexpr int numThreads = 256;
+      const int numBlocks = (numGroups + numThreads - 1) / numThreads;
       InvertDeltaAsymmetricKernel<<<numBlocks, numThreads, 0,
                                     *m_IntegratorStream>>>(
           m_CoordsDeltaPrevious.getDeviceData(), xyzq, groups, numGroups,
@@ -631,7 +901,7 @@ void CudaNoseHooverThermostatIntegrator::propagateOneStep(void) {
 
   if ((m_DebugPrintFrequency > 0) &&
       (m_CurrentPropagatedStep % m_DebugPrintFrequency == 0)) {
-    m_Context->calculateForces(false, true, false);
+    m_Context->calculateForces(false, true, true);
   } else {
     m_Context->calculateForces(false, false, false);
   }
@@ -642,6 +912,9 @@ void CudaNoseHooverThermostatIntegrator::propagateOneStep(void) {
   copy_DtoD_async<double>(m_NoseHooverPistonForce.getDeviceData(),
                           m_NoseHooverPistonForcePrevious.getDeviceData(), 1,
                           *m_IntegratorStream);
+
+  constexpr int numThreads = 256;
+  const int numBlocks = (numAtoms + numThreads - 1) / numThreads;
 
   HalfStepVelocityKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
       coordsCharges, m_CoordsDelta.getDeviceData(),

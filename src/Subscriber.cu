@@ -20,7 +20,7 @@ Subscriber::Subscriber(void)
       m_CharmmContext(nullptr), m_Integrator(nullptr) {}
 
 Subscriber::Subscriber(const std::string &fileName) : Subscriber() {
-  m_FileName = fileName;
+  this->setFileName(fileName);
   this->openFile();
 }
 
@@ -39,10 +39,6 @@ void Subscriber::setFileName(const std::string &fileName) {
   m_FileName = fileName;
   return;
 }
-
-// void Subscriber::setTimeStepFromIntegrator(double ts) {
-//   integratorTimeStep = ts;
-// }
 
 void Subscriber::setCharmmContext(std::shared_ptr<CharmmContext> ctx) {
   if (m_CharmmContext != nullptr)

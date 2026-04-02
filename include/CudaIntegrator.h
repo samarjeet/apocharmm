@@ -13,6 +13,8 @@
 #include "CudaHolonomicConstraint.h"
 #include "Subscriber.h"
 #include "XYZQ.h"
+#include "str_utils.h"
+#include <fstream>
 #include <map>
 #include <memory>
 
@@ -77,6 +79,8 @@ public:
   std::shared_ptr<CharmmContext> getCharmmContext(void);
 
   virtual void initialize(void);
+
+  virtual void initializeFromRestartFile(const std::string &rstFileName);
 
   /**
    * @brief Propagate a single time step
@@ -211,6 +215,15 @@ public:
    */
   int getCurrentPropagatedStep(void) const;
 
+  /** @brief Returns the total number of dynamics steps that have been performed
+   * for a "given" trajectory.
+   */
+  unsigned long long int getTotNumSteps(void) const;
+
+  /** @brief Returns the number of steps most recently requested for dynamics.
+   */
+  int getNumSteps(void) const;
+
   ///////////////
   // PROTECTED //
   ///////////////
@@ -254,6 +267,10 @@ protected:
   /** @brief Allows subscribers to have knowledge of which step the integrator
    * has propgated*/
   int m_CurrentPropagatedStep;
+
+  unsigned long long int m_TotNumSteps;
+
+  int m_NumSteps;
 
   std::shared_ptr<CudaHolonomicConstraint> m_HolonomicConstraint;
 

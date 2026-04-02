@@ -38,7 +38,7 @@ void exportCharmmContext(py::module &mod) {
            "takes CHARMM crd object")
       .def("setCoordinates",
            static_cast<void (CharmmContext::*)(
-               const std::vector<std::vector<double>>)>(
+               const std::vector<std::vector<double>> &)>(
                &CharmmContext::setCoordinates),
            "takes 3*N array of coordinates")
       //.def("setCoordinates", &CharmmContext::setCoordinates,

@@ -120,7 +120,7 @@ void CharmmContext::setCoordinates(const std::shared_ptr<Coordinates> crd) {
 }
 
 void CharmmContext::setCoordinates(
-    const std::vector<std::vector<double>> coords) {
+    const std::vector<std::vector<double>> &coords) {
   // Constructor for CharmmCrd casts to float4 which loses precision when
   // reading from restart file
   // 1. Create a charmmCrd using this vec{vec{double}}

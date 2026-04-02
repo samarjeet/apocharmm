@@ -11,7 +11,6 @@
 #include "CharmmContext.h"
 #include "CharmmCrd.h"
 #include "CudaLangevinPistonIntegrator.h"
-#include "CudaNoseHooverThermostatIntegrator.h"
 #include "DcdSubscriber.h"
 #include "catch.hpp"
 #include "compare.h"

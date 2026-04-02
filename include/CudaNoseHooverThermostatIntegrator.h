@@ -55,6 +55,7 @@ public:
 
 public:
   void initialize(void) override;
+  void initializeFromRestartFile(const std::string &rstFileName) override;
   void propagateOneStep(void) override;
 
 protected:
