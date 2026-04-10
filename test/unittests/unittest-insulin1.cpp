@@ -53,8 +53,7 @@ TEST_CASE("insulin", "[energy]") {
     ctx->assignVelocitiesAtTemperature(300);
 
     auto integrator = std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    integrator->setFriction(5.0);
-    integrator->setBathTemperature(300.0);
+    integrator->setThermostatFriction(5.0);
     integrator->setCharmmContext(ctx);
 
     auto subscriber = std::make_shared<DcdSubscriber>("insulin1.dcd");

@@ -13,8 +13,8 @@
 #include "gpu_utils.h"
 #include <cassert>
 #include <iostream>
-#include <stdio.h>
 #include <sstream>
+#include <stdio.h>
 //#define BUCKET_SORT_IN_USE
 #include "CudaNeighborListSort.h"
 
@@ -715,6 +715,39 @@ __global__ void calc_bb_cell_bz_kernel(const int ncell,
   }
 }
 
+void CudaNeighborListSort::dealloc(void) {
+  if (col_natom != NULL)
+    deallocate<int>(&col_natom);
+  if (col_patom != NULL)
+    deallocate<int>(&col_patom);
+  if (atom_icol != NULL)
+    deallocate<int>(&atom_icol);
+  if (col_xy_zone != NULL)
+    deallocate<int3>(&col_xy_zone);
+  if (loc2gloTmp != NULL)
+    deallocate<int>(&loc2gloTmp);
+  if (xyzqTmp != NULL)
+    deallocate<float4>(&xyzqTmp);
+#ifdef BUCKET_SORT_IN_USE
+  if (bucketPos != NULL)
+    deallocate<int>(&bucketPos);
+  if (bucketIndex != NULL)
+    deallocate<int>(&bucketIndex);
+  if (indSortedTmp != NULL)
+    deallocate<int>(&indSortedTmp);
+#else
+  if (keyvalBuffer != NULL)
+    deallocate<keyval_t>(&keyvalBuffer);
+#endif
+  deallocate_host<int>(&h_ncell);
+  deallocate_host<int>(&h_zoneMaxZColNatom);
+  deallocate<int>(&d_zoneMaxZColNatom);
+  cudaCheck(cudaEventDestroy(ncell_copy_event));
+  cudaCheck(cudaEventDestroy(zoneMaxZColNatom_copy_event));
+
+  return;
+}
+
 //########################################################################################
 //########################################################################################
 //########################################################################################
@@ -776,34 +809,7 @@ CudaNeighborListSort::CudaNeighborListSort(const int tilesize,
 // Class destructor
 //
 CudaNeighborListSort::~CudaNeighborListSort() {
-  if (col_natom != NULL)
-    deallocate<int>(&col_natom);
-  if (col_patom != NULL)
-    deallocate<int>(&col_patom);
-  if (atom_icol != NULL)
-    deallocate<int>(&atom_icol);
-  if (col_xy_zone != NULL)
-    deallocate<int3>(&col_xy_zone);
-  if (loc2gloTmp != NULL)
-    deallocate<int>(&loc2gloTmp);
-  if (xyzqTmp != NULL)
-    deallocate<float4>(&xyzqTmp);
-#ifdef BUCKET_SORT_IN_USE
-  if (bucketPos != NULL)
-    deallocate<int>(&bucketPos);
-  if (bucketIndex != NULL)
-    deallocate<int>(&bucketIndex);
-  if (indSortedTmp != NULL)
-    deallocate<int>(&indSortedTmp);
-#else
-  if (keyvalBuffer != NULL)
-    deallocate<keyval_t>(&keyvalBuffer);
-#endif
-  deallocate_host<int>(&h_ncell);
-  deallocate_host<int>(&h_zoneMaxZColNatom);
-  deallocate<int>(&d_zoneMaxZColNatom);
-  cudaCheck(cudaEventDestroy(ncell_copy_event));
-  cudaCheck(cudaEventDestroy(zoneMaxZColNatom_copy_event));
+  this->dealloc(); // To get rid of compiler warnings
 }
 
 //
@@ -915,9 +921,9 @@ void CudaNeighborListSort::sort_setup(const int *zone_patom,
       h_ZoneParam[izone].celldz_min =
           zsize / (float)(h_ZoneParam[izone].ncellz_max);
       if (test) {
-         std::stringstream tmpexc; 
+        std::stringstream tmpexc;
         tmpexc << izone << ": " << h_ZoneParam[izone].min_xyz.z << " ... "
-                  << h_ZoneParam[izone].max_xyz.z << std::endl;
+               << h_ZoneParam[izone].max_xyz.z << std::endl;
         throw std::invalid_argument(tmpexc.str());
       }
     } else {
@@ -1021,10 +1027,10 @@ void CudaNeighborListSort::sort_core(
   nthread = min(((ncol_tot - 1) / tilesize + 1) * tilesize, get_max_nthread());
   shmem_size = nthread * sizeof(int2);
   if (shmem_size > get_max_shmem_size()) {
-     std::stringstream tmpexc; 
+    std::stringstream tmpexc;
     tmpexc << "CudaNeighborListSort::sort_core, Device maximum reached: "
-                 "shmem_size="
-              << shmem_size << std::endl;
+              "shmem_size="
+           << shmem_size << std::endl;
     throw std::invalid_argument(tmpexc.str());
     exit(1);
   }

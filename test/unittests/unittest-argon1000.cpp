@@ -74,8 +74,7 @@ TEST_CASE("argon1000", "[energy conservation]") {
   // Use no friction to test energy conservation
   SECTION("LangevinThermostat") {
     integratorMargin = .1;
-    auto integrator =
-        std::make_shared<CudaLangevinThermostatIntegrator>(0.001, 300., 0.0);
+    auto integrator = std::make_shared<CudaLangevinThermostatIntegrator>(0.001);
     integrator->setCharmmContext(ctx);
     for (int i = 0; i < nFrames; i++) {
       integrator->propagate(nStepsPerFrame);

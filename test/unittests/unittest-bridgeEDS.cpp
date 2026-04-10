@@ -80,8 +80,8 @@ TEST_CASE("eds", "[energy]") {
     ctx->calculatePotentialEnergy(true, true);
     ctx->assignVelocitiesAtTemperature(300);
     auto integrator = std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    integrator->setFriction(5.0);
-    integrator->setBathTemperature(300.0);
+    integrator->setThermostatFriction(5.0);
+    integrator->setReferenceTemperature(300.0);
     integrator->setCharmmContext(ctx);
 
     integrator->propagate(50000);

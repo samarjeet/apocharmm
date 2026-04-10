@@ -4,7 +4,7 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author: Samarjeet Prasad, James E. Gonzales II
+// Author: James E. Gonzales II, Samarjeet Prasad
 //
 // ENDLICENSE
 
@@ -12,77 +12,54 @@
 
 #include "CharmmContext.h"
 #include "CudaIntegrator.h"
+#include <cstdint>
 #include <curand_kernel.h>
-#include <map>
-#include <memory>
 
-/** @brief Langevin integrator.
- * If run without setting a friction coefficient nor a bath temperature, will
- * propagate as a NVE integrator
- *
- */
 class CudaLangevinThermostatIntegrator : public CudaIntegrator {
-
 public:
-  /** @brief Base constructor. Uses timeStep (in ps) as input.
-   * @param timeStep Time step in ps
-   */
   CudaLangevinThermostatIntegrator(const double timeStep);
-
-  /** @brief Creates a Langevin Thermostat integrator using the time step length
-   * (ps), the bath temperature (K) and the friction coefficient (ps-1).
-   * @param timeStep Time step in ps
-   * @param bathTemperature Bath temperature in K
-   * @param friction Friction coefficient in ps-1
-   */
-  CudaLangevinThermostatIntegrator(const double timeStep,
-                                   const double bathTemperature,
-                                   const double friction);
-
   ~CudaLangevinThermostatIntegrator(void);
 
-  // Put these in the base class
-  // void setContext();
-  void initialize(void);
+public:
+  void setReferenceTemperature(const double referenceTemperature);
+  void setThermostatFriction(const double thermostatFriction);
+  void setThermostatRngSeed(const std::uint64_t seed);
+  void setRngSequencePos(const unsigned long long int sequencePos);
+  void resetAverageTemperature(void);
 
-  /**
-   * @brief Set the Friction value in ps ^ -1
-   *
-   * @param frictionIn
-   */
-  void setFriction(const double friction);
+public:
+  double getReferenceTemperature(void) const;
+  double getThermostatFriction(void) const;
+  std::uint64_t getThermostatRngSeed(void) const;
+  unsigned long long int getRngSequencePos(void) const;
+  int getAverageWindowSize(void) const;
+  const CudaContainer<double> &getKineticEnergy(void) const;
+  const CudaContainer<double> &getAverageTemperature(void) const;
 
-  double getFriction(void) const;
+  CudaContainer<double> &getKineticEnergy(void);
+  CudaContainer<double> &getAverageTemperature(void);
 
-  /**
-   * @brief Set the Bath Temperature of the thermostat
-   *
-   * @param temp
-   */
-  void setBathTemperature(const double bathTemperature);
-
-  /**
-   * @brief Get the Bath Temperature of the thermostat
-   *
-   * @return double
-   */
-  double getBathTemperature(void) const;
-
+public:
+  void initialize(void) override;
+  void initializeFromRestartFile(const std::string &rstFileName) override;
   void propagateOneStep(void) override;
 
-  std::map<std::string, std::string> getIntegratorDescriptors(void) override;
+protected:
+  void initializeRng(void);
+  void removeCenterOfMassMotion(void);
+  void alloc(const int n);
+  void dealloc(void);
 
-  const CudaContainer<double4> &getCoordsDeltaPrevious(void) const override;
+protected:
+  double m_ReferenceTemperature;
+  double m_ThermostatFriction;
+  double m_ThermostatGamma;
 
-  CudaContainer<double4> &getCoordsDeltaPrevious(void) override;
+  std::uint64_t m_Seed;
+  unsigned long long int m_RngSequencePos;
+  curandStatePhilox4_32_10_t *m_RngStates;
 
-  void setCoordsDeltaPrevious(
-      const std::vector<std::vector<double>> &coordsDeltaPrevious) override;
-
-private:
-  double m_Friction;
-  curandStatePhilox4_32_10_t *m_DevPHILOXStates;
-  int m_StepsSinceLastReport;
-  double m_BathTemperature;
-  std::string m_IntegratorTypeName; // = "LangevinThermostat";
+  int m_AverageWindowSize;
+  CudaContainer<double> m_KineticEnergy;
+  CudaContainer<double> m_AverageTemperature;
 };

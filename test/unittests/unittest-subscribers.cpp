@@ -335,8 +335,8 @@ TEST_CASE("MBARSubscriber") {
   ctx->assignVelocitiesAtTemperature(300);
 
   SECTION("save") {
-    auto integrator =
-        std::make_shared<CudaLangevinThermostatIntegrator>(0.002, 300., 12.);
+    auto integrator = std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
+    integrator->setThermostatFriction(12.0);
     integrator->setCharmmContext(ctx);
     auto myRestartSubWrite =
         std::make_shared<RestartSubscriber>("restartWaterThermostat.res", 10);

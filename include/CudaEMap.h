@@ -29,8 +29,9 @@ public:
     atomicMasses = context->getForceManager()->getPSF()->getAtomMasses();
   }
 
-  ~CudaEMap() { cudaCheck(cudaStreamDestroy(stream)); }
+  ~CudaEMap() { this->dealloc(); }
   void generate();
+  void dealloc(void);
 
 private:
   std::shared_ptr<CharmmContext> context;

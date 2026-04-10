@@ -249,21 +249,33 @@
 #endif
 
     if (i < 4) {
-      shred[i].x += shred[i + 4].x;
-      shred[i].y += shred[i + 4].y;
-      shred[i].z += shred[i + 4].z;
+      shred[i].x = shred[i].x + shred[i + 4].x;
+      shred[i].y = shred[i].y + shred[i + 4].y;
+      shred[i].z = shred[i].z + shred[i + 4].z;
 #ifdef DOMDEC_MSLDPME
-      shred[i].w += shred[i + 4].w;
+      shred[i].w = shred[i].w + shred[i + 4].w;
 #endif
+      //       shred[i].x += shred[i + 4].x;
+      //       shred[i].y += shred[i + 4].y;
+      //       shred[i].z += shred[i + 4].z;
+      // #ifdef DOMDEC_MSLDPME
+      //       shred[i].w += shred[i + 4].w;
+      // #endif
     }
 
     if (i < 2) {
-      shred[i].x += shred[i + 2].x;
-      shred[i].y += shred[i + 2].y;
-      shred[i].z += shred[i + 2].z;
+      shred[i].x = shred[i].x + shred[i + 2].x;
+      shred[i].y = shred[i].y + shred[i + 2].y;
+      shred[i].z = shred[i].z + shred[i + 2].z;
 #ifdef DOMDEC_MSLDPME
-      shred[i].w += shred[i + 2].w;
+      shred[i].w = shred[i].w + shred[i + 2].w;
 #endif
+      //       shred[i].x += shred[i + 2].x;
+      //       shred[i].y += shred[i + 2].y;
+      //       shred[i].z += shred[i + 2].z;
+      // #ifdef DOMDEC_MSLDPME
+      //       shred[i].w += shred[i + 2].w;
+      // #endif
     }
 
     if (i == 0) {

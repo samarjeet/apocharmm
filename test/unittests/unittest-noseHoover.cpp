@@ -271,7 +271,7 @@ TEST_CASE("noseHooverThermostat", "[dynamics]") {
   }
 }
 
-/* */
+/* *
 TEST_CASE("optimalTemperature") {
   const std::string dataPath = getDataPath();
   const std::vector<double> boxDims(3, 50.0);
@@ -315,13 +315,10 @@ TEST_CASE("optimalTemperature") {
 
     integrator->propagate(nsteps);
 
-    CudaContainer<double> averageOldTemperature =
-        integrator->getAverageOldTemperature();
     CudaContainer<double> averageTemperature =
         integrator->getAverageTemperature();
-    averageOldTemperature.transferToHost();
     averageTemperature.transferToHost();
-    std::cout << "Average Old Temperature:  " << averageOldTemperature[0]
+    std::cout << "Average Old Temperature:  " << averageTemperature[1]
               << std::endl;
     std::cout << "Average Jung Temperature: " << averageTemperature[0]
               << std::endl;
@@ -340,16 +337,13 @@ TEST_CASE("optimalTemperature") {
 
     integrator->propagate(nsteps);
 
-    CudaContainer<double> averageOldTemperature =
-        integrator->getAverageOldTemperature();
     CudaContainer<double> averageTemperature =
         integrator->getAverageTemperature();
-    averageOldTemperature.transferToHost();
     averageTemperature.transferToHost();
-    std::cout << "Average Old Temperature:  " << averageOldTemperature[0]
+    std::cout << "Average Old Temperature:  " << averageTemperature[1]
               << std::endl;
     std::cout << "Average Jung Temperature: " << averageTemperature[0]
               << std::endl;
   }
 }
-/* */
+* */

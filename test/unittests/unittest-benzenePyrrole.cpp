@@ -103,13 +103,13 @@ TEST_CASE("benzene_pyrrole", "[free energy]") {
 
     auto equilIntegrator =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.001);
-    equilIntegrator->setFriction(5.0);
-    equilIntegrator->setBathTemperature(300.0);
+    equilIntegrator->setThermostatFriction(5.0);
+    equilIntegrator->setReferenceTemperature(300.0);
     equilIntegrator->setCharmmContext(ctx);
 
     auto integrator = std::make_shared<CudaLangevinThermostatIntegrator>(0.001);
-    integrator->setFriction(5.0);
-    integrator->setBathTemperature(300.0);
+    integrator->setThermostatFriction(5.0);
+    integrator->setReferenceTemperature(300.0);
     integrator->setCharmmContext(ctx);
 
     /*
@@ -196,13 +196,13 @@ TEST_CASE("sep_benzene_pyrrole", "[free energy]") {
     //  ctx->assignVelocitiesAtTemperature(0.0);
     ctx->assignVelocitiesAtTemperature(300.0);
     CudaLangevinThermostatIntegrator equilIntegrator(0.001);
-    equilIntegrator.setFriction(5.0);
-    equilIntegrator.setBathTemperature(300.0);
+    equilIntegrator.setThermostatFriction(5.0);
+    equilIntegrator.setReferenceTemperature(300.0);
     equilIntegrator.setCharmmContext(ctx);
 
     CudaLangevinThermostatIntegrator integrator(0.001);
-    integrator.setFriction(5.0);
-    integrator.setBathTemperature(300.0);
+    integrator.setThermostatFriction(5.0);
+    integrator.setReferenceTemperature(300.0);
     integrator.setCharmmContext(ctx);
 
     int iter = 0;

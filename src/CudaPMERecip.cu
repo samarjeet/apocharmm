@@ -1228,15 +1228,21 @@ __global__ void gather_force_4_ortho_kernel(
     shred[i].z = f3;
 
     if (i < 4) {
-      shred[i].x += shred[i + 4].x;
-      shred[i].y += shred[i + 4].y;
-      shred[i].z += shred[i + 4].z;
+      shred[i].x = shred[i].x + shred[i + 4].x;
+      shred[i].y = shred[i].y + shred[i + 4].y;
+      shred[i].z = shred[i].z + shred[i + 4].z;
+      // shred[i].x += shred[i + 4].x;
+      // shred[i].y += shred[i + 4].y;
+      // shred[i].z += shred[i + 4].z;
     }
 
     if (i < 2) {
-      shred[i].x += shred[i + 2].x;
-      shred[i].y += shred[i + 2].y;
-      shred[i].z += shred[i + 2].z;
+      shred[i].x = shred[i].x + shred[i + 2].x;
+      shred[i].y = shred[i].y + shred[i + 2].y;
+      shred[i].z = shred[i].z + shred[i + 2].z;
+      // shred[i].x += shred[i + 2].x;
+      // shred[i].y += shred[i + 2].y;
+      // shred[i].z += shred[i + 2].z;
     }
 
     if (i == 0) {
@@ -1462,6 +1468,72 @@ void CudaPMERecip<AT, CT, CT2>::init(int x0, int x1, int y0, int y1, int z0,
 
   // Bind grid_texture to solved_grid->data (data2)
   setup_grid_texture(solved_grid->data, xsize * ysize * zsize);
+}
+
+template <typename AT, typename CT, typename CT2>
+void CudaPMERecip<AT, CT, CT2>::dealloc(void) {
+#ifdef USE_TEXTURE_OBJECTS
+  cudaCheck(cudaDestroyTextureObject(gridTexObj));
+#else
+  // Unbind grid texture
+  cudaCheck(cudaUnbindTexture(gridTexRef));
+#endif
+
+  delete accum_grid;
+  delete charge_grid;
+  delete solved_grid;
+  deallocate<CT>(&data1);
+  deallocate<CT>(&data2);
+
+  cudaCheck(cudaFree(fft_scratch));
+
+#if CUDA_VERSION >= 6000
+  if (multi_gpu) {
+    delete[] host_data;
+    delete[] host_tmp;
+    cufftCheck(cufftXtFree(multi_data));
+  }
+#endif
+
+  if (fft_type == COLUMN) {
+    delete xfft_grid;
+    delete yfft_grid;
+    delete zfft_grid;
+    if (x_r2c_plan)
+      cufftCheck(cufftDestroy(x_r2c_plan));
+    if (y_c2c_plan)
+      cufftCheck(cufftDestroy(y_c2c_plan));
+    if (z_c2c_plan)
+      cufftCheck(cufftDestroy(z_c2c_plan));
+    if (x_c2r_plan)
+      cufftCheck(cufftDestroy(x_c2r_plan));
+  } else if (fft_type == SLAB) {
+    delete xyfft_grid;
+    delete zfft_grid;
+    if (xy_r2c_plan)
+      cufftCheck(cufftDestroy(xy_r2c_plan));
+    if (z_c2c_plan)
+      cufftCheck(cufftDestroy(z_c2c_plan));
+    if (xy_c2r_plan)
+      cufftCheck(cufftDestroy(xy_c2r_plan));
+  } else if (fft_type == BOX) {
+    delete fft_grid;
+    if (r2c_plan)
+      cufftCheck(cufftDestroy(r2c_plan));
+    if (c2r_plan)
+      cufftCheck(cufftDestroy(c2r_plan));
+  }
+
+  deallocate<CT>(&prefac_x);
+  deallocate<CT>(&prefac_y);
+  deallocate<CT>(&prefac_z);
+
+  // if (d_energy_virial != NULL)
+  // deallocate<RecipEnergyVirial_t>(&d_energy_virial);
+  // if (h_energy_virial != NULL)
+  // deallocate_host<RecipEnergyVirial_t>(&h_energy_virial);
+
+  return;
 }
 
 //
@@ -1775,67 +1847,7 @@ CudaPMERecip<AT, CT, CT2>::CudaPMERecip(CudaPMERecip &&other)
 //
 template <typename AT, typename CT, typename CT2>
 CudaPMERecip<AT, CT, CT2>::~CudaPMERecip() {
-
-#ifdef USE_TEXTURE_OBJECTS
-  cudaCheck(cudaDestroyTextureObject(gridTexObj));
-#else
-  // Unbind grid texture
-  cudaCheck(cudaUnbindTexture(gridTexRef));
-#endif
-
-  delete accum_grid;
-  delete charge_grid;
-  delete solved_grid;
-  deallocate<CT>(&data1);
-  deallocate<CT>(&data2);
-
-  cudaCheck(cudaFree(fft_scratch));
-
-#if CUDA_VERSION >= 6000
-  if (multi_gpu) {
-    delete[] host_data;
-    delete[] host_tmp;
-    cufftCheck(cufftXtFree(multi_data));
-  }
-#endif
-
-  if (fft_type == COLUMN) {
-    delete xfft_grid;
-    delete yfft_grid;
-    delete zfft_grid;
-    if (x_r2c_plan)
-      cufftCheck(cufftDestroy(x_r2c_plan));
-    if (y_c2c_plan)
-      cufftCheck(cufftDestroy(y_c2c_plan));
-    if (z_c2c_plan)
-      cufftCheck(cufftDestroy(z_c2c_plan));
-    if (x_c2r_plan)
-      cufftCheck(cufftDestroy(x_c2r_plan));
-  } else if (fft_type == SLAB) {
-    delete xyfft_grid;
-    delete zfft_grid;
-    if (xy_r2c_plan)
-      cufftCheck(cufftDestroy(xy_r2c_plan));
-    if (z_c2c_plan)
-      cufftCheck(cufftDestroy(z_c2c_plan));
-    if (xy_c2r_plan)
-      cufftCheck(cufftDestroy(xy_c2r_plan));
-  } else if (fft_type == BOX) {
-    delete fft_grid;
-    if (r2c_plan)
-      cufftCheck(cufftDestroy(r2c_plan));
-    if (c2r_plan)
-      cufftCheck(cufftDestroy(c2r_plan));
-  }
-
-  deallocate<CT>(&prefac_x);
-  deallocate<CT>(&prefac_y);
-  deallocate<CT>(&prefac_z);
-
-  // if (d_energy_virial != NULL)
-  // deallocate<RecipEnergyVirial_t>(&d_energy_virial);
-  // if (h_energy_virial != NULL)
-  // deallocate_host<RecipEnergyVirial_t>(&h_energy_virial);
+  this->dealloc(); // To get rid of compiler warnings
 }
 
 template <typename AT, typename CT, typename CT2>

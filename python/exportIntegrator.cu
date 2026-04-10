@@ -116,40 +116,6 @@ void exportIntegrator(py::module &mod) {
       //<arg> steps")
       ;
 
-  // LANGEVIN THERMOSTAT
-  //=====================
-  py::class_<CudaLangevinThermostatIntegrator,
-             std::shared_ptr<CudaLangevinThermostatIntegrator>, CudaIntegrator>(
-      mod, "LangevinThermostatIntegrator")
-      .def(py::init<float>(),
-           R"sitb(
-               Langevin Thermostat Integrator. Takes timestep (in ps) as arg. If
-               ran without a friction coefficient nor a bath temperature, will
-               propagate as a NVE integrator.
-               )sitb")
-      .def(py::init<float, float, float>(),
-           R"sitb(
-               Langevin Thermostat Integrator. Takes timestep (ps), friction
-               coefficient (ps-1) and bath temperature (K) as args.
-               :param timeStep: integrator timestep, in ps
-               :type timeStep: float
-               :param bathTemperature: bath temperature, in K
-               :type bathTemperature: float
-               :param friction: friction coefficient, in units /ps
-               :type friction: float
-               )sitb")
-      .def("setCharmmContext",
-           &CudaLangevinThermostatIntegrator::setCharmmContext,
-           "set the charmm context ")
-      .def("setSimulationContext",
-           &CudaLangevinThermostatIntegrator::setCharmmContext,
-           "set the charmm context ")
-      .def("setBathTemperature",
-           &CudaLangevinThermostatIntegrator::setBathTemperature,
-           "set the bath temperature")
-      .def("setFriction", &CudaLangevinThermostatIntegrator::setFriction,
-           "set the friction (in units /ps)");
-
   // NOSE-HOOVER
   //=====================
   py::class_<CudaNoseHooverThermostatIntegrator,
@@ -216,6 +182,37 @@ void exportIntegrator(py::module &mod) {
   //      .def("setDebugPrintFrequency",
   //           &CudaLangevinPistonIntegrator::setDebugPrintFrequency,
   //           "set the debug frequency. Default: 0");
+
+  // LANGEVIN THERMOSTAT
+  //=====================
+  py::class_<CudaLangevinThermostatIntegrator,
+             std::shared_ptr<CudaLangevinThermostatIntegrator>, CudaIntegrator>(
+      mod, "LangevinThermostatIntegrator")
+      .def(py::init<float>(),
+           R"sitb(
+               Langevin Thermostat Integrator. Takes timestep (in ps) as arg.
+               If ran without a friction coefficient nor a bath temperature,
+               will propagate as a NVE integrator. )sitb")
+      // .def(py::init<float, float, float>(),
+      //      R"sitb(
+      //          Langevin Thermostat Integrator. Takes timestep (ps), friction
+      //          coefficient (ps-1) and bath temperature (K) as args.
+      //          :param timeStep: integrator timestep, in ps
+      //          :type timeStep: float
+      //          :param bathTemperature: bath temperature, in K
+      //          :type bathTemperature: float
+      //          :param friction: friction coefficient, in units /ps
+      //          :type friction: float
+      //          )sitb")
+      .def("setCharmmContext",
+           &CudaLangevinThermostatIntegrator::setCharmmContext,
+           "set the charmm context ")
+      .def("setReferenceTemperature",
+           &CudaLangevinThermostatIntegrator::setReferenceTemperature,
+           "set the bath temperature")
+      .def("setThermostatFriction",
+           &CudaLangevinThermostatIntegrator::setThermostatFriction,
+           "set the friction (in units /ps)");
 }
 
 void exportMinimizer(py::module &mod) {

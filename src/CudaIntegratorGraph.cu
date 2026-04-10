@@ -9,12 +9,19 @@
 // ENDLICENSE
 
 #include <CudaIntegratorGraph.h>
+
 CudaIntegratorGraph::CudaIntegratorGraph() {
   cudaCheck(cudaGraphCreate(&graph, 0));
   cudaGraphNode_t emptynode;
   cudaCheck(cudaGraphAddEmptyNode(&emptynode, graph, NULL, 0));
 }
+
 cudaGraph_t CudaIntegratorGraph::getGraph() { return graph; }
 CudaIntegratorGraph::~CudaIntegratorGraph() {
+  this->dealloc(); // To get rid of compiler warnings
+}
+
+void CudaIntegratorGraph::dealloc(void) {
   cudaCheck(cudaGraphDestroy(graph));
+  return;
 }

@@ -13,11 +13,12 @@
 #include "CharmmContext.h"
 #include "CudaIntegrator.h"
 #include <cstdint>
-#include <random>
+#include <curand_kernel.h>
 
 class CudaLangevinPistonIntegrator : public CudaIntegrator {
 public:
   CudaLangevinPistonIntegrator(const double timeStep);
+  ~CudaLangevinPistonIntegrator(void);
 
 public:
   void useNoseHooverThermostat(const bool usingNoseHooverThermostat);
@@ -38,7 +39,7 @@ public:
   void setCrystalType(const CRYSTAL crystalType);
   void setLangevinPistonMass(const std::vector<double> &mass);
   void setLangevinPistonFrictionSeed(const std::uint64_t seed);
-  void setRng(const std::string &state);
+  void setRngSequencePos(const unsigned long long int rngSequencePos);
   void setLangevinPistonFriction(const double pgamma);
   void resetAverages(void);
 
@@ -83,7 +84,7 @@ public:
   double getInstantaneousTemperature(void);
 
   std::uint64_t getLangevinPistonFrictionSeed(void) const;
-  const std::mt19937 &getRng(void) const;
+  unsigned long long int getRngSequencePos(void) const;
   CudaContainer<double> &getReferencePressureTensor(void);
   CudaContainer<double> &getLangevinPistonMass(void);
   CudaContainer<double> &getLangevinPistonOnStepPosition(void);
@@ -109,7 +110,10 @@ protected:
   double computeNoseHooverPistonMass(void);
   double computeLangevinPistonMass(void);
   void allocateLangevinPistonVariables(void);
+  void initializeRng(void);
   void removeCenterOfMassMotion(void);
+  void alloc(const int n);
+  void dealloc(void);
 
 protected:
   bool m_UsingNoseHooverThermostat;
@@ -151,22 +155,19 @@ protected:
   CudaContainer<double> m_HalfStepCrystalFactor;
 
   std::uint64_t m_Seed;
-  std::mt19937 m_Rng;
-  CudaContainer<double> m_RandNums;
+  unsigned long long int m_RngSequencePos;
+  curandStatePhilox4_32_10_t *m_RngStates;
 
   bool m_ConstantSurfaceTensionFlag;
   CudaContainer<double> m_SurfaceTension;
 
   int m_MaxPredictorCorrectorIterations;
 
+  int m_AverageWindowSize;
   CudaContainer<double> m_KineticEnergy;
   CudaContainer<double> m_AverageTemperature;
-
   CudaContainer<double> m_AveragePressureTensor;
   CudaContainer<double> m_AveragePressureScalar;
 
-  int m_AverageWindowSize;
-
   bool m_UsingOldTemperature;
-  CudaContainer<double> m_AverageOldTemperature;
 };

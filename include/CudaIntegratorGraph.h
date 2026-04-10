@@ -31,5 +31,8 @@ public:
   ~CudaIntegratorGraph();
 
 protected:
+  void dealloc(void);
+
+protected:
   cudaGraph_t graph;
 };

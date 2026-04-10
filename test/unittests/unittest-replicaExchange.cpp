@@ -65,14 +65,14 @@ TEST_CASE("rex", "[energy]") {
 
     auto integrator0 =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    integrator0->setFriction(5.0);
-    integrator0->setBathTemperature(300.0);
+    integrator0->setThermostatFriction(5.0);
+    integrator0->setReferenceTemperature(300.0);
     integrator0->setCharmmContext(ctx0);
 
     auto integrator1 =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    integrator1->setFriction(5.0);
-    integrator1->setBathTemperature(300.0);
+    integrator1->setThermostatFriction(5.0);
+    integrator1->setReferenceTemperature(300.0);
     integrator1->setCharmmContext(ctx1);
 
     std::vector<std::shared_ptr<CudaIntegrator>> integrators;
@@ -127,14 +127,14 @@ TEST_CASE("rex", "[energy]") {
 
     auto integrator0 =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    integrator0->setFriction(5.0);
-    integrator0->setBathTemperature(300.0);
+    integrator0->setThermostatFriction(5.0);
+    integrator0->setReferenceTemperature(300.0);
     integrator0->setCharmmContext(ctx0);
 
     auto integrator1 =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    integrator1->setFriction(5.0);
-    integrator1->setBathTemperature(300.0);
+    integrator1->setThermostatFriction(5.0);
+    integrator1->setReferenceTemperature(300.0);
     integrator1->setCharmmContext(ctx1);
 
     for (int i = 0; i < 100; i++) {

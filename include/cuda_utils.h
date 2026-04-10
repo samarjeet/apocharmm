@@ -21,18 +21,6 @@
 #include <string>
 #include <vector>
 
-/* *
-#define cudaCheck(stmt)
-  do {
-    cudaError_t err = stmt;
-    if (err != cudaSuccess) {
-      printf("Error running %s in file %s, function %s\n", #stmt, __FILE__,
-             __FUNCTION__);
-      printf("Error string: %s\n", cudaGetErrorString(err));
-      exit(1);
-    }
-  } while (0)
-* */
 #define cudaCheck(result)                                                      \
   if (result != cudaSuccess) {                                                 \
     std::string msg = std::string(cudaGetErrorString(result)) + "\n";          \

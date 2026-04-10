@@ -124,6 +124,8 @@ private:
   // void set_NlistParam(cudaStream_t stream);
   // void get_NlistParam();
 
+  void dealloc(void);
+
 public:
   CudaNeighborListSort(const int tilesize, const int izoneStart,
                        const int izoneEnd);

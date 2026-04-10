@@ -271,8 +271,6 @@ TEST_CASE("blade_benchmark", "[dynamics]") {
         std::make_shared<CudaLangevinThermostatIntegrator>(timeStep);
     // CudaVelocityVerletIntegrator langevinThermostat(0.002);
 
-    langevinThermostat->setFriction(0.0);
-    langevinThermostat->setBathTemperature(300.0);
     langevinThermostat->setCharmmContext(ctx);
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -329,8 +327,6 @@ TEST_CASE("blade_benchmark", "[dynamics]") {
     auto langevinThermostat =
         std::make_shared<CudaLangevinThermostatIntegrator>(timeStep);
     // CudaVelocityVerletIntegrator langevinThermostat(0.002);
-    langevinThermostat->setFriction(0.0);
-    langevinThermostat->setBathTemperature(300.0);
     langevinThermostat->setCharmmContext(ctx);
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -389,8 +385,6 @@ TEST_CASE("microtubule", "[dyna]") {
     auto langevinThermostat =
         std::make_shared<CudaLangevinThermostatIntegrator>(timeStep);
     // CudaVelocityVerletIntegrator langevinThermostat(0.002);
-    langevinThermostat->setFriction(0.0);
-    langevinThermostat->setBathTemperature(300.0);
     langevinThermostat->setCharmmContext(ctx);
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -456,8 +450,6 @@ TEST_CASE("namd_benchmark", "[dynamics]") {
     auto langevinThermostat =
         std::make_shared<CudaLangevinThermostatIntegrator>(timeStep);
     // CudaVelocityVerletIntegrator langevinThermostat(0.002);
-    langevinThermostat->setFriction(0.0);
-    langevinThermostat->setBathTemperature(300.0);
     langevinThermostat->setCharmmContext(ctx);
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -509,8 +501,6 @@ TEST_CASE("namd_benchmark", "[dynamics]") {
     auto langevinThermostat =
         std::make_shared<CudaLangevinThermostatIntegrator>(timeStep);
     // CudaVelocityVerletIntegrator langevinThermostat(0.002);
-    langevinThermostat->setFriction(0.0);
-    langevinThermostat->setBathTemperature(300.0);
     langevinThermostat->setCharmmContext(ctx);
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -568,8 +558,6 @@ TEST_CASE("namd_benchmark", "[dynamics]") {
     auto langevinThermostat =
         std::make_shared<CudaLangevinThermostatIntegrator>(timeStep);
     // CudaVelocityVerletIntegrator langevinThermostat(0.002);
-    langevinThermostat->setFriction(0.0);
-    langevinThermostat->setBathTemperature(300.0);
     langevinThermostat->setCharmmContext(ctx);
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -685,8 +673,6 @@ TEST_CASE("waterbox", "[dynamics]") {
     auto langevinThermostat =
         std::make_shared<CudaLangevinThermostatIntegrator>(timeStep);
     // CudaVelocityVerletIntegrator langevinThermostat(0.002);
-    langevinThermostat->setFriction(0.0);
-    langevinThermostat->setBathTemperature(300.0);
     langevinThermostat->setCharmmContext(ctx);
 
     auto integrator = std::make_shared<CudaLangevinPistonIntegrator>(timeStep);

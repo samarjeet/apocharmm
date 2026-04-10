@@ -469,8 +469,8 @@ void ForceManager::calc_force_part3(const float4 *xyzq, bool reset,
   }
 
   // Copy everything (all EnergyVirials) to Host, add together
-  float totalBondedEnergy = 0.0f;
-  float totalNonBondedEnergy = 0.0f;
+  // float totalBondedEnergy = 0.0f;
+  // float totalNonBondedEnergy = 0.0f;
   if (calcEnergy) {
     // cudaDeviceSynchronize();
     bondedEnergyVirial.copyToHost();
@@ -480,17 +480,17 @@ void ForceManager::calc_force_part3(const float4 *xyzq, bool reset,
       m_EnergyVirials[i]->copyToHost();
     cudaDeviceSynchronize();
 
-    totalBondedEnergy = bondedEnergyVirial.getEnergy("bond") +
-                        bondedEnergyVirial.getEnergy("angle") +
-                        bondedEnergyVirial.getEnergy("ureyb") +
-                        bondedEnergyVirial.getEnergy("dihe") +
-                        bondedEnergyVirial.getEnergy("imdihe");
+    // totalBondedEnergy = bondedEnergyVirial.getEnergy("bond") +
+    //                     bondedEnergyVirial.getEnergy("angle") +
+    //                     bondedEnergyVirial.getEnergy("ureyb") +
+    //                     bondedEnergyVirial.getEnergy("dihe") +
+    //                     bondedEnergyVirial.getEnergy("imdihe");
 
-    totalNonBondedEnergy = directEnergyVirial.getEnergy("ewex") +
-                           directEnergyVirial.getEnergy("elec") +
-                           directEnergyVirial.getEnergy("vdw") +
-                           reciprocalEnergyVirial.getEnergy("ewks") +
-                           reciprocalEnergyVirial.getEnergy("ewse");
+    // totalNonBondedEnergy = directEnergyVirial.getEnergy("ewex") +
+    //                        directEnergyVirial.getEnergy("elec") +
+    //                        directEnergyVirial.getEnergy("vdw") +
+    //                        reciprocalEnergyVirial.getEnergy("ewks") +
+    //                        reciprocalEnergyVirial.getEnergy("ewse");
 
     updatePotentialEnergy<<<1, 1, 0, *forceManagerStream>>>(
         bondedEnergyVirial.getEnergyPointer("bond"),

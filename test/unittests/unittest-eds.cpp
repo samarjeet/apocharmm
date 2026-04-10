@@ -141,14 +141,14 @@ TEST_CASE("glu", "[unit]") {
 
     auto integrator_0 =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    integrator_0->setFriction(5.0);
-    integrator_0->setBathTemperature(T);
+    integrator_0->setThermostatFriction(5.0);
+    integrator_0->setReferenceTemperature(T);
     integrator_0->setCharmmContext(ctx_0);
 
     auto integrator_1 =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    integrator_1->setFriction(5.0);
-    integrator_1->setBathTemperature(T);
+    integrator_1->setThermostatFriction(5.0);
+    integrator_1->setReferenceTemperature(T);
     integrator_1->setCharmmContext(ctx_1);
 
     auto compositeSub_0 = std::make_shared<EDSSubscriber>(
@@ -422,26 +422,26 @@ TEST_CASE("glu", "[unit]") {
 
     auto integrator_0 =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    integrator_0->setFriction(5.0);
-    integrator_0->setBathTemperature(T);
+    integrator_0->setThermostatFriction(5.0);
+    integrator_0->setReferenceTemperature(T);
     integrator_0->setCharmmContext(ctx_0);
 
     auto integrator_1 =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    integrator_1->setFriction(5.0);
-    integrator_1->setBathTemperature(T);
+    integrator_1->setThermostatFriction(5.0);
+    integrator_1->setReferenceTemperature(T);
     integrator_1->setCharmmContext(ctx_1);
 
     auto integrator_2 =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    integrator_2->setFriction(5.0);
-    integrator_2->setBathTemperature(T);
+    integrator_2->setThermostatFriction(5.0);
+    integrator_2->setReferenceTemperature(T);
     integrator_2->setCharmmContext(ctx_2);
 
     auto integrator_3 =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    integrator_3->setFriction(5.0);
-    integrator_3->setBathTemperature(T);
+    integrator_3->setThermostatFriction(5.0);
+    integrator_3->setReferenceTemperature(T);
     integrator_3->setCharmmContext(ctx_3);
 
     auto compositeSub_0 = std::make_shared<EDSSubscriber>(
@@ -652,8 +652,8 @@ TEST_CASE("1p5f", "[unit]") {
     langevinPiston->propagate(10000);
 
     auto integrator = std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    integrator->setFriction(5.0);
-    integrator->setBathTemperature(T);
+    integrator->setThermostatFriction(5.0);
+    integrator->setReferenceTemperature(T);
     integrator->setCharmmContext(ctx);
     std::ostringstream strs;
     strs << s;
@@ -769,14 +769,14 @@ TEST_CASE("1p5f", "[unit]") {
 
     auto integrator_0 =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    integrator_0->setFriction(5.0);
-    integrator_0->setBathTemperature(T);
+    integrator_0->setThermostatFriction(5.0);
+    integrator_0->setReferenceTemperature(T);
     integrator_0->setCharmmContext(ctx_0);
 
     auto integrator_1 =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    integrator_1->setFriction(5.0);
-    integrator_1->setBathTemperature(T);
+    integrator_1->setThermostatFriction(5.0);
+    integrator_1->setReferenceTemperature(T);
     integrator_1->setCharmmContext(ctx_1);
 
     // auto compositeSub_0 =
@@ -971,14 +971,14 @@ TEST_CASE("1p5f", "[unit]") {
 
     auto integrator_0 =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    integrator_0->setFriction(5.0);
-    integrator_0->setBathTemperature(T);
+    integrator_0->setThermostatFriction(5.0);
+    integrator_0->setReferenceTemperature(T);
     integrator_0->setCharmmContext(ctx_0);
 
     auto integrator_1 =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    integrator_1->setFriction(5.0);
-    integrator_1->setBathTemperature(T);
+    integrator_1->setThermostatFriction(5.0);
+    integrator_1->setReferenceTemperature(T);
     integrator_1->setCharmmContext(ctx_1);
 
     integrators.push_back(integrator_0);
@@ -1175,8 +1175,8 @@ TEST_CASE("consph", "[unit]") {
     }
 
     auto integrator = std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    integrator->setFriction(5.0);
-    integrator->setBathTemperature(T);
+    integrator->setThermostatFriction(5.0);
+    integrator->setReferenceTemperature(T);
     integrator->setCharmmContext(ctx);
 
     auto compositeSub = std::make_shared<CompositeSubscriber>("mbar.out");
@@ -1301,14 +1301,14 @@ TEST_CASE("consph", "[unit]") {
 
     auto integrator_0 =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    integrator_0->setFriction(5.0);
-    integrator_0->setBathTemperature(T);
+    integrator_0->setThermostatFriction(5.0);
+    integrator_0->setReferenceTemperature(T);
     integrator_0->setCharmmContext(ctx_0);
 
     auto integrator_1 =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    integrator_1->setFriction(5.0);
-    integrator_1->setBathTemperature(T);
+    integrator_1->setThermostatFriction(5.0);
+    integrator_1->setReferenceTemperature(T);
     integrator_1->setCharmmContext(ctx_1);
 
     auto compositeSub_0 = std::make_shared<CompositeSubscriber>("mbar_0.out");
@@ -1474,8 +1474,8 @@ TEST_CASE("eds", "[energy]") {
     std::cout << "isinit " << fmEDS->isInitialized()
               << ctx->getForceManager()->isInitialized() << std::endl;
     auto integrator = std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    integrator->setFriction(5.0);
-    integrator->setBathTemperature(300.0);
+    integrator->setThermostatFriction(5.0);
+    integrator->setReferenceTemperature(300.0);
     std::cout << "isinit " << fmEDS->isInitialized()
               << ctx->getForceManager()->isInitialized() << std::endl;
     integrator->setCharmmContext(ctx);

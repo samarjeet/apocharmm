@@ -295,7 +295,7 @@ __forceinline__ __device__ int incl_scan_shmem(int val, const int wid,
   shbuf[wid] = val;
   for (int i = 1; i < scansize; i *= 2) {
     int n = (wid >= i) ? shbuf[wid - i] : 0;
-    shbuf[wid] += n;
+    shbuf[wid] = shbuf[wid] + n;
   }
   return shbuf[wid];
 }
@@ -318,7 +318,7 @@ __forceinline__ __device__ int sum_shmem(int val, const int wid,
   shbuf[wid] = val;
   for (int i = 16; i >= 1; i /= 2) {
     int n = shbuf[i ^ wid];
-    shbuf[wid] += n;
+    shbuf[wid] = shbuf[wid] + n;
   }
   return val;
 }

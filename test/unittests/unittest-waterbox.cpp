@@ -69,9 +69,7 @@ TEST_CASE("waterbox", "[energy conservation]") {
   auto restartSub =
       std::make_shared<RestartSubscriber>("waterboxRestart.res", 10000);
 
-  auto integrator = std::make_shared<CudaLangevinThermostatIntegrator>(
-      0.001, bathTemperature, frictionCoeff);
-  integrator->setFriction(0.0);
+  auto integrator = std::make_shared<CudaLangevinThermostatIntegrator>(0.001);
   // integrator.setDebugPrintFrequency(100);
   integrator->setCharmmContext(ctx);
   // integrator.subscribe(restartSub);

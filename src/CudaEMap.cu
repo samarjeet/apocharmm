@@ -8,10 +8,9 @@
 //
 // ENDLICENSE
 
-
 #include "CudaEMap.h"
-#include <iostream>
 #include <chrono>
+#include <iostream>
 
 /*
 __global__ void cuda_mass_spread(const double *__restrict__ masses,
@@ -36,19 +35,25 @@ void CudaEMap::generate() {
   dim3 nthread, nblock;
 
   // Only doing the case of 4 right now
-  nthread.x = 32;  
-  nthread.y = 4;   
-  nthread.z = 1; 
+  nthread.x = 32;
+  nthread.y = 4;
+  nthread.z = 1;
 
   nblock.x = (numAtoms + nthread.x - 1) / nthread.x;
-  nblock.y = 1; 
+  nblock.y = 1;
   nblock.z = 1;
-  
+
 
   cuda_mass_spread<<<nblock, nthread, 0, stream>>>(
-      atomicMasses.getDeviceArray().data(), numAtoms);cudaCheck(cudaGetLastError());
+      atomicMasses.getDeviceArray().data(),
+  numAtoms);cudaCheck(cudaGetLastError());
   // reduce the mass of the particles to the grid
   // this is similar to the spread of pme
   // how is it now
   */
+}
+
+void CudaEMap::dealloc(void) {
+  cudaCheck(cudaStreamDestroy(stream));
+  return;
 }

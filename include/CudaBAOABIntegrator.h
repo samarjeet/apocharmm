@@ -77,6 +77,8 @@ public:
   void setCoordsDeltaPrevious(
       const std::vector<std::vector<double>> &coordsDeltaPrevious) override;
 
+  void dealloc(void);
+
 private:
   double m_Friction;
   curandStatePhilox4_32_10_t *m_DevPHILOXStates;

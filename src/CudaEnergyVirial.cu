@@ -87,8 +87,11 @@ __global__ void calcVirialKernel(const int ncoord,
       vir_val[k] = (pos < blockDim.x) ? sh_vir[pos + k * blockDim.x] : 0.0;
     __syncthreads();
 #pragma unroll
-    for (int k = 0; k < 3; k++)
-      sh_vir[threadIdx.x + k * blockDim.x] += vir_val[k];
+    for (int k = 0; k < 3; k++) {
+      sh_vir[threadIdx.x + k * blockDim.x] =
+          sh_vir[threadIdx.x + k * blockDim.x] + vir_val[k];
+      // sh_vir[threadIdx.x + k * blockDim.x] += vir_val[k];
+    }
     __syncthreads();
   }
   if (threadIdx.x == 0) {
@@ -110,8 +113,11 @@ __global__ void calcVirialKernel(const int ncoord,
       vir_val[k] = (pos < blockDim.x) ? sh_vir[pos + k * blockDim.x] : 0.0;
     __syncthreads();
 #pragma unroll
-    for (int k = 0; k < 3; k++)
-      sh_vir[threadIdx.x + k * blockDim.x] += vir_val[k];
+    for (int k = 0; k < 3; k++) {
+      sh_vir[threadIdx.x + k * blockDim.x] =
+          sh_vir[threadIdx.x + k * blockDim.x] + vir_val[k];
+      // sh_vir[threadIdx.x + k * blockDim.x] += vir_val[k];
+    }
     __syncthreads();
   }
   if (threadIdx.x == 0) {
@@ -133,8 +139,11 @@ __global__ void calcVirialKernel(const int ncoord,
       vir_val[k] = (pos < blockDim.x) ? sh_vir[pos + k * blockDim.x] : 0.0;
     __syncthreads();
 #pragma unroll
-    for (int k = 0; k < 3; k++)
-      sh_vir[threadIdx.x + k * blockDim.x] += vir_val[k];
+    for (int k = 0; k < 3; k++) {
+      sh_vir[threadIdx.x + k * blockDim.x] =
+          sh_vir[threadIdx.x + k * blockDim.x] + vir_val[k];
+      // sh_vir[threadIdx.x + k * blockDim.x] += vir_val[k];
+    }
     __syncthreads();
   }
   if (threadIdx.x == 0) {

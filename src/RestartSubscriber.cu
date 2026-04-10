@@ -10,8 +10,8 @@
 
 #include "CharmmContext.h"
 #include "CudaLangevinPistonIntegrator.h"
+#include "CudaLangevinThermostatIntegrator.h"
 #include "CudaNoseHooverThermostatIntegrator.h"
-// #include "CudaLangevinThermostatIntegrator.h"
 #include "PBC.h"
 #include "RestartSubscriber.h"
 #include "str_utils.h"
@@ -19,6 +19,7 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
+#include <string>
 
 RestartSubscriber::RestartSubscriber(void) : Subscriber() {}
 
@@ -52,11 +53,24 @@ void RestartSubscriber::update(void) {
       m_Integrator);
   auto lp =
       std::dynamic_pointer_cast<CudaLangevinPistonIntegrator>(m_Integrator);
+  auto lt =
+      std::dynamic_pointer_cast<CudaLangevinThermostatIntegrator>(m_Integrator);
+
+  // Ensure that the integrator is at least one of the supported types
+  if ((nh == nullptr) && (lp == nullptr) && (lt == nullptr)) {
+    std::string msg =
+        "Attempted to write a restart file for an unsupported integrator type. "
+        "Currently the only supported integrators are:\n";
+    msg += "  1.) CudaNoseHooverThermostatIntegrator\n";
+    msg += "  2.) CudaLangevinPistonIntegrator\n";
+    msg += "  3.) CudaLangevinThermostatIntegrator";
+    throw std::runtime_error(msg);
+  }
 
   std::string crystalString = "NONE";
   const std::vector<double> boxDimensions = m_CharmmContext->getBoxDimensions();
 
-  if (nh != nullptr) {
+  if ((nh != nullptr) || (lt != nullptr)) {
     // JEG260330: Get box dimensions and compare lengths to determine crystal
     // type. This should be fixed so that the CharmmContext always stores the
     // crystal type.
@@ -74,14 +88,13 @@ void RestartSubscriber::update(void) {
       crystalString = "TETR";
     else if (lp->getCrystalType() == CRYSTAL::ORTHORHOMBIC)
       crystalString = "ORTH";
-  } else {
-    throw std::runtime_error(
-        "Unknown integrator detected. Cannot write restart file.");
   }
 
   // Write formatted header
   m_FileStream << "REST" << std::setw(6) << VERSION << std::setw(6) << 1 << "  "
-               << std::setw(4) << crystalString << "  " << "    " << "  "
+               << std::setw(4) << crystalString << "  "
+               << "    "
+               << "  "
                << "APO" << '\n';
   m_FileStream << '\n';
 
@@ -233,9 +246,10 @@ void RestartSubscriber::update(void) {
   std::string RNGSTATE = "";
   if (lp != nullptr) {
     SEED = lp->getLangevinPistonFrictionSeed();
-    std::stringstream ss;
-    ss << lp->getRng();
-    RNGSTATE = ss.str();
+    RNGSTATE = std::to_string(lp->getRngSequencePos());
+  } else if (lt != nullptr) {
+    SEED = lt->getThermostatRngSeed();
+    RNGSTATE = std::to_string(lt->getRngSequencePos());
   }
 
   m_FileStream << " !NATOM,NPRIV,NSTEP,NSAVC,NSAVV,JHSTRT,NDEGF,SEED,NSAVL\n";
@@ -273,6 +287,9 @@ void RestartSubscriber::update(void) {
   } else if (lp != nullptr) {
     lp->getAverageTemperature().transferToHost();
     AVETEM = lp->getAverageTemperature()[0];
+  } else if (lt != nullptr) {
+    lt->getAverageTemperature().transferToHost();
+    AVETEM = lt->getAverageTemperature()[0];
   }
 
   m_FileStream << " !ENERGIES and STATISTICS\n";

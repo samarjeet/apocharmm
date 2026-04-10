@@ -15,8 +15,6 @@
 #include <iostream>
 #include <stdexcept>
 
-#include <iomanip> // TMP
-
 CudaNoseHooverThermostatIntegrator::CudaNoseHooverThermostatIntegrator(
     const double timeStep)
     : CudaIntegrator(timeStep) {
@@ -40,17 +38,16 @@ CudaNoseHooverThermostatIntegrator::CudaNoseHooverThermostatIntegrator(
 
   m_MaxPredictorCorrectorIterations = 3;
 
-  m_KineticEnergy.resize(1);
-  m_KineticEnergy.setToValue(0.0);
+  // 0 -> New "Jung" T
+  // 1 -> Old T
+  m_AverageWindowSize = 0;
+  m_KineticEnergy.resize(2);
+  m_AverageTemperature.resize(2);
 
-  m_AverageTemperature.resize(1);
+  m_KineticEnergy.setToValue(0.0);
   m_AverageTemperature.setToValue(0.0);
 
-  m_UseOldTemperature = false;
-  m_AverageOldTemperature.resize(1);
-  m_AverageOldTemperature.setToValue(0.0);
-
-  m_AverageWindowSize = 0;
+  m_UsingOldTemperature = false;
 }
 
 void CudaNoseHooverThermostatIntegrator::setReferenceTemperature(
@@ -97,15 +94,14 @@ void CudaNoseHooverThermostatIntegrator::setMaxPredictorCorrectorIterations(
 }
 
 void CudaNoseHooverThermostatIntegrator::useOldTemperature(
-    const bool useOldTemperature) {
-  m_UseOldTemperature = useOldTemperature;
+    const bool usingOldTemperature) {
+  m_UsingOldTemperature = usingOldTemperature;
   return;
 }
 
 void CudaNoseHooverThermostatIntegrator::resetAverageTemperature(void) {
-  m_AverageTemperature.setToValue(0.0);
-  m_AverageOldTemperature.setToValue(0.0);
   m_AverageWindowSize = 0;
+  m_AverageTemperature.setToValue(0.0);
   return;
 }
 
@@ -155,11 +151,6 @@ CudaNoseHooverThermostatIntegrator::getAverageTemperature(void) const {
   return m_AverageTemperature;
 }
 
-const CudaContainer<double> &
-CudaNoseHooverThermostatIntegrator::getAverageOldTemperature(void) const {
-  return m_AverageOldTemperature;
-}
-
 CudaContainer<double> &
 CudaNoseHooverThermostatIntegrator::getNoseHooverPistonMass(void) {
   return m_NoseHooverPistonMass;
@@ -195,14 +186,11 @@ CudaNoseHooverThermostatIntegrator::getAverageTemperature(void) {
   return m_AverageTemperature;
 }
 
-CudaContainer<double> &
-CudaNoseHooverThermostatIntegrator::getAverageOldTemperature(void) {
-  return m_AverageOldTemperature;
-}
-
 double CudaNoseHooverThermostatIntegrator::getInstantaneousTemperature(void) {
   const double ndegf = static_cast<double>(m_Context->getDegreesOfFreedom());
   m_KineticEnergy.transferToHost();
+  if (m_UsingOldTemperature)
+    return (m_KineticEnergy[1] / (0.5 * ndegf * charmm::constants::kBoltz));
   return (m_KineticEnergy[0] / (0.5 * ndegf * charmm::constants::kBoltz));
 }
 
@@ -290,6 +278,8 @@ BackStepInitializationKernel2(double4 *__restrict__ coordsCharges,
 
 void CudaNoseHooverThermostatIntegrator::initialize(void) {
   const int numAtoms = m_Context->getNumAtoms();
+  constexpr int numThreads = 256;
+  const int numBlocks = (numAtoms + numThreads - 1) / numThreads;
 
   m_CoordsDeltaPredicted.resize(numAtoms);
 
@@ -306,8 +296,6 @@ void CudaNoseHooverThermostatIntegrator::initialize(void) {
     m_HolonomicConstraint->handleHolonomicConstraints(
         m_CoordsRef.getDeviceData());
 
-    const int numThreads = 256;
-    const int numBlocks = numAtoms / numThreads + 1;
     UpdateSinglePrecisionCoordinatesKernel<<<numBlocks, numThreads, 0,
                                              *m_IntegratorStream>>>(
         xyzq, coordsCharges, numAtoms);
@@ -322,19 +310,13 @@ void CudaNoseHooverThermostatIntegrator::initialize(void) {
 
   double4 *velMass = m_Context->getVelocityMass().getDeviceData();
   double *forces = m_Context->getForces()->xyz();
-  int forceStride = m_Context->getForceStride();
+  const int forceStride = m_Context->getForceStride();
 
-  {
-    const int numThreads = 256;
-    const int numBlocks = numAtoms / numThreads + 1;
-    InitializationKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
-        m_CoordsDelta.getDeviceData(), m_CoordsDeltaPrevious.getDeviceData(),
-        velMass, numAtoms, forces, forceStride, m_TimeStep);
-  }
+  InitializationKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
+      m_CoordsDelta.getDeviceData(), m_CoordsDeltaPrevious.getDeviceData(),
+      velMass, numAtoms, forces, forceStride, m_TimeStep);
 
   if (m_UsingHolonomicConstraints) {
-    const int numThreads = 256;
-    const int numBlocks = numAtoms / numThreads + 1;
     BackStepInitializationKernel1<<<numBlocks, numThreads, 0,
                                     *m_IntegratorStream>>>(
         coordsCharges, m_CoordsDeltaPrevious.getDeviceData(), numAtoms);
@@ -502,7 +484,7 @@ void CudaNoseHooverThermostatIntegrator::initializeFromRestartFile(
   int NATOM = 0;
   unsigned long long int NPRIV = 0;
   int NSTEP = 0;
-  // int NSAVC = 0; // Not needed for Nose-Hoover Thermostat
+  // int NSAVC = 0;  // Not needed for Nose-Hoover Thermostat
   // int NSAVV = 0;  // Not needed for Nose-Hoover Thermostat
   // int JHSTRT = 0; // Not needed for Nose-Hoover Thermostat
   int NDEGF = 0;
@@ -699,29 +681,6 @@ __global__ static void UpdateCoordsDeltaAfterHolonomicConstraintKernel(
 }
 
 __global__ static void
-ComputeOldKineticEnergyKernel(double *__restrict__ kineticEnergy,
-                              const double4 *__restrict__ velMass,
-                              const int numAtoms) {
-  const int idx = blockIdx.x * blockDim.x + threadIdx.x;
-  const int stride = gridDim.x * blockDim.x;
-
-  double ke = 0.0;
-  for (int i = idx; i < numAtoms; i += stride) {
-    ke += 0.5 *
-          ((velMass[i].x * velMass[i].x) + (velMass[i].y * velMass[i].y) +
-           (velMass[i].z * velMass[i].z)) /
-          velMass[i].w;
-  }
-
-  ke = BlockReduceSum<double>(ke);
-
-  if (threadIdx.x == 0)
-    atomicAdd(kineticEnergy, ke);
-
-  return;
-}
-
-__global__ static void
 ComputeKineticEnergyKernel(double *__restrict__ kineticEnergy,
                            const double4 *__restrict__ velMass,
                            const double4 *__restrict__ coordsDelta,
@@ -732,7 +691,7 @@ ComputeKineticEnergyKernel(double *__restrict__ kineticEnergy,
   const int stride = gridDim.x * blockDim.x;
   const double invTimeStep = 1.0 / timeStep;
 
-  double ke = 0.0;
+  double ke[2] = {0.0, 0.0};
   for (int i = idx; i < numAtoms; i += stride) {
     const double4 u1 =
         make_double4(coordsDeltaPrevious[i].x * invTimeStep,
@@ -750,14 +709,18 @@ ComputeKineticEnergyKernel(double *__restrict__ kineticEnergy,
     const double newHalfStepKineticEnergy =
         0.5 * ((u2.x * u2.x) + (u2.y * u2.y) + (u2.z * u2.z)) / v.w;
 
-    ke += oneThird * (oldHalfStepKineticEnergy + onStepKineticEnergy +
-                      newHalfStepKineticEnergy);
+    ke[0] += oneThird * (oldHalfStepKineticEnergy + onStepKineticEnergy +
+                         newHalfStepKineticEnergy);
+    ke[1] += onStepKineticEnergy;
   }
 
-  ke = BlockReduceSum<double>(ke);
+  ke[0] = BlockReduceSum<double>(ke[0]);
+  ke[1] = BlockReduceSum<double>(ke[1]);
 
-  if (threadIdx.x == 0)
-    atomicAdd(kineticEnergy, ke);
+  if (threadIdx.x == 0) {
+    atomicAdd(kineticEnergy + 0, ke[0]);
+    atomicAdd(kineticEnergy + 1, ke[1]);
+  }
 
   return;
 }
@@ -769,11 +732,14 @@ __global__ static void UpdateNoseHooverPistonKernel(
     const double *__restrict__ noseHooverPistonVelocityPrevious,
     const double *__restrict__ noseHooverPistonMass,
     const double *__restrict__ kineticEnergy,
-    const double referenceKineticEnergy, const double timeStep) {
+    const double referenceKineticEnergy, const bool usingOldTemperature,
+    const double timeStep) {
   if (threadIdx.x == 0) {
+    const int i = (usingOldTemperature) ? 1 : 0;
+
     // Actually store the change in velocity (not the force)
     *noseHooverPistonForce = 2.0 * timeStep *
-                             (*kineticEnergy - referenceKineticEnergy) /
+                             (kineticEnergy[i] - referenceKineticEnergy) /
                              *noseHooverPistonMass;
 
     if (*noseHooverPistonForcePrevious == 0.0)
@@ -847,14 +813,15 @@ UpdateAverageTemperatureKernel(double *__restrict__ averageTemperature,
                                const double *__restrict__ kineticEnergy,
                                const int numDegreesOfFreedom,
                                const double kBoltz, const int step) {
-  if (threadIdx.x == 0) {
+  if (threadIdx.x < 2) {
     const double s = static_cast<double>(step + 1);
     const double ndegf = static_cast<double>(numDegreesOfFreedom);
-    const double temperature = *kineticEnergy / (0.5 * ndegf * kBoltz);
-    const double delta0 = temperature - *averageTemperature;
-    *averageTemperature += delta0 / s;
-    // const double delta1 = temperature - *averageTemperature;
-    // *varianceTemperature += delta0 * delta1;
+    const double temperature =
+        kineticEnergy[threadIdx.x] / (0.5 * ndegf * kBoltz);
+    const double delta0 = temperature - averageTemperature[threadIdx.x];
+    averageTemperature[threadIdx.x] += delta0 / s;
+    // const double delta1 = temperature - averageTemperature[threadIdx.x];
+    // varianceTemperature[threadIdx.x] += delta0 * delta1;
   }
   return;
 }
@@ -899,6 +866,8 @@ void CudaNoseHooverThermostatIntegrator::propagateOneStep(void) {
   copy_DtoD_async<double4>(coordsCharges, m_CoordsRef.getDeviceData(), numAtoms,
                            *m_IntegratorStream);
 
+  cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
+
   if ((m_DebugPrintFrequency > 0) &&
       (m_CurrentPropagatedStep % m_DebugPrintFrequency == 0)) {
     m_Context->calculateForces(false, true, true);
@@ -942,17 +911,11 @@ void CudaNoseHooverThermostatIntegrator::propagateOneStep(void) {
   for (int iter = 0; iter < m_MaxPredictorCorrectorIterations; iter++) {
     cudaCheck(
         cudaMemsetAsync(static_cast<void *>(m_KineticEnergy.getDeviceData()), 0,
-                        sizeof(double), *m_IntegratorStream));
+                        2 * sizeof(double), *m_IntegratorStream));
 
-    if (m_UseOldTemperature) {
-      ComputeOldKineticEnergyKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
-          m_KineticEnergy.getDeviceData(), velMass, numAtoms);
-    } else {
-      ComputeKineticEnergyKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
-          m_KineticEnergy.getDeviceData(), velMass,
-          m_CoordsDelta.getDeviceData(), m_CoordsDeltaPrevious.getDeviceData(),
-          numAtoms, m_TimeStep);
-    }
+    ComputeKineticEnergyKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
+        m_KineticEnergy.getDeviceData(), velMass, m_CoordsDelta.getDeviceData(),
+        m_CoordsDeltaPrevious.getDeviceData(), numAtoms, m_TimeStep);
 
     UpdateNoseHooverPistonKernel<<<1, 32, 0, *m_IntegratorStream>>>(
         m_NoseHooverPistonForce.getDeviceData(),
@@ -960,7 +923,7 @@ void CudaNoseHooverThermostatIntegrator::propagateOneStep(void) {
         m_NoseHooverPistonVelocity.getDeviceData(),
         m_NoseHooverPistonVelocityPrevious.getDeviceData(),
         m_NoseHooverPistonMass.getDeviceData(), m_KineticEnergy.getDeviceData(),
-        referenceKineticEnergy, m_TimeStep);
+        referenceKineticEnergy, m_UsingOldTemperature, m_TimeStep);
 
     PredictorCorrectorKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
         coordsCharges, velMass, m_CoordsDeltaPredicted.getDeviceData(),
@@ -989,16 +952,11 @@ void CudaNoseHooverThermostatIntegrator::propagateOneStep(void) {
 
   cudaCheck(
       cudaMemsetAsync(static_cast<void *>(m_KineticEnergy.getDeviceData()), 0,
-                      sizeof(double), *m_IntegratorStream));
+                      2 * sizeof(double), *m_IntegratorStream));
 
-  if (m_UseOldTemperature) {
-    ComputeOldKineticEnergyKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
-        m_KineticEnergy.getDeviceData(), velMass, numAtoms);
-  } else {
-    ComputeKineticEnergyKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
-        m_KineticEnergy.getDeviceData(), velMass, m_CoordsDelta.getDeviceData(),
-        m_CoordsDeltaPrevious.getDeviceData(), numAtoms, m_TimeStep);
-  }
+  ComputeKineticEnergyKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
+      m_KineticEnergy.getDeviceData(), velMass, m_CoordsDelta.getDeviceData(),
+      m_CoordsDeltaPrevious.getDeviceData(), numAtoms, m_TimeStep);
 
   UpdateNoseHooverPistonKernel<<<1, 32, 0, *m_IntegratorStream>>>(
       m_NoseHooverPistonForce.getDeviceData(),
@@ -1006,42 +964,11 @@ void CudaNoseHooverThermostatIntegrator::propagateOneStep(void) {
       m_NoseHooverPistonVelocity.getDeviceData(),
       m_NoseHooverPistonVelocityPrevious.getDeviceData(),
       m_NoseHooverPistonMass.getDeviceData(), m_KineticEnergy.getDeviceData(),
-      referenceKineticEnergy, m_TimeStep);
+      referenceKineticEnergy, m_UsingOldTemperature, m_TimeStep);
 
-  if (m_UseOldTemperature) {
-    UpdateAverageTemperatureKernel<<<1, 32, 0, *m_IntegratorStream>>>(
-        m_AverageOldTemperature.getDeviceData(),
-        m_KineticEnergy.getDeviceData(), numDegreesOfFreedom,
-        charmm::constants::kBoltz, m_AverageWindowSize);
-
-    cudaCheck(
-        cudaMemsetAsync(static_cast<void *>(m_KineticEnergy.getDeviceData()), 0,
-                        sizeof(double), *m_IntegratorStream));
-
-    ComputeKineticEnergyKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
-        m_KineticEnergy.getDeviceData(), velMass, m_CoordsDelta.getDeviceData(),
-        m_CoordsDeltaPrevious.getDeviceData(), numAtoms, m_TimeStep);
-
-    UpdateAverageTemperatureKernel<<<1, 32, 0, *m_IntegratorStream>>>(
-        m_AverageTemperature.getDeviceData(), m_KineticEnergy.getDeviceData(),
-        numDegreesOfFreedom, charmm::constants::kBoltz, m_AverageWindowSize);
-  } else {
-    UpdateAverageTemperatureKernel<<<1, 32, 0, *m_IntegratorStream>>>(
-        m_AverageTemperature.getDeviceData(), m_KineticEnergy.getDeviceData(),
-        numDegreesOfFreedom, charmm::constants::kBoltz, m_AverageWindowSize);
-
-    cudaCheck(
-        cudaMemsetAsync(static_cast<void *>(m_KineticEnergy.getDeviceData()), 0,
-                        sizeof(double), *m_IntegratorStream));
-
-    ComputeOldKineticEnergyKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
-        m_KineticEnergy.getDeviceData(), velMass, numAtoms);
-
-    UpdateAverageTemperatureKernel<<<1, 32, 0, *m_IntegratorStream>>>(
-        m_AverageOldTemperature.getDeviceData(),
-        m_KineticEnergy.getDeviceData(), numDegreesOfFreedom,
-        charmm::constants::kBoltz, m_AverageWindowSize);
-  }
+  UpdateAverageTemperatureKernel<<<1, 32, 0, *m_IntegratorStream>>>(
+      m_AverageTemperature.getDeviceData(), m_KineticEnergy.getDeviceData(),
+      numDegreesOfFreedom, charmm::constants::kBoltz, m_AverageWindowSize);
 
   m_AverageWindowSize++;
 

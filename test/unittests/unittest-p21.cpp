@@ -68,7 +68,6 @@ TEST_CASE("waterbox", "[all]") {
   SECTION("nve") {
     auto langevinThermostat =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    langevinThermostat->setFriction(0.0);
     langevinThermostat->setCharmmContext(ctx);
     langevinThermostat->propagate(nSteps);
   }
@@ -76,8 +75,7 @@ TEST_CASE("waterbox", "[all]") {
   SECTION("nvt") {
     auto langevinThermostat =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    langevinThermostat->setFriction(12.0);
-    langevinThermostat->setBathTemperature(300.0);
+    langevinThermostat->setThermostatFriction(12.0);
     langevinThermostat->setCharmmContext(ctx);
     langevinThermostat->propagate(nSteps);
   }
@@ -147,16 +145,15 @@ TEST_CASE("bilayer", "[all]") {
   auto langevinThermostat =
       std::make_shared<CudaLangevinThermostatIntegrator>(0.001);
 
-  langevinThermostat->setBathTemperature(300.0);
   langevinThermostat->setCharmmContext(ctx);
 
   SECTION("nve") {
-    langevinThermostat->setFriction(0.0);
+    langevinThermostat->setThermostatFriction(0.0);
     langevinThermostat->propagate(nSteps);
   }
 
   SECTION("nvt") {
-    langevinThermostat->setFriction(12.0);
+    langevinThermostat->setThermostatFriction(12.0);
     std::string subfile = "p21_bilayer_nvt.dcd";
     // auto subscriber = std::make_shared<DcdSubscriber>(subfile, 1000, ctx);
     auto subscriber = std::make_shared<DcdSubscriber>(subfile, 1000);
@@ -186,7 +183,7 @@ TEST_CASE("bilayer", "[all]") {
   }
   SECTION("nvt_npt") {
 
-    langevinThermostat->setFriction(12.0);
+    langevinThermostat->setThermostatFriction(12.0);
     langevinThermostat->propagate(nSteps);
 
     std::cout << "nvt_npt: nvt done\n";
@@ -255,16 +252,15 @@ TEST_CASE("sooh", "[all]") {
   auto langevinThermostat =
       std::make_shared<CudaLangevinThermostatIntegrator>(0.001);
 
-  langevinThermostat->setBathTemperature(300.0);
   langevinThermostat->setCharmmContext(ctx);
 
   SECTION("nve") {
-    langevinThermostat->setFriction(0.0);
+    langevinThermostat->setThermostatFriction(0.0);
     langevinThermostat->propagate(nSteps);
   }
 
   SECTION("nvt") {
-    langevinThermostat->setFriction(12.0);
+    langevinThermostat->setThermostatFriction(12.0);
     langevinThermostat->propagate(nSteps);
   }
 
@@ -289,7 +285,7 @@ TEST_CASE("sooh", "[all]") {
   }
   SECTION("nvt_npt") {
 
-    langevinThermostat->setFriction(12.0);
+    langevinThermostat->setThermostatFriction(12.0);
     langevinThermostat->propagate(nSteps);
 
     std::cout << "nvt_npt: nvt done\n";

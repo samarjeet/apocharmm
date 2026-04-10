@@ -33,9 +33,7 @@ CudaBAOABIntegrator::CudaBAOABIntegrator(const double timeStep,
   m_BathTemperature = bathTemperature;
 }
 
-CudaBAOABIntegrator::~CudaBAOABIntegrator(void) {
-  cudaCheck(cudaFree(m_DevPHILOXStates));
-}
+CudaBAOABIntegrator::~CudaBAOABIntegrator(void) { this->dealloc(); }
 
 __global__ static void setup_kernel(int numAtoms,
                                     curandStatePhilox4_32_10_t *state) {
@@ -361,5 +359,10 @@ void CudaBAOABIntegrator::setCoordsDeltaPrevious(
   // coordsDeltaPrevious.setHostArray(cdpCC);
   // coordsDeltaPrevious.transferToDevice();
 
+  return;
+}
+
+void CudaBAOABIntegrator::dealloc(void) {
+  cudaCheck(cudaFree(m_DevPHILOXStates));
   return;
 }

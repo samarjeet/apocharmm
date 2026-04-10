@@ -112,6 +112,8 @@ private:
 
   void sort_realloc(const int indList);
 
+  void dealloc(void);
+
   std::shared_ptr<CellParam_t> h_cellParam;
   CellParam_t *d_cellParam;
   std::unique_ptr<NeighborListSort> neighborListSorter;
@@ -151,7 +153,7 @@ public:
 
   CudaNeighborListBuild<tilesize> &getBuilder(const int indList) {
     assert(indList >= 0 && indList < numList);
-    //assert(pbc == PBC::P1);
+    // assert(pbc == PBC::P1);
 
     return *builder.at(indList);
   }

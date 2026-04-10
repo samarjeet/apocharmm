@@ -50,8 +50,7 @@ TEST_CASE("relative", "[energy]") {
     ctx->assignVelocitiesAtTemperature(300.0);
 
     auto integrator = std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    integrator->setFriction(5.0);
-    integrator->setBathTemperature(300.0);
+    integrator->setThermostatFriction(5.0);
     integrator->setCharmmContext(ctx);
 
     integrator->propagate(1000);
@@ -197,13 +196,11 @@ TEST_CASE("FEP-EI") {
 
     auto equilIntegrator =
         std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    equilIntegrator->setFriction(5.0);
-    equilIntegrator->setBathTemperature(300.0);
+    equilIntegrator->setThermostatFriction(5.0);
     equilIntegrator->setCharmmContext(ctx);
 
     auto integrator = std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
-    integrator->setFriction(5.0);
-    integrator->setBathTemperature(300.0);
+    integrator->setThermostatFriction(5.0);
     integrator->setCharmmContext(ctx);
 
     auto fepSub = std::make_shared<FEPSubscriber>("dbexp_fepEI_vdw.out");

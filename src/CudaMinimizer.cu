@@ -305,7 +305,8 @@ void CudaMinimizer::minimize(int numSteps) {
 
       s = stepSize / std::max(gradientNorm, 1e-10);
       if (verboseFlag) {
-        std::cout << " stepSize : " << stepSize << " ";
+        std::cout << " stepSize : " << stepSize << " " << bestGradientNorm
+                  << " " << converged;
       }
 
       // s = 0.0;

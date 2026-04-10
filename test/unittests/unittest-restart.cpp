@@ -13,6 +13,7 @@
 #include "CharmmPSF.h"
 #include "CharmmParameters.h"
 #include "CudaLangevinPistonIntegrator.h"
+#include "CudaLangevinThermostatIntegrator.h"
 #include "CudaNoseHooverThermostatIntegrator.h"
 #include "ForceManager.h"
 #include "RestartSubscriber.h"
@@ -183,6 +184,35 @@ TEST_CASE("restart") {
     CHECK(integrator1->getLangevinPistonDeltaPositionPrevious()[0] ==
           Approx(integrator2->getLangevinPistonDeltaPositionPrevious()[0])
               .margin(1e-15));
+  }
+
+  SECTION("langevinThermostat") {
+    std::cout << "**** Langevin Thermostat ****" << std::endl;
+
+    // Setup first integrator
+    auto integrator1 =
+        std::make_shared<CudaLangevinThermostatIntegrator>(timeStep);
+    integrator1->setThermostatFriction(1.0);
+    integrator1->setThermostatRngSeed(randomSeed);
+    integrator1->setCharmmContext(ctx1);
+
+    // Setup restart subscrber
+    auto rst = std::make_shared<RestartSubscriber>("tmpLangevinThermostat.rst",
+                                                   nsteps);
+    integrator1->subscribe(rst);
+
+    integrator1->propagate(nsteps);
+    integrator1->unsubscribe(rst);
+    integrator1->propagate(1);
+
+    // Setup second integrator from restart file
+    auto integrator2 =
+        std::make_shared<CudaLangevinThermostatIntegrator>(timeStep);
+    integrator2->setThermostatFriction(1.0);
+    integrator2->setCharmmContext(ctx2);
+    integrator2->initializeFromRestartFile("tmpLangevinThermostat.rst");
+
+    integrator2->propagate(1);
   }
 
   // Check that the coordinates and velocities match enough

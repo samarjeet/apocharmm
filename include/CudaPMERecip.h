@@ -150,6 +150,8 @@ private:
   void init(int x0, int x1, int y0, int y1, int z0, int z1, int order,
             bool y_land_locked, bool z_land_locked);
 
+  void dealloc(void);
+
   void make_fft_plans();
 
   void calc_prefac();

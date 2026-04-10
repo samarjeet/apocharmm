@@ -55,8 +55,6 @@ TEST_CASE("holonomic constraints", "[dynamics]") {
     ctx->assignVelocitiesAtTemperature(300);
 
     auto integrator = std::make_shared<CudaLangevinThermostatIntegrator>(0.001);
-    integrator->setFriction(0.0);
-    integrator->setBathTemperature(300.0);
     integrator->setCharmmContext(ctx);
 
     auto coords = ctx->getCoordinatesCharges();

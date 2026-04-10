@@ -54,8 +54,8 @@ setupLangevinThermostatIntegrator(std::shared_ptr<CharmmContext> ctx) {
   std::shared_ptr<CudaLangevinThermostatIntegrator> integrator =
       std::make_shared<CudaLangevinThermostatIntegrator>(0.001);
   integrator->setCharmmContext(ctx);
-  integrator->setBathTemperature(300.0);
-  integrator->setFriction(12.0);
+  integrator->setReferenceTemperature(300.0);
+  integrator->setThermostatFriction(12.0);
   return integrator;
 }
 
@@ -157,8 +157,8 @@ TEST_CASE("Basic functions", "[unittest]") {
     auto ctx = std::make_shared<CharmmContext>(fm);
     auto crd = std::make_shared<CharmmCrd>(dataPath + "waterbox_NaN.crd");
     ctx->setCoordinates(crd);
-    auto integr =
-        std::make_shared<CudaLangevinThermostatIntegrator>(0.002, 300, 12.);
+    auto integr = std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
+    integr->setThermostatFriction(12.0);
     integr->setCharmmContext(ctx);
     // This should throw ! That's what we're testing.
     CHECK_THROWS(integr->propagate(10));
@@ -353,8 +353,7 @@ TEST_CASE("waterDimer", "[gasphase]") {
   ctx->assignVelocitiesAtTemperature(300);
 
   SECTION("LangevinThermostat") {
-    auto integrator =
-        std::make_shared<CudaLangevinThermostatIntegrator>(0.002, 300, 0.0);
+    auto integrator = std::make_shared<CudaLangevinThermostatIntegrator>(0.002);
     integrator->setDebugPrintFrequency(100);
     integrator->setCharmmContext(ctx);
     CHECK_NOTHROW(integrator->propagate(nsteps));
@@ -468,10 +467,10 @@ TEST_CASE("deterministic") {
   // is deterministic
   SECTION("langevinThermostatNoFriction") {
     int nsteps = 1000;
-    auto integrator1 = std::make_shared<CudaLangevinThermostatIntegrator>(
-             0.001, 300, 0.0),
-         integrator2 = std::make_shared<CudaLangevinThermostatIntegrator>(
-             0.001, 300, 0.0);
+    auto integrator1 =
+             std::make_shared<CudaLangevinThermostatIntegrator>(0.001),
+         integrator2 =
+             std::make_shared<CudaLangevinThermostatIntegrator>(0.001);
     integrator1->setCharmmContext(ctx1);
     integrator2->setCharmmContext(ctx2);
 
@@ -529,8 +528,8 @@ TEST_CASE("casting") {
   // see how downcasting works
   auto baseintegrator = std::make_shared<CudaIntegrator>(0.001);
   auto vvintegrator = std::make_shared<CudaVelocityVerletIntegrator>(0.001);
-  auto ltintegrator =
-      std::make_shared<CudaLangevinThermostatIntegrator>(0.001, 300, 12.0);
+  auto ltintegrator = std::make_shared<CudaLangevinThermostatIntegrator>(0.001);
+  ltintegrator->setThermostatFriction(12.0);
   auto lpintegrator = std::make_shared<CudaLangevinPistonIntegrator>(0.001);
 
   // Can I downcast base to LP

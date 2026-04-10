@@ -116,43 +116,7 @@ CudaNeighborList<tilesize>::CudaNeighborList(const CudaTopExcl &topExcl,
 // Class destructor
 //
 template <int tilesize> CudaNeighborList<tilesize>::~CudaNeighborList() {
-  // Neighbor list building
-  if (ind_sorted != NULL)
-    deallocate<int>(&ind_sorted);
-  if (cell_patom != NULL)
-    deallocate<int>(&cell_patom);
-  if (col_ncellz != NULL)
-    deallocate<int>(&col_ncellz);
-  if (col_cell != NULL)
-    deallocate<int>(&col_cell);
-  if (cell_xyz_zone != NULL)
-    deallocate<int4>(&cell_xyz_zone);
-  if (cell_bz != NULL)
-    deallocate<float>(&cell_bz);
-  if (bb != NULL)
-    deallocate<bb_t>(&bb);
-  for (int i = 0; i < d_NlistParam.size(); i++) {
-    deallocate<NlistParam_t>(&d_NlistParam.at(i));
-    deallocate_host<NlistParam_t>(&h_NlistParam.at(i));
-  }
-  for (int i = 0; i < sorter.size(); i++) {
-    delete sorter.at(i);
-  }
-  if (!builder.empty()) {
-    for (int i = 0; i < builder.size(); ++i) {
-      delete builder.at(i);
-    }
-  }
-  if (h_ZoneParam != NULL)
-    deallocate_host<ZoneParam_t>(&h_ZoneParam);
-  if (d_ZoneParam != NULL)
-    deallocate<ZoneParam_t>(&d_ZoneParam);
-  for (int i = 0; i < build_event.size(); i++) {
-    cudaCheck(cudaEventDestroy(build_event.at(i)));
-  }
-  cudaCheck(cudaEventDestroy(glo2loc_reset_event));
-  if (d_cellParam != NULL)
-    deallocate<CellParam_t>(&d_cellParam);
+  this->dealloc(); // To get rid of compiler warnings
 }
 
 //
@@ -305,6 +269,48 @@ void CudaNeighborList<tilesize>::sort(const int indList, const int *zone_patom,
     sorter.at(indList)->test_sort(zone_patom, cellStart, h_ZoneParam, xyzq,
                                   xyzq_sorted, ind_sorted, cell_patom);
   }
+}
+
+template <int tilesize> void CudaNeighborList<tilesize>::dealloc(void) {
+  // Neighbor list building
+  if (ind_sorted != NULL)
+    deallocate<int>(&ind_sorted);
+  if (cell_patom != NULL)
+    deallocate<int>(&cell_patom);
+  if (col_ncellz != NULL)
+    deallocate<int>(&col_ncellz);
+  if (col_cell != NULL)
+    deallocate<int>(&col_cell);
+  if (cell_xyz_zone != NULL)
+    deallocate<int4>(&cell_xyz_zone);
+  if (cell_bz != NULL)
+    deallocate<float>(&cell_bz);
+  if (bb != NULL)
+    deallocate<bb_t>(&bb);
+  for (int i = 0; i < d_NlistParam.size(); i++) {
+    deallocate<NlistParam_t>(&d_NlistParam.at(i));
+    deallocate_host<NlistParam_t>(&h_NlistParam.at(i));
+  }
+  for (int i = 0; i < sorter.size(); i++) {
+    delete sorter.at(i);
+  }
+  if (!builder.empty()) {
+    for (int i = 0; i < builder.size(); ++i) {
+      delete builder.at(i);
+    }
+  }
+  if (h_ZoneParam != NULL)
+    deallocate_host<ZoneParam_t>(&h_ZoneParam);
+  if (d_ZoneParam != NULL)
+    deallocate<ZoneParam_t>(&d_ZoneParam);
+  for (int i = 0; i < build_event.size(); i++) {
+    cudaCheck(cudaEventDestroy(build_event.at(i)));
+  }
+  cudaCheck(cudaEventDestroy(glo2loc_reset_event));
+  if (d_cellParam != NULL)
+    deallocate<CellParam_t>(&d_cellParam);
+
+  return;
 }
 
 //
