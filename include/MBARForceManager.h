@@ -9,7 +9,7 @@
 // ENDLICENSE
 
 #pragma once
-#include "ForceManager.h"
+#include "ForceManagerComposite.h"
 
 /* Question : how do I run standard FEP(via MBAR) computation ? One way would be
  * to save n_lambda traj and post-process. Another is to run n_lambda dynamics,
@@ -26,9 +26,9 @@ public:
   MBARForceManager();
   MBARForceManager(std::vector<std::shared_ptr<ForceManager>> fmList);
   void initialize() override;
-  void setSelectorVec(std::vector<float> lambdaIn) override;
-  float calc_force(const float4 *xyzq, bool reset = false,
-                   bool calcEnergy = false, bool calcVirial = false) override;
+  void setSelectorVec(const std::vector<float> &lambdas) override;
+  void calcForce(const float4 *xyzq, bool reset = false,
+                 bool calcEnergy = false, bool calcVirial = false) override;
   std::shared_ptr<Force<double>> getForces() override;
   CudaContainer<double> &getVirial() override;
   // void storePotentialEnergy();

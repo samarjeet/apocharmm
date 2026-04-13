@@ -34,8 +34,8 @@ EDSForceManager::EDSForceManager(std::shared_ptr<ForceManager> fm1,
 
 void EDSForceManager::initialize() {
   ForceManagerComposite::initialize();
-  energyOffsets.resize(children.size());
-  weights.resize(children.size());
+  energyOffsets.resize(m_Children.size());
+  weights.resize(m_Children.size());
   // children[1]->computeDirectSpaceForces = false;
 }
 
@@ -101,13 +101,13 @@ void EDSForceManager::updateWeights() {
   double beta = charmm::constants::kBoltz * temperature;
 
   // assert(weights.size() == children.size());
-  updateWeightsKernel<<<1, 1, 0, *compositeStream>>>(
-      children.size(), beta * sValue,
-      totalPotentialEnergy.getDeviceArray().data(),
+  updateWeightsKernel<<<1, 1, 0, *m_CompositeStream>>>(
+      m_Children.size(), beta * sValue,
+      m_TotalPotentialEnergy.getDeviceArray().data(),
       energyOffsets.getDeviceArray().data(),
-      totalPotentialEnergy.getDeviceArray().data(),
+      m_TotalPotentialEnergy.getDeviceArray().data(),
       weights.getDeviceArray().data());
-  cudaCheck(cudaStreamSynchronize(*compositeStream));
+  cudaCheck(cudaStreamSynchronize(*m_CompositeStream));
 
   /*weights.transferFromDevice();
 
@@ -136,34 +136,35 @@ static __global__ void weighForcesKernel(int numAtoms, int stride, int childId,
 }
 
 void EDSForceManager::weighForces() {
+  const int numAtoms = m_Psf->getNumAtoms();
 
-  totalForceValues->clear(*compositeStream);
-  int forceStride = totalForceValues->stride();
+  m_TotalForceValues->clear(*m_CompositeStream);
+  int forceStride = m_TotalForceValues->stride();
 
   int numThreads = 128;
   int numBlocks = (numAtoms - 1) / numThreads + 1;
 
-  for (int i = 0; i < children.size(); ++i) {
-    weighForcesKernel<<<numBlocks, numThreads, 0, *compositeStream>>>(
+  for (int i = 0; i < m_Children.size(); ++i) {
+    weighForcesKernel<<<numBlocks, numThreads, 0, *m_CompositeStream>>>(
         numAtoms, forceStride, i, weights.getDeviceArray().data(),
-        children[i]->getForces()->xyz(), totalForceValues->xyz());
+        m_Children[i]->getForces()->xyz(), m_TotalForceValues->xyz());
     // cudaStreamSynchronize(*compositeStream);
   }
 }
 
-float EDSForceManager::calc_force(const float4 *xyzq, bool reset,
-                                  bool calcEnergy, bool calcVirial) {
+void EDSForceManager::calcForce(const float4 *xyzq, bool reset, bool calcEnergy,
+                                bool calcVirial) {
 
   calcEnergy = true; // need the energies to weight the forces
-  ForceManagerComposite::calc_force(xyzq, reset, calcEnergy, calcVirial);
+  ForceManagerComposite::calcForce(xyzq, reset, calcEnergy, calcVirial);
   updateWeights();
   weighForces();
-  cudaStreamSynchronize(*compositeStream);
-  return 0.0;
+  cudaStreamSynchronize(*m_CompositeStream);
+  return;
 }
 
 std::shared_ptr<Force<double>> EDSForceManager::getForces() {
-  return totalForceValues;
+  return m_TotalForceValues;
 }
 
 void EDSForceManager::setSValue(float svalue) { sValue = svalue; }

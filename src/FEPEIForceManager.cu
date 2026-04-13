@@ -26,18 +26,18 @@ void FEPEIForceManager::setLambdas(std::vector<float> lambdasIn) {
   lambdaPotentialEnergies.resize(lambdas.size());
 }
 
-void FEPEIForceManager::setSelectorVec(std::vector<float> lambdaIn) {
+void FEPEIForceManager::setSelectorVec(const std::vector<float> &lambda) {
   // Ensure that only one of entries is 1.0 and
   // the sum of the lambdas is 1.0
-  assert(std::accumulate(lambdaIn.begin(), lambdaIn.end(), 0.0));
-  auto it = std::find(lambdaIn.begin(), lambdaIn.end(), 1.0);
-  assert(it != lambdaIn.end());
-  nonZeroLambdaIndex = it - lambdaIn.begin();
-  for (int i = 0; i < lambdaIn.size(); ++i) {
+  assert(std::accumulate(lambda.begin(), lambda.end(), 0.0));
+  auto it = std::find(lambda.begin(), lambda.end(), 1.0);
+  assert(it != lambda.end());
+  nonZeroLambdaIndex = it - lambda.begin();
+  for (int i = 0; i < lambda.size(); ++i) {
     if (i != nonZeroLambdaIndex)
-      assert(lambdaIn[i] == 0.0);
+      assert(lambda[i] == 0.0);
   }
-  ForceManagerComposite::setSelectorVec(lambdaIn);
+  ForceManagerComposite::setSelectorVec(lambda);
 }
 
 static __global__ void weighForcesKernel(
@@ -62,50 +62,50 @@ static __global__ void weighForcesKernel(
 }
 
 void FEPEIForceManager::weighForces() {
+  const int numAtoms = m_Psf->getNumAtoms();
 
-  totalForceValues->clear(*compositeStream);
-  int forceStride = totalForceValues->stride();
+  m_TotalForceValues->clear(*m_CompositeStream);
+  int forceStride = m_TotalForceValues->stride();
 
   int numThreads = 128;
   int numBlocks = (numAtoms - 1) / numThreads + 1;
 
-  weighForcesKernel<<<numBlocks, numThreads, 0, *compositeStream>>>(
+  weighForcesKernel<<<numBlocks, numThreads, 0, *m_CompositeStream>>>(
       numAtoms, forceStride, lambdas.size(), lambdas.getDeviceArray().data(),
-      totalPotentialEnergy.getDeviceArray().data(), lambda,
-      children[0]->getForces()->xyz(), children[1]->getForces()->xyz(),
-      totalForceValues->xyz());
+      m_TotalPotentialEnergy.getDeviceArray().data(), lambda,
+      m_Children[0]->getForces()->xyz(), m_Children[1]->getForces()->xyz(),
+      m_TotalForceValues->xyz());
 }
 
-float FEPEIForceManager::calc_force(const float4 *xyzq, bool reset,
-                                    bool calcEnergy, bool calcVirial) {
+void FEPEIForceManager::calcForce(const float4 *xyzq, bool reset,
+                                  bool calcEnergy, bool calcVirial) {
 
   calcEnergy = true; // need the energies to weight the forces
-  ForceManagerComposite::calc_force(xyzq, reset, calcEnergy, calcVirial);
+  ForceManagerComposite::calcForce(xyzq, reset, calcEnergy, calcVirial);
   weighForces();
-  cudaCheck(cudaStreamSynchronize(*compositeStream));
-  return 0.0;
+  cudaCheck(cudaStreamSynchronize(*m_CompositeStream));
+  return;
 }
 
 std::shared_ptr<Force<double>> FEPEIForceManager::getForces() {
-
-  return totalForceValues;
+  return m_TotalForceValues;
 }
 
 CudaContainer<double> &FEPEIForceManager::getVirial() {
   std::cout << "[FEPEIForceManager] Don't call me. Instead call "
                "getVirialInChild with <int> childId\n"
             << "For now, returns child[0]'s virial.";
-  return children[0]->getVirial();
+  return m_Children[0]->getVirial();
 }
 
 CudaContainer<double> FEPEIForceManager::getLambdaPotentialEnergies() {
   // Doing these on the host side itself as they are not costly
   // Move them to the device in the second pass
   // weights.transferFromDevice();
-  totalPotentialEnergy.transferFromDevice();
+  m_TotalPotentialEnergy.transferFromDevice();
   for (int i = 0; i < lambdas.size(); ++i) {
-    lambdaPotentialEnergies[i] = (1 - lambdas[i]) * totalPotentialEnergy[0] +
-                                 lambdas[i] * totalPotentialEnergy[1];
+    lambdaPotentialEnergies[i] = (1 - lambdas[i]) * m_TotalPotentialEnergy[0] +
+                                 lambdas[i] * m_TotalPotentialEnergy[1];
   }
 
   return lambdaPotentialEnergies;

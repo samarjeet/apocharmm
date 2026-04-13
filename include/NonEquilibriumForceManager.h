@@ -9,22 +9,22 @@
 // ENDLICENSE
 
 #pragma once
-#include "ForceManager.h"
+#include "ForceManagerComposite.h"
 
 class NonEquilibriumForceManager {
 public:
-   NonEquilibriumForceManager();
+  NonEquilibriumForceManager();
 };
 
-//class NonEquilibriumForceManager : 
-//   public ForceManagerComposite {
-//public:
-//  NonEquilibriumForceManager();
-//  void setLambdaIncrements(float lambdaIncrement);
-//  virtual float calc_force(const float4 *xyzq, bool reset = false,
-//                           bool calcEnergy = false,
-//                           bool calcVirial = false) override;
+// class NonEquilibriumForceManager :
+//    public ForceManagerComposite {
+// public:
+//   NonEquilibriumForceManager();
+//   void setLambdaIncrements(float lambdaIncrement);
+//   virtual float calc_force(const float4 *xyzq, bool reset = false,
+//                            bool calcEnergy = false,
+//                            bool calcVirial = false) override;
 //
-//private:
-//  float lambdaIncrement;
-//};
+// private:
+//   float lambdaIncrement;
+// };

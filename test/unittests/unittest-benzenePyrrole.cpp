@@ -59,7 +59,7 @@ TEST_CASE("benzene_pyrrole", "[free energy]") {
     auto crd = std::make_shared<CharmmCrd>(dataPath + "min.0.crd");
     ctx->setCoordinates(crd);
 
-    std::cout << ctx->calculatePotentialEnergy(true, true);
+    ctx->calculatePotentialEnergy(true, true);
     // char c;
     // std::cin >> c;
     //  ctx->assignVelocitiesAtTemperature(0.0);
@@ -190,7 +190,7 @@ TEST_CASE("sep_benzene_pyrrole", "[free energy]") {
                                            std::to_string(0) + ".crd");
     ctx->setCoordinates(crd);
 
-    std::cout << ctx->calculatePotentialEnergy(true, true);
+    ctx->calculatePotentialEnergy(true, true);
     // char c;
     // std::cin >> c;
     //  ctx->assignVelocitiesAtTemperature(0.0);

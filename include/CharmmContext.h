@@ -211,7 +211,7 @@ public:
   void setCoordsCharges(const std::vector<std::vector<float>> &coordsChargesIn);
 
   void resetNeighborList();
-  float calculatePotentialEnergy(bool reset = false, bool print = false);
+  void calculatePotentialEnergy(bool reset = false, bool print = false);
   /** @brief Compute the potential energy (using the ForceManager calc_force
    * function)
    * @todo Param "reset" not implemented in ForceManager::calc_force
@@ -227,8 +227,8 @@ public:
   // float calculatePotentialEnergy(bool reset = false);
   /** @brief Call calc_force on each ForceManager.
    */
-  float calculateForces(bool reset = false, bool calcEnergy = false,
-                        bool calcVirial = false);
+  void calculateForces(bool reset = false, bool calcEnergy = false,
+                       bool calcVirial = false);
 
   void setMasses(const std::vector<double> &masses);
 
@@ -314,7 +314,7 @@ public:
    *
    * Calls ForceManager's getPotentialEnergies
    */
-  std::vector<float> getPotentialEnergies();
+  float getPotentialEnergies();
 
   /**
    * @brief Get the Potential Energy value.

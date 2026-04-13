@@ -844,9 +844,9 @@ void CudaNoseHooverThermostatIntegrator::propagateOneStep(void) {
         PBC::P21) {
       // Find a better place for this
       int numGroups =
-          m_Context->getForceManager()->getPSF()->getGroups().size();
+          m_Context->getForceManager()->getPsf()->getGroups().size();
       int2 *groups =
-          m_Context->getForceManager()->getPSF()->getGroups().getDeviceData();
+          m_Context->getForceManager()->getPsf()->getGroups().getDeviceData();
       float boxDimX = static_cast<float>(m_Context->getBoxDimensions()[0]);
 
       constexpr int numThreads = 256;
@@ -1002,9 +1002,9 @@ double CudaNoseHooverThermostatIntegrator::computeNoseHooverPistonMass(void) {
 void CudaNoseHooverThermostatIntegrator::removeCenterOfMassMotion(void) {
   cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
 
-  auto pbc = m_Context->getForceManager()->getPeriodicBoundaryCondition();
-  int numAtoms = m_Context->getNumAtoms();
-  CudaContainer<double4> velMass = m_Context->getVelocityMass();
+  const PBC pbc = m_Context->getForceManager()->getPeriodicBoundaryCondition();
+  const int numAtoms = m_Context->getNumAtoms();
+  CudaContainer<double4> &velMass = m_Context->getVelocityMass();
 
   velMass.transferToHost();
   m_CoordsDeltaPrevious.transferToHost();
@@ -1012,7 +1012,7 @@ void CudaNoseHooverThermostatIntegrator::removeCenterOfMassMotion(void) {
   double3 com = make_double3(0.0, 0.0, 0.0);
   double totalMass = 0.0;
   for (int i = 0; i < numAtoms; i++) {
-    double mass = 1.0 / velMass[i].w;
+    const double mass = 1.0 / velMass[i].w;
 
     com.x += m_CoordsDeltaPrevious[i].x * mass;
     if (pbc == PBC::P21) {

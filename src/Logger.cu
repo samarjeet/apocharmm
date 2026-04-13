@@ -136,7 +136,9 @@ void Logger::logContext() {
 
 void Logger::logForceManager() {
   std::shared_ptr<ForceManager> fm = context->getForceManager();
-  if (fm->isComposite()) { return ; } // if composite, don't log (not implemented yet)
+  if (fm->isComposite()) {
+    return;
+  } // if composite, don't log (not implemented yet)
   tinyxml2::XMLElement *xmlForceManager = xmldoc.NewElement("ForceManager");
   xmlForceManager->SetAttribute("NumAtoms", fm->getNumAtoms());
   xmlForceManager->SetAttribute("Cutoff", fm->getCutoff());
@@ -157,7 +159,7 @@ void Logger::logForceManager() {
   xmlForceManager->SetAttribute("PBC", tempstr.c_str());
 
   tinyxml2::XMLElement *xmlPSF = xmldoc.NewElement("PSF");
-  xmlPSF->SetText(fm->getPSF()->getOriginalPSFFileName().c_str());
+  xmlPSF->SetText(fm->getPsf()->getOriginalPSFFileName().c_str());
   tinyxml2::XMLElement *xmlPRM = xmldoc.NewElement("PRM");
   std::vector<std::string> prmFileNames =
       fm->getPrm()->getOriginalPrmFileNames();

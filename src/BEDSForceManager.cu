@@ -143,45 +143,47 @@ static __global__ void weighForcesKernel(
 }
 
 void BEDSForceManager::weighForces() {
+  const int numAtoms = m_Psf->getNumAtoms();
+
   double temperature = 298.17;
   double beta = charmm::constants::kBoltz * temperature;
 
-  totalForceValues->clear(*compositeStream);
-  int forceStride = totalForceValues->stride();
+  m_TotalForceValues->clear(*m_CompositeStream);
+  int forceStride = m_TotalForceValues->stride();
 
   int numThreads = 128;
   int numBlocks = (numAtoms - 1) / numThreads + 1;
 
   // Assuming two end states for now
-  calculateWeightsKernel<<<1, 1, 0, *compositeStream>>>(
+  calculateWeightsKernel<<<1, 1, 0, *m_CompositeStream>>>(
       beta * sValue, forceStride, lambdas.size(),
       lambdas.getDeviceArray().data(),
-      totalPotentialEnergy.getDeviceArray().data(),
+      m_TotalPotentialEnergy.getDeviceArray().data(),
       energyOffsets.getDeviceArray().data(), weights.getDeviceArray().data());
 
-  weighForcesKernel<<<numBlocks, numThreads, 0, *compositeStream>>>(
+  weighForcesKernel<<<numBlocks, numThreads, 0, *m_CompositeStream>>>(
       numAtoms, beta * sValue, forceStride, lambdas.size(),
       lambdas.getDeviceArray().data(),
-      totalPotentialEnergy.getDeviceArray().data(),
+      m_TotalPotentialEnergy.getDeviceArray().data(),
       energyOffsets.getDeviceArray().data(), weights.getDeviceArray().data(),
-      children[0]->getForces()->xyz(), children[1]->getForces()->xyz(),
-      totalForceValues->xyz());
+      m_Children[0]->getForces()->xyz(), m_Children[1]->getForces()->xyz(),
+      m_TotalForceValues->xyz());
 }
 
-float BEDSForceManager::calc_force(const float4 *xyzq, bool reset,
-                                   bool calcEnergy, bool calcVirial) {
+void BEDSForceManager::calcForce(const float4 *xyzq, bool reset,
+                                 bool calcEnergy, bool calcVirial) {
 
   calcEnergy = true; // need the energies to weight the forces
-  ForceManagerComposite::calc_force(xyzq, reset, calcEnergy, calcVirial);
+  ForceManagerComposite::calcForce(xyzq, reset, calcEnergy, calcVirial);
   // updateWeights();
   // In branch EDS, weights on the forces are calcualted on the fly
   weighForces();
-  cudaStreamSynchronize(*compositeStream);
-  return 0.0;
+  cudaStreamSynchronize(*m_CompositeStream);
+  return;
 }
 
 std::shared_ptr<Force<double>> BEDSForceManager::getForces() {
-  return totalForceValues;
+  return m_TotalForceValues;
 }
 
 void BEDSForceManager::setSValue(float svalue) { sValue = svalue; }
@@ -201,7 +203,7 @@ void BEDSForceManager::setEndStateEnergyOffsets(
     std::vector<double> _energyOffsets) {
 
   // for the current version this should be 2
-  assertm(_energyOffsets.size() == children.size(),
+  assertm(_energyOffsets.size() == m_Children.size(),
           "Wrong energyOffsets size -- BEDSForceManager might not be "
           "initialized.");
   assertm(lambdas.size() != 0,
@@ -224,10 +226,10 @@ CudaContainer<double> BEDSForceManager::getLambdaPotentialEnergies() {
   // Doing these on the host side itself as they are not costly
   // Move them to the device in the second pass
   // weights.transferFromDevice();
-  totalPotentialEnergy.transferFromDevice();
+  m_TotalPotentialEnergy.transferFromDevice();
   for (int i = 0; i < lambdas.size(); ++i) {
-    lambdaPotentialEnergies[i] = (1 - lambdas[i]) * totalPotentialEnergy[0] +
-                                 lambdas[i] * totalPotentialEnergy[1];
+    lambdaPotentialEnergies[i] = (1 - lambdas[i]) * m_TotalPotentialEnergy[0] +
+                                 lambdas[i] * m_TotalPotentialEnergy[1];
   }
 
   return lambdaPotentialEnergies;

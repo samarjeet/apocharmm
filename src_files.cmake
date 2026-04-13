@@ -36,6 +36,7 @@ list(APPEND src_files
   src/FEPSubscriber.cu
   src/Force.cu
   src/ForceManager.cu
+  src/ForceManagerComposite.cu
   src/ForceManagerGenerator.cu
 
   # src/ForceType.cu

@@ -25,10 +25,10 @@ public:
    * ones can be created
    */
   ForceManagerGenerator(std::shared_ptr<ForceManager> baseForceManager);
-  /**
-   * @brief Generate a SINGLE ForceManager following arguments
-   */
-  virtual std::shared_ptr<ForceManager> generateForceManager();
+  // /**
+  //  * @brief Generate a SINGLE ForceManager following arguments
+  //  */
+  // virtual std::shared_ptr<ForceManager> generateForceManager();
 
 protected:
   /**

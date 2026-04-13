@@ -30,15 +30,11 @@ DualTopologySubscriber::~DualTopologySubscriber(void) {
 }
 
 void DualTopologySubscriber::update(void) {
-  float pe = m_CharmmContext->calculateForces(false, true, true);
+  m_CharmmContext->calculateForces(false, true, true);
 
   // the previous command has calculated the energies as well
   // here we are just calling them. No force or energy is being calculated here
-  auto pes = m_CharmmContext->getPotentialEnergies();
-
-  for (auto pesi : pes)
-    m_FileStream << pesi << "\t";
-  m_FileStream << pe << std::endl;
+  m_FileStream << m_CharmmContext->getPotentialEnergies() << '\t';
 
   m_NumFramesWritten++;
 

@@ -61,11 +61,11 @@ TEST_CASE("ForceManager", "[unit]") {
     std::string prmfile = dataPath + "par_all36_cgenff.prm";
     std::vector<std::string> prmlist = {dataPath + "par_all36_cgenff.prm",
                                         dataPath + "toppar_water_ions.str"};
-    CHECK_NOTHROW(fm->addPRM(prmfile));
-    CHECK_NOTHROW(fm->addPRM(prmlist));
+    CHECK_NOTHROW(fm->addPrm(prmfile));
+    CHECK_NOTHROW(fm->addPrm(prmlist));
     REQUIRE(fm->isInitialized() == false);
     std::string psffile = dataPath + "argon_10.psf";
-    CHECK_NOTHROW(fm->addPSF(psffile));
+    CHECK_NOTHROW(fm->addPsf(psffile));
 
     // numAtoms
     REQUIRE(fm->getNumAtoms() == 10);

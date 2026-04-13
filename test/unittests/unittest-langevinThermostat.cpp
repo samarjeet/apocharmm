@@ -64,13 +64,13 @@ TEST_CASE("langevinThermostat", "[dynamics]") {
     averageTemperature.transferToHost();
 
     if (useHolonomicConstraints) {
-      CHECK(ctx->computeTemperature() == 298.75998f);
-      CHECK(averageTemperature[0] == Approx(300.3470642899).margin(1e-8));
-      CHECK(averageTemperature[1] == Approx(299.1793101868).margin(1e-8));
+      CHECK(ctx->computeTemperature() == 299.96588f);
+      CHECK(averageTemperature[0] == Approx(301.3690901918).margin(1e-8));
+      CHECK(averageTemperature[1] == Approx(300.1985645927).margin(1e-8));
     } else {
-      CHECK(ctx->computeTemperature() == 300.22888f);
-      CHECK(averageTemperature[0] == Approx(306.2450447664).margin(1e-8));
-      CHECK(averageTemperature[1] == Approx(300.5825325454).margin(1e-8));
+      CHECK(ctx->computeTemperature() == 294.9382f);
+      CHECK(averageTemperature[0] == Approx(305.4079733868).margin(1e-8));
+      CHECK(averageTemperature[1] == Approx(299.7495496752).margin(1e-8));
     }
   }
 

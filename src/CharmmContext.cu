@@ -128,7 +128,7 @@ void CharmmContext::setCoordinates(
   // auto charmmCrd = std::make_shared<CharmmCrd>(crd);
   // setCoordinates(charmmCrd);
   if (!forceManager->isComposite()) {
-    assert(coords.size() == forceManager->getPSF()->getNumAtoms());
+    assert(coords.size() == forceManager->getNumAtoms());
   }
   if (!forceManager->hasCharmmContext()) {
     linkBackForceManager();
@@ -136,11 +136,11 @@ void CharmmContext::setCoordinates(
   setNumAtoms(coords.size());
 
   velocityMass.resize(numAtoms);
-  setMasses(forceManager->getPSF()->getAtomMasses());
+  setMasses(forceManager->getPsf()->getAtomMasses());
 
   useHolonomicConstraints(usingHolonomicConstraints);
   auto charges =
-      forceManager->getPSF()->getAtomCharges(); // this is a std::vector<double>
+      forceManager->getPsf()->getAtomCharges(); // this is a std::vector<double>
 
   // 4N-sized vector to contain spatial coords + atomic charges
   std::vector<double4> crdCharges(coords.size());
@@ -311,7 +311,7 @@ void CharmmContext::imageCentering() {
   double boxz = boxSize[2];
   auto pbc = forceManager->getPeriodicBoundaryCondition();
 
-  auto groups = forceManager->getPSF()->getGroups();
+  auto groups = forceManager->getPsf()->getGroups();
 
   auto force = getForces();
   auto forceStride = getForceStride();
@@ -338,13 +338,13 @@ void CharmmContext::resetNeighborList() {
   forceManager->resetNeighborList(xyzq.getDeviceXYZQ());
 }
 
-float CharmmContext::calculateForces(bool reset, bool calcEnergy,
-                                     bool calcVirial) {
-  return forceManager->calc_force(xyzq.getDeviceXYZQ(), reset, calcEnergy,
-                                  calcVirial);
+void CharmmContext::calculateForces(bool reset, bool calcEnergy,
+                                    bool calcVirial) {
+  forceManager->calcForce(xyzq.getDeviceXYZQ(), reset, calcEnergy, calcVirial);
+  return;
 }
 
-std::vector<float> CharmmContext::getPotentialEnergies() {
+float CharmmContext::getPotentialEnergies() {
   return forceManager->getPotentialEnergies();
 }
 
@@ -655,7 +655,7 @@ float CharmmContext::computeTemperature() {
         "No atoms in the system -- coordinates have not been loaded and/or "
         "velocities not assigned.");
   }
-  auto ke = getKineticEnergy();
+  double ke = getKineticEnergy();
   int numDegreesOfFreedom = getDegreesOfFreedom();
   return ke / (0.5 * numDegreesOfFreedom * charmm::constants::kBoltz);
 }
@@ -681,12 +681,15 @@ void CharmmContext::setBoxDimensions(const std::vector<double> &boxDimensions) {
   forceManager->setBoxDimensions(boxDimensions);
 }
 
-std::vector<Bond> CharmmContext::getBonds() { return forceManager->getBonds(); }
+std::vector<Bond> CharmmContext::getBonds() {
+  return forceManager->getPsf()->getBonds();
+}
 
 int CharmmContext::getDegreesOfFreedom() { return numDegreesOfFreedom; }
 
-float CharmmContext::calculatePotentialEnergy(bool reset, bool print) {
-  return forceManager->calc_force(xyzq.getDeviceXYZQ(), reset, true, true);
+void CharmmContext::calculatePotentialEnergy(bool reset, bool print) {
+  forceManager->calcForce(xyzq.getDeviceXYZQ(), reset, true, true);
+  return;
 }
 CudaContainer<double> &CharmmContext::getPotentialEnergy() {
   return forceManager->getPotentialEnergy();
@@ -820,8 +823,7 @@ CudaContainer<double> &CharmmContext::getVirial() {
 }
 
 CudaContainer<int4> CharmmContext::getWaterMolecules() {
-  auto waterMolecules = forceManager->getPSF()->getWaterMolecules();
-  return waterMolecules;
+  return forceManager->getPsf()->getWaterMolecules();
 }
 
 CudaContainer<int4> CharmmContext::getShakeAtoms() {

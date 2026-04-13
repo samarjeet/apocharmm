@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "ForceManager.h"
+#include "ForceManagerComposite.h"
 #include "Subscriber.h"
 
 /** @brief Subscriber linked to one or more ForceManager. Computes at each

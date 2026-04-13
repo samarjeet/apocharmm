@@ -243,7 +243,7 @@ void CudaBAOABIntegrator::propagateOneStep(void) {
   if (m_StepsSinceNeighborListUpdate % m_NonbondedListUpdateFrequency == 0) {
     if (m_Context->getForceManager()->getPeriodicBoundaryCondition() ==
         PBC::P21) {
-      auto groups = m_Context->getForceManager()->getPSF()->getGroups();
+      auto groups = m_Context->getForceManager()->getPsf()->getGroups();
 
       // find a better place for this
       int numGroups = groups.size();

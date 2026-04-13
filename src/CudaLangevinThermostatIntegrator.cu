@@ -704,9 +704,9 @@ void CudaLangevinThermostatIntegrator::propagateOneStep(void) {
         PBC::P21) {
       // Find a better place for this
       int numGroups =
-          m_Context->getForceManager()->getPSF()->getGroups().size();
+          m_Context->getForceManager()->getPsf()->getGroups().size();
       int2 *groups =
-          m_Context->getForceManager()->getPSF()->getGroups().getDeviceData();
+          m_Context->getForceManager()->getPsf()->getGroups().getDeviceData();
       float boxDimX = static_cast<float>(m_Context->getBoxDimensions()[0]);
 
       constexpr int numThreads = 256;
@@ -816,9 +816,9 @@ void CudaLangevinThermostatIntegrator::initializeRng(void) {
 void CudaLangevinThermostatIntegrator::removeCenterOfMassMotion(void) {
   cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
 
-  auto pbc = m_Context->getForceManager()->getPeriodicBoundaryCondition();
-  int numAtoms = m_Context->getNumAtoms();
-  CudaContainer<double4> velMass = m_Context->getVelocityMass();
+  const PBC pbc = m_Context->getForceManager()->getPeriodicBoundaryCondition();
+  const int numAtoms = m_Context->getNumAtoms();
+  CudaContainer<double4> &velMass = m_Context->getVelocityMass();
 
   velMass.transferToHost();
   m_CoordsDeltaPrevious.transferToHost();

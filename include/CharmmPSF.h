@@ -94,30 +94,43 @@ public:
   int getNumCrossTerms() { return numCrossTerms; }
 
   /** @brief Returns a vector containing all Bond objects */
-  std::vector<Bond> getBonds() { return bonds; }
+  const std::vector<Bond> &getBonds(void) const { return bonds; }
+  std::vector<Bond> &getBonds(void) { return bonds; }
   /** @brief Returns a vector containing all Angle objects */
-  std::vector<Angle> getAngles() { return angles; }
+  const std::vector<Angle> &getAngles(void) const { return angles; }
+  std::vector<Angle> &getAngles(void) { return angles; }
   /** @brief Returns a vector containing all Dihedral objects */
-  std::vector<Dihedral> getDihedrals() { return dihedrals; }
+  const std::vector<Dihedral> &getDihedrals(void) const { return dihedrals; }
+  std::vector<Dihedral> &getDihedrals(void) { return dihedrals; }
   /** @brief Returns a vector containing all improper dihedral objects */
-  std::vector<Dihedral> getImpropers() { return impropers; }
-
-  std::vector<CrossTerm> getCrossTerms() { return crossTerms; }
+  const std::vector<Dihedral> &getImpropers(void) const { return impropers; }
+  std::vector<Dihedral> &getImpropers(void) { return impropers; }
+  /** @brief Returns a vector containing all cross term objects */
+  const std::vector<CrossTerm> &getCrossTerms(void) const { return crossTerms; }
+  std::vector<CrossTerm> &getCrossTerms(void) { return crossTerms; }
 
   /** @brief Returns a N-sized vector containing all atomic masses */
-  std::vector<double> getAtomMasses() { return masses; }
+  const std::vector<double> &getAtomMasses(void) const { return masses; }
+  std::vector<double> &getAtomMasses(void) { return masses; }
   /** @brief Returns a N-sized vector containing all atomic charges */
-  std::vector<double> getAtomCharges() { return charges; }
+  const std::vector<double> &getAtomCharges(void) const { return charges; }
+  std::vector<double> &getAtomCharges(void) { return charges; }
 
   /** @brief Returns a N-sized string-vector containing all atomic names */
-  std::vector<std::string> getAtomNames() { return atomNames; }
+  const std::vector<std::string> &getAtomNames(void) const { return atomNames; }
+  std::vector<std::string> &getAtomNames(void) { return atomNames; }
   /** @brief Returns a N-sized string-vector containing all atomic types */
-  std::vector<std::string> getAtomTypes() { return atomTypes; }
+  const std::vector<std::string> &getAtomTypes(void) const { return atomTypes; }
+  std::vector<std::string> &getAtomTypes(void) { return atomTypes; }
 
-  std::string getAtomType(int index) const { return atomTypes[index]; }
+  const std::string &getAtomType(const int index) const {
+    return atomTypes[index];
+  }
 
-  std::vector<int> getInb14() { return inb14; }
-  std::vector<int> getIblo14() { return iblo14; }
+  const std::vector<int> &getInb14(void) const { return inb14; }
+  std::vector<int> &getInb14(void) { return inb14; }
+  const std::vector<int> &getIblo14(void) const { return iblo14; }
+  std::vector<int> &getIblo14(void) { return iblo14; }
 
   /** @brief Computes number of water molecules.
    *

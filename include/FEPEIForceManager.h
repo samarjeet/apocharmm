@@ -9,7 +9,7 @@
 // ENDLICENSE
 
 #pragma once
-#include "ForceManager.h"
+#include "ForceManagerComposite.h"
 
 /** @brief ForceManagerComposite subclass to compute FEP free energies using
  * Energy Interpolation.
@@ -21,9 +21,9 @@ class FEPEIForceManager : public ForceManagerComposite {
 public:
   FEPEIForceManager();
   void initialize() override;
-  void setSelectorVec(std::vector<float> lambdaIn) override;
-  float calc_force(const float4 *xyzq, bool reset = false,
-                   bool calcEnergy = false, bool calcVirial = false) override;
+  void setSelectorVec(const std::vector<float> &lambda) override;
+  void calcForce(const float4 *xyzq, bool reset = false,
+                 bool calcEnergy = false, bool calcVirial = false) override;
   std::shared_ptr<Force<double>> getForces() override;
   // void storePotentialEnergy();
 

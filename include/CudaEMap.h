@@ -26,7 +26,7 @@ public:
     ny = 100;
     nz = 100;
 
-    atomicMasses = context->getForceManager()->getPSF()->getAtomMasses();
+    atomicMasses = context->getForceManager()->getPsf()->getAtomMasses();
   }
 
   ~CudaEMap() { this->dealloc(); }

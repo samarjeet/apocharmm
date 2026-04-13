@@ -8,10 +8,10 @@
 //
 // ENDLICENSE
 
-#include "CharmmContext.h"
-#include "ForceManager.h"
-#include "MBARForceManager.h"
 #include "MBARSubscriber.h"
+
+#include "CharmmContext.h"
+#include "MBARForceManager.h"
 #include "XYZQ.h"
 #include <iomanip>
 #include <iostream>
@@ -35,7 +35,7 @@ void MBARSubscriber::update(void) {
   XYZQ *xyzq = m_CharmmContext->getXYZQ();
   xyzq->transferFromDevice();
   float4 *xyzqPointer = xyzq->xyzq;
-  tempfm->ForceManagerComposite::calc_force(xyzqPointer, false, true, false);
+  tempfm->ForceManagerComposite::calcForce(xyzqPointer, false, true, false);
   // fm->ForceManagerComposite::calc_force(xyzqPointer, false, true, false);
   auto peCC = tempfm->getPotentialEnergy();
   peCC.transferFromDevice();

@@ -133,8 +133,7 @@ TEST_CASE("bilayer", "[all]") {
 
   // ctx->useHolonomicConstraints(false);
 
-  std::cout << "Potential energy : \n"
-            << ctx->calculatePotentialEnergy(true, true) << "\n";
+  ctx->calculatePotentialEnergy(true, true);
 
   /*
   auto energyComponents = fm->getEnergyComponents();
@@ -240,8 +239,7 @@ TEST_CASE("sooh", "[all]") {
 
   // ctx->useHolonomicConstraints(false);
 
-  std::cout << "Potential energy : \n"
-            << ctx->calculatePotentialEnergy(true, true) << "\n";
+  ctx->calculatePotentialEnergy(true, true);
 
   /*
   auto energyComponents = fm->getEnergyComponents();

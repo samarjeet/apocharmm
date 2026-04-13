@@ -84,8 +84,7 @@ __global__ void initializeKernel(float4 *coords, float4 *oldCoords,
 void CudaVerletIntegrator::initialize(void) {
   int numAtoms = m_Context->getNumAtoms();
   // CudaIntegrator::initializeOldNewCoords(numAtoms);
-  auto energy = m_Context->calculatePotentialEnergy(true);
-  // std::cout << "Total energy = " << energy << "\n";
+  m_Context->calculatePotentialEnergy(true);
   auto force = m_Context->getForces();
   double *forceData = (double *)force->xyz();
   auto velocityMass = m_Context->getVelocityMass();

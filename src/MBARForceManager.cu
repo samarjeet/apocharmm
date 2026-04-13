@@ -44,28 +44,28 @@ updateChargeInCharmmContext(int numAtoms, const double *__restrict__ d_charges,
   }
 }
 
-void MBARForceManager::setSelectorVec(std::vector<float> lambdaIn) {
+void MBARForceManager::setSelectorVec(const std::vector<float> &lambdas) {
   // Ensure that only one of entries is 1.0 and
   // the sum of the lambdas is 1.0
-  assert(std::accumulate(lambdaIn.begin(), lambdaIn.end(), 0.0));
-  auto it = std::find(lambdaIn.begin(), lambdaIn.end(), 1.0);
-  assert(it != lambdaIn.end());
-  nonZeroLambdaIndex = it - lambdaIn.begin();
-  for (int i = 0; i < lambdaIn.size(); ++i) {
+  assert(std::accumulate(lambdas.begin(), lambdas.end(), 0.0));
+  auto it = std::find(lambdas.begin(), lambdas.end(), 1.0);
+  assert(it != lambdas.end());
+  nonZeroLambdaIndex = it - lambdas.begin();
+  for (int i = 0; i < lambdas.size(); ++i) {
     if (i != nonZeroLambdaIndex)
-      // assert((lambdaIn[i] == 0.0) && "Only one of the entries in the
+      // assert((lambdas[i] == 0.0) && "Only one of the entries in the
       // selectorVec should be 1.");
-      if (lambdaIn[i] != 0.0) {
+      if (lambdas[i] != 0.0) {
         throw std::invalid_argument(
             "Only one of the entries in the selectorVec of a MBARForceManager "
             "should be 1.");
       }
   }
 
-  ForceManagerComposite::setSelectorVec(lambdaIn);
+  ForceManagerComposite::setSelectorVec(lambdas);
 
   // Testing this design
-  auto charges = children[nonZeroLambdaIndex]->getPSF()->getAtomCharges();
+  auto charges = m_Children[nonZeroLambdaIndex]->getPsf()->getAtomCharges();
   double *d_charges;
   cudaMalloc(&d_charges, sizeof(double) * charges.size());
   cudaMemcpy(d_charges, charges.data(), sizeof(double) * charges.size(),
@@ -74,8 +74,9 @@ void MBARForceManager::setSelectorVec(std::vector<float> lambdaIn) {
   int numThreads = 128;
   int numBlocks = (charges.size() + numThreads - 1) / numThreads;
 
-  auto xyzq = context->getXYZQ()->getDeviceXYZQ();
-  auto coordsCharge = context->getCoordinatesCharges().getDeviceArray().data();
+  auto xyzq = m_Context->getXYZQ()->getDeviceXYZQ();
+  auto coordsCharge =
+      m_Context->getCoordinatesCharges().getDeviceArray().data();
 
   updateChargeInCharmmContext<<<numBlocks, numThreads>>>(
       charges.size(), d_charges, xyzq, coordsCharge);
@@ -84,25 +85,26 @@ void MBARForceManager::setSelectorVec(std::vector<float> lambdaIn) {
   cudaFree(d_charges);
 }
 
-float MBARForceManager::calc_force(const float4 *xyzq, bool reset,
-                                   bool calcEnergy, bool calcVirial) {
+void MBARForceManager::calcForce(const float4 *xyzq, bool reset,
+                                 bool calcEnergy, bool calcVirial) {
 
-  children[nonZeroLambdaIndex]->calc_force(xyzq, reset, calcEnergy, calcVirial);
+  m_Children[nonZeroLambdaIndex]->calcForce(xyzq, reset, calcEnergy,
+                                            calcVirial);
   auto childPotentialEnergy =
-      children[nonZeroLambdaIndex]->getPotentialEnergy();
+      m_Children[nonZeroLambdaIndex]->getPotentialEnergy();
 
-  cudaMemcpyAsync(totalPotentialEnergy.getDeviceArray().data() +
+  cudaMemcpyAsync(m_TotalPotentialEnergy.getDeviceArray().data() +
                       nonZeroLambdaIndex,
                   childPotentialEnergy.getDeviceArray().data(), sizeof(double),
-                  cudaMemcpyDeviceToDevice, *compositeStream);
-  return 0.0;
+                  cudaMemcpyDeviceToDevice, *m_CompositeStream);
+  return;
 }
 
 std::shared_ptr<Force<double>> MBARForceManager::getForces() {
 
-  return children[nonZeroLambdaIndex]->getForces();
+  return m_Children[nonZeroLambdaIndex]->getForces();
 }
 
 CudaContainer<double> &MBARForceManager::getVirial() {
-  return children[nonZeroLambdaIndex]->getVirial();
+  return m_Children[nonZeroLambdaIndex]->getVirial();
 }

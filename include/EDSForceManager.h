@@ -9,7 +9,7 @@
 // ENDLICENSE
 
 #pragma once
-#include "ForceManager.h"
+#include "ForceManagerComposite.h"
 
 /**
  * @brief Composite force manager designed to handle Enveloping Distribution
@@ -19,7 +19,7 @@
  * by two different ForceManager objects.
  *
  * Uses a smoothness parameter \f$s\f$ and, for N different states, N energy
- * offsets \f$E_i\f$,  such that 
+ * offsets \f$E_i\f$,  such that
  * \f[     H = - \frac{1}{\beta s} \exp^{-\beta s \left( H -
  * E_i)\right) }  \f] See <a
  * href="https://aip.scitation.org/doi/10.1063/1.2730508">Enveloping
@@ -52,8 +52,8 @@ public:
    *
    * Computes energies and forces for all children.
    */
-  float calc_force(const float4 *xyzq, bool reset = false,
-                   bool calcEnergy = false, bool calcVirial = false) override;
+  void calcForce(const float4 *xyzq, bool reset = false,
+                 bool calcEnergy = false, bool calcVirial = false) override;
 
   /**
    * @brief Returns getForces on the FIRST child
@@ -85,9 +85,9 @@ public:
    * the number of FMchildren.
    */
   void setEnergyOffsets(std::vector<double> _energyOffsets);
-  /** 
+  /**
    * @brief Get potential energy offsets used for EDS
-  */
+   */
   CudaContainer<double> getEnergyOffsets();
 
   /** @brief Set \f$\lambda\f$ value for \f$\lambda\f$-EDS */
@@ -99,7 +99,7 @@ protected:
   /** @brief \f$\lambda\f$ value for \f$\lambda\f$-EDS method */
   float lambdaValue = -1;
 
-  /** @brief Smoothness parameter of EDS 
+  /** @brief Smoothness parameter of EDS
    *
    * Default value (set by constructor) 0.05
    */

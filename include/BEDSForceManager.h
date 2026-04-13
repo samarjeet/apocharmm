@@ -9,7 +9,7 @@
 // ENDLICENSE
 
 #pragma once
-#include "ForceManager.h"
+#include "ForceManagerComposite.h"
 
 /**
  * @brief Composite force manager designed to handle Branch Enveloping
@@ -51,8 +51,8 @@ public:
    *
    * Computes energies and forces for all children.
    */
-  float calc_force(const float4 *xyzq, bool reset = false,
-                   bool calcEnergy = false, bool calcVirial = false) override;
+  void calcForce(const float4 *xyzq, bool reset = false,
+                 bool calcEnergy = false, bool calcVirial = false) override;
 
   /**
    * @brief Returns getForces on the FIRST child

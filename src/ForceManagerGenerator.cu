@@ -11,18 +11,16 @@
 #include "ForceManagerGenerator.h"
 #include <iostream>
 
-ForceManagerGenerator::ForceManagerGenerator() { ; }
+ForceManagerGenerator::ForceManagerGenerator() {}
 
 ForceManagerGenerator::ForceManagerGenerator(std::shared_ptr<ForceManager> fmIn)
-    : baseForceManager(fmIn) {
-  ;
-}
+    : baseForceManager(fmIn) {}
 
-std::shared_ptr<ForceManager> ForceManagerGenerator::generateForceManager() {
-  std::cout << "Not Implemented -- should not be called ?" << std::endl;
-  exit(1);
-  return baseForceManager;
-}
+// std::shared_ptr<ForceManager> ForceManagerGenerator::generateForceManager() {
+//   std::cout << "Not Implemented -- should not be called ?" << std::endl;
+//   exit(1);
+//   return baseForceManager;
+// }
 
 AlchemicalForceManagerGenerator::AlchemicalForceManagerGenerator(
     std::shared_ptr<ForceManager> forceManagerIn) {
@@ -91,7 +89,7 @@ void AlchemicalForceManagerGenerator::modifyElectrostatics(
   // "addForceManager"
 
   // Get PSF's charges
-  auto psf = fmIn->getPSF();
+  auto psf = fmIn->getPsf();
   std::vector<double> charges = psf->getAtomCharges();
 
   // For each element in the alch region, scale the charges by lambdaIn
@@ -103,9 +101,9 @@ void AlchemicalForceManagerGenerator::modifyElectrostatics(
   }
 
   // New PSF object to give new charges to
-  std::shared_ptr<CharmmPSF> newPSF = std::make_shared<CharmmPSF>(*psf);
-  newPSF->setAtomCharges(charges);
-  fmIn->setPSF(newPSF);
+  std::shared_ptr<CharmmPSF> newPsf = std::make_shared<CharmmPSF>(*psf);
+  newPsf->setAtomCharges(charges);
+  fmIn->setPsf(newPsf);
 }
 
 void AlchemicalForceManagerGenerator::modifyvdW(
