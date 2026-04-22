@@ -4,783 +4,673 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author:  Samarjeet Prasad
+// Author:  Samarjeet Prasad, James E. Gonzales II
 //
 // ENDLICENSE
 
-#include <cmath>
-#include <iostream>
-
-#include "CharmmContext.h"
 #include "CudaHolonomicConstraint.h"
 
-CudaHolonomicConstraint::CudaHolonomicConstraint() {}
+#include "CharmmContext.h"
+#include <cmath>
+#include <iostream>
+#include <stdexcept>
+
+CudaHolonomicConstraint::CudaHolonomicConstraint(void)
+    : m_Context(nullptr), m_SettleAtoms(), m_ShakeAtoms(),
+      m_AllConstrainedAtomPairs(), m_ShakeParams(), m_CoordsStored(),
+      m_TimeStep(-9999.9999), m_Stream(nullptr), mO(15.99940), mH(1.00800),
+      mH2O(18.0154), mO_div_mH2O(-9999.9999), mH_div_mH2O(-9999.9999),
+      rOHsq(0.91623184), rHHsq(2.29189321), ra(-9999.9999), ra_inv(-9999.9999),
+      rb(-9999.9999), rc(-9999.9999), rc2(-9999.9999) {
+  this->mO_div_mH2O = this->mO / this->mH2O;
+  this->mH_div_mH2O = this->mH / this->mH2O;
+
+  this->ra = this->mH_div_mH2O * std::sqrt(4.0 * this->rOHsq - this->rHHsq);
+  this->ra_inv = 1.0 / this->ra;
+  this->rb = this->ra * this->mO / (2.0 * this->mH);
+  this->rc = std::sqrt(this->rHHsq) / 2.0;
+  this->rc2 = 2.0 * this->rc;
+}
 
 void CudaHolonomicConstraint::setCharmmContext(
     std::shared_ptr<CharmmContext> ctx) {
-  context = ctx;
-
-  numWaterMolecules = 0;
-  mO = 15.99940;
-  mH = 1.00800;
-  mH2O = mO + 2.0 * mH;
-
-  mO_div_mH2O = mO / mH2O;
-  mH_div_mH2O = mH / mH2O;
-
-  rOHsq = 0.91623184;
-  rHHsq = 2.29189321;
-
-  ra = mH_div_mH2O * std::sqrt(4.0 * rOHsq - rHHsq);
-  ra_inv = 1.0 / ra;
-  rb = ra * mO / (2.0 * mH);
-  rc = std::sqrt(rHHsq) / 2.0;
-  rc2 = 2.0 * rc;
+  m_Context = ctx;
+  return;
 }
 
-void CudaHolonomicConstraint::setup(double ts) {
-  timeStep = ts;
-  // xyzq_stored.set_ncoord(context->getNumAtoms());
-  coords_stored.resize(context->getNumAtoms());
+void CudaHolonomicConstraint::setStream(std::shared_ptr<cudaStream_t> stream) {
+  m_Stream = stream;
+  return;
+}
 
-  settleWaterIndex = context->getWaterMolecules();
-  numWaterMolecules = settleWaterIndex.size();
-  // std::cout << "[Holo] "
-  //           << "Num of waters : " << settleWaterIndex.size() << "\n";
-  //  settleWaterIndex = waterMolecules;
-  shakeAtoms = context->getShakeAtoms();
-  shakeParams = context->getShakeParams();
+void CudaHolonomicConstraint::setup(const double timeStep) {
+  if (m_Context == nullptr) {
+    throw std::runtime_error("CudaHolonomicConstraint::setup(const double): No "
+                             "CharmmContext was set");
+  }
 
-  std::vector<int2> allConstrainedAtomPairsHost;
-  int2 constrainedPair;
+  const int numAtoms = m_Context->getNumAtoms();
 
-  for (int i = 0; i < shakeAtoms.size(); ++i) {
-    constrainedPair.x = shakeAtoms[i].x;
-    constrainedPair.y = shakeAtoms[i].y;
-    allConstrainedAtomPairsHost.push_back(constrainedPair);
-    if (shakeAtoms[i].z != -1) {
-      constrainedPair.x = shakeAtoms[i].x;
-      constrainedPair.y = shakeAtoms[i].z;
-      allConstrainedAtomPairsHost.push_back(constrainedPair);
-      constrainedPair.x = shakeAtoms[i].y;
-      constrainedPair.y = shakeAtoms[i].z;
-      allConstrainedAtomPairsHost.push_back(constrainedPair);
-    } else if (shakeAtoms[i].w == -1) {
-      constrainedPair.x = shakeAtoms[i].x;
-      constrainedPair.y = shakeAtoms[i].w;
-      allConstrainedAtomPairsHost.push_back(constrainedPair);
-      constrainedPair.x = shakeAtoms[i].y;
-      constrainedPair.y = shakeAtoms[i].w;
-      allConstrainedAtomPairsHost.push_back(constrainedPair);
-      constrainedPair.x = shakeAtoms[i].z;
-      constrainedPair.y = shakeAtoms[i].w;
-      allConstrainedAtomPairsHost.push_back(constrainedPair);
+  m_TimeStep = timeStep;
+  m_CoordsStored.resize(numAtoms);
+
+  m_SettleAtoms = m_Context->getWaterMolecules();
+  m_ShakeAtoms = m_Context->getShakeAtoms();
+  m_ShakeParams = m_Context->getShakeParams();
+
+  std::vector<int2> allConstrainedAtomPairs;
+  for (std::size_t i = 0; i < m_ShakeAtoms.size(); i++) {
+    allConstrainedAtomPairs.push_back(
+        make_int2(m_ShakeAtoms[i].x, m_ShakeAtoms[i].y));
+    if (m_ShakeAtoms[i].z != -1) {
+      allConstrainedAtomPairs.push_back(
+          make_int2(m_ShakeAtoms[i].x, m_ShakeAtoms[i].z));
+      allConstrainedAtomPairs.push_back(
+          make_int2(m_ShakeAtoms[i].y, m_ShakeAtoms[i].z));
+    } else if (m_ShakeAtoms[i].w == -1) {
+      allConstrainedAtomPairs.push_back(
+          make_int2(m_ShakeAtoms[i].x, m_ShakeAtoms[i].w));
+      allConstrainedAtomPairs.push_back(
+          make_int2(m_ShakeAtoms[i].y, m_ShakeAtoms[i].w));
+      allConstrainedAtomPairs.push_back(
+          make_int2(m_ShakeAtoms[i].z, m_ShakeAtoms[i].w));
     }
   }
-  for (int i = 0; i < settleWaterIndex.size(); ++i) {
-    constrainedPair.x = settleWaterIndex[i].x;
-    constrainedPair.y = settleWaterIndex[i].y;
-    allConstrainedAtomPairsHost.push_back(constrainedPair);
-    constrainedPair.x = settleWaterIndex[i].x;
-    constrainedPair.y = settleWaterIndex[i].z;
-    allConstrainedAtomPairsHost.push_back(constrainedPair);
-    constrainedPair.x = settleWaterIndex[i].y;
-    constrainedPair.y = settleWaterIndex[i].z;
-    allConstrainedAtomPairsHost.push_back(constrainedPair);
+
+  for (std::size_t i = 0; i < m_SettleAtoms.size(); i++) {
+    allConstrainedAtomPairs.push_back(
+        make_int2(m_SettleAtoms[i].x, m_SettleAtoms[i].y));
+    allConstrainedAtomPairs.push_back(
+        make_int2(m_SettleAtoms[i].x, m_SettleAtoms[i].z));
+    allConstrainedAtomPairs.push_back(
+        make_int2(m_SettleAtoms[i].y, m_SettleAtoms[i].z));
   }
 
-  // allConstrainedAtomPairs.allocate(allConstrainedAtomPairsHost.size());
-  // allConstrainedAtomPairs.setHostArray(allConstrainedAtomPairsHost);
-  // allConstrainedAtomPairs.transferToDevice();
-  allConstrainedAtomPairs = allConstrainedAtomPairsHost;
+  m_AllConstrainedAtomPairs = allConstrainedAtomPairs;
 
-  // std::cout << "[Holo] "
-  //           << "Num of constrained pairs : " <<
-  //           allConstrainedAtomPairs.size()
-  //           << "\n";
+  return;
 }
 
-/*
-Each thread handles one water molecule
-*/
+void CudaHolonomicConstraint::handleHolonomicConstraints(
+    const double4 *coordsRef) {
+  copy_DtoD_async<double4>(
+      m_Context->getCoordinatesCharges().getDeviceArray().data(),
+      m_CoordsStored.getDeviceArray().data(), m_Context->getNumAtoms(),
+      *m_Stream);
+
+  this->constrainWaterMolecules(coordsRef);
+  this->constrainShakeAtoms(coordsRef);
+  this->updateVelocities();
+
+  cudaCheck(cudaStreamSynchronize(*m_Stream));
+
+  return;
+}
+
+__global__ static void RemoveForceAlongHolonomicConstraintsKernel(
+    double *__restrict__ forces, const int forceStride,
+    const int2 *__restrict__ constrainedPairs, const int numConstraints,
+    const double4 *__restrict__ coords) {
+  constexpr int maxIter = 20;
+  const int index = blockDim.x * blockIdx.x + threadIdx.x;
+  const int stride = gridDim.x * blockDim.x;
+
+  for (int iter = 0; iter < maxIter; iter++) {
+    for (int i = index; i < numConstraints; i += stride) {
+      const int2 pair = constrainedPairs[i];
+      const double xpij =
+          forces[0 * forceStride + pair.x] - forces[0 * forceStride + pair.y];
+      const double ypij =
+          forces[1 * forceStride + pair.x] - forces[1 * forceStride + pair.y];
+      const double zpij =
+          forces[2 * forceStride + pair.x] - forces[2 * forceStride + pair.y];
+
+      const double xrij = coords[pair.x].x - coords[pair.y].x;
+      const double yrij = coords[pair.x].y - coords[pair.y].y;
+      const double zrij = coords[pair.x].z - coords[pair.y].z;
+
+      const double rrijsq = xrij * xrij + yrij * yrij + zrij * zrij;
+      const double rijrijp = xrij * xpij + yrij * ypij + zrij * zpij;
+
+      const double acor = -0.5 * rijrijp / rrijsq; // 0.5 as per CHARMM
+
+      atomicAdd(forces + 0 * forceStride + pair.x, acor * xrij);
+      atomicAdd(forces + 1 * forceStride + pair.x, acor * yrij);
+      atomicAdd(forces + 2 * forceStride + pair.x, acor * zrij);
+      atomicAdd(forces + 0 * forceStride + pair.y, -acor * xrij);
+      atomicAdd(forces + 1 * forceStride + pair.y, -acor * yrij);
+      atomicAdd(forces + 2 * forceStride + pair.y, -acor * zrij);
+    }
+  }
+
+  return;
+}
+
+void CudaHolonomicConstraint::removeForceAlongHolonomicConstraints(void) {
+  if (m_AllConstrainedAtomPairs.size() > 0) {
+    RemoveForceAlongHolonomicConstraintsKernel<<<64, 1024, 0, *m_Stream>>>(
+        m_Context->getForces()->xyz(), m_Context->getForceStride(),
+        m_AllConstrainedAtomPairs.getDeviceArray().data(),
+        m_AllConstrainedAtomPairs.size(),
+        m_Context->getCoordinatesCharges().getDeviceArray().data());
+    cudaStreamSynchronize(*m_Stream);
+  }
+  return;
+}
+
+//
+// Each thread handles one water molecule
+//
 __global__ static void
-settle(const double mH_div_mH2O, const double mO_div_mH2O, const double ra_inv,
-       const double ra, const double rb, const double rc, const double rc2,
-       const int numWaterMolecules, const int4 *__restrict__ settleWaterIndex,
-       const double4 *__restrict__ xyzq, double4 *__restrict__ xyzqNew) {
-  int index = blockDim.x * blockIdx.x + threadIdx.x;
+SettleKernel(double4 *__restrict__ xyzq, const double4 *__restrict__ xyzq0,
+             const int4 *__restrict__ settleAtoms, const int numSettles,
+             const double mO_div_mH2O, const double mH_div_mH2O,
+             const double ra, const double ra_inv, const double rb,
+             const double rc, const double rc2) {
+  const int index = blockDim.x * blockIdx.x + threadIdx.x;
+  const int stride = gridDim.x * blockDim.x;
 
-  const double one = 1.0;
-  if (index < numWaterMolecules) {
-    int i = settleWaterIndex[index].x;
-    int j = settleWaterIndex[index].y;
-    int k = settleWaterIndex[index].z;
+  for (int i = index; i < numSettles; i += stride) {
+    const int iatom = settleAtoms[i].x;
+    const int jatom = settleAtoms[i].y;
+    const int katom = settleAtoms[i].z;
 
-    double x1 = xyzq[i].x;
-    double y1 = xyzq[i].y;
-    double z1 = xyzq[i].z;
-    double x2 = xyzq[j].x;
-    double y2 = xyzq[j].y;
-    double z2 = xyzq[j].z;
-    double x3 = xyzq[k].x;
-    double y3 = xyzq[k].y;
-    double z3 = xyzq[k].z;
+    const double x1 = xyzq0[iatom].x;
+    const double y1 = xyzq0[iatom].y;
+    const double z1 = xyzq0[iatom].z;
+    const double x2 = xyzq0[jatom].x;
+    const double y2 = xyzq0[jatom].y;
+    const double z2 = xyzq0[jatom].z;
+    const double x3 = xyzq0[katom].x;
+    const double y3 = xyzq0[katom].y;
+    const double z3 = xyzq0[katom].z;
 
     // Convert to primed coordinates
-    double xp1 = xyzqNew[i].x;
-    double yp1 = xyzqNew[i].y;
-    double zp1 = xyzqNew[i].z;
-    double xp2 = xyzqNew[j].x;
-    double yp2 = xyzqNew[j].y;
-    double zp2 = xyzqNew[j].z;
-    double xp3 = xyzqNew[k].x;
-    double yp3 = xyzqNew[k].y;
-    double zp3 = xyzqNew[k].z;
+    const double xp1 = xyzq[iatom].x;
+    const double yp1 = xyzq[iatom].y;
+    const double zp1 = xyzq[iatom].z;
+    const double xp2 = xyzq[jatom].x;
+    const double yp2 = xyzq[jatom].y;
+    const double zp2 = xyzq[jatom].z;
+    const double xp3 = xyzq[katom].x;
+    const double yp3 = xyzq[katom].y;
+    const double zp3 = xyzq[katom].z;
 
     // Calculate the center of mass for (x1, y1, z1)
-    double xcm = xp1 * mO_div_mH2O + (xp2 + xp3) * mH_div_mH2O;
-    double ycm = yp1 * mO_div_mH2O + (yp2 + yp3) * mH_div_mH2O;
-    double zcm = zp1 * mO_div_mH2O + (zp2 + zp3) * mH_div_mH2O;
+    const double xcm = xp1 * mO_div_mH2O + (xp2 + xp3) * mH_div_mH2O;
+    const double ycm = yp1 * mO_div_mH2O + (yp2 + yp3) * mH_div_mH2O;
+    const double zcm = zp1 * mO_div_mH2O + (zp2 + zp3) * mH_div_mH2O;
 
-    double xa1 = xp1 - xcm;
-    double ya1 = yp1 - ycm;
-    double za1 = zp1 - zcm;
-    double xb1 = xp2 - xcm;
-    double yb1 = yp2 - ycm;
-    double zb1 = zp2 - zcm;
-    double xc1 = xp3 - xcm;
-    double yc1 = yp3 - ycm;
-    double zc1 = zp3 - zcm;
+    const double xa1 = xp1 - xcm;
+    const double ya1 = yp1 - ycm;
+    const double za1 = zp1 - zcm;
+    const double xb1 = xp2 - xcm;
+    const double yb1 = yp2 - ycm;
+    const double zb1 = zp2 - zcm;
+    const double xc1 = xp3 - xcm;
+    const double yc1 = yp3 - ycm;
+    const double zc1 = zp3 - zcm;
 
-    double xb0 = x2 - x1;
-    double yb0 = y2 - y1;
-    double zb0 = z2 - z1;
-    double xc0 = x3 - x1;
-    double yc0 = y3 - y1;
-    double zc0 = z3 - z1;
+    const double xb0 = x2 - x1;
+    const double yb0 = y2 - y1;
+    const double zb0 = z2 - z1;
+    const double xc0 = x3 - x1;
+    const double yc0 = y3 - y1;
+    const double zc0 = z3 - z1;
 
-    double xakszd = yb0 * zc0 - zb0 * yc0;
-    double yakszd = zb0 * xc0 - xb0 * zc0;
-    double zakszd = xb0 * yc0 - yb0 * xc0;
-    double xaksxd = ya1 * zakszd - za1 * yakszd;
-    double yaksxd = za1 * xakszd - xa1 * zakszd;
-    double zaksxd = xa1 * yakszd - ya1 * xakszd;
-    double xaksyd = yakszd * zaksxd - zakszd * yaksxd;
-    double yaksyd = zakszd * xaksxd - xakszd * zaksxd;
-    double zaksyd = xakszd * yaksxd - yakszd * xaksxd;
+    const double xakszd = yb0 * zc0 - zb0 * yc0;
+    const double yakszd = zb0 * xc0 - xb0 * zc0;
+    const double zakszd = xb0 * yc0 - yb0 * xc0;
+    const double xaksxd = ya1 * zakszd - za1 * yakszd;
+    const double yaksxd = za1 * xakszd - xa1 * zakszd;
+    const double zaksxd = xa1 * yakszd - ya1 * xakszd;
+    const double xaksyd = yakszd * zaksxd - zakszd * yaksxd;
+    const double yaksyd = zakszd * xaksxd - xakszd * zaksxd;
+    const double zaksyd = xakszd * yaksxd - yakszd * xaksxd;
 
-    double axlng_inv =
-        one / sqrt(xaksxd * xaksxd + yaksxd * yaksxd + zaksxd * zaksxd);
-    double aylng_inv =
-        one / sqrt(xaksyd * xaksyd + yaksyd * yaksyd + zaksyd * zaksyd);
-    double azlng_inv =
-        one / sqrt(xakszd * xakszd + yakszd * yakszd + zakszd * zakszd);
+    const double axlng_inv =
+        1.0 / sqrt(xaksxd * xaksxd + yaksxd * yaksxd + zaksxd * zaksxd);
+    const double aylng_inv =
+        1.0 / sqrt(xaksyd * xaksyd + yaksyd * yaksyd + zaksyd * zaksyd);
+    const double azlng_inv =
+        1.0 / sqrt(xakszd * xakszd + yakszd * yakszd + zakszd * zakszd);
 
-    double trans11 = xaksxd * axlng_inv;
-    double trans21 = yaksxd * axlng_inv;
-    double trans31 = zaksxd * axlng_inv;
-    double trans12 = xaksyd * aylng_inv;
-    double trans22 = yaksyd * aylng_inv;
-    double trans32 = zaksyd * aylng_inv;
-    double trans13 = xakszd * azlng_inv;
-    double trans23 = yakszd * azlng_inv;
-    double trans33 = zakszd * azlng_inv;
+    const double trans11 = xaksxd * axlng_inv;
+    const double trans21 = yaksxd * axlng_inv;
+    const double trans31 = zaksxd * axlng_inv;
+    const double trans12 = xaksyd * aylng_inv;
+    const double trans22 = yaksyd * aylng_inv;
+    const double trans32 = zaksyd * aylng_inv;
+    const double trans13 = xakszd * azlng_inv;
+    const double trans23 = yakszd * azlng_inv;
+    const double trans33 = zakszd * azlng_inv;
 
     // Calculate necessary primed coordinates
-    double xb0p = trans11 * xb0 + trans21 * yb0 + trans31 * zb0;
-    double yb0p = trans12 * xb0 + trans22 * yb0 + trans32 * zb0;
-    double xc0p = trans11 * xc0 + trans21 * yc0 + trans31 * zc0;
-    double yc0p = trans12 * xc0 + trans22 * yc0 + trans32 * zc0;
-    double za1p = trans13 * xa1 + trans23 * ya1 + trans33 * za1;
-    double xb1p = trans11 * xb1 + trans21 * yb1 + trans31 * zb1;
-    double yb1p = trans12 * xb1 + trans22 * yb1 + trans32 * zb1;
-    double zb1p = trans13 * xb1 + trans23 * yb1 + trans33 * zb1;
-    double xc1p = trans11 * xc1 + trans21 * yc1 + trans31 * zc1;
-    double yc1p = trans12 * xc1 + trans22 * yc1 + trans32 * zc1;
-    double zc1p = trans13 * xc1 + trans23 * yc1 + trans33 * zc1;
+    const double xb0p = trans11 * xb0 + trans21 * yb0 + trans31 * zb0;
+    const double yb0p = trans12 * xb0 + trans22 * yb0 + trans32 * zb0;
+    const double xc0p = trans11 * xc0 + trans21 * yc0 + trans31 * zc0;
+    const double yc0p = trans12 * xc0 + trans22 * yc0 + trans32 * zc0;
+    const double za1p = trans13 * xa1 + trans23 * ya1 + trans33 * za1;
+    const double xb1p = trans11 * xb1 + trans21 * yb1 + trans31 * zb1;
+    const double yb1p = trans12 * xb1 + trans22 * yb1 + trans32 * zb1;
+    const double zb1p = trans13 * xb1 + trans23 * yb1 + trans33 * zb1;
+    const double xc1p = trans11 * xc1 + trans21 * yc1 + trans31 * zc1;
+    const double yc1p = trans12 * xc1 + trans22 * yc1 + trans32 * zc1;
+    const double zc1p = trans13 * xc1 + trans23 * yc1 + trans33 * zc1;
 
     // Calculate rotation angles
-    double sinphi = za1p * ra_inv;
-    double cosphi = sqrt(one - sinphi * sinphi);
-    double sinpsi = (zb1p - zc1p) / (rc2 * cosphi);
-    double cospsi = sqrt(one - sinpsi * sinpsi);
+    const double sinphi = za1p * ra_inv;
+    const double cosphi = sqrt(1.0 - sinphi * sinphi);
+    const double sinpsi = (zb1p - zc1p) / (rc2 * cosphi);
+    const double cospsi = sqrt(1.0 - sinpsi * sinpsi);
 
-    double ya2p = ra * cosphi;
-    double xb2p = -rc * cospsi;
-    double yb2p = -rb * cosphi - rc * sinpsi * sinphi;
-    double yc2p = -rb * cosphi + rc * sinpsi * sinphi;
+    const double ya2p = ra * cosphi;
+    const double xb2p = -rc * cospsi;
+    const double yb2p = -rb * cosphi - rc * sinpsi * sinphi;
+    const double yc2p = -rb * cosphi + rc * sinpsi * sinphi;
 
-    double alpha = (xb2p * (xb0p - xc0p) + yb0p * yb2p + yc0p * yc2p);
-    double beta = (xb2p * (yc0p - yb0p) + xb0p * yb2p + xc0p * yc2p);
-    double gamma = xb0p * yb1p - xb1p * yb0p + xc0p * yc1p - xc1p * yc0p;
+    const double alpha = (xb2p * (xb0p - xc0p) + yb0p * yb2p + yc0p * yc2p);
+    const double beta = (xb2p * (yc0p - yb0p) + xb0p * yb2p + xc0p * yc2p);
+    const double gamma = xb0p * yb1p - xb1p * yb0p + xc0p * yc1p - xc1p * yc0p;
 
-    double alpha_beta = alpha * alpha + beta * beta;
-    double sintheta =
+    const double alpha_beta = alpha * alpha + beta * beta;
+    const double sintheta =
         (alpha * gamma - beta * sqrt(alpha_beta - gamma * gamma)) / alpha_beta;
+    const double costheta = sqrt(1.0 - sintheta * sintheta);
 
-    double costheta = sqrt(one - sintheta * sintheta);
+    const double xa3p = -ya2p * sintheta;
+    const double ya3p = ya2p * costheta;
+    const double za3p = za1p;
+    const double xb3p = xb2p * costheta - yb2p * sintheta;
+    const double yb3p = xb2p * sintheta + yb2p * costheta;
+    const double zb3p = zb1p;
+    const double xc3p = -xb2p * costheta - yc2p * sintheta;
+    const double yc3p = -xb2p * sintheta + yc2p * costheta;
+    const double zc3p = zc1p;
 
-    double xa3p = -ya2p * sintheta;
-    double ya3p = ya2p * costheta;
-    double za3p = za1p;
-    double xb3p = xb2p * costheta - yb2p * sintheta;
-    double yb3p = xb2p * sintheta + yb2p * costheta;
-    double zb3p = zb1p;
-    double xc3p = -xb2p * costheta - yc2p * sintheta;
-    double yc3p = -xb2p * sintheta + yc2p * costheta;
-    double zc3p = zc1p;
-
-    xyzqNew[i].x = xcm + trans11 * xa3p + trans12 * ya3p + trans13 * za3p;
-    xyzqNew[i].y = ycm + trans21 * xa3p + trans22 * ya3p + trans23 * za3p;
-    xyzqNew[i].z = zcm + trans31 * xa3p + trans32 * ya3p + trans33 * za3p;
-    xyzqNew[j].x = xcm + trans11 * xb3p + trans12 * yb3p + trans13 * zb3p;
-    xyzqNew[j].y = ycm + trans21 * xb3p + trans22 * yb3p + trans23 * zb3p;
-    xyzqNew[j].z = zcm + trans31 * xb3p + trans32 * yb3p + trans33 * zb3p;
-    xyzqNew[k].x = xcm + trans11 * xc3p + trans12 * yc3p + trans13 * zc3p;
-    xyzqNew[k].y = ycm + trans21 * xc3p + trans22 * yc3p + trans23 * zc3p;
-    xyzqNew[k].z = zcm + trans31 * xc3p + trans32 * yc3p + trans33 * zc3p;
+    xyzq[iatom].x = xcm + trans11 * xa3p + trans12 * ya3p + trans13 * za3p;
+    xyzq[iatom].y = ycm + trans21 * xa3p + trans22 * ya3p + trans23 * za3p;
+    xyzq[iatom].z = zcm + trans31 * xa3p + trans32 * ya3p + trans33 * za3p;
+    xyzq[jatom].x = xcm + trans11 * xb3p + trans12 * yb3p + trans13 * zb3p;
+    xyzq[jatom].y = ycm + trans21 * xb3p + trans22 * yb3p + trans23 * zb3p;
+    xyzq[jatom].z = zcm + trans31 * xb3p + trans32 * yb3p + trans33 * zb3p;
+    xyzq[katom].x = xcm + trans11 * xc3p + trans12 * yc3p + trans13 * zc3p;
+    xyzq[katom].y = ycm + trans21 * xc3p + trans22 * yc3p + trans23 * zc3p;
+    xyzq[katom].z = zcm + trans31 * xc3p + trans32 * yc3p + trans33 * zc3p;
   }
+
+  return;
 }
-/*
-__global__ static void settle_test(const double rOHsq, const double rHHsq,
-                                   const int numWaterMolecules,
-                                   const int4 *__restrict__ settleWaterIndex,
-                                   const double4 *__restrict__ xyzqNew) {
-  int index = blockDim.x * blockIdx.x + threadIdx.x;
 
-  if (index < numWaterMolecules) {
-    int i = settleWaterIndex[index].x;
-    int j = settleWaterIndex[index].y;
-    int k = settleWaterIndex[index].z;
+void CudaHolonomicConstraint::constrainWaterMolecules(
+    const double4 *coordsRef) {
+  double4 *coords = m_Context->getCoordinatesCharges().getDeviceArray().data();
 
-    double tol = 1e-5;
-    double rsq = (xyzqNew[i].x - xyzqNew[j].x) * (xyzqNew[i].x - xyzqNew[j].x) +
-                 (xyzqNew[i].y - xyzqNew[j].y) * (xyzqNew[i].y - xyzqNew[j].y) +
-                 (xyzqNew[i].z - xyzqNew[j].z) * (xyzqNew[i].z - xyzqNew[j].z);
-    if (abs(rsq - rOHsq) > tol * 0.1) {
-      printf("OH bond length error: %f\n", rsq - rOHsq);
-    }
-    assert(abs(rsq - rOHsq) < tol);
+  if (m_SettleAtoms.size() > 0) {
+    constexpr int numThreads = 128;
+    const int numBlocks =
+        (static_cast<int>(m_SettleAtoms.size()) + numThreads - 1) / numThreads;
 
-    rsq = (xyzqNew[i].x - xyzqNew[k].x) * (xyzqNew[i].x - xyzqNew[k].x) +
-          (xyzqNew[i].y - xyzqNew[k].y) * (xyzqNew[i].y - xyzqNew[k].y) +
-          (xyzqNew[i].z - xyzqNew[k].z) * (xyzqNew[i].z - xyzqNew[k].z);
-    if (abs(rsq - rOHsq) > tol * 0.1) {
-      printf("OH bond length error: %f\n", rsq - rOHsq);
-    }
-    assert(abs(rsq - rOHsq) < tol);
-
-    rsq = (xyzqNew[j].x - xyzqNew[k].x) * (xyzqNew[j].x - xyzqNew[k].x) +
-          (xyzqNew[j].y - xyzqNew[k].y) * (xyzqNew[j].y - xyzqNew[k].y) +
-          (xyzqNew[j].z - xyzqNew[k].z) * (xyzqNew[j].z - xyzqNew[k].z);
-    if (abs(rsq - rHHsq) > tol * 0.1) {
-      printf("HH bond length error: %f\n", rsq - rHHsq);
-    }
-    assert(abs(rsq - rHHsq) < tol);
+    SettleKernel<<<numBlocks, numThreads, 0, *m_Stream>>>(
+        coords, coordsRef, m_SettleAtoms.getDeviceArray().data(),
+        static_cast<int>(m_SettleAtoms.size()), this->mO_div_mH2O,
+        this->mH_div_mH2O, this->ra, this->ra_inv, this->rb, this->rc,
+        this->rc2);
   }
-}
-*/
-void CudaHolonomicConstraint::constrainWaterMolecules(const double4 *ref) {
 
-  auto current = context->getCoordinatesCharges().getDeviceArray().data();
-
-  if (numWaterMolecules) {
-    int numThreads = 128;
-    int numBlocks = (numWaterMolecules - 1) / numThreads + 1;
-
-    settle<<<numBlocks, numThreads, 0, *stream>>>(
-        mH_div_mH2O, mO_div_mH2O, ra_inv, ra, rb, rc, rc2, numWaterMolecules,
-        settleWaterIndex.getDeviceArray().data(), ref, current);
-
-    cudaCheck(cudaStreamSynchronize(*stream));
-  }
-  // std::cout << "[Holo]Constraining water molecules done.\n";
+  return;
 }
 
-__global__ static void updateVelocitiesKernel(
-    int numAtoms, double inv_timeStep, const double4 *__restrict__ stored,
-    const double4 *__restrict__ current, double4 *__restrict__ velMass) {
+__global__ static void Shake2Kernel(double4 *__restrict__ coords,
+                                    const double4 *__restrict__ coordsRef,
+                                    const int4 *__restrict__ shakeAtoms,
+                                    const float4 *__restrict__ shakeParams,
+                                    const int numShakes) {
+  const int index = blockIdx.x * blockDim.x + threadIdx.x;
+  const int stride = gridDim.x * blockDim.x;
 
-  int index = blockDim.x * blockIdx.x + threadIdx.x;
+  for (int i = index; i < numShakes; i += stride) {
+    const int4 atoms = shakeAtoms[i];
+    if ((atoms.z == -1) && (atoms.w == -1)) {
+      const float4 params = shakeParams[i];
+      const double imass = static_cast<double>(params.x);
+      const double jmass = static_cast<double>(params.w);
+      const double bijsq = static_cast<double>(params.z);
 
-  if (index < numAtoms) {
-    double cx = current[index].x;
-    double cy = current[index].y;
-    double cz = current[index].z;
+      const double xpij = coords[atoms.x].x - coords[atoms.y].x;
+      const double ypij = coords[atoms.x].y - coords[atoms.y].y;
+      const double zpij = coords[atoms.x].z - coords[atoms.y].z;
 
-    double sx = stored[index].x;
-    double sy = stored[index].y;
-    double sz = stored[index].z;
+      const double xrij = coordsRef[atoms.x].x - coordsRef[atoms.y].x;
+      const double yrij = coordsRef[atoms.x].y - coordsRef[atoms.y].y;
+      const double zrij = coordsRef[atoms.x].z - coordsRef[atoms.y].z;
 
-    velMass[index].x += inv_timeStep * (cx - sx);
-    velMass[index].y += inv_timeStep * (cy - sy);
-    velMass[index].z += inv_timeStep * (cz - sz);
-    /*
-    double deltax = current[index].x - stored[index].x;
-    double deltay = current[index].y - stored[index].y;
-    double deltaz = current[index].z - stored[index].z;
+      const double pijpijsq = xpij * xpij + ypij * ypij + zpij * zpij;
+      const double rijrijsq = xrij * xrij + yrij * yrij + zrij * zrij;
+      const double rijpijsq = xrij * xpij + yrij * ypij + zrij * zpij;
+      const double dijsq = bijsq - pijpijsq;
+      const double lambda =
+          (-rijpijsq + sqrt(rijpijsq * rijpijsq + rijrijsq * dijsq)) /
+          (rijrijsq * (imass + jmass));
 
-    velMass[index].x += inv_timeStep * deltax;
-    velMass[index].y += inv_timeStep * deltay;
-    velMass[index].z += inv_timeStep * deltaz;
-
-
-    double cxt = current[index].x * inv_timeStep;
-    double sxt = stored[index].x * inv_timeStep;
-    double cvt = cxt - sxt;
-    double v2 = velMass[index].x + cvt;
-
-    velMass[index].x += (current[index].x - stored[index].x) * inv_timeStep;
-    velMass[index].y += (current[index].y - stored[index].y) * inv_timeStep;
-    velMass[index].z += (current[index].z - stored[index].z) * inv_timeStep;
-    */
-  }
-}
-
-void CudaHolonomicConstraint::updateVelocities() {
-  auto velMass = context->getVelocityMass().getDeviceArray().data();
-  // auto xyzq = context->getXYZQ()->getDeviceXYZQ();
-  auto coordsCharge = context->getCoordinatesCharges().getDeviceArray().data();
-
-  int numThreads = 128;
-  int numBlocks = (context->getNumAtoms() - 1) / numThreads + 1;
-
-  updateVelocitiesKernel<<<numBlocks, numThreads, 0, *stream>>>(
-      context->getNumAtoms(), 1.0 / timeStep,
-      coords_stored.getDeviceArray().data(), coordsCharge, velMass);
-
-  // cudaCheck(cudaDeviceSynchronize());
-
-  // cudaCheck(cudaStreamSynchronize(*stream));
-}
-
-/*
-__global__ static void updateVelocitiesKernel(
-    int numAtoms, double inv_timeStep, const float4 *__restrict__ stored,
-    const float4 *__restrict__ current, double4 *__restrict__ velMass) {
-
-  int index = blockDim.x * blockIdx.x + threadIdx.x;
-
-  if (index < numAtoms) {
-
-    velMass[index].x = (current[index].x - stored[index].x) * inv_timeStep;
-    velMass[index].y = (current[index].y - stored[index].y) * inv_timeStep;
-    velMass[index].z = (current[index].z - stored[index].z) * inv_timeStep;
-  }
-}
-
-void CudaHolonomicConstraint::updateVelocities(XYZQ *ref, XYZQ *current) {
-  auto velMass = context->getVelocityMass().getDeviceArray().data();
-  auto xyzq = context->getXYZQ()->getDeviceXYZQ();
-  auto xyzqRef = ref->getDeviceXYZQ();
-
-  int numThreads = 128;
-  int numBlocks = (context->getNumAtoms() - 1) / numThreads + 1;
-
-  updateVelocitiesKernel<<<numBlocks, numThreads>>>(
-      context->getNumAtoms(), 1.0 / timeStep, xyzqRef, xyzq, velMass);
-
-  cudaCheck(cudaDeviceSynchronize());
-}
-*/
-
-__global__ void
-constrainShakeTwoAtomsKernel(int numShakes, const double4 *__restrict__ ref,
-                             double4 *__restrict__ current,
-                             const float4 *__restrict__ shakeParams,
-                             const int4 *__restrict__ shakeAtomsIndex) {
-
-  const int index = threadIdx.x + blockDim.x * blockIdx.x;
-  if (index < numShakes) {
-    int4 shakeAtoms = shakeAtomsIndex[index];
-    if (shakeAtoms.z == -1 && shakeAtoms.w == -1) {
-      float4 params = shakeParams[index];
-      double xpij = current[shakeAtoms.x].x - current[shakeAtoms.y].x;
-      double ypij = current[shakeAtoms.x].y - current[shakeAtoms.y].y;
-      double zpij = current[shakeAtoms.x].z - current[shakeAtoms.y].z;
-
-      double rijsq = xpij * xpij + ypij * ypij + zpij * zpij;
-
-      double diff = params.z - rijsq;
-
-      double xrij = ref[shakeAtoms.x].x - ref[shakeAtoms.y].x;
-      double yrij = ref[shakeAtoms.x].y - ref[shakeAtoms.y].y;
-      double zrij = ref[shakeAtoms.x].z - ref[shakeAtoms.y].z;
-
-      double rrijsq = xrij * xrij + yrij * yrij + zrij * zrij;
-      double rijrijp = xrij * xpij + yrij * ypij + zrij * zpij;
-      // double lambda =
-      //     2.0 * (-rijrijp + sqrt(rijrijp * rijrijp + rrijsq * diff)) /
-      //     (rrijsq);
-
-      double massi = params.x;
-      double massj = params.w;
-      double mm = massi + massj;
-      double lambda =
-          (-rijrijp + sqrt(rijrijp * rijrijp + rrijsq * diff)) / (rrijsq * mm);
-
-      current[shakeAtoms.x].x += massi * lambda * xrij;
-      current[shakeAtoms.x].y += massi * lambda * yrij;
-      current[shakeAtoms.x].z += massi * lambda * zrij;
-      current[shakeAtoms.y].x -= massj * lambda * xrij;
-      current[shakeAtoms.y].y -= massj * lambda * yrij;
-      current[shakeAtoms.y].z -= massj * lambda * zrij;
+      coords[atoms.x].x += imass * lambda * xrij;
+      coords[atoms.x].y += imass * lambda * yrij;
+      coords[atoms.x].z += imass * lambda * zrij;
+      coords[atoms.y].x -= jmass * lambda * xrij;
+      coords[atoms.y].y -= jmass * lambda * yrij;
+      coords[atoms.y].z -= jmass * lambda * zrij;
     }
   }
+
+  return;
 }
 
-__global__ void
-constrainShakeThreeAtomsKernel(int numShakes, const double4 *__restrict__ ref,
-                               double4 *__restrict__ current,
-                               const float4 *__restrict__ shakeParams,
-                               const int4 *__restrict__ shakeAtomsIndex) {
+__global__ static void Shake3Kernel(double4 *__restrict__ coords,
+                                    const double4 *__restrict__ coordsRef,
+                                    const int4 *__restrict__ shakeAtoms,
+                                    const float4 *__restrict__ shakeParams,
+                                    const int numShakes) {
+  constexpr int MAX_ITER = 25;
+  constexpr double TOL = 1e-5;
 
-  const int index = threadIdx.x + blockDim.x * blockIdx.x;
-  if (index < numShakes) {
-    int4 shakeAtoms = shakeAtomsIndex[index];
-    if (shakeAtoms.z != -1 && shakeAtoms.w == -1) {
-      double tol = 1e-5;
-      int max_niter = 25;
-      float4 params = shakeParams[index];
-      double a120 = 0.0;
-      double a130 = 0.0;
+  const int index = blockIdx.x * blockDim.x + threadIdx.x;
+  const int stride = gridDim.x * blockDim.x;
 
-      double xrij = ref[shakeAtoms.x].x - ref[shakeAtoms.y].x;
-      double yrij = ref[shakeAtoms.x].y - ref[shakeAtoms.y].y;
-      double zrij = ref[shakeAtoms.x].z - ref[shakeAtoms.y].z;
-      double xrik = ref[shakeAtoms.x].x - ref[shakeAtoms.z].x;
-      double yrik = ref[shakeAtoms.x].y - ref[shakeAtoms.z].y;
-      double zrik = ref[shakeAtoms.x].z - ref[shakeAtoms.z].z;
+  for (int i = index; i < numShakes; i += stride) {
+    const int4 atoms = shakeAtoms[i];
+    if ((atoms.z != -1) && (atoms.w == -1)) {
+      const float4 params = shakeParams[i];
+      const double imass = static_cast<double>(params.x);
+      const double jmass = static_cast<double>(params.w);
+      const double kmass = jmass;
+      const double ijmass = imass + jmass;
+      const double ikmass = imass + kmass;
+      const double bijsq = static_cast<double>(params.z);
+      const double biksq = bijsq;
 
-      double rrijsq = xrij * xrij + yrij * yrij + zrij * zrij;
-      double rriksq = xrik * xrik + yrik * yrik + zrik * zrik;
-      double rijrik = xrij * xrik + yrij * yrik + zrij * zrik;
+      const double xpij = coords[atoms.x].x - coords[atoms.y].x;
+      const double ypij = coords[atoms.x].y - coords[atoms.y].y;
+      const double zpij = coords[atoms.x].z - coords[atoms.y].z;
+      const double xpik = coords[atoms.x].x - coords[atoms.z].x;
+      const double ypik = coords[atoms.x].y - coords[atoms.z].y;
+      const double zpik = coords[atoms.x].z - coords[atoms.z].z;
 
-      double mmi = params.x;
-      double mmj = params.w;
-      double mmk = mmj;
-      double mij = params.x + params.w;
-      double mik = mij;
+      const double xrij = coordsRef[atoms.x].x - coordsRef[atoms.y].x;
+      const double yrij = coordsRef[atoms.x].y - coordsRef[atoms.y].y;
+      const double zrij = coordsRef[atoms.x].z - coordsRef[atoms.y].z;
+      const double xrik = coordsRef[atoms.x].x - coordsRef[atoms.z].x;
+      const double yrik = coordsRef[atoms.x].y - coordsRef[atoms.z].y;
+      const double zrik = coordsRef[atoms.x].z - coordsRef[atoms.z].z;
 
-      double acorr1 = mij * mij * rrijsq;
-      double acorr2 = mij * mmi * 2.0 * rijrik;
-      double acorr3 = mmi * mmi * rriksq;
-      double acorr4 = mmi * mmi * rrijsq;
-      double acorr5 = mik * mmi * 2.0 * rijrik;
-      double acorr6 = mik * mik * rriksq;
+      const double pijpijsq = xpij * xpij + ypij * ypij + zpij * zpij;
+      const double pikpiksq = xpik * xpik + ypik * ypik + zpik * zpik;
+      const double rijrijsq = xrij * xrij + yrij * yrij + zrij * zrij;
+      const double rikriksq = xrik * xrik + yrik * yrik + zrik * zrik;
+      const double rijriksq = xrij * xrik + yrij * yrik + zrij * zrik;
 
-      double xpij = current[shakeAtoms.x].x - current[shakeAtoms.y].x;
-      double ypij = current[shakeAtoms.x].y - current[shakeAtoms.y].y;
-      double zpij = current[shakeAtoms.x].z - current[shakeAtoms.y].z;
-      double xpik = current[shakeAtoms.x].x - current[shakeAtoms.z].x;
-      double ypik = current[shakeAtoms.x].y - current[shakeAtoms.z].y;
-      double zpik = current[shakeAtoms.x].z - current[shakeAtoms.z].z;
+      const double rijpijsq = xrij * xpij + yrij * ypij + zrij * zpij;
+      const double rijpiksq = xrij * xpik + yrij * ypik + zrij * zpik;
+      const double rikpijsq = xrik * xpij + yrik * ypij + zrik * zpij;
+      const double rikpiksq = xrik * xpik + yrik * ypik + zrik * zpik;
 
-      double rijsq = xpij * xpij + ypij * ypij + zpij * zpij;
-      double riksq = xpik * xpik + ypik * ypik + zpik * zpik;
+      const double dijsq = bijsq - pijpijsq;
+      const double diksq = biksq - pikpiksq;
 
-      double dij = params.z - rijsq;
-      double dik = params.z - riksq;
+      const double dinv = 0.5 / (rijpijsq * rikpiksq * ijmass * ikmass -
+                                 rijpiksq * rikpijsq * imass * imass);
+      const double acorr1 = ijmass * ijmass * rijrijsq;
+      const double acorr2 = 2.0 * ijmass * imass * rijriksq;
+      const double acorr3 = imass * imass * rikriksq;
+      const double acorr4 = imass * imass * rijrijsq;
+      const double acorr5 = 2.0 * ikmass * imass * rijriksq;
+      const double acorr6 = ikmass * ikmass * rikriksq;
 
-      double rijrijp = xrij * xpij + yrij * ypij + zrij * zpij;
-      double rijrikp = xrij * xpik + yrij * ypik + zrij * zpik;
-      double rikrijp = xpij * xrik + ypij * yrik + zpij * zrik;
-      double rikrikp = xrik * xpik + yrik * ypik + zrik * zpik;
-
-      double dinv =
-          0.5 / (rijrijp * rikrikp * mij * mik - rijrikp * rikrijp * mmi * mmi);
-      double a12 = dinv * (rikrikp * mik * (dij)-rikrijp * mmi * (dik));
-      double a13 = dinv * (-mmi * rijrikp * (dij) + rijrijp * mij * (dik));
-
-      int aniter = 0;
-      do {
-        aniter = aniter + 1;
+      double a120 = 0.0, a130 = 0.0;
+      double a12 =
+          dinv * (rikpiksq * ikmass * dijsq - rikpijsq * imass * diksq);
+      double a13 =
+          dinv * (rijpijsq * ijmass * diksq - rijpiksq * imass * dijsq);
+      for (int ITER = 0; ITER < MAX_ITER; ITER++) {
         a120 = a12;
         a130 = a13;
-        double a12corr =
+
+        const double a12corr =
             acorr1 * a12 * a12 + acorr2 * a12 * a13 + acorr3 * a13 * a13;
-        double a13corr =
+        const double a13corr =
             acorr4 * a12 * a12 + acorr5 * a12 * a13 + acorr6 * a13 * a13;
-        a12 = dinv * (rikrikp * mik * (dij - a12corr) -
-                      rikrijp * mmi * (dik - a13corr));
-        a13 = dinv * (-mmi * rijrikp * (dij - a12corr) +
-                      rijrijp * mij * (dik - a13corr));
 
-      } while ((abs(a120 - a12) > tol || (abs(a130 - a13) > tol)) &&
-               aniter < max_niter);
-      current[shakeAtoms.x].x += mmi * (a12 * xrij + a13 * xrik);
-      current[shakeAtoms.y].x -= mmj * a12 * xrij;
-      current[shakeAtoms.z].x -= mmk * a13 * xrik;
+        a12 = dinv * (rikpiksq * ikmass * (dijsq - a12corr) -
+                      rikpijsq * imass * (diksq - a13corr));
+        a13 = dinv * (rijpijsq * ijmass * (diksq - a13corr) -
+                      rijpiksq * imass * (dijsq - a12corr));
 
-      current[shakeAtoms.x].y += mmi * (a12 * yrij + a13 * yrik);
-      current[shakeAtoms.y].y -= mmj * a12 * yrij;
-      current[shakeAtoms.z].y -= mmk * a13 * yrik;
+        if ((abs(a120 - a12) < TOL) && (abs(a130 - a13) < TOL))
+          break;
+      }
 
-      current[shakeAtoms.x].z += mmi * (a12 * zrij + a13 * zrik);
-      current[shakeAtoms.y].z -= mmj * a12 * zrij;
-      current[shakeAtoms.z].z -= mmk * a13 * zrik;
+      coords[atoms.x].x += imass * (a12 * xrij + a13 * xrik);
+      coords[atoms.x].y += imass * (a12 * yrij + a13 * yrik);
+      coords[atoms.x].z += imass * (a12 * zrij + a13 * zrik);
+
+      coords[atoms.y].x -= jmass * a12 * xrij;
+      coords[atoms.y].y -= jmass * a12 * yrij;
+      coords[atoms.y].z -= jmass * a12 * zrij;
+
+      coords[atoms.z].x -= kmass * a13 * xrik;
+      coords[atoms.z].y -= kmass * a13 * yrik;
+      coords[atoms.z].z -= kmass * a13 * zrik;
     }
   }
+
+  return;
 }
 
-__global__ void
-constrainShakeFourAtomsKernel(int numShakes, const double4 *__restrict__ ref,
-                              double4 *__restrict__ current,
-                              const float4 *__restrict__ shakeParams,
-                              const int4 *__restrict__ shakeAtomsIndex) {
-  const int index = threadIdx.x + blockDim.x * blockIdx.x;
-  if (index < numShakes) {
-    int4 shakeAtoms = shakeAtomsIndex[index];
-    // if (shakeAtoms.z != -1 && shakeAtoms.w != -1) {
-    if (shakeAtoms.w != -1) {
-      double tol = 1e-5;
-      int max_niter = 25;
-      float4 params = shakeParams[index];
-      double a120 = 0.0;
-      double a130 = 0.0;
-      double a140 = 0.0;
+__global__ static void Shake4Kernel(double4 *__restrict__ coords,
+                                    const double4 *__restrict__ coordsRef,
+                                    const int4 *__restrict__ shakeAtoms,
+                                    const float4 *__restrict__ shakeParams,
+                                    const int numShakes) {
+  constexpr int MAX_ITER = 25;
+  constexpr double TOL = 1e-5;
 
-      double xrij = ref[shakeAtoms.x].x - ref[shakeAtoms.y].x;
-      double yrij = ref[shakeAtoms.x].y - ref[shakeAtoms.y].y;
-      double zrij = ref[shakeAtoms.x].z - ref[shakeAtoms.y].z;
-      double xrik = ref[shakeAtoms.x].x - ref[shakeAtoms.z].x;
-      double yrik = ref[shakeAtoms.x].y - ref[shakeAtoms.z].y;
-      double zrik = ref[shakeAtoms.x].z - ref[shakeAtoms.z].z;
-      double xril = ref[shakeAtoms.x].x - ref[shakeAtoms.w].x;
-      double yril = ref[shakeAtoms.x].y - ref[shakeAtoms.w].y;
-      double zril = ref[shakeAtoms.x].z - ref[shakeAtoms.w].z;
+  const int index = blockIdx.x * blockDim.x + threadIdx.x;
+  const int stride = gridDim.x * blockDim.x;
 
-      double rrijsq = xrij * xrij + yrij * yrij + zrij * zrij;
-      double rriksq = xrik * xrik + yrik * yrik + zrik * zrik;
-      double rrilsq = xril * xril + yril * yril + zril * zril;
-      double rijrik = xrij * xrik + yrij * yrik + zrij * zrik;
-      double rijril = xrij * xril + yrij * yril + zrij * zril;
-      double rikril = xrik * xril + yrik * yril + zrik * zril;
+  for (int i = index; i < numShakes; i += stride) {
+    const int4 atoms = shakeAtoms[i];
+    if (atoms.w != -1) {
+      const float4 params = shakeParams[i];
+      const double imass = static_cast<double>(params.x);
+      const double jmass = static_cast<double>(params.w);
+      const double kmass = jmass;
+      const double lmass = jmass;
+      const double ijmass = imass + jmass;
+      const double ikmass = imass + kmass;
+      const double ilmass = imass + lmass;
+      const double bijsq = static_cast<double>(params.z);
+      const double biksq = bijsq;
+      const double bilsq = bijsq;
 
-      double mmi = params.x;
-      double mmj = params.w;
-      double mmk = mmj;
-      double mml = mmj;
-      double mij = params.x + params.w;
-      double mik = mij;
-      double mil = mij;
+      const double xpij = coords[atoms.x].x - coords[atoms.y].x;
+      const double ypij = coords[atoms.x].y - coords[atoms.y].y;
+      const double zpij = coords[atoms.x].z - coords[atoms.y].z;
+      const double xpik = coords[atoms.x].x - coords[atoms.z].x;
+      const double ypik = coords[atoms.x].y - coords[atoms.z].y;
+      const double zpik = coords[atoms.x].z - coords[atoms.z].z;
+      const double xpil = coords[atoms.x].x - coords[atoms.w].x;
+      const double ypil = coords[atoms.x].y - coords[atoms.w].y;
+      const double zpil = coords[atoms.x].z - coords[atoms.w].z;
 
-      double acorr1 = mij * mij * rrijsq;
-      double acorr2 = 2.0 * mij * mmi * rijrik;
-      double acorr3 = mmi * mmi * rriksq;
-      double acorr4 = mmi * mmi * rrijsq;
-      double acorr5 = 2.0 * mik * mmi * rijrik;
-      double acorr6 = mik * mik * rriksq;
-      double acorr7 = 2.0 * mij * mmi * rijril;
-      double acorr8 = 2.0 * mmi * mmi * rikril;
-      double acorr9 = mmi * mmi * rrilsq;
-      double acorr10 = 2.0 * mmi * mmi * rijril;
-      double acorr11 = 2.0 * mmi * mik * rikril;
-      double acorr12 = 2.0 * mmi * mmi * rijrik;
-      double acorr13 = 2.0 * mmi * mil * rijril;
-      double acorr14 = 2.0 * mmi * mil * rikril;
-      double acorr15 = mil * mil * rrilsq;
+      const double xrij = coordsRef[atoms.x].x - coordsRef[atoms.y].x;
+      const double yrij = coordsRef[atoms.x].y - coordsRef[atoms.y].y;
+      const double zrij = coordsRef[atoms.x].z - coordsRef[atoms.y].z;
+      const double xrik = coordsRef[atoms.x].x - coordsRef[atoms.z].x;
+      const double yrik = coordsRef[atoms.x].y - coordsRef[atoms.z].y;
+      const double zrik = coordsRef[atoms.x].z - coordsRef[atoms.z].z;
+      const double xril = coordsRef[atoms.x].x - coordsRef[atoms.w].x;
+      const double yril = coordsRef[atoms.x].y - coordsRef[atoms.w].y;
+      const double zril = coordsRef[atoms.x].z - coordsRef[atoms.w].z;
 
-      double xpij = current[shakeAtoms.x].x - current[shakeAtoms.y].x;
-      double ypij = current[shakeAtoms.x].y - current[shakeAtoms.y].y;
-      double zpij = current[shakeAtoms.x].z - current[shakeAtoms.y].z;
-      double xpik = current[shakeAtoms.x].x - current[shakeAtoms.z].x;
-      double ypik = current[shakeAtoms.x].y - current[shakeAtoms.z].y;
-      double zpik = current[shakeAtoms.x].z - current[shakeAtoms.z].z;
-      double xpil = current[shakeAtoms.x].x - current[shakeAtoms.w].x;
-      double ypil = current[shakeAtoms.x].y - current[shakeAtoms.w].y;
-      double zpil = current[shakeAtoms.x].z - current[shakeAtoms.w].z;
+      const double pijpijsq = xpij * xpij + ypij * ypij + zpij * zpij;
+      const double pikpiksq = xpik * xpik + ypik * ypik + zpik * zpik;
+      const double pilpilsq = xpil * xpil + ypil * ypil + zpil * zpil;
+      const double rijrijsq = xrij * xrij + yrij * yrij + zrij * zrij;
+      const double rijriksq = xrij * xrik + yrij * yrik + zrij * zrik;
+      const double rijrilsq = xrij * xril + yrij * yril + zrij * zril;
+      const double rikriksq = xrik * xrik + yrik * yrik + zrik * zrik;
+      const double rikrilsq = xrik * xril + yrik * yril + zrik * zril;
+      const double rilrilsq = xril * xril + yril * yril + zril * zril;
 
-      double rijsq = xpij * xpij + ypij * ypij + zpij * zpij;
-      double riksq = xpik * xpik + ypik * ypik + zpik * zpik;
-      double rilsq = xpil * xpil + ypil * ypil + zpil * zpil;
+      const double rijpijsq = xrij * xpij + yrij * ypij + zrij * zpij;
+      const double rijpiksq = xrij * xpik + yrij * ypik + zrij * zpik;
+      const double rijpilsq = xrij * xpil + yrij * ypil + zrij * zpil;
+      const double rikpijsq = xrik * xpij + yrik * ypij + zrik * zpij;
+      const double rikpiksq = xrik * xpik + yrik * ypik + zrik * zpik;
+      const double rikpilsq = xrik * xpil + yrik * ypil + zrik * zpil;
+      const double rilpijsq = xril * xpij + yril * ypij + zril * zpij;
+      const double rilpiksq = xril * xpik + yril * ypik + zril * zpik;
+      const double rilpilsq = xril * xpil + yril * ypil + zril * zpil;
 
-      double dij = params.z - rijsq;
-      double dik = params.z - riksq;
-      double dil = params.z - rilsq;
-      double rijrijp = xrij * xpij + yrij * ypij + zrij * zpij;
-      double rijrikp = xrij * xpik + yrij * ypik + zrij * zpik;
-      double rijrilp = xrij * xpil + yrij * ypil + zrij * zpil;
-      double rikrijp = xrik * xpij + yrik * ypij + zrik * zpij;
-      double rikrikp = xrik * xpik + yrik * ypik + zrik * zpik;
-      double rikrilp = xrik * xpil + yrik * ypil + zrik * zpil;
-      double rilrijp = xril * xpij + yril * ypij + zril * zpij;
-      double rilrikp = xril * xpik + yril * ypik + zril * zpik;
-      double rilrilp = xril * xpil + yril * ypil + zril * zpil;
+      const double dijsq = bijsq - pijpijsq;
+      const double diksq = biksq - pikpiksq;
+      const double dilsq = bilsq - pilpilsq;
 
-      double d1 = mik * mil * rikrikp * rilrilp - mmi * mmi * rikrilp * rilrikp;
-      double d2 = mmi * mil * rikrijp * rilrilp - mmi * mmi * rikrilp * rilrijp;
-      double d3 = mmi * mmi * rikrijp * rilrikp - mik * mmi * rikrikp * rilrijp;
-      double d4 = mmi * mil * rijrikp * rilrilp - mmi * mmi * rijrilp * rilrikp;
-      double d5 = mij * mil * rijrijp * rilrilp - mmi * mmi * rijrilp * rilrijp;
-      double d6 = mij * mmi * rijrijp * rilrikp - mmi * mmi * rijrikp * rilrijp;
-      double d7 = mmi * mmi * rijrikp * rikrilp - mmi * mik * rijrilp * rikrikp;
-      double d8 = mij * mmi * rijrijp * rikrilp - mmi * mmi * rijrilp * rikrijp;
-      double d9 = mij * mik * rijrijp * rikrikp - mmi * mmi * rijrikp * rikrijp;
+      const double d1 = ikmass * ilmass * rikpiksq * rilpilsq -
+                        imass * imass * rikpilsq * rilpiksq;
+      const double d2 = imass * ilmass * rikpijsq * rilpilsq -
+                        imass * imass * rikpilsq * rilpijsq;
+      const double d3 = imass * imass * rikpijsq * rilpiksq -
+                        ikmass * imass * rikpiksq * rilpijsq;
+      const double d4 = imass * ilmass * rijpiksq * rilpilsq -
+                        imass * imass * rijpilsq * rilpiksq;
+      const double d5 = ijmass * ilmass * rijpijsq * rilpilsq -
+                        imass * imass * rijpilsq * rilpijsq;
+      const double d6 = ijmass * imass * rijpijsq * rilpiksq -
+                        imass * imass * rijpiksq * rilpijsq;
+      const double d7 = imass * imass * rijpiksq * rikpilsq -
+                        imass * ikmass * rijpilsq * rikpiksq;
+      const double d8 = ijmass * imass * rijpijsq * rikpilsq -
+                        imass * imass * rijpilsq * rikpijsq;
+      const double d9 = ijmass * ikmass * rijpijsq * rikpiksq -
+                        imass * imass * rijpiksq * rikpijsq;
+      const double dinv = 0.5 / (rijpijsq * ijmass * d1 -
+                                 rijpiksq * imass * d2 + rijpilsq * imass * d3);
+      const double acorr1 = ijmass * ijmass * rijrijsq;
+      const double acorr2 = 2.0 * ijmass * imass * rijriksq;
+      const double acorr3 = imass * imass * rikriksq;
+      const double acorr4 = imass * imass * rijrijsq;
+      const double acorr5 = 2.0 * ikmass * imass * rijriksq;
+      const double acorr6 = ikmass * ikmass * rikriksq;
+      const double acorr7 = 2.0 * ijmass * imass * rijrilsq;
+      const double acorr8 = 2.0 * imass * imass * rikrilsq;
+      const double acorr9 = imass * imass * rilrilsq;
+      const double acorr10 = 2.0 * imass * imass * rijrilsq;
+      const double acorr11 = 2.0 * imass * ikmass * rikrilsq;
+      const double acorr12 = 2.0 * imass * imass * rijriksq;
+      const double acorr13 = 2.0 * imass * ilmass * rijrilsq;
+      const double acorr14 = 2.0 * imass * ilmass * rikrilsq;
+      const double acorr15 = ilmass * ilmass * rilrilsq;
 
-      double dinv =
-          0.5 / (rijrijp * mij * d1 - mmi * rijrikp * d2 + mmi * rijrilp * d3);
-      double a12 = dinv * (d1 * dij - d2 * dik + d3 * dil);
-      double a13 = dinv * (-d4 * dij + d5 * dik - d6 * dil);
-      double a14 = dinv * (d7 * dij - d8 * dik + d9 * dil);
-      int aniter = 0;
-
-      do {
-        aniter = aniter + 1;
+      double a12 = dinv * (d1 * dijsq - d2 * diksq + d3 * dilsq);
+      double a13 = dinv * (-d4 * dijsq + d5 * diksq - d6 * dilsq);
+      double a14 = dinv * (d7 * dijsq - d8 * diksq + d9 * dilsq);
+      double a120 = 0.0, a130 = 0.0, a140 = 0.0;
+      for (int ITER = 0; ITER < MAX_ITER; ITER++) {
         a120 = a12;
         a130 = a13;
         a140 = a14;
-        double a12corr = acorr1 * a12 * a12 + acorr2 * a12 * a13 +
-                         acorr3 * a13 * a13 + acorr7 * a12 * a14 +
-                         acorr8 * a13 * a14 + acorr9 * a14 * a14;
-        double a13corr = acorr4 * a12 * a12 + acorr5 * a12 * a13 +
-                         acorr6 * a13 * a13 + acorr10 * a12 * a14 +
-                         acorr11 * a13 * a14 + acorr9 * a14 * a14;
-        double a14corr = acorr4 * a12 * a12 + acorr12 * a12 * a13 +
-                         acorr3 * a13 * a13 + acorr13 * a12 * a14 +
-                         acorr14 * a13 * a14 + acorr15 * a14 * a14;
 
-        a12 = dinv * (d1 * (dij - a12corr) - d2 * (dik - a13corr) +
-                      d3 * (dil - a14corr));
-        a13 = dinv * (-d4 * (dij - a12corr) + d5 * (dik - a13corr) -
-                      d6 * (dil - a14corr));
-        a14 = dinv * (d7 * (dij - a12corr) - d8 * (dik - a13corr) +
-                      d9 * (dil - a14corr));
-      } while ((abs(a120 - a12) > tol || (abs(a130 - a13) > tol) ||
-                (abs(a140 - a14) > tol)) &&
-               aniter < max_niter);
+        const double a12corr = acorr1 * a12 * a12 + acorr2 * a12 * a13 +
+                               acorr3 * a13 * a13 + acorr7 * a12 * a14 +
+                               acorr8 * a13 * a14 + acorr9 * a14 * a14;
+        const double a13corr = acorr4 * a12 * a12 + acorr5 * a12 * a13 +
+                               acorr6 * a13 * a13 + acorr10 * a12 * a14 +
+                               acorr11 * a13 * a14 + acorr9 * a14 * a14;
+        const double a14corr = acorr4 * a12 * a12 + acorr12 * a12 * a13 +
+                               acorr3 * a13 * a13 + acorr13 * a12 * a14 +
+                               acorr14 * a13 * a14 + acorr15 * a14 * a14;
 
-      current[shakeAtoms.x].x += mmi * (a12 * xrij + a13 * xrik + a14 * xril);
-      current[shakeAtoms.x].y += mmi * (a12 * yrij + a13 * yrik + a14 * yril);
-      current[shakeAtoms.x].z += mmi * (a12 * zrij + a13 * zrik + a14 * zril);
-      current[shakeAtoms.y].x -= mmj * a12 * xrij;
-      current[shakeAtoms.y].y -= mmj * a12 * yrij;
-      current[shakeAtoms.y].z -= mmj * a12 * zrij;
-      current[shakeAtoms.z].x -= mmk * a13 * xrik;
-      current[shakeAtoms.z].y -= mmk * a13 * yrik;
-      current[shakeAtoms.z].z -= mmk * a13 * zrik;
-      current[shakeAtoms.w].x -= mml * a14 * xril;
-      current[shakeAtoms.w].y -= mml * a14 * yril;
-      current[shakeAtoms.w].z -= mml * a14 * zril;
+        a12 = dinv * (d1 * (dijsq - a12corr) - d2 * (diksq - a13corr) +
+                      d3 * (dilsq - a14corr));
+        a13 = dinv * (-d4 * (dijsq - a12corr) + d5 * (diksq - a13corr) -
+                      d6 * (dilsq - a14corr));
+        a14 = dinv * (d7 * (dijsq - a12corr) - d8 * (diksq - a13corr) +
+                      d9 * (dilsq - a14corr));
+
+        if ((abs(a120 - a12) < TOL) && (abs(a130 - a13) < TOL) &&
+            (abs(a140 - a14) < TOL))
+          break;
+      }
     }
   }
+
+  return;
 }
 
-void CudaHolonomicConstraint::constrainShakeAtoms(const double4 *ref) {
+void CudaHolonomicConstraint::constrainShakeAtoms(const double4 *coordsRef) {
+  if (m_ShakeAtoms.size() > 0) {
+    double4 *coords =
+        m_Context->getCoordinatesCharges().getDeviceArray().data();
 
-  if (shakeAtoms.size()) {
-    auto current = context->getCoordinatesCharges().getDeviceArray().data();
+    constexpr int numThreads = 128;
+    const int numBlocks =
+        (static_cast<int>(m_ShakeAtoms.size()) + numThreads - 1) / numThreads;
 
-    int numThreads = 128;
-    int numBlocks = (shakeAtoms.size() - 1) / numThreads + 1;
+    Shake2Kernel<<<numBlocks, numThreads, 0, *m_Stream>>>(
+        coords, coordsRef, m_ShakeAtoms.getDeviceArray().data(),
+        m_ShakeParams.getDeviceArray().data(),
+        static_cast<int>(m_ShakeAtoms.size()));
 
-    constrainShakeTwoAtomsKernel<<<numBlocks, numThreads, 0, *stream>>>(
-        shakeAtoms.size(), ref, current, shakeParams.getDeviceArray().data(),
-        shakeAtoms.getDeviceArray().data());
-    // cudaCheck(cudaStreamSynchronize(*stream));
+    Shake3Kernel<<<numBlocks, numThreads, 0, *m_Stream>>>(
+        coords, coordsRef, m_ShakeAtoms.getDeviceArray().data(),
+        m_ShakeParams.getDeviceArray().data(),
+        static_cast<int>(m_ShakeAtoms.size()));
 
-    constrainShakeThreeAtomsKernel<<<numBlocks, numThreads, 0, *stream>>>(
-        shakeAtoms.size(), ref, current, shakeParams.getDeviceArray().data(),
-        shakeAtoms.getDeviceArray().data());
-    // cudaCheck(cudaDeviceSynchronize());
-
-    constrainShakeFourAtomsKernel<<<numBlocks, numThreads, 0, *stream>>>(
-        shakeAtoms.size(), ref, current, shakeParams.getDeviceArray().data(),
-        shakeAtoms.getDeviceArray().data());
-    // cudaCheck(cudaDeviceSynchronize());
-
-    cudaCheck(cudaStreamSynchronize(*stream));
+    Shake4Kernel<<<numBlocks, numThreads, 0, *m_Stream>>>(
+        coords, coordsRef, m_ShakeAtoms.getDeviceArray().data(),
+        m_ShakeParams.getDeviceArray().data(),
+        static_cast<int>(m_ShakeAtoms.size()));
   }
+
+  return;
 }
 
-void CudaHolonomicConstraint::handleHolonomicConstraints(const double4 *ref) {
+__global__ static void
+UpdateVelocitiesKernel(double4 *__restrict__ velMass,
+                       const double4 *__restrict__ coords,
+                       const double4 *__restrict__ coordsStored,
+                       const int numAtoms, const double invTimeStep) {
 
-  /*
-  if (charmmContext->getConstraintType() == ConstraintType::HOLONOMIC) {
-    constrainWaterMolecules();
+  const int index = blockDim.x * blockIdx.x + threadIdx.x;
+  const int stride = gridDim.x * blockDim.x;
+
+  for (int i = index; i < numAtoms; i += stride) {
+    const double x = coords[i].x;
+    const double y = coords[i].y;
+    const double z = coords[i].z;
+
+    const double x0 = coordsStored[i].x;
+    const double y0 = coordsStored[i].y;
+    const double z0 = coordsStored[i].z;
+
+    velMass[i].x += invTimeStep * (x - x0);
+    velMass[i].y += invTimeStep * (y - y0);
+    velMass[i].z += invTimeStep * (z - z0);
   }
-  */
 
-  auto current = context->getCoordinatesCharges().getDeviceArray().data();
-  copy_DtoD_async<double4>(current, coords_stored.getDeviceArray().data(),
-                           context->getNumAtoms(), *memcpyStream);
-  cudaStreamSynchronize(*memcpyStream);
-
-  constrainWaterMolecules(ref);
-  constrainShakeAtoms(ref);
-
-  // cudaStreamSynchronize(*stream);
-  // constrainShakeAtoms(ref);
-
-  updateVelocities();
-
-  // xx updateVelocities(ref, current);
+  return;
 }
 
-//
-__device__ static void removeOneForce(int i, int j, int stride,
-                                      const double4 *__restrict__ current,
-                                      double *__restrict__ force) {
-  double xpij = force[i] - force[j];
-  double ypij = force[i + stride] - force[j + stride];
-  double zpij = force[i + 2 * stride] - force[j + 2 * stride];
+void CudaHolonomicConstraint::updateVelocities(void) {
+  constexpr int numThreads = 128;
+  const int numBlocks =
+      (m_Context->getNumAtoms() + numThreads - 1) / numThreads;
 
-  double acor = xpij * xpij + ypij * ypij + zpij * zpij;
-  if (acor < 1.0)
-    acor = 1.0;
+  UpdateVelocitiesKernel<<<numBlocks, numThreads, 0, *m_Stream>>>(
+      m_Context->getVelocityMass().getDeviceArray().data(),
+      m_Context->getCoordinatesCharges().getDeviceArray().data(),
+      m_CoordsStored.getDeviceArray().data(), m_Context->getNumAtoms(),
+      1.0 / m_TimeStep);
 
-  double xrij = current[i].x - current[j].x;
-  double yrij = current[i].y - current[j].y;
-  double zrij = current[i].z - current[j].z;
-
-  double rrijsq = xrij * xrij + yrij * yrij + zrij * zrij;
-  double rijrijp = xrij * xpij + yrij * ypij + zrij * zpij;
-
-  // if (std::abs(rijrijp) < std::sqrt(acor * rrijsq) * 1e-6) {
-
-  // } else {
-
-  acor = -0.5 * rijrijp / rrijsq; // 0.5 as per CHARMM
-
-  atomicAdd(&force[i], acor * xrij);
-  atomicAdd(&force[i + stride], acor * yrij);
-  atomicAdd(&force[i + 2 * stride], acor * zrij);
-  atomicAdd(&force[j], -acor * xrij);
-  atomicAdd(&force[j + stride], -acor * yrij);
-  atomicAdd(&force[j + 2 * stride], -acor * zrij);
-  //}
-}
-//
-
-__global__ static void removeForceAlongHolonomicConstraintsKernel(
-    const int2 *__restrict__ constrainedPairs, int numConstraints, int stride,
-    const double4 *__restrict__ current, double *__restrict__ force) {
-  int threadIndex = blockDim.x * blockIdx.x + threadIdx.x;
-
-  int maxIter = 20;
-  for (int iter = 0; iter < maxIter; iter++) {
-
-    for (int i = threadIndex; i < numConstraints; i += gridDim.x * blockDim.x) {
-      int2 pair = constrainedPairs[i];
-      removeOneForce(pair.x, pair.y, stride, current, force);
-    }
-  }
-}
-
-void CudaHolonomicConstraint::removeForceAlongHolonomicConstraints() {
-  auto current = context->getCoordinatesCharges().getDeviceArray().data();
-  int stride = context->getForceStride();
-  auto force = context->getForces();
-
-  if (allConstrainedAtomPairs.size()) {
-
-    int numThreads = 1024;
-    int numBlocks = 64;
-
-    removeForceAlongHolonomicConstraintsKernel<<<numBlocks, numThreads, 0,
-                                                 *stream>>>(
-        allConstrainedAtomPairs.getDeviceArray().data(),
-        allConstrainedAtomPairs.size(), stride, current, force->xyz());
-  }
-  cudaStreamSynchronize(*stream);
+  return;
 }

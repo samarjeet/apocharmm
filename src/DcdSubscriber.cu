@@ -54,7 +54,8 @@ void DcdSubscriber::update(void) {
   m_NumFramesWritten++;
 
   m_FileStream.seekp(8);
-  m_FileStream.write(reinterpret_cast<const char *>(&m_NumFramesWritten), sizeof(int));
+  m_FileStream.write(reinterpret_cast<const char *>(&m_NumFramesWritten),
+                     sizeof(int));
 
   int idum = m_NumFramesWritten * m_ReportFrequency;
   m_FileStream.seekp(20);
@@ -187,9 +188,11 @@ void DcdSubscriber::writeXtalData(void) {
 }
 
 void DcdSubscriber::writeCoordData(void) {
-  const std::shared_ptr<std::vector<float4>> ptr =
-      m_CharmmContext->getXYZQ()->getHostXYZQ();
-  const float4 *xyzq = (*ptr).data();
+  // const std::shared_ptr<std::vector<float4>> ptr =
+  //     m_CharmmContext->getXYZQ()->getHostXYZQ();
+  // const float4 *xyzq = (*ptr).data();
+  m_CharmmContext->getXYZQ().transferToHost();
+  const float4 *xyzq = m_CharmmContext->getXYZQ().getHostArray().data();
   const int numAtoms = m_CharmmContext->getNumAtoms();
   const int blockSizeBytes = numAtoms * static_cast<int>(sizeof(float));
 

@@ -739,7 +739,7 @@ void ForceManager::calcForcePart3(const float4 *xyzq, const bool reset,
     //                        reciprocalEnergyVirial.getEnergy("ewse");
 
     UpdatePotentialEnergyKernel<<<1, 32, 0, *m_ForceManagerStream>>>(
-        m_TotalPotentialEnergy.getDeviceData(),
+        m_TotalPotentialEnergy.getDeviceArray().data(),
         m_BondedEnergyVirial.getEnergyPointer("bond"),
         m_BondedEnergyVirial.getEnergyPointer("angle"),
         m_BondedEnergyVirial.getEnergyPointer("ureyb"),
@@ -754,19 +754,19 @@ void ForceManager::calcForcePart3(const float4 *xyzq, const bool reset,
     for (std::size_t i = 0; i < m_ForceViews.size(); i++) {
       UpdatePotentialEnergyKernel2<<<1, 32, 0, *m_ForceManagerStream>>>(
           m_EnergyVirials[i]->getEnergyPointer("bond"),
-          m_TotalPotentialEnergy.getDeviceData());
+          m_TotalPotentialEnergy.getDeviceArray().data());
       UpdatePotentialEnergyKernel2<<<1, 32, 0, *m_ForceManagerStream>>>(
           m_EnergyVirials[i]->getEnergyPointer("angle"),
-          m_TotalPotentialEnergy.getDeviceData());
+          m_TotalPotentialEnergy.getDeviceArray().data());
       UpdatePotentialEnergyKernel2<<<1, 32, 0, *m_ForceManagerStream>>>(
           m_EnergyVirials[i]->getEnergyPointer("ureyb"),
-          m_TotalPotentialEnergy.getDeviceData());
+          m_TotalPotentialEnergy.getDeviceArray().data());
       UpdatePotentialEnergyKernel2<<<1, 32, 0, *m_ForceManagerStream>>>(
           m_EnergyVirials[i]->getEnergyPointer("dihe"),
-          m_TotalPotentialEnergy.getDeviceData());
+          m_TotalPotentialEnergy.getDeviceArray().data());
       UpdatePotentialEnergyKernel2<<<1, 32, 0, *m_ForceManagerStream>>>(
           m_EnergyVirials[i]->getEnergyPointer("imdihe"),
-          m_TotalPotentialEnergy.getDeviceData());
+          m_TotalPotentialEnergy.getDeviceArray().data());
     }
 
     cudaCheck(cudaStreamSynchronize(*m_ForceManagerStream));

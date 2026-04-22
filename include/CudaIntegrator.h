@@ -12,7 +12,6 @@
 #include "CharmmContext.h"
 #include "CudaHolonomicConstraint.h"
 #include "Subscriber.h"
-#include "XYZQ.h"
 #include "str_utils.h"
 #include <fstream>
 #include <map>

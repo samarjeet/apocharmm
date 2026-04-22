@@ -59,7 +59,7 @@ TEST_CASE("waterbox", "[all]") {
   auto force = ctx->getForces()->xyz();
 
   CudaContainer<double> forcesContainer(stride * 3);
-  copy_DtoD<double>(force, forcesContainer.getDeviceData(), stride * 3);
+  copy_DtoD<double>(force, forcesContainer.getDeviceArray().data(), stride * 3);
   // forcesContainer.setDeviceArray(force);
   forcesContainer.transferFromDevice();
   compareP21Forces(ctx->getNumAtoms(), stride, forcesContainer.getHostArray(),
@@ -347,7 +347,7 @@ TEST_CASE("virial") {
   auto force = ctx->getForces()->xyz();
 
   CudaContainer<double> forcesContainer(stride * 3);
-  copy_DtoD<double>(force, forcesContainer.getDeviceData(), stride * 3);
+  copy_DtoD<double>(force, forcesContainer.getDeviceArray().data(), stride * 3);
   // forcesContainer.setDeviceArray(force);
   forcesContainer.transferFromDevice();
 

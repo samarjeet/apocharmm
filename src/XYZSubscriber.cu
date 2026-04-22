@@ -33,12 +33,18 @@ void XYZSubscriber::update(void) {
   if (m_CharmmContext == nullptr)
     throw std::runtime_error("ERROR: XYZSubscriber has no CHARMM context.");
 
-  // vector in the shared ptr
-  std::vector<float4> xyzq = *(m_CharmmContext->getXYZQ()->getHostXYZQ());
+  // // vector in the shared ptr
+  // std::vector<float4> xyzq = *(m_CharmmContext->getXYZQ()->getHostXYZQ());
 
+  // for (int i = 0; i < m_CharmmContext->getNumAtoms(); i++) {
+  //   m_FileStream << i << "\t" << xyzq[i].x << "\t" << xyzq[i].y << "\t"
+  //                << xyzq[i].z << std::endl;
+  // }
+  m_CharmmContext->getXYZQ().transferToHost();
   for (int i = 0; i < m_CharmmContext->getNumAtoms(); i++) {
-    m_FileStream << i << "\t" << xyzq[i].x << "\t" << xyzq[i].y << "\t"
-                 << xyzq[i].z << std::endl;
+    m_FileStream << i << "\t" << m_CharmmContext->getXYZQ()[i].x << "\t"
+                 << m_CharmmContext->getXYZQ()[i].y << "\t"
+                 << m_CharmmContext->getXYZQ()[i].z << std::endl;
   }
 
   m_NumFramesWritten++;

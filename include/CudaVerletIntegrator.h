@@ -9,8 +9,11 @@
 // ENDLICENSE
 
 #pragma once
-#include "CharmmContext.h"
+
 #include "CudaIntegrator.h"
+
+#include "CharmmContext.h"
+#include "CudaContainer.h"
 
 class CudaVerletIntegrator : public CudaIntegrator {
 public:
@@ -21,11 +24,11 @@ public:
 
   void initialize(void);
 
-  // void propagate(const int nSteps);
-
 private:
-  XYZQ *m_OldXYZQ;
-  XYZQ *m_NewXYZQ;
+  CudaContainer<float4> m_OldXYZQ;
+  CudaContainer<float4> m_NewXYZQ;
+  // XYZQ *m_OldXYZQ;
+  // XYZQ *m_NewXYZQ;
 
-  std::string m_IntegratorTypeName = "Verlet";
+  std::string m_IntegratorTypeName;
 };

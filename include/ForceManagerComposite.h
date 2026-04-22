@@ -28,7 +28,6 @@
 #include "ForceManager.h"
 #include "PBC.h"
 #include "TestForce.h"
-#include "XYZQ.h"
 
 #include <algorithm>
 #include <memory>
@@ -182,7 +181,7 @@ protected:
   /**
    * @brief List of XYZQs, one per child
    */
-  std::vector<std::shared_ptr<XYZQ>> m_XYZQs;
+  std::vector<CudaContainer<float4>> m_XYZQs;
 
   std::vector<std::shared_ptr<Force<double>>> m_ChildrenTotalForceValues;
 

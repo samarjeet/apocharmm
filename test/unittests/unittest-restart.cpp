@@ -20,7 +20,117 @@
 #include "catch.hpp"
 #include "compare.h"
 #include "test_paths.h"
+#include <iomanip>
 #include <iostream>
+#include <vector>
+
+TEST_CASE("restartCHARMM") {
+  const int randomSeed = 314159;
+  const double temperature = 300.0;
+  const bool useHolonomicConstraints = true;
+  const double timeStep = (useHolonomicConstraints) ? 0.002 : 0.001;
+  const int nsteps = (useHolonomicConstraints) ? 10000 : 20000;
+
+  // // 1LVZ
+  // const std::vector<double> boxDims(3, 48.0169234);
+  // const int nfftx = 50, nffty = 50, nfftz = 50;
+  // const std::vector<std::string> prmFiles = {
+  //     "/u/jeg/charmm_dev/c49a1jeg/toppar/par_all36m_prot.prm",
+  //     "/u/jeg/charmm_dev/c49a1jeg/toppar/toppar_water_ions.str"};
+  // const std::string psfName =
+  //     "/u/jeg/Documents/git/CHARMM-Tutorial-Dev/1lvz/dyn/1lvzi.psf";
+  // const std::string corName =
+  //     "/u/jeg/Documents/git/CHARMM-Tutorial-Dev/1lvz/init_heat_eq/1lvzm0.cor";
+  // const std::string rstName =
+  //     "/u/jeg/Documents/git/CHARMM-Tutorial-Dev/1lvz/dyn/rst/1lvzd2.rst";
+
+  // 3KWG
+  const std::vector<double> boxDims(3, 71.590617);
+  const int nfftx = 80, nffty = 80, nfftz = 80;
+  const std::vector<std::string> prmFiles = {
+      "/u/jeg/charmm_dev/c49a1jeg/toppar/par_all36m_prot.prm",
+      "/u/jeg/charmm_dev/c49a1jeg/toppar/toppar_water_ions.str"};
+  const std::string psfName =
+      "/u/jeg/biomed/ns1/bc/3kwg/init_heat_eq/3kwgi.psf";
+  const std::string corName =
+      "/u/jeg/biomed/ns1/bc/3kwg/init_heat_eq/3kwgm0.cor";
+  const std::string rstName =
+      "/u/jeg/biomed/ns1/bc/3kwg/init_heat_eq/rst/3kwge0.rst";
+
+  // // 3F5T Umbrella
+  // const std::vector<double> boxDims = {128.918671, 71.8888814, 71.8888814};
+  // const int nfftx = 144, nffty = 72, nfftz = 72;
+  // const std::vector<std::string> prmFiles = {
+  //     "/u/jeg/charmm_dev/c49a1jeg/toppar/par_all36m_prot.prm",
+  //     "/u/jeg/charmm_dev/c49a1jeg/toppar/toppar_water_ions.str"};
+  // const std::string psfName =
+  //     "/u/jeg/biomed/ns1/umbrella/3f5t/init_heat_eq0/3f5t_edai.psf";
+  // const std::string corName =
+  //     "/u/jeg/biomed/ns1/umbrella/3f5t/init_heat_eq0/3f5t_edam0.cor";
+  // const std::string rstName =
+  //     "/u/jeg/biomed/ns1/umbrella/3f5t/init_heat_eq0/rst/3f5t_edae0.rst";
+
+  // // 3RYI 2MER
+  // const std::vector<double> boxDims = {210.229501, 104.171506, 104.171506};
+  // const int nfftx = 216, nffty = 108, nfftz = 108;
+  // const std::vector<std::string> prmFiles = {
+  //     "/u/jeg/charmm_dev/c49a1jeg/toppar/par_all36m_prot.prm",
+  //     "/u/jeg/charmm_dev/c49a1jeg/toppar/par_all36_na.prm",
+  //     "/u/jeg/charmm_dev/c49a1jeg/toppar/stream/na/toppar_all36_na_nad_ppi.str",
+  //     "/u/jeg/charmm_dev/c49a1jeg/toppar/toppar_water_ions.str"};
+  // const std::string psfName =
+  //     "/u/jeg/biomed/mt/2mer/3ryi/init_heat_eq/3ryii.psf";
+  // const std::string corName =
+  //     "/u/jeg/biomed/mt/2mer/3ryi/init_heat_eq/3ryim0.cor";
+  // const std::string rstName =
+  //     "/u/jeg/biomed/mt/2mer/3ryi/init_heat_eq/rst/3ryie0.rst";
+
+  // // 3RYI 4MER
+  // const std::vector<double> boxDims = {365.681337, 144.883412, 144.883412};
+  // const int nfftx = 384, nffty = 150, nfftz = 150;
+  // const std::vector<std::string> prmFiles = {
+  //     "/u/jeg/charmm_dev/c49a1jeg/toppar/par_all36m_prot.prm",
+  //     "/u/jeg/charmm_dev/c49a1jeg/toppar/par_all36_na.prm",
+  //     "/u/jeg/charmm_dev/c49a1jeg/toppar/stream/na/toppar_all36_na_nad_ppi.str",
+  //     "/u/jeg/charmm_dev/c49a1jeg/toppar/toppar_water_ions.str",
+  // };
+  // const std::string psfName =
+  //     "/u/jeg/biomed/mt/4mer/3ryi/init_heat_eq/3ryii.psf";
+  // const std::string corName =
+  //     "/u/jeg/biomed/mt/4mer/3ryi/init_heat_eq/3ryim0.cor";
+  // const std::string rstName =
+  //     "/u/jeg/biomed/mt/4mer/3ryi/init_heat_eq/rst/3ryie0.rst";
+
+  // Setup CHARMM parameters, PSF, and coordinates
+  auto prm = std::make_shared<CharmmParameters>(prmFiles);
+  auto psf = std::make_shared<CharmmPSF>(psfName);
+  auto crd = std::make_shared<CharmmCrd>(corName);
+
+  // Setup force manager
+  auto fm = std::make_shared<ForceManager>(psf, prm);
+  fm->setBoxDimensions(boxDims);
+  fm->setFFTGrid(nfftx, nffty, nfftz);
+  fm->setPmeSplineOrder(6);
+
+  // Setup CHARMM context
+  auto ctx = std::make_shared<CharmmContext>(fm);
+  ctx->setCoordinates(crd);
+  ctx->setRandomSeedForVelocities(randomSeed);
+  ctx->assignVelocitiesAtTemperature(temperature);
+  ctx->useHolonomicConstraints(useHolonomicConstraints);
+
+  auto integrator =
+      std::make_shared<CudaNoseHooverThermostatIntegrator>(timeStep);
+  integrator->setCharmmContext(ctx);
+  integrator->initializeFromRestartFile(rstName);
+
+  integrator->propagate(nsteps);
+
+  integrator->getAverageTemperature().transferToHost();
+  std::cout << "integrator->getAverageTemperature()[0] = "
+            << std::setprecision(12) << integrator->getAverageTemperature()[0]
+            << std::endl;
+}
 
 TEST_CASE("restart") {
   const std::string dataPath = getDataPath();

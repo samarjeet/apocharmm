@@ -559,7 +559,6 @@ BondedParamsAndLists CharmmParameters::getBondedParamsAndLists(
         listVal.push_back({dihedrals[dihedral].atom1, dihedrals[dihedral].atom2,
                            dihedrals[dihedral].atom3, dihedrals[dihedral].atom4,
                            dihedralType, 13, 13, 13});
-
       } else {
         std::stringstream tmpexc;
         tmpexc << "dihedral not found " << dihedral << " "
@@ -655,7 +654,6 @@ BondedParamsAndLists CharmmParameters::getBondedParamsAndLists(
       }
     }
   }
-
   paramsSize.push_back(improperKeysPresent.size());
   listsSize.push_back(listVal.size() - listsSize[0] - listsSize[1] -
                       listsSize[2] - listsSize[3]);

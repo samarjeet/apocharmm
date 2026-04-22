@@ -12,7 +12,7 @@
 
 #include "CharmmContext.h"
 #include "MBARForceManager.h"
-#include "XYZQ.h"
+// #include "XYZQ.h"
 #include <iomanip>
 #include <iostream>
 
@@ -32,11 +32,14 @@ void MBARSubscriber::update(void) {
   auto tempfm = std::dynamic_pointer_cast<MBARForceManager>(
       fm); // dynamic cast to FMComposite in order to use its calc_force
 
-  XYZQ *xyzq = m_CharmmContext->getXYZQ();
-  xyzq->transferFromDevice();
-  float4 *xyzqPointer = xyzq->xyzq;
-  tempfm->ForceManagerComposite::calcForce(xyzqPointer, false, true, false);
-  // fm->ForceManagerComposite::calc_force(xyzqPointer, false, true, false);
+  // XYZQ *xyzq = m_CharmmContext->getXYZQ();
+  // xyzq->transferFromDevice();
+  // float4 *xyzqPointer = xyzq->xyzq;
+  // tempfm->ForceManagerComposite::calcForce(xyzqPointer, false, true, false);
+  // // fm->ForceManagerComposite::calc_force(xyzqPointer, false, true, false);
+  m_CharmmContext->getXYZQ().transferToHost();
+  tempfm->ForceManagerComposite::calcForce(
+      m_CharmmContext->getXYZQ().getDeviceArray().data(), false, true, false);
   auto peCC = tempfm->getPotentialEnergy();
   peCC.transferFromDevice();
 

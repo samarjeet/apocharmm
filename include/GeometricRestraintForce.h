@@ -9,14 +9,15 @@
 // ENDLICENSE
 
 #pragma once
+
 #include "CudaContainer.h"
 #include "CudaEnergyVirial.h"
 #include "Force.h"
 #include <iostream>
+#include <memory>
+// #include <thrust/device_vector.h>
+// #include <thrust/host_vector.h>
 #include <vector>
-
-#include <thrust/device_vector.h>
-#include <thrust/host_vector.h>
 
 /*
 GEO [MAXGEO integer] [shape_specification] [position_spec] [RCM]
@@ -41,7 +42,6 @@ potential_spec:== { HARMonic } { INSIDE    } [FORCE real] -
 
 
 atom-selection:== (see *note select:(chmdoc/select.doc).)
-
 */
 
 enum class RestraintShape { SPHERE, CYLINDER, PLANE };
@@ -93,6 +93,6 @@ private:
   CudaEnergyVirial &energyVirial;
   std::shared_ptr<Force<long long int>> forceVal;
   // CudaContainer<Restraint> restraints;
-  thrust::device_vector<Restraint> restraints; // use a unified memory vector
+  // thrust::device_vector<Restraint> restraints; // use a unified memory vector
   // thrust::device_vector<thrust::device_vector<int>> restraintAtoms;
 };

@@ -10,17 +10,13 @@
 
 #include "CudaIntegrator.h"
 #include "Subscriber.h"
-// #include "pybind11/pybind11.h"
 #include <chrono>
 #include <climits>
-// #include <experimental/source_location> // C++20
 #include <cpp_utils.h>
 #include <iomanip>
 #include <iostream>
 #include <source_location> // C++20
 #include <sstream>
-
-// namespace py = pybind11;
 
 CudaIntegrator::CudaIntegrator(void)
     : m_TimeStep(0.0), m_Timfac(0.0488882129), m_DebugPrintFrequency(0),
@@ -91,7 +87,6 @@ void CudaIntegrator::setCharmmContext(std::shared_ptr<CharmmContext> ctx) {
     m_HolonomicConstraint->setCharmmContext(ctx);
     m_HolonomicConstraint->setup(m_TimeStep);
     m_HolonomicConstraint->setStream(m_IntegratorStream);
-    m_HolonomicConstraint->setMemcpyStream(m_IntegratorMemcpyStream);
   }
   this->initialize();
 

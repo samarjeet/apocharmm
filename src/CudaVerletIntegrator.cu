@@ -13,8 +13,6 @@
 
 CudaVerletIntegrator::CudaVerletIntegrator(double timeStep)
     : CudaIntegrator(timeStep) {
-  m_OldXYZQ = nullptr;
-  m_NewXYZQ = nullptr;
   m_IntegratorTypeName = "CudaVerletIntegrator";
 }
 
@@ -83,23 +81,23 @@ __global__ void initializeKernel(float4 *coords, float4 *oldCoords,
 
 void CudaVerletIntegrator::initialize(void) {
   int numAtoms = m_Context->getNumAtoms();
-  // CudaIntegrator::initializeOldNewCoords(numAtoms);
+  m_OldXYZQ.resize(numAtoms);
+  m_NewXYZQ.resize(numAtoms);
   m_Context->calculatePotentialEnergy(true);
   auto force = m_Context->getForces();
   double *forceData = (double *)force->xyz();
   auto velocityMass = m_Context->getVelocityMass();
   DeviceVector<double4> vmDeviceArray = velocityMass.getDeviceArray();
   double4 *d_velMass = vmDeviceArray.data();
-  auto xyzq = m_Context->getXYZQ();
-  auto coords = xyzq->getDeviceXYZQ();
+  float4 *xyzq = m_Context->getXYZQ().getDeviceArray().data();
   auto stride = m_Context->getForceStride();
   int nThreads = 128;
   int nBlocks = (numAtoms - 1) / nThreads + 1;
   // printKernel<<<nBlocks, nThreads>>>(1000, coords);
   initializeKernel<<<nBlocks, nThreads>>>(
-      xyzq->getDeviceXYZQ(), m_OldXYZQ->getDeviceXYZQ(),
-      m_NewXYZQ->getDeviceXYZQ(), d_velMass, forceData, stride, m_TimeStep,
-      numAtoms);
+      xyzq, m_OldXYZQ.getDeviceArray().data(),
+      m_NewXYZQ.getDeviceArray().data(), d_velMass, forceData, stride,
+      m_TimeStep, numAtoms);
   cudaDeviceSynchronize();
 
   return;

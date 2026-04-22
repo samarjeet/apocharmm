@@ -95,16 +95,30 @@ template <typename T> void DeviceVector<T>::clear(void) {
   return;
 }
 
-// template <typename T> void DeviceVector<T>::push_back(const T &value) {
-//   if (m_Size >= m_Capacity) // Increase size of memory block by 50%
-//     this->reallocate(m_Capacity + m_Capacity / 2);
-//   return;
-// }
+template <typename T>
+__global__ static void SetBackKernel(T *data, const std::size_t size,
+                                     const T value) {
+  if ((blockIdx.x == 0) && (blockIdx.y == 0) && (blockIdx.z == 0) &&
+      (threadIdx.x == 0) && (threadIdx.y == 0) && (threadIdx.z == 0))
+    data[size - 1] = value;
+  return;
+}
+
+template <typename T> void DeviceVector<T>::push_back(const T &value) {
+  if (m_Size >= m_Capacity) // Increase size of memory block by 50%
+    this->reallocate(m_Capacity + m_Capacity / 2);
+
+  m_Size++;
+
+  SetBackKernel<<<1, 1>>>(m_Data, m_Size, value);
+
+  return;
+}
 
 template <typename T> void DeviceVector<T>::resize(const std::size_t count) {
   if (m_Capacity == 0)
     this->allocate(count);
-  else if (count > m_Capacity)
+  else if (m_Capacity < count)
     this->reallocate(count);
   m_Size = count;
   return;

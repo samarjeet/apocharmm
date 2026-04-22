@@ -11,7 +11,6 @@
 #pragma once
 
 #include "DeviceVector.h"
-
 #include <vector>
 
 /**
@@ -19,12 +18,6 @@
  *
  * @tparam T
  *
- * Right now, double-precision vectors containing positions and charges are
- * stored as CudaContainer, but single-precision ones are using the
- * (deprecated) XYZQ class.
- *
- * @todo Remove the XYZQ class, replace it with instances of CudaContainers
- * using single precision
  */
 template <typename T> class CudaContainer {
 public: // Member functions
@@ -46,11 +39,27 @@ public: // Member functions
 
   /**
    * @brief Construct a new Cuda Container object with the same contents as the
-   * vector passed
+   * vector passed as a rvalue
+   *
+   * @param const std::vector<T> &&
+   */
+  CudaContainer(const std::vector<T> &&other);
+
+  /**
+   * @brief Construct a new Cuda Container object with the same contents as the
+   * device vector passed
    *
    * @param const DeviceVector<T> &
    */
   CudaContainer(const DeviceVector<T> &other);
+
+  /**
+   * @brief Construct a new Cuda Container object with the same contents as the
+   * device vector passed as a rvalue
+   *
+   * @param const DeviceVector<T> &&
+   */
+  CudaContainer(const DeviceVector<T> &&other);
 
   /**
    * @brief Copy constructor for new Cuda Container object
@@ -60,14 +69,16 @@ public: // Member functions
   CudaContainer(const CudaContainer<T> &other);
 
   /**
-   * @brief Copy constructor for new Cuda Container object using an rvalue
+   * @brief Copy constructor for new Cuda Container object using a rvalue
    *
    * @param const CudaContainer<T> &&
    */
   CudaContainer(const CudaContainer<T> &&other);
 
   CudaContainer<T> &operator=(const std::vector<T> &other);
+  CudaContainer<T> &operator=(const std::vector<T> &&other);
   CudaContainer<T> &operator=(const DeviceVector<T> &other);
+  CudaContainer<T> &operator=(const DeviceVector<T> &&other);
   CudaContainer<T> &operator=(const CudaContainer<T> &other);
   CudaContainer<T> &operator=(const CudaContainer<T> &&other);
 
@@ -112,12 +123,6 @@ public: // Element access
   const DeviceVector<T> &getDeviceArray(void) const;
   DeviceVector<T> &getDeviceArray(void);
 
-  const T *getHostData(void) const;
-  T *getHostData(void);
-
-  const T *getDeviceData(void) const;
-  T *getDeviceData(void);
-
 public: // Capacity
   /**
    * @brief Size of the container
@@ -128,6 +133,7 @@ public: // Capacity
 
 public: // Modifiers
   void clear(void);
+  void push_back(const T &value);
   void resize(const std::size_t count);
 
   /**
@@ -148,6 +154,7 @@ public: // Modifiers
    * @brief Set all values of the host array to the input value, transfer to
    * device.
    */
+  void set(const T value);
   void setToValue(const T value);
 
   void transferToDevice(void);
@@ -177,6 +184,7 @@ template class CudaContainer<long long int>;
 template class CudaContainer<longlong2>;
 template class CudaContainer<longlong3>;
 template class CudaContainer<longlong4>;
+template class CudaContainer<unsigned long long int>;
 template class CudaContainer<std::size_t>;
 template class CudaContainer<double>;
 template class CudaContainer<double2>;

@@ -4,14 +4,13 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author: Samarjeet Prasad, James E. Gonzales II
+// Author: Andrew Simmonett, Samarjeet Prasad, James E. Gonzales II
 //
 // ENDLICENSE
 
 #include "CudaContainer.h"
 
 #include "cuda_utils.h"
-
 #include <stdexcept>
 
 template <typename T>
@@ -28,7 +27,19 @@ CudaContainer<T>::CudaContainer(const std::vector<T> &other)
 }
 
 template <typename T>
+CudaContainer<T>::CudaContainer(const std::vector<T> &&other)
+    : m_HostArray(other), m_DeviceArray(other.size()) {
+  this->transferToDevice();
+}
+
+template <typename T>
 CudaContainer<T>::CudaContainer(const DeviceVector<T> &other)
+    : m_HostArray(other.size()), m_DeviceArray(other) {
+  this->transferToHost();
+}
+
+template <typename T>
+CudaContainer<T>::CudaContainer(const DeviceVector<T> &&other)
     : m_HostArray(other.size()), m_DeviceArray(other) {
   this->transferToHost();
 }
@@ -52,7 +63,23 @@ CudaContainer<T> &CudaContainer<T>::operator=(const std::vector<T> &other) {
 }
 
 template <typename T>
+CudaContainer<T> &CudaContainer<T>::operator=(const std::vector<T> &&other) {
+  m_HostArray = other;
+  m_DeviceArray.resize(other.size());
+  this->transferToDevice();
+  return *this;
+}
+
+template <typename T>
 CudaContainer<T> &CudaContainer<T>::operator=(const DeviceVector<T> &other) {
+  m_DeviceArray = other;
+  m_HostArray.resize(other.size());
+  this->transferToHost();
+  return *this;
+}
+
+template <typename T>
+CudaContainer<T> &CudaContainer<T>::operator=(const DeviceVector<T> &&other) {
   m_DeviceArray = other;
   m_HostArray.resize(other.size());
   this->transferToHost();
@@ -109,22 +136,6 @@ template <typename T> DeviceVector<T> &CudaContainer<T>::getDeviceArray(void) {
   return m_DeviceArray;
 }
 
-template <typename T> const T *CudaContainer<T>::getHostData(void) const {
-  return m_HostArray.data();
-}
-
-template <typename T> T *CudaContainer<T>::getHostData(void) {
-  return m_HostArray.data();
-}
-
-template <typename T> const T *CudaContainer<T>::getDeviceData(void) const {
-  return m_DeviceArray.data();
-}
-
-template <typename T> T *CudaContainer<T>::getDeviceData(void) {
-  return m_DeviceArray.data();
-}
-
 template <typename T> std::size_t CudaContainer<T>::size(void) const {
   return m_HostArray.size();
 }
@@ -132,6 +143,16 @@ template <typename T> std::size_t CudaContainer<T>::size(void) const {
 template <typename T> void CudaContainer<T>::clear(void) {
   m_HostArray.clear();
   m_DeviceArray.clear();
+  return;
+}
+
+template <typename T> void CudaContainer<T>::push_back(const T &value) {
+  // JEG260420: I imagine this is super slow, since there is the potential to
+  // have to reallocate memory both on the host and device. This should really
+  // only be used during some kind of set up ONLY IF there's no easy way to know
+  // the size of memory needed before hand.
+  m_HostArray.push_back(value);
+  m_DeviceArray.push_back(value);
   return;
 }
 
@@ -154,9 +175,14 @@ void CudaContainer<T>::set(const DeviceVector<T> &values) {
   return;
 }
 
-template <typename T> void CudaContainer<T>::setToValue(const T value) {
+template <typename T> void CudaContainer<T>::set(const T value) {
   m_HostArray.assign(m_HostArray.size(), value);
   this->transferToDevice();
+  return;
+}
+
+template <typename T> void CudaContainer<T>::setToValue(const T value) {
+  this->set(value);
   return;
 }
 
@@ -284,6 +310,14 @@ __global__ void printKernel(const longlong4 *data, const size_t size) {
   return;
 }
 
+__global__ void printKernel(const unsigned long long int *data,
+                            const size_t size) {
+  unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
+  if (index < size)
+    printf("%u: %llu\n", index, data[index]);
+  return;
+}
+
 __global__ void printKernel(const std::size_t *data, const size_t size) {
   unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
   if (index < size)
@@ -322,7 +356,7 @@ __global__ void printKernel(const double4 *data, const size_t size) {
 }
 
 template <typename T> void CudaContainer<T>::printDeviceArray(void) const {
-  const unsigned int blockDim = 256;
+  constexpr unsigned int blockDim = 256;
   const unsigned int gridDim = (this->size() + blockDim - 1) / blockDim;
   printKernel<<<gridDim, blockDim>>>(m_DeviceArray.data(), this->size());
   cudaCheck(cudaDeviceSynchronize());

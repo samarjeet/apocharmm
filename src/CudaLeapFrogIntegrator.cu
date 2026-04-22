@@ -41,8 +41,8 @@ __global__ static void leapFrogKernel(const int numAtoms, const int stride,
 }
 
 void CudaLeapFrogIntegrator::propagateOneStep(void) {
-  auto xyzq = m_Context->getXYZQ()->getDeviceXYZQ();
-  auto velMass = m_Context->getVelocityMass().getDeviceData();
+  float4 *xyzq = m_Context->getXYZQ().getDeviceArray().data();
+  double4 *velMass = m_Context->getVelocityMass().getDeviceArray().data();
 
   if (m_StepsSinceNeighborListUpdate % 20 == 0)
     m_Context->resetNeighborList();

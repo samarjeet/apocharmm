@@ -147,6 +147,7 @@ TEST_CASE("langevinPiston", "[dynamics]") {
     integrator->useNoseHooverThermostat(useNoseHooverThermostat);
     integrator->setCrystalType(CRYSTAL::CUBIC);
     integrator->setLangevinPistonFrictionSeed(randomSeed);
+    integrator->setPressure({7.0, 0.0, 0.0, 0.0, 7.0, 0.0, 0.0, 0.0, 7.0});
     // integrator->setLangevinPistonMass({0.0}); // "Turns off" pressure control
     integrator->setCharmmContext(ctx);
 

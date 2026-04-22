@@ -1307,7 +1307,7 @@ void CudaPMEDirectForce<AT, CT>::calc_force(
 
 template <typename AT, typename CT>
 void CudaPMEDirectForce<AT, CT>::setupSorted(int numAtoms) {
-  xyzq_sorted.set_ncoord(numAtoms);
+  xyzq_sorted.resize(numAtoms);
 }
 
 template <typename AT, typename CT>
@@ -1353,17 +1353,17 @@ void CudaPMEDirectForce<AT, CT>::resetNeighborList(const float4 *xyzq,
   int numBlocks = (numAtoms - 1) / numThreads + 1;
   set_loc2glo<<<numBlocks, numThreads, 0, *directStream>>>(loc2glo, numAtoms);
   // cudaStreamSynchronize(*directStream);
-  neighborList->sort(0, zone_patom, xyzq, xyzq_sorted.xyzq, loc2glo,
-                     *directStream);
+  neighborList->sort(0, zone_patom, xyzq, xyzq_sorted.getDeviceArray().data(),
+                     loc2glo, *directStream);
   // cudaStreamSynchronize(*directStream);
 
   set_vdwtype(numAtoms, glo_vdwtype, neighborList->get_ind_sorted(),
               *directStream);
   // cudaCheck(cudaStreamSynchronize(*directStream));
 
-  neighborList->build(0, zone_patom, boxDimensions[0], boxDimensions[1],
-                      boxDimensions[2], cutoff, xyzq_sorted.xyzq, loc2glo,
-                      *directStream);
+  neighborList->build(
+      0, zone_patom, boxDimensions[0], boxDimensions[1], boxDimensions[2],
+      cutoff, xyzq_sorted.getDeviceArray().data(), loc2glo, *directStream);
   cudaStreamSynchronize(*directStream);
   // std::cout << "Prepared nlist.\n";
 }
@@ -1408,14 +1408,14 @@ void CudaPMEDirectForce<AT, CT>::calc_force(const float4 *xyzq, bool calcEnergy,
   int numThreads = 512;
   int numBlocks = (numAtoms - 1) / numThreads + 1;
   setSortedCoords<<<numBlocks, numThreads, 0, *directStream>>>(
-      numAtoms, loc2glo, xyzq, xyzq_sorted.xyzq);
+      numAtoms, loc2glo, xyzq, xyzq_sorted.getDeviceArray().data());
 
   forceSortedVal->clear(*directStream);
 
   nvtxRangePushA("direct space force");
-  calc_force(0, xyzq_sorted.xyzq, neighborList->getBuilder(0), calcEnergy,
-             calcVirial, forceSortedVal->stride(), forceSortedVal->xyz(),
-             *directStream);
+  calc_force(0, xyzq_sorted.getDeviceArray().data(),
+             neighborList->getBuilder(0), calcEnergy, calcVirial,
+             forceSortedVal->stride(), forceSortedVal->xyz(), *directStream);
 
   calc_14_force(xyzq, calcEnergy, calcVirial, forceVal->stride(),
                 forceVal->xyz(), *directStream);
@@ -1426,6 +1426,15 @@ void CudaPMEDirectForce<AT, CT>::calc_force(const float4 *xyzq, bool calcEnergy,
   addSortedForce<<<numBlocks, numThreads, 0, *directStream>>>(
       loc2glo, numAtoms, forceVal->stride(), forceSortedVal->xyz(),
       forceVal->xyz());
+}
+
+template <typename AT, typename CT>
+void CudaPMEDirectForce<AT, CT>::setNumAtoms(int n) {
+  numAtoms = n;
+  // TODO : this should be in the constructor
+  forceSortedVal->realloc(numAtoms, 1.5f);
+  forceVal->realloc(numAtoms, 1.5f);
+  return;
 }
 
 //

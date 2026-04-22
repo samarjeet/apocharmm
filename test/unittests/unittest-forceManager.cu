@@ -14,7 +14,6 @@
 #include "CudaLangevinThermostatIntegrator.h"
 #include "MBARForceManager.h"
 #include "MBARSubscriber.h"
-#include "XYZQ.h"
 #include "catch.hpp"
 #include "helper.h"
 #include "test_paths.h"

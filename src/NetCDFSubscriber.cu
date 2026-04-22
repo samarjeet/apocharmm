@@ -47,7 +47,8 @@ void NetCDFSubscriber::update() {
   m_Count[1] = m_CharmmContext->getNumAtoms();
   m_Count[2] = 3;
 
-  this->formatDataForInput(*(m_CharmmContext->getXYZQ()->getHostXYZQ()));
+  // this->formatDataForInput(*(m_CharmmContext->getXYZQ()->getHostXYZQ()));
+  this->formatDataForInput(m_CharmmContext->getXYZQ().getHostArray());
 
   int status = nc_put_vara_float(m_NcId, m_CoordVariableId, m_Start.data(),
                                  m_Count.data(), m_XYZ.data());

@@ -9,27 +9,26 @@
 // ENDLICENSE
 
 #include "GeometricRestraintForce.h"
+
 #include "gpu_utils.h"
 
-__device__ float3 operator+(const float3 &a, const float3 &b) {
-
+__forceinline__ __device__ float3 operator+(const float3 &a, const float3 &b) {
   return make_float3(a.x + b.x, a.y + b.y, a.z + b.z);
 }
-__device__ float3 operator-(const float3 &a, const float3 &b) {
 
+__forceinline__ __device__ float3 operator-(const float3 &a, const float3 &b) {
   return make_float3(a.x - b.x, a.y - b.y, a.z - b.z);
 }
-__device__ float3 operator*(const float3 &a, const float3 &b) {
 
+__forceinline__ __device__ float3 operator*(const float3 &a, const float3 &b) {
   return make_float3(a.x * b.x, a.y * b.y, a.z * b.z);
 }
 
-__device__ float dot(const float3 &a, const float3 &b) {
-
+__forceinline__ __device__ float dot(const float3 &a, const float3 &b) {
   return a.x * b.x + a.y * b.y + a.z * b.z;
 }
-__device__ float3 operator*(const float &a, const float3 &b) {
 
+__forceinline__ __device__ float3 operator*(const float &a, const float3 &b) {
   return make_float3(a * b.x, a * b.y, a * b.z);
 }
 
@@ -37,7 +36,6 @@ template <typename AT, typename CT>
 GeometricRestraintForce<AT, CT>::GeometricRestraintForce(
     CudaEnergyVirial &_energyVirial)
     : energyVirial(_energyVirial) {
-
   energyVirial.insert("geo");
 }
 
@@ -45,15 +43,16 @@ template <typename AT, typename CT>
 void GeometricRestraintForce<AT, CT>::setForce(
     std::shared_ptr<Force<long long int>> &forceValIn) {
   forceVal = forceValIn;
+  return;
 }
 
 template <typename AT, typename CT>
 __forceinline__ __device__ float
-harmonicRestraintForce(const float4 *__restrict__ xyzqi, AT *__restrict__ force,
+harmonicRestraintForce(const float4 *__restrict__ xyzq, AT *__restrict__ force,
                        float3 origin, float3 orientation, AT *energy) {
-
   // distance from origin
   // float3 r = make_float3(xyzqi->x, xyzqi->y, xyzqi->z) - origin;
+  return 0.0f;
 }
 
 // Should we use a single kernel for all the restraints or a kernel for each
@@ -115,6 +114,8 @@ __global__ void restraintKernel(size_t numRestraints, Restraint *restraints,
       }
     }
   }
+
+  return;
 }
 
 template <typename AT, typename CT>
@@ -123,6 +124,7 @@ void GeometricRestraintForce<AT, CT>::addRestraint(
     float3 origin, bool relativeToBox, float3 orientation, bool insideOnly,
     float forceConstant, float offsetDistance, std::vector<int> atoms) {
 
+  /*
   Restraint r;
   r.shape = shape;
   r.potential = potential;
@@ -151,13 +153,18 @@ void GeometricRestraintForce<AT, CT>::addRestraint(
   // restraints[idx] = r;
 
   restraints.push_back(r);
-  thrust::device_vector<int> atoms_d(atoms);
+  // thrust::device_vector<int> atoms_d(atoms);
   // // thrust::device_vector<thrust::device_vector<int>> restraintAtoms;
   // // restraintAtoms.push_back(atoms_d);
+  */
+
+  return;
 }
 
 template <typename AT, typename CT>
-void GeometricRestraintForce<AT, CT>::initialize() {}
+void GeometricRestraintForce<AT, CT>::initialize(void) {
+  return;
+}
 
 template <typename AT, typename CT>
 void GeometricRestraintForce<AT, CT>::calc_force(const float4 *xyzq,
@@ -179,10 +186,12 @@ void GeometricRestraintForce<AT, CT>::calc_force(const float4 *xyzq,
   //   xyzq, forceVal->stride(), box.x, box.y, box.z, forceVal->xyz(),
   //   energyVirial.getEnergyPointer("geo"));
   restraintKernel<<<numBlocks, numThreads>>>(
-      restraints.size(), thrust::raw_pointer_cast(restraints.data()),
+      restraints.size(), restraints.getDeviceData(),
       // calcEnergy, calcVirial,
       xyzq, forceVal->stride(), box.x, box.y, box.z, forceVal->xyz(),
       energyVirial.getEnergyPointer("geo"));
+
+  return;
 }
 
 template class GeometricRestraintForce<long long int, float>;

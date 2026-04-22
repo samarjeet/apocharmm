@@ -84,10 +84,11 @@ void CudaBAOABIntegrator::initialize(void) {
   setup_kernel<<<numBlocks, numThreads>>>(numAtoms, m_DevPHILOXStates);
   cudaCheck(cudaDeviceSynchronize());
 
-  auto coords = m_Context->getCoordinatesCharges().getDeviceData();
-  auto coordsDeltaDevice = m_CoordsDelta.getDeviceData();
-  auto coordsDeltaPreviousDevice = m_CoordsDeltaPrevious.getDeviceData();
-  auto velMass = m_Context->getVelocityMass().getDeviceData();
+  auto coords = m_Context->getCoordinatesCharges().getDeviceArray().data();
+  auto coordsDeltaDevice = m_CoordsDelta.getDeviceArray().data();
+  auto coordsDeltaPreviousDevice =
+      m_CoordsDeltaPrevious.getDeviceArray().data();
+  auto velMass = m_Context->getVelocityMass().getDeviceArray().data();
 
   m_Context->calculateForces(); // false, false, false);
   auto force = m_Context->getForces();
@@ -231,11 +232,12 @@ static __global__ void invertDeltaAsymmetric(int numGroups,
 }
 
 void CudaBAOABIntegrator::propagateOneStep(void) {
-  auto coords = m_Context->getCoordinatesCharges().getDeviceData();
-  auto xyzq = m_Context->getXYZQ()->getDeviceXYZQ();
-  auto coordsDeltaDevice = m_CoordsDelta.getDeviceData();
-  auto coordsDeltaPreviousDevice = m_CoordsDeltaPrevious.getDeviceData();
-  auto velMass = m_Context->getVelocityMass().getDeviceData();
+  auto coords = m_Context->getCoordinatesCharges().getDeviceArray().data();
+  auto xyzq = m_Context->getXYZQ().getDeviceArray().data();
+  auto coordsDeltaDevice = m_CoordsDelta.getDeviceArray().data();
+  auto coordsDeltaPreviousDevice =
+      m_CoordsDeltaPrevious.getDeviceArray().data();
+  auto velMass = m_Context->getVelocityMass().getDeviceArray().data();
 
   int numAtoms = m_Context->getNumAtoms();
   int stride = m_Context->getForceStride();
@@ -255,7 +257,7 @@ void CudaBAOABIntegrator::propagateOneStep(void) {
                     (float)boxDimensions[2]};
 
       invertDeltaAsymmetric<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
-          numGroups, groups.getDeviceData(), box.x, xyzq, stride,
+          numGroups, groups.getDeviceArray().data(), box.x, xyzq, stride,
           coordsDeltaPreviousDevice);
       cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
     }
@@ -275,8 +277,8 @@ void CudaBAOABIntegrator::propagateOneStep(void) {
   const double gamma = m_TimeStep * m_Timfac * m_Friction;
 
   if (m_UsingHolonomicConstraints) {
-    copy_DtoD_async<double4>(coords, m_CoordsRef.getDeviceData(), numAtoms,
-                             *m_IntegratorMemcpyStream);
+    copy_DtoD_async<double4>(coords, m_CoordsRef.getDeviceArray().data(),
+                             numAtoms, *m_IntegratorMemcpyStream);
   }
 
   int numThreads = 512;
@@ -289,13 +291,13 @@ void CudaBAOABIntegrator::propagateOneStep(void) {
   cudaCheck(cudaStreamSynchronize(*m_IntegratorMemcpyStream));
   if (m_UsingHolonomicConstraints) {
     m_HolonomicConstraint->handleHolonomicConstraints(
-        m_CoordsRef.getDeviceData());
+        m_CoordsRef.getDeviceArray().data());
   }
 
   step2<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
-      kbt, gamma, numAtoms, stride, m_TimeStep, m_CoordsRef.getDeviceData(),
-      coords, coordsDeltaDevice, coordsDeltaPreviousDevice, velMass,
-      force->xyz());
+      kbt, gamma, numAtoms, stride, m_TimeStep,
+      m_CoordsRef.getDeviceArray().data(), coords, coordsDeltaDevice,
+      coordsDeltaPreviousDevice, velMass, force->xyz());
 
   updateSPKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
       numAtoms, xyzq, coords);

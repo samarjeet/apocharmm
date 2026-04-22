@@ -10,6 +10,7 @@
 
 #include "CudaContainer.h"
 #include "compare.h"
+#include "cuda_utils.h"
 #include "helper.h"
 
 /* IDEA: test a few functions of the CudaContainer class */
@@ -25,23 +26,23 @@ TEST_CASE("unittest") {
     CudaContainer<double4> double4Container;
     floatContainer = CudaContainer<float>(size);
     double4Container.resize(size);
-    intContainer.setToValue(intRef);
-    floatContainer.setToValue(floatRef);
-    double4Container.setToValue(double4Ref);
+    intContainer.set(intRef);
+    floatContainer.set(floatRef);
+    double4Container.set(double4Ref);
     intContainer.transferFromDevice();
     floatContainer.transferFromDevice();
     double4Container.transferFromDevice();
 
     bool intCheck = true, floatCheck = true, double4Check = true;
     for (int i; i < size; i++) {
-      if (intContainer.getHostArray()[i] != intRef)
+      if (intContainer[i] != intRef)
         intCheck = false;
-      if (floatContainer.getHostArray()[i] != floatRef)
+      if (floatContainer[i] != floatRef)
         floatCheck = false;
-      if ((double4Container.getHostArray()[i].x != double4Ref.x) or //
-          (double4Container.getHostArray()[i].y != double4Ref.y) or //
-          (double4Container.getHostArray()[i].z != double4Ref.z) or //
-          (double4Container.getHostArray()[i].w != double4Ref.w))
+      if ((double4Container[i].x != double4Ref.x) ||
+          (double4Container[i].y != double4Ref.y) ||
+          (double4Container[i].z != double4Ref.z) ||
+          (double4Container[i].w != double4Ref.w))
         double4Check = false;
     }
     CHECK(intCheck);

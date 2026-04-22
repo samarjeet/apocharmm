@@ -31,7 +31,6 @@
 #include "CudaTopExcl.h"
 #include "PBC.h"
 #include "TestForce.h"
-#include "XYZQ.h"
 
 // Forward declaration
 class CharmmContext;

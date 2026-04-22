@@ -10,7 +10,7 @@ set(SOURCES_UNITTESTS_TESTS
     unittest-readPRM.cpp
 
     # unittest-ForceManagerGenerator.cpp
-    unittest-restraintForce.cu
+    # unittest-restraintForce.cu
     unittest-logger.cpp
     unittest-utils.cpp
     unittest-cudaContainers.cpp

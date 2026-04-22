@@ -11,6 +11,8 @@
 #include "CharmmContext.h"
 #include "CharmmCrd.h"
 #include "CudaLangevinPistonIntegrator.h"
+#include "ForceManager.h"
+#include "ForceManagerComposite.h"
 #include "StateSubscriber.h"
 #include "Subscriber.h"
 #include "catch.hpp"

@@ -9,10 +9,12 @@
 // ENDLICENSE
 
 #include "CharmmContext.h"
+
 #include "CharmmCrd.h"
 #include "Checkpoint.h"
 #include "Constants.h"
 #include "PBC.h"
+#include "cuda_utils.h"
 #include "gpu_utils.h"
 #include <cstdlib>
 #include <cuda.h>
@@ -139,27 +141,20 @@ void CharmmContext::setCoordinates(
   setMasses(forceManager->getPsf()->getAtomMasses());
 
   useHolonomicConstraints(usingHolonomicConstraints);
-  auto charges =
-      forceManager->getPsf()->getAtomCharges(); // this is a std::vector<double>
+  std::vector<double> charges = forceManager->getPsf()->getAtomCharges();
 
-  // 4N-sized vector to contain spatial coords + atomic charges
-  std::vector<double4> crdCharges(coords.size());
-  for (int i = 0; i < numAtoms; i++)
-    crdCharges[i] =
-        make_double4(coords[i][0], coords[i][1], coords[i][2],
-                     static_cast<double>(static_cast<float>(charges[i])));
+  xyzq.resize(numAtoms);
+  coordsCharge.resize(numAtoms);
+  for (int i = 0; i < numAtoms; i++) {
+    xyzq[i] = make_float4(
+        static_cast<float>(coords[i][0]), static_cast<float>(coords[i][1]),
+        static_cast<float>(coords[i][2]), static_cast<float>(charges[i]));
+    coordsCharge[i] =
+        make_double4(coords[i][0], coords[i][1], coords[i][2], charges[i]);
+  }
+  xyzq.transferToDevice();
+  coordsCharge.transferToDevice();
 
-  // xyzq gets initialized with coords (crd->getCoordinates()) + the charges
-  // extracted from the PSF
-  xyzq.set_ncoord(coords.size());
-  std::vector<float4> fcrds(numAtoms);
-  for (int i = 0; i < numAtoms; i++)
-    fcrds[i] = make_float4(crdCharges[i].x, crdCharges[i].y, crdCharges[i].z,
-                           crdCharges[i].w);
-  xyzq.set_xyzq(coords.size(), fcrds.data(), 0);
-
-  coordsCharge.resize(coords.size());
-  coordsCharge.set(crdCharges);
   resetNeighborList();
 }
 
@@ -198,11 +193,16 @@ std::vector<std::vector<double>> CharmmContext::getCoordinates() {
 void CharmmContext::setCoords(const std::vector<float> &coords) {
   assert(coords.size() == numAtoms * 3);
 
-  xyzq.set_xyz(coords);
+  for (int i = 0; i < numAtoms; i++) {
+    xyzq[i].x = coords[i * 3 + 0];
+    xyzq[i].y = coords[i * 3 + 1];
+    xyzq[i].z = coords[i * 3 + 2];
+  }
+  xyzq.transferToDevice();
   resetNeighborList();
 }
 
-std::vector<float> CharmmContext::getCoords() { return xyzq.get_xyz(); }
+// std::vector<float> CharmmContext::getCoords() { return xyzq.get_xyz(); }
 
 int CharmmContext::getNumAtoms() const { return numAtoms; }
 
@@ -328,19 +328,20 @@ void CharmmContext::imageCentering() {
 
   imageCenterKernel<<<numBlocks, numThreads>>>(
       pbc, box, forceStride, numGroups, groups.getDeviceArray().data(),
-      coordsCharge.getDeviceArray().data(), xyzq.xyzq,
+      coordsCharge.getDeviceArray().data(), xyzq.getDeviceArray().data(),
       velocityMass.getDeviceArray().data(), force->xyz());
   cudaCheck(cudaDeviceSynchronize());
 }
 
 void CharmmContext::resetNeighborList() {
   imageCentering();
-  forceManager->resetNeighborList(xyzq.getDeviceXYZQ());
+  forceManager->resetNeighborList(xyzq.getDeviceArray().data());
 }
 
 void CharmmContext::calculateForces(bool reset, bool calcEnergy,
                                     bool calcVirial) {
-  forceManager->calcForce(xyzq.getDeviceXYZQ(), reset, calcEnergy, calcVirial);
+  forceManager->calcForce(xyzq.getDeviceArray().data(), reset, calcEnergy,
+                          calcVirial);
   return;
 }
 
@@ -556,7 +557,9 @@ CudaContainer<double4> &CharmmContext::getCoordinatesCharges() {
   return coordsCharge;
 }
 
-XYZQ *CharmmContext::getXYZQ() { return &xyzq; }
+const CudaContainer<float4> &CharmmContext::getXYZQ(void) const { return xyzq; }
+
+CudaContainer<float4> &CharmmContext::getXYZQ(void) { return xyzq; }
 
 int CharmmContext::getForceStride() const {
   return forceManager->getForceStride();
@@ -632,10 +635,12 @@ CalculateKineticEnergyKernel(double *__restrict__ kineticEnergy,
 }
 
 void CharmmContext::calculateKineticEnergy(void) {
-  cudaCheck(cudaMemset(static_cast<void *>(kineticEnergy.getDeviceData()), 0,
-                       sizeof(double)));
+  cudaCheck(
+      cudaMemset(static_cast<void *>(kineticEnergy.getDeviceArray().data()), 0,
+                 sizeof(double)));
   CalculateKineticEnergyKernel<<<1, 1024>>>(
-      kineticEnergy.getDeviceData(), velocityMass.getDeviceData(), numAtoms);
+      kineticEnergy.getDeviceArray().data(),
+      velocityMass.getDeviceArray().data(), numAtoms);
 
   cudaCheck(cudaDeviceSynchronize());
 
@@ -688,7 +693,7 @@ std::vector<Bond> CharmmContext::getBonds() {
 int CharmmContext::getDegreesOfFreedom() { return numDegreesOfFreedom; }
 
 void CharmmContext::calculatePotentialEnergy(bool reset, bool print) {
-  forceManager->calcForce(xyzq.getDeviceXYZQ(), reset, true, true);
+  forceManager->calcForce(xyzq.getDeviceArray().data(), reset, true, true);
   return;
 }
 CudaContainer<double> &CharmmContext::getPotentialEnergy() {

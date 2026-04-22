@@ -11,8 +11,7 @@
 #pragma once
 
 #include <cstddef>
-#include <cuda_runtime.h>
-#include <iostream>
+#include <vector_types.h>
 
 template <typename T> class DeviceVector {
 public: // Member functions
@@ -40,7 +39,7 @@ public: // Capacity
 
 public: // Modifiers
   void clear(void);
-  // void push_back(const T &value);
+  void push_back(const T &value);
   void resize(const std::size_t count);
   void swap(DeviceVector<T> &other);
 
@@ -68,6 +67,7 @@ template class DeviceVector<long long int>;
 template class DeviceVector<longlong2>;
 template class DeviceVector<longlong3>;
 template class DeviceVector<longlong4>;
+template class DeviceVector<unsigned long long int>;
 template class DeviceVector<std::size_t>;
 template class DeviceVector<double>;
 template class DeviceVector<double2>;

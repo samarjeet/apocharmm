@@ -11,26 +11,18 @@
 /**\file*/
 
 #pragma once
-#include <memory>
-// #include <pybind11/numpy.h>
-// #include <pybind11/pybind11.h>
-#include <vector>
 
 #include "CharmmPSF.h"
 #include "Coordinates.h"
 #include "CudaContainer.h"
-// #include "CudaHolonomicConstraint.h"
-// #include "CudaMinimizer.h"
 #include "Force.h"
 #include "ForceManager.h"
 #include "Logger.h"
-#include "NonEquilibriumForceManager.h"
 #include "Subscriber.h"
-#include "XYZQ.h"
 #include "cuda_utils.h"
+#include <memory>
 #include <random_utils.h>
-
-// #include "Checkpoint.h"
+#include <vector>
 
 // Forward declaration
 class Logger;
@@ -132,13 +124,13 @@ public:
   // for getting minimization working
   // will improve the semantics of the setters and getters later
   void setCoords(const std::vector<float> &coords);
-  std::vector<float> getCoords();
+  // std::vector<float> getCoords();
 
   /** @brief Sets systems atomic charges
    *
    * Currently, there are *two* data containers for the atomic charges :
-   *    _ an XYZQ object (deprecated) xyzq
-   *    _ a CudaContainer object coordsCharge (such a good name <3)
+   *    _ a CudaContainer object xyzq (single precision)
+   *    _ a CudaContainer object coordsCharge (double precision)
    *
    * Sets the fourth column of both of these containers to be a N-sized vector
    * containing the value of the atomic charges.
@@ -189,8 +181,17 @@ public:
    */
   int getNumAtoms() const;
 
-  /** @brief Returns a pointer to the XYZQ */
-  XYZQ *getXYZQ();
+  /**
+   * @brief Returns a read-only reference to the container storing the
+   * single-precision coordinates and charges
+   */
+  const CudaContainer<float4> &getXYZQ(void) const;
+
+  /**
+   * @brief Returns a reference to the container storing the single-precision
+   * coordinates and charges
+   */
+  CudaContainer<float4> &getXYZQ(void);
 
   int *get_loc2glo() const;
   int getForceStride() const;
@@ -436,9 +437,11 @@ private:
   PBC pbc;
   // CudaContainer<float> charges;
 
-  /** @brief Contains positions and charges as four columns
+  /**
+   * @brief Single precision container of the positions (x, y, z coords) and
+   * atomic charge value
    */
-  XYZQ xyzq;
+  CudaContainer<float4> xyzq;
 
   /**
    * @brief Double precision container of the positions (x,y,z coords) and

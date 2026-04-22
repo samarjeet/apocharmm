@@ -192,9 +192,10 @@ void CudaMinimizer::minimize(int numSteps) {
     double stepSizeTolerance = 0.0;
     double gradientTolerance = 0.0;
 
-    auto xyzq = m_Context->getXYZQ()->getDeviceXYZQ();
-    auto coords = m_Context->getCoordinatesCharges().getDeviceArray().data();
-    auto velMass = m_Context->getVelocityMass().getDeviceArray().data();
+    float4 *xyzq = m_Context->getXYZQ().getDeviceArray().data();
+    double4 *coords =
+        m_Context->getCoordinatesCharges().getDeviceArray().data();
+    double4 *velMass = m_Context->getVelocityMass().getDeviceArray().data();
 
     int numAtoms = m_Context->getNumAtoms();
     int stride = m_Context->getForceStride();

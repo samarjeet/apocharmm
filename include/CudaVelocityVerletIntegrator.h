@@ -28,5 +28,5 @@ public:
 private:
   int m_StepsSinceLastReport;
 
-  std::string m_IntegratorTypeName = "VelocityVerlet";
+  std::string m_IntegratorTypeName;
 };

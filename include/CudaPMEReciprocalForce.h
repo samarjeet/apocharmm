@@ -15,7 +15,7 @@
 #include "DomdecRecip.h"
 #include "Force.h"
 #include "PBC.h"
-#include "XYZQ.h"
+#include <memory>
 #include <vector>
 
 class CudaPMEReciprocalForce {

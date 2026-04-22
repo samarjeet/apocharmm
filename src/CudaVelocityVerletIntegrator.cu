@@ -82,15 +82,17 @@ updateSPKernel(int numAtoms, float4 *__restrict__ xyzq,
 }
 
 void CudaVelocityVerletIntegrator::propagateOneStep(void) {
-  auto xyzq = m_Context->getXYZQ()->getDeviceXYZQ();
-  auto coordsCharge = m_Context->getCoordinatesCharges().getDeviceData();
-  auto velMass = m_Context->getVelocityMass().getDeviceData();
+  float4 *xyzq = m_Context->getXYZQ().getDeviceArray().data();
+  auto coordsCharge =
+      m_Context->getCoordinatesCharges().getDeviceArray().data();
+  auto velMass = m_Context->getVelocityMass().getDeviceArray().data();
   auto force = m_Context->getForces();
 
   int numAtoms = m_Context->getNumAtoms();
   int stride = m_Context->getForceStride();
 
-  copy_DtoD_sync<double4>(coordsCharge, m_CoordsRef.getDeviceData(), numAtoms);
+  copy_DtoD_sync<double4>(coordsCharge, m_CoordsRef.getDeviceArray().data(),
+                          numAtoms);
 
   int numThreads = 128;
   int numBlocks = (numAtoms - 1) / numThreads + 1;
@@ -106,7 +108,7 @@ void CudaVelocityVerletIntegrator::propagateOneStep(void) {
 
   if (m_UsingHolonomicConstraints) {
     m_HolonomicConstraint->handleHolonomicConstraints(
-        m_CoordsRef.getDeviceData());
+        m_CoordsRef.getDeviceArray().data());
   }
 
   updateSPKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(

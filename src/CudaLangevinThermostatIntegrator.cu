@@ -210,21 +210,22 @@ void CudaLangevinThermostatIntegrator::initialize(void) {
 
   this->initializeRng();
 
-  double4 *coordsCharges = m_Context->getCoordinatesCharges().getDeviceData();
-  float4 *xyzq = m_Context->getXYZQ()->getDeviceXYZQ();
+  double4 *coordsCharges =
+      m_Context->getCoordinatesCharges().getDeviceArray().data();
+  float4 *xyzq = m_Context->getXYZQ().getDeviceArray().data();
 
   if (m_UsingHolonomicConstraints) {
-    copy_DtoD_async<double4>(coordsCharges, m_CoordsRef.getDeviceData(),
+    copy_DtoD_async<double4>(coordsCharges, m_CoordsRef.getDeviceArray().data(),
                              numAtoms, *m_IntegratorStream);
 
     m_HolonomicConstraint->handleHolonomicConstraints(
-        m_CoordsRef.getDeviceData());
+        m_CoordsRef.getDeviceArray().data());
 
     UpdateSinglePrecisionCoordinatesKernel<<<numBlocks, numThreads, 0,
                                              *m_IntegratorStream>>>(
         xyzq, coordsCharges, numAtoms);
 
-    copy_DtoD_async<double4>(coordsCharges, m_CoordsRef.getDeviceData(),
+    copy_DtoD_async<double4>(coordsCharges, m_CoordsRef.getDeviceArray().data(),
                              numAtoms, *m_IntegratorStream);
 
     cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
@@ -232,26 +233,27 @@ void CudaLangevinThermostatIntegrator::initialize(void) {
 
   m_Context->calculateForces();
 
-  double4 *velMass = m_Context->getVelocityMass().getDeviceData();
+  double4 *velMass = m_Context->getVelocityMass().getDeviceArray().data();
   double *forces = m_Context->getForces()->xyz();
   const int forceStride = m_Context->getForceStride();
 
   InitializationKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
-      m_CoordsDelta.getDeviceData(), m_CoordsDeltaPrevious.getDeviceData(),
-      velMass, numAtoms, forces, forceStride, m_ThermostatGamma, m_TimeStep);
+      m_CoordsDelta.getDeviceArray().data(),
+      m_CoordsDeltaPrevious.getDeviceArray().data(), velMass, numAtoms, forces,
+      forceStride, m_ThermostatGamma, m_TimeStep);
 
   if (m_UsingHolonomicConstraints) {
     BackStepInitializationKernel1<<<numBlocks, numThreads, 0,
                                     *m_IntegratorStream>>>(
-        coordsCharges, m_CoordsDeltaPrevious.getDeviceData(), numAtoms);
+        coordsCharges, m_CoordsDeltaPrevious.getDeviceArray().data(), numAtoms);
 
     m_HolonomicConstraint->handleHolonomicConstraints(
-        m_CoordsRef.getDeviceData());
+        m_CoordsRef.getDeviceArray().data());
 
     BackStepInitializationKernel2<<<numBlocks, numThreads, 0,
                                     *m_IntegratorStream>>>(
-        coordsCharges, m_CoordsDeltaPrevious.getDeviceData(),
-        m_CoordsRef.getDeviceData(), numAtoms);
+        coordsCharges, m_CoordsDeltaPrevious.getDeviceArray().data(),
+        m_CoordsRef.getDeviceArray().data(), numAtoms);
   }
 
   cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
@@ -458,14 +460,14 @@ void CudaLangevinThermostatIntegrator::initializeFromRestartFile(
     throw std::runtime_error("Could not find !XOLD, YOLD, ZOLD section");
 
   // Parse XOLD, YOLD, ZOLD section
+  std::vector<double> XOLD(NATOM), YOLD(NATOM), ZOLD(NATOM);
   for (int i = 0; i < NATOM; i++) {
     line.clear();
     std::getline(fin, line);
-    m_CoordsDeltaPrevious[i].x = apo::fortSciStrToCDouble(line.substr(0, 22));
-    m_CoordsDeltaPrevious[i].y = apo::fortSciStrToCDouble(line.substr(22, 22));
-    m_CoordsDeltaPrevious[i].z = apo::fortSciStrToCDouble(line.substr(44, 22));
+    XOLD[i] = apo::fortSciStrToCDouble(line.substr(0, 22));
+    YOLD[i] = apo::fortSciStrToCDouble(line.substr(22, 22));
+    ZOLD[i] = apo::fortSciStrToCDouble(line.substr(44, 22));
   }
-  m_CoordsDeltaPrevious.transferToDevice();
 
   // Find VX, VY, VZ section
   foundSection = false;
@@ -480,17 +482,15 @@ void CudaLangevinThermostatIntegrator::initializeFromRestartFile(
   if (!foundSection)
     throw std::runtime_error("Could not find !VX, VY, VZ section");
 
+  // Parse VX, VY, VZ section
+  std::vector<double> VX(NATOM), VY(NATOM), VZ(NATOM);
   for (int i = 0; i < NATOM; i++) {
     line.clear();
     std::getline(fin, line);
-    m_Context->getVelocityMass()[i].x =
-        apo::fortSciStrToCDouble(line.substr(0, 22));
-    m_Context->getVelocityMass()[i].y =
-        apo::fortSciStrToCDouble(line.substr(22, 22));
-    m_Context->getVelocityMass()[i].z =
-        apo::fortSciStrToCDouble(line.substr(44, 22));
+    VX[i] = apo::fortSciStrToCDouble(line.substr(0, 22));
+    VY[i] = apo::fortSciStrToCDouble(line.substr(22, 22));
+    VZ[i] = apo::fortSciStrToCDouble(line.substr(44, 22));
   }
-  m_Context->getVelocityMass().transferToDevice();
 
   // Find X, Y, Z section
   foundSection = false;
@@ -506,27 +506,37 @@ void CudaLangevinThermostatIntegrator::initializeFromRestartFile(
     throw std::runtime_error("Could not find !X, Y, Z section");
 
   // Parse X, Y, Z section
+  std::vector<double> X(NATOM), Y(NATOM), Z(NATOM);
   for (int i = 0; i < NATOM; i++) {
     line.clear();
     std::getline(fin, line);
-    m_Context->getCoordinatesCharges()[i].x =
-        apo::fortSciStrToCDouble(line.substr(0, 22));
-    m_Context->getCoordinatesCharges()[i].y =
-        apo::fortSciStrToCDouble(line.substr(22, 22));
-    m_Context->getCoordinatesCharges()[i].z =
-        apo::fortSciStrToCDouble(line.substr(44, 22));
+    X[i] = apo::fortSciStrToCDouble(line.substr(0, 22));
+    Y[i] = apo::fortSciStrToCDouble(line.substr(22, 22));
+    Z[i] = apo::fortSciStrToCDouble(line.substr(44, 22));
+  }
+
+  for (int i = 0; i < NATOM; i++) {
+    m_Context->getCoordinatesCharges()[i].x = XOLD[i];
+    m_Context->getCoordinatesCharges()[i].y = YOLD[i];
+    m_Context->getCoordinatesCharges()[i].z = ZOLD[i];
+    m_Context->getVelocityMass()[i].x = VX[i];
+    m_Context->getVelocityMass()[i].y = VY[i];
+    m_Context->getVelocityMass()[i].z = VZ[i];
+    m_CoordsDeltaPrevious[i].x = X[i];
+    m_CoordsDeltaPrevious[i].y = Y[i];
+    m_CoordsDeltaPrevious[i].z = Z[i];
   }
   m_Context->getCoordinatesCharges().transferToDevice();
+  m_Context->getVelocityMass().transferToDevice();
+  m_CoordsDeltaPrevious.transferToDevice();
 
   {
-    double4 *dptr = m_Context->getCoordinatesCharges().getDeviceData();
-    float4 *fptr = m_Context->getXYZQ()->getDeviceXYZQ();
-
     constexpr int numThreads = 256;
     const int numBlocks = (NATOM + numThreads - 1) / numThreads;
     UpdateSinglePrecisionCoordinatesKernel<<<numBlocks, numThreads, 0,
-                                             *m_IntegratorStream>>>(fptr, dptr,
-                                                                    NATOM);
+                                             *m_IntegratorStream>>>(
+        m_Context->getXYZQ().getDeviceArray().data(),
+        m_Context->getCoordinatesCharges().getDeviceArray().data(), NATOM);
     cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
   }
 
@@ -693,9 +703,10 @@ UpdateAverageTemperatureKernel(double *__restrict__ averageTemperature,
 void CudaLangevinThermostatIntegrator::propagateOneStep(void) {
   const double kbt = charmm::constants::kBoltz * m_ReferenceTemperature;
   const int numAtoms = m_Context->getNumAtoms();
-  double4 *coordsCharges = m_Context->getCoordinatesCharges().getDeviceData();
-  float4 *xyzq = m_Context->getXYZQ()->getDeviceXYZQ();
-  double4 *velMass = m_Context->getVelocityMass().getDeviceData();
+  double4 *coordsCharges =
+      m_Context->getCoordinatesCharges().getDeviceArray().data();
+  float4 *xyzq = m_Context->getXYZQ().getDeviceArray().data();
+  double4 *velMass = m_Context->getVelocityMass().getDeviceArray().data();
   const int forceStride = m_Context->getForceStride();
   double *forces = m_Context->getForces()->xyz();
 
@@ -705,16 +716,19 @@ void CudaLangevinThermostatIntegrator::propagateOneStep(void) {
       // Find a better place for this
       int numGroups =
           m_Context->getForceManager()->getPsf()->getGroups().size();
-      int2 *groups =
-          m_Context->getForceManager()->getPsf()->getGroups().getDeviceData();
+      int2 *groups = m_Context->getForceManager()
+                         ->getPsf()
+                         ->getGroups()
+                         .getDeviceArray()
+                         .data();
       float boxDimX = static_cast<float>(m_Context->getBoxDimensions()[0]);
 
       constexpr int numThreads = 256;
       const int numBlocks = (numGroups + numThreads - 1) / numThreads;
       InvertDeltaAsymmetricKernel<<<numBlocks, numThreads, 0,
                                     *m_IntegratorStream>>>(
-          m_CoordsDeltaPrevious.getDeviceData(), xyzq, groups, numGroups,
-          boxDimX);
+          m_CoordsDeltaPrevious.getDeviceArray().data(), xyzq, groups,
+          numGroups, boxDimX);
       cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
     }
     m_Context->resetNeighborList();
@@ -723,8 +737,8 @@ void CudaLangevinThermostatIntegrator::propagateOneStep(void) {
   if (m_CurrentPropagatedStep % m_RemoveCenterOfMassFrequency == 0)
     this->removeCenterOfMassMotion();
 
-  copy_DtoD_async<double4>(coordsCharges, m_CoordsRef.getDeviceData(), numAtoms,
-                           *m_IntegratorStream);
+  copy_DtoD_async<double4>(coordsCharges, m_CoordsRef.getDeviceArray().data(),
+                           numAtoms, *m_IntegratorStream);
 
   cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
 
@@ -739,34 +753,36 @@ void CudaLangevinThermostatIntegrator::propagateOneStep(void) {
   const int numBlocks = (numAtoms + numThreads - 1) / numThreads;
 
   PositionUpdateKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
-      coordsCharges, m_CoordsDelta.getDeviceData(), m_RngStates,
-      m_CoordsDeltaPrevious.getDeviceData(), velMass, numAtoms, forces,
+      coordsCharges, m_CoordsDelta.getDeviceArray().data(), m_RngStates,
+      m_CoordsDeltaPrevious.getDeviceArray().data(), velMass, numAtoms, forces,
       forceStride, m_ThermostatGamma, kbt, m_TimeStep);
 
   m_RngSequencePos += 4; // curand_normal4 iterates 4 steps
 
   if (m_UsingHolonomicConstraints) {
     m_HolonomicConstraint->handleHolonomicConstraints(
-        m_CoordsRef.getDeviceData());
+        m_CoordsRef.getDeviceArray().data());
   }
 
   VelocityUpdateKernel<<<numBlocks, numThreads, 0, *m_IntegratorStream>>>(
-      m_CoordsDelta.getDeviceData(), velMass, coordsCharges,
-      m_CoordsRef.getDeviceData(), m_CoordsDeltaPrevious.getDeviceData(),
-      numAtoms, m_ThermostatGamma, m_TimeStep);
+      m_CoordsDelta.getDeviceArray().data(), velMass, coordsCharges,
+      m_CoordsRef.getDeviceArray().data(),
+      m_CoordsDeltaPrevious.getDeviceArray().data(), numAtoms,
+      m_ThermostatGamma, m_TimeStep);
 
-  cudaCheck(
-      cudaMemsetAsync(static_cast<void *>(m_KineticEnergy.getDeviceData()), 0,
-                      2 * sizeof(double), *m_IntegratorStream));
+  cudaCheck(cudaMemsetAsync(
+      static_cast<void *>(m_KineticEnergy.getDeviceArray().data()), 0,
+      2 * sizeof(double), *m_IntegratorStream));
 
   ComputeKineticEnergyKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
-      m_KineticEnergy.getDeviceData(), velMass, m_CoordsDelta.getDeviceData(),
-      m_CoordsDeltaPrevious.getDeviceData(), numAtoms, m_TimeStep);
+      m_KineticEnergy.getDeviceArray().data(), velMass,
+      m_CoordsDelta.getDeviceArray().data(),
+      m_CoordsDeltaPrevious.getDeviceArray().data(), numAtoms, m_TimeStep);
 
   UpdateAverageTemperatureKernel<<<1, 32, 0, *m_IntegratorStream>>>(
-      m_AverageTemperature.getDeviceData(), m_KineticEnergy.getDeviceData(),
-      m_Context->getDegreesOfFreedom(), charmm::constants::kBoltz,
-      m_AverageWindowSize);
+      m_AverageTemperature.getDeviceArray().data(),
+      m_KineticEnergy.getDeviceArray().data(), m_Context->getDegreesOfFreedom(),
+      charmm::constants::kBoltz, m_AverageWindowSize);
 
   m_AverageWindowSize++;
 
@@ -774,9 +790,9 @@ void CudaLangevinThermostatIntegrator::propagateOneStep(void) {
                                            *m_IntegratorStream>>>(
       xyzq, coordsCharges, numAtoms);
 
-  copy_DtoD_async<double4>(m_CoordsDelta.getDeviceData(),
-                           m_CoordsDeltaPrevious.getDeviceData(), numAtoms,
-                           *m_IntegratorStream);
+  copy_DtoD_async<double4>(m_CoordsDelta.getDeviceArray().data(),
+                           m_CoordsDeltaPrevious.getDeviceArray().data(),
+                           numAtoms, *m_IntegratorStream);
 
   cudaCheck(cudaStreamSynchronize(*m_IntegratorStream));
 

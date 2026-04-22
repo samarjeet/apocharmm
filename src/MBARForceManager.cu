@@ -74,8 +74,8 @@ void MBARForceManager::setSelectorVec(const std::vector<float> &lambdas) {
   int numThreads = 128;
   int numBlocks = (charges.size() + numThreads - 1) / numThreads;
 
-  auto xyzq = m_Context->getXYZQ()->getDeviceXYZQ();
-  auto coordsCharge =
+  float4 *xyzq = m_Context->getXYZQ().getDeviceArray().data();
+  double4 *coordsCharge =
       m_Context->getCoordinatesCharges().getDeviceArray().data();
 
   updateChargeInCharmmContext<<<numBlocks, numThreads>>>(

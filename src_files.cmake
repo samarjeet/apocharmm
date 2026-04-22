@@ -26,7 +26,7 @@ list(APPEND src_files
   src/CudaNeighborListSort.cu
   src/CudaNeighborList.cu
   src/CudaTopExcl.cu
-  src/XYZQ.cu
+  # src/XYZQ.cu
   src/CudaPMERecip.cu
   src/DcdSubscriber.cu
   src/EDSForceManager.cu
@@ -54,11 +54,11 @@ list(APPEND src_files
   src/CudaLangevinPistonIntegrator.cu
   src/CudaP21NeighborListBuild.cu
   src/CudaExternalForce.cu
-  src/CudaRestraintForce.cu
+  src/HarmonicRestraintForce.cu
   src/CompositeSubscriber.cu
   src/DualTopologySubscriber.cu
   src/BEDSForceManager.cu
-  src/GeometricRestraintForce.cu
+  # src/GeometricRestraintForce.cu
   src/MBARSubscriber.cu
   src/FEPEIForceManager.cu
   src/MBARForceManager.cu

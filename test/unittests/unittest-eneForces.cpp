@@ -47,9 +47,12 @@ getForcesAsCudaContainer(std::shared_ptr<CharmmContext> ctxIn) {
   int numAtoms = ctxIn->getNumAtoms();
   CudaContainer<double> fx(numAtoms), fy(numAtoms), fz(numAtoms);
 
-  copy_DtoD<double>(ctxIn->getForces()->x(), fx.getDeviceData(), numAtoms);
-  copy_DtoD<double>(ctxIn->getForces()->y(), fy.getDeviceData(), numAtoms);
-  copy_DtoD<double>(ctxIn->getForces()->z(), fz.getDeviceData(), numAtoms);
+  copy_DtoD<double>(ctxIn->getForces()->x(), fx.getDeviceArray().data(),
+                    numAtoms);
+  copy_DtoD<double>(ctxIn->getForces()->y(), fy.getDeviceArray().data(),
+                    numAtoms);
+  copy_DtoD<double>(ctxIn->getForces()->z(), fz.getDeviceArray().data(),
+                    numAtoms);
   // double *tmpx = fx.getDeviceData();
   // double *tmpy = fy.getDeviceData();
   // double *tmpz = fz.getDeviceData();
@@ -239,9 +242,12 @@ TEST_CASE("argon10") {
     // refVals obtained from CHARMM c43b1
 
     CudaContainer<double> fxc(numAtoms), fyc(numAtoms), fzc(numAtoms);
-    copy_DtoD<double>(ctx->getForces()->x(), fxc.getDeviceData(), numAtoms);
-    copy_DtoD<double>(ctx->getForces()->y(), fyc.getDeviceData(), numAtoms);
-    copy_DtoD<double>(ctx->getForces()->z(), fzc.getDeviceData(), numAtoms);
+    copy_DtoD<double>(ctx->getForces()->x(), fxc.getDeviceArray().data(),
+                      numAtoms);
+    copy_DtoD<double>(ctx->getForces()->y(), fyc.getDeviceArray().data(),
+                      numAtoms);
+    copy_DtoD<double>(ctx->getForces()->z(), fzc.getDeviceArray().data(),
+                      numAtoms);
     // fxc.setDeviceArray(ctx->getForces()->x());
     // fyc.setDeviceArray(ctx->getForces()->y());
     // fzc.setDeviceArray(ctx->getForces()->z());

@@ -20,7 +20,6 @@
 #include "CudaTopExcl.h"
 #include "Force.h"
 #include "PBC.h"
-#include "XYZQ.h"
 #include <cuda.h>
 #include <memory>
 #include <string>
@@ -183,7 +182,7 @@ protected:
   // void load_vdwparam(const char *filename, const int nvdwparam, CT
   // **h_vdwparam);
 
-  XYZQ xyzq_sorted;
+  CudaContainer<float4> xyzq_sorted;
   /**
    * @brief Topological exclusion
    */
@@ -294,12 +293,7 @@ public:
   void setStream(std::shared_ptr<cudaStream_t> streamIn) {
     directStream = streamIn;
   }
-  void setNumAtoms(int n) {
-    numAtoms = n;
-    // TODO : this should be in the constructor
-    forceSortedVal->realloc(numAtoms, 1.5f);
-    forceVal->realloc(numAtoms, 1.5f);
-  }
+  void setNumAtoms(int n);
 
   void setCutoff(float cutoffIn) { cutoff = cutoffIn; }
 

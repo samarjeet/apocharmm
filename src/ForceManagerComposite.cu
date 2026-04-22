@@ -55,10 +55,11 @@ void ForceManagerComposite::addForceManager(std::shared_ptr<ForceManager> fm) {
   for (int i = 0; i < numAtoms; i++)
     coords[i] = make_float4(0.0f, 0.0f, 0.0f, static_cast<float>(charges[i]));
 
-  auto tmpxyzq = std::make_shared<XYZQ>();
-  tmpxyzq->set_ncoord(numAtoms);
-  tmpxyzq->set_xyzq(numAtoms, coords.data(), 0);
-  m_XYZQs.push_back(tmpxyzq);
+  // auto tmpxyzq = std::make_shared<XYZQ>();
+  // tmpxyzq->set_ncoord(numAtoms);
+  // tmpxyzq->set_xyzq(numAtoms, coords.data(), 0);
+  // m_XYZQs.push_back(tmpxyzq);
+  m_XYZQs.push_back(coords);
 
   return;
 }
@@ -300,31 +301,31 @@ void ForceManagerComposite::calcForce(const float4 *xyzq, const bool reset,
 
     // Copy xyz part of XYZQ to Device's XYZQ
     copyXYZKernel<<<numBlocks, numThreads, 0, *m_CompositeStream>>>(
-        m_XYZQs[i]->getDeviceXYZQ(), xyzq, numAtoms);
+        m_XYZQs[i].getDeviceArray().data(), xyzq, numAtoms);
   }
   cudaStreamSynchronize(*m_CompositeStream);
 
   for (int i = 0; i < numChildren; i++) {
-    m_Children[i]->calcForcePart1(m_XYZQs[i]->getDeviceXYZQ(), reset,
+    m_Children[i]->calcForcePart1(m_XYZQs[i].getDeviceArray().data(), reset,
                                   calcEnergy, calcVirial);
   }
 
   for (int i = 0; i < numChildren; i++) {
-    m_Children[i]->calcForcePart2(m_XYZQs[i]->getDeviceXYZQ(), reset,
+    m_Children[i]->calcForcePart2(m_XYZQs[i].getDeviceArray().data(), reset,
                                   calcEnergy, calcVirial);
   }
 
   for (int i = 0; i < numChildren; i++) {
-    m_Children[i]->calcForcePart3(m_XYZQs[i]->getDeviceXYZQ(), reset,
+    m_Children[i]->calcForcePart3(m_XYZQs[i].getDeviceArray().data(), reset,
                                   calcEnergy, calcVirial);
   }
 
   for (int i = 0; i < numChildren; i++) {
     // TODO : this is not the best way. Profile it to see the impact
     cudaCheck(cudaMemcpyAsync(
-        m_TotalPotentialEnergy.getDeviceData() + i,
-        m_Children[i]->getPotentialEnergy().getDeviceData(), sizeof(double),
-        cudaMemcpyDeviceToDevice, *m_CompositeStream));
+        m_TotalPotentialEnergy.getDeviceArray().data() + i,
+        m_Children[i]->getPotentialEnergy().getDeviceArray().data(),
+        sizeof(double), cudaMemcpyDeviceToDevice, *m_CompositeStream));
   }
 
   return;
