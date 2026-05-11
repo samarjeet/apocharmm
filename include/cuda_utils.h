@@ -16,6 +16,7 @@
 // #include <nvToolsExt.h>
 #include <nvtx3/nvToolsExt.h>
 // #include <nvtx3/nvtx3.hpp>
+#include <cuda.h>
 #include <cuda_runtime.h>
 #include <stdexcept>
 #include <stdio.h>

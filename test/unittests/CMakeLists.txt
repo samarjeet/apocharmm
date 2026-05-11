@@ -13,7 +13,8 @@ set(SOURCES_UNITTESTS_TESTS
     unittest-restraintForce.cpp
     unittest-logger.cpp
     unittest-utils.cpp
-    unittest-cudaContainers.cpp
+    unittest-deviceVector.cpp
+    unittest-cudaContainer.cpp
     unittest-restart.cpp
     unittest-checkpoint.cpp
 
@@ -128,11 +129,12 @@ foreach(name ${TARGETS_UNITTESTS_TESTS})
     add_executable(${name} ${filename} $<TARGET_OBJECTS:CatchMain> ${HEADER_DIR}/catch.hpp)
 
     target_compile_definitions(${name} PUBLIC DATA_PATH="${PROJECT_SOURCE_DIR}/test/data/")
-    target_link_libraries(${name} PRIVATE ${EXTERNAL_LIBRARIES})
+    target_link_libraries(${name} PRIVATE
+      ${EXTERNAL_LIBRARIES}
+      chcudadynlib
+      CUDA::cudart
+    )
     set_property(TARGET ${name} PROPERTY CUDA_RUNTIME_LIBRARY SHARED) # For CMake 3.23 and later
-
-    # target_link_libraries( ${name} PRIVATE chcudalib)
-    target_link_libraries(${name} PRIVATE chcudadynlib)
 
     # target_link_libraries(${name} PRIVATE )
     set_target_properties(${name} PROPERTIES LINKER_LANGUAGE CUDA)
