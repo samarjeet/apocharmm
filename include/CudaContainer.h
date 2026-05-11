@@ -131,6 +131,12 @@ public: // Capacity
    */
   std::size_t size(void) const;
 
+  /**
+   * @brief Shrinks both host and device array to be large enough to store data.
+   * Should only be called if "push_back" has been called previously.
+   */
+  void shrink_to_fit(void);
+
 public: // Modifiers
   void clear(void);
   void push_back(const T &value);

@@ -51,7 +51,7 @@ void ForceManagerComposite::addForceManager(std::shared_ptr<ForceManager> fm) {
   // add xyzq as well
   // we only need the charges but it is available only along with xyz
   std::vector<float4> coords(numAtoms);
-  const std::vector<double> &charges = fm->getPsf()->getAtomCharges();
+  const std::vector<double> &charges = fm->getPsf()->getCharges();
   for (int i = 0; i < numAtoms; i++)
     coords[i] = make_float4(0.0f, 0.0f, 0.0f, static_cast<float>(charges[i]));
 

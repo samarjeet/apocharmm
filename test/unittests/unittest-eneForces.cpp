@@ -94,7 +94,7 @@ std::vector<double4> getForcesFromRefFile(std::string fname) {
 
   int lineCount = 0;
   while (std::getline(refFile, line)) {
-    apo::trimIP(line);
+    apo::trim_ip(line);
     if (line[0] == '!') {
       continue;
     } // dont look at comments

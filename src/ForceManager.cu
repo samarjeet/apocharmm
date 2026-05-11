@@ -844,7 +844,7 @@ void ForceManager::initializeHolonomicConstraintsVariables(void) {
   const auto &bonds = m_Psf->getBonds();
   const auto &atomNames = m_Psf->getAtomNames();
   const auto &atomTypes = m_Psf->getAtomTypes();
-  const auto &atomMasses = m_Psf->getAtomMasses();
+  const auto &atomMasses = m_Psf->getMasses();
 
   std::vector<int> numBondsH(numAtoms, 0);
   std::vector<std::vector<int>> hydrogenBonds(numAtoms);
@@ -855,19 +855,19 @@ void ForceManager::initializeHolonomicConstraintsVariables(void) {
 
   for (const auto &bond : bonds) {
     // TODO : refine these selection criteria
-    if (isHydrogen(atomTypes[bond.atom1]) ||
-        isHydrogen(atomTypes[bond.atom2])) {
-      if (!((atomTypes[bond.atom1] == "OT" and atomTypes[bond.atom2] == "HT") ||
-            (atomTypes[bond.atom1] == "HT" and atomTypes[bond.atom2] == "OT") ||
-            (atomTypes[bond.atom1][0] == 'H' and
-             atomTypes[bond.atom2][0] == 'H'))) {
+    if (isHydrogen(atomTypes[bond.iatom]) ||
+        isHydrogen(atomTypes[bond.jatom])) {
+      if (!((atomTypes[bond.iatom] == "OT" and atomTypes[bond.jatom] == "HT") ||
+            (atomTypes[bond.iatom] == "HT" and atomTypes[bond.jatom] == "OT") ||
+            (atomTypes[bond.iatom][0] == 'H' and
+             atomTypes[bond.jatom][0] == 'H'))) {
         int heavyAtom = -1, hydrogenAtom = -1;
-        if (isHydrogen(atomTypes[bond.atom1])) {
-          heavyAtom = bond.atom2;
-          hydrogenAtom = bond.atom1;
+        if (isHydrogen(atomTypes[bond.iatom])) {
+          heavyAtom = bond.jatom;
+          hydrogenAtom = bond.iatom;
         } else {
-          heavyAtom = bond.atom1;
-          hydrogenAtom = bond.atom2;
+          heavyAtom = bond.iatom;
+          hydrogenAtom = bond.jatom;
         }
         numBondsH[heavyAtom]++;
         hydrogenBonds[heavyAtom].push_back(hydrogenAtom);
@@ -952,9 +952,21 @@ void ForceManager::checkBoxDimensions(const std::vector<double> &size) {
 }
 
 void ForceManager::dealloc(void) {
-  cudaCheck(cudaStreamDestroy(*m_BondedStream));
-  cudaCheck(cudaStreamDestroy(*m_ReciprocalStream));
-  cudaCheck(cudaStreamDestroy(*m_DirectStream));
-  cudaCheck(cudaStreamDestroy(*m_ForceManagerStream));
+  if (m_BondedStream != nullptr) {
+    cudaCheck(cudaStreamDestroy(*m_BondedStream));
+    m_BondedStream.reset();
+  }
+  if (m_ReciprocalStream != nullptr) {
+    cudaCheck(cudaStreamDestroy(*m_ReciprocalStream));
+    m_ReciprocalStream.reset();
+  }
+  if (m_DirectStream != nullptr) {
+    cudaCheck(cudaStreamDestroy(*m_DirectStream));
+    m_DirectStream.reset();
+  }
+  if (m_ForceManagerStream != nullptr) {
+    cudaCheck(cudaStreamDestroy(*m_ForceManagerStream));
+    m_ForceManagerStream.reset();
+  }
   return;
 }

@@ -38,14 +38,11 @@ void exportCharmmContext(py::module &mod) {
            "takes CHARMM crd object")
       .def("setCoordinates",
            static_cast<void (CharmmContext::*)(
-               const std::vector<std::vector<double>> &)>(
-               &CharmmContext::setCoordinates),
+               // const std::vector<std::vector<double>> &)>(
+               const std::vector<double4> &)>(&CharmmContext::setCoordinates),
            "takes 3*N array of coordinates")
       //.def("setCoordinates", &CharmmContext::setCoordinates,
       //     "sets coordinates using either a CharmmCrd object or a 3*N array")
-      .def("readRestart", &CharmmContext::readRestart,
-           "reads initial positions, velocities and possibly box dimensions "
-           "from a CHARMM-format restart file. Args: filename")
       .def("setPeriodicBoundaryCondition",
            &CharmmContext::setPeriodicBoundaryCondition,
            "Use P1 or P21 PBC for simulation")

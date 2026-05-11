@@ -189,11 +189,11 @@ TEST_CASE("glu", "[unit]") {
       pe11.transferFromDevice();
       std::cout << "Potential energy 1:" << pe11[0] << std::endl;
 
-      auto temp_crd0 = ctx_0->getCoordinates();
-      auto temp_crd1 = ctx_1->getCoordinates();
+      auto temp_crd0 = ctx_0->getCoordinatesCharges();
+      auto temp_crd1 = ctx_1->getCoordinatesCharges();
 
-      ctx_0->setCoordinates(temp_crd1);
-      ctx_1->setCoordinates(temp_crd0);
+      ctx_0->setCoordinates(temp_crd1.getHostArray());
+      ctx_1->setCoordinates(temp_crd0.getHostArray());
       // std::cout << "\n\nSwapped" << std::endl;
 
       // Now calculate the energies
@@ -228,8 +228,8 @@ TEST_CASE("glu", "[unit]") {
         std::cout << "Accepted" << std::endl;
       } else {
         std::cout << "Rejected" << std::endl;
-        ctx_0->setCoordinates(temp_crd0);
-        ctx_1->setCoordinates(temp_crd1);
+        ctx_0->setCoordinates(temp_crd0.getHostArray());
+        ctx_1->setCoordinates(temp_crd1.getHostArray());
       }
     }
   }
@@ -531,11 +531,11 @@ TEST_CASE("glu", "[unit]") {
         std::cout << "Potential energy : psfs=1, crd=1 :" << pe11[0]
                   << std::endl;
 
-        auto temp_crd0 = ctxs[pair.first]->getCoordinates();
-        auto temp_crd1 = ctxs[pair.second]->getCoordinates();
+        auto temp_crd0 = ctxs[pair.first]->getCoordinatesCharges();
+        auto temp_crd1 = ctxs[pair.second]->getCoordinatesCharges();
 
-        ctxs[pair.first]->setCoordinates(temp_crd1);
-        ctxs[pair.second]->setCoordinates(temp_crd0);
+        ctxs[pair.first]->setCoordinates(temp_crd1.getHostArray());
+        ctxs[pair.second]->setCoordinates(temp_crd0.getHostArray());
 
         // Now calculate the energies
         ctxs[pair.first]->calculatePotentialEnergy(true, true);
@@ -572,8 +572,8 @@ TEST_CASE("glu", "[unit]") {
           std::cout << "Accepted" << std::endl;
         } else {
           std::cout << "Rejected" << std::endl;
-          ctxs[pair.first]->setCoordinates(temp_crd0);
-          ctxs[pair.second]->setCoordinates(temp_crd1);
+          ctxs[pair.first]->setCoordinates(temp_crd0.getHostArray());
+          ctxs[pair.second]->setCoordinates(temp_crd1.getHostArray());
         }
       }
     }
@@ -810,11 +810,11 @@ TEST_CASE("1p5f", "[unit]") {
       pe11.transferFromDevice();
       std::cout << "Potential energy 1:" << pe11[0] << std::endl;
 
-      auto temp_crd0 = ctx_0->getCoordinates();
-      auto temp_crd1 = ctx_1->getCoordinates();
+      auto temp_crd0 = ctx_0->getCoordinatesCharges();
+      auto temp_crd1 = ctx_1->getCoordinatesCharges();
 
-      ctx_0->setCoordinates(temp_crd1);
-      ctx_1->setCoordinates(temp_crd0);
+      ctx_0->setCoordinates(temp_crd1.getHostArray());
+      ctx_1->setCoordinates(temp_crd0.getHostArray());
       // std::cout << "\n\nSwapped" << std::endl;
 
       // Now calculate the energies
@@ -849,8 +849,8 @@ TEST_CASE("1p5f", "[unit]") {
         std::cout << "Accepted" << std::endl;
       } else {
         std::cout << "Rejected" << std::endl;
-        ctx_0->setCoordinates(temp_crd0);
-        ctx_1->setCoordinates(temp_crd1);
+        ctx_0->setCoordinates(temp_crd0.getHostArray());
+        ctx_1->setCoordinates(temp_crd1.getHostArray());
       }
     }
   }
@@ -1010,11 +1010,11 @@ TEST_CASE("1p5f", "[unit]") {
       pe11.transferFromDevice();
       std::cout << "Potential energy 1:" << pe11[0] << std::endl;
 
-      auto temp_crd0 = ctx_0->getCoordinates();
-      auto temp_crd1 = ctx_1->getCoordinates();
+      auto temp_crd0 = ctx_0->getCoordinatesCharges();
+      auto temp_crd1 = ctx_1->getCoordinatesCharges();
 
-      ctx_0->setCoordinates(temp_crd1);
-      ctx_1->setCoordinates(temp_crd0);
+      ctx_0->setCoordinates(temp_crd1.getHostArray());
+      ctx_1->setCoordinates(temp_crd0.getHostArray());
       std::cout << "\n\nSwapped" << std::endl;
 
       // Now calculate the energies
@@ -1049,8 +1049,8 @@ TEST_CASE("1p5f", "[unit]") {
         std::cout << "Accepted" << std::endl;
       } else {
         std::cout << "Rejected" << std::endl;
-        ctx_0->setCoordinates(temp_crd0);
-        ctx_1->setCoordinates(temp_crd1);
+        ctx_0->setCoordinates(temp_crd0.getHostArray());
+        ctx_1->setCoordinates(temp_crd1.getHostArray());
       }
     }
   }
@@ -1337,11 +1337,11 @@ TEST_CASE("consph", "[unit]") {
       pe11.transferFromDevice();
       std::cout << "Potential energy 1:" << pe11[0] << std::endl;
 
-      auto temp_crd0 = ctx_0->getCoordinates();
-      auto temp_crd1 = ctx_1->getCoordinates();
+      auto temp_crd0 = ctx_0->getCoordinatesCharges();
+      auto temp_crd1 = ctx_1->getCoordinatesCharges();
 
-      ctx_0->setCoordinates(temp_crd1);
-      ctx_1->setCoordinates(temp_crd0);
+      ctx_0->setCoordinates(temp_crd1.getHostArray());
+      ctx_1->setCoordinates(temp_crd0.getHostArray());
       std::cout << "\n\nSwapped" << std::endl;
 
       // Now calculate the energies
@@ -1376,8 +1376,8 @@ TEST_CASE("consph", "[unit]") {
         std::cout << "Accepted" << std::endl;
       } else {
         std::cout << "Rejected" << std::endl;
-        ctx_0->setCoordinates(temp_crd0);
-        ctx_1->setCoordinates(temp_crd1);
+        ctx_0->setCoordinates(temp_crd0.getHostArray());
+        ctx_1->setCoordinates(temp_crd1.getHostArray());
       }
     }
   }

@@ -10,8 +10,6 @@
 
 #pragma once
 
-#include <cuda.h>
-#include <string>
 #include <vector>
 
 /**
@@ -23,21 +21,54 @@
  */
 class Coordinates {
 public:
-  // Coordinates(const std::string &fileName);
+  Coordinates(void);
 
-  /** @brief Returns coordinates as a 4*N sized vector
-   * @return vector<float4>
+  /**
+   * @brief Create a Coordinate object using a list of doubles.
+   *
+   * Initializes the coords vector with x,y and z coordinates as the first
+   * three columns, and a 0.0 in the fourth column (charges are NOT set here).
    */
-  std::vector<std::vector<double>> getCoordinates(void) const;
+  Coordinates(const std::vector<double3> &coords);
 
-  /** @brief Returns the size of the coords vector
+  /**
+   * @brief Create a Coordinate object using a list of floats.
+   *
+   * Initializes the coords vector with x,y and z coordinates as the first
+   * three columns, and a 0.0 in the fourth column (charges are NOT set here).
+   */
+  Coordinates(const std::vector<float3> &coords);
+
+  /**
+   * @brief Creates a Coordinate object using a vector of vector (dimensions
+   * N*3)
+   */
+  Coordinates(const std::vector<std::vector<double>> &coords);
+
+  /**
+   * @brief Creates a Coordinate object using a vector of vector (dimensions
+   * N*3)
+   */
+  Coordinates(const std::vector<std::vector<float>> &coords);
+
+public:
+  void setNumAtoms(const int numAtoms);
+
+public:
+  /**
+   * @brief Returns the size of the coords vector
    * @return int
    */
   int getNumAtoms(void) const;
 
+  const std::vector<double4> &getCoordinatesD(void) const;
+  std::vector<double4> &getCoordinatesD(void);
+
+  const std::vector<float4> &getCoordinatesF(void) const;
+  std::vector<float4> &getCoordinatesF(void);
+
 protected:
-  int numAtoms;
-  // std::vector<double3> coords;
-  std::vector<float4> coords;
-  // void readCharmmCrdFile(std::string fileName);
+  int m_NumAtoms;
+  std::vector<double4> m_CoordinatesD;
+  std::vector<float4> m_CoordinatesF;
 };

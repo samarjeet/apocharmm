@@ -10,6 +10,7 @@
 
 #include "CharmmContext.h"
 #include "CharmmCrd.h"
+#include "Coordinates.h"
 #include "PDB.h"
 #include "catch.hpp"
 #include "helper.h"
@@ -65,7 +66,7 @@ TEST_CASE("CrdVector") {
                             static_cast<float>(i));
     inpcrd.push_back(singlecrd);
   }
-  auto charmmCrd = std::make_shared<CharmmCrd>(inpcrd);
+  auto charmmCrd = std::make_shared<Coordinates>(inpcrd);
   CHECK_NOTHROW(ctx->setCoordinates(charmmCrd));
 }
 
@@ -75,5 +76,5 @@ TEST_CASE("vectorvector") {
   std::vector<std::vector<double>> inpcrd;
   inpcrd.push_back({1.0, 2.0, 3.0});
   inpcrd.push_back({4.0, 5.0, 6.0});
-  auto crd = CharmmCrd(inpcrd);
+  auto crd = Coordinates(inpcrd);
 }

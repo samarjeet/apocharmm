@@ -77,7 +77,7 @@ public:
    * ForceManager CharmmPSF object.  Also resets the neighborlist
    * @param crd  vector of vector (dimensions N,3) of atom coordinates
    */
-  void setCoordinates(const std::vector<std::vector<double>> &coords);
+  void setCoordinates(const std::vector<double4> &coords);
 
   /**
    * @brief Returns the coordinates as a vector of vector of double
@@ -394,12 +394,12 @@ public:
    */
   // void setCoordinatesNumpy(pybind11::array_t<double> input_array);
 
-  /**
-   * @brief Reads coordinates and velocities from a restart file.
-   *
-   * @todo This needs to be tested
-   */
-  void readRestart(std::string fileName);
+  // /**
+  //  * @brief Reads coordinates and velocities from a restart file.
+  //  *
+  //  * @todo This needs to be tested
+  //  */
+  // void readRestart(std::string fileName);
 
   void setLogger();
   void setLogger(std::string loggerFileName);

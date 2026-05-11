@@ -155,11 +155,11 @@ TEST_CASE("rex", "[energy]") {
 
       // Swap the coordinates and calculate the potential energy
 
-      auto temp_crd0 = ctx0->getCoordinates();
-      auto temp_crd1 = ctx1->getCoordinates();
+      auto temp_crd0 = ctx0->getCoordinatesCharges();
+      auto temp_crd1 = ctx1->getCoordinatesCharges();
 
-      ctx0->setCoordinates(temp_crd1);
-      ctx1->setCoordinates(temp_crd0);
+      ctx0->setCoordinates(temp_crd1.getHostArray());
+      ctx1->setCoordinates(temp_crd0.getHostArray());
       std::cout << "\n\nSwapped" << std::endl;
 
       // Now calculate the energies
@@ -194,8 +194,8 @@ TEST_CASE("rex", "[energy]") {
         std::cout << "Accepted" << std::endl;
       } else {
         std::cout << "Rejected" << std::endl;
-        ctx0->setCoordinates(temp_crd0);
-        ctx1->setCoordinates(temp_crd1);
+        ctx0->setCoordinates(temp_crd0.getHostArray());
+        ctx1->setCoordinates(temp_crd1.getHostArray());
       }
     }
   }

@@ -63,7 +63,7 @@ TEST_CASE("waterbox", "[all]") {
   // forcesContainer.setDeviceArray(force);
   forcesContainer.transferFromDevice();
   compareP21Forces(ctx->getNumAtoms(), stride, forcesContainer.getHostArray(),
-                   charmmForces->getCoordinates());
+                   charmmForces->getCoordinatesD());
 
   SECTION("nve") {
     auto langevinThermostat =

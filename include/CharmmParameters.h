@@ -14,7 +14,9 @@
  *
  */
 #pragma once
+
 #include "CharmmPSF.h"
+
 #include <iostream>
 #include <map>
 #include <memory>
@@ -35,7 +37,8 @@ public:
     return this->atom2 == other.atom2 && this->atom1 == other.atom1;
   }
   friend std::ostream &operator<<(std::ostream &output, const BondKey &key) {
-    output << key.atom1 << " " << key.atom2 << " " << " ";
+    output << key.atom1 << " " << key.atom2 << " "
+           << " ";
     return output;
   }
 };

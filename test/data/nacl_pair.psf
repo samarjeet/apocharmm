@@ -1,0 +1,39 @@
+PSF EXT CMAP XPLOR
+
+         2 !NTITLE
+* NACL PAIR
+*  DATE:     6/13/23      7:25:23      CREATED BY USER: jeg                     
+
+         2 !NATOM
+         1 NACL     1        SOD      SOD      SOD       1.00000       22.9898           0
+         2 NACL     2        CLA      CLA      CLA      -1.00000       35.4500           0
+
+         0 !NBOND: bonds
+
+
+         0 !NTHETA: angles
+
+
+         0 !NPHI: dihedrals
+
+
+         0 !NIMPHI: impropers
+
+
+         0 !NDON: donors
+
+
+         0 !NACC: acceptors
+
+
+         0 !NNB
+
+         0         0
+
+         2         0 !NGRP NST2
+         0         2         0         1         2         0
+
+         0         0 !NUMLP NUMLPH
+
+         0 !NCRTERM: cross-terms
+

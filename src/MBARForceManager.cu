@@ -65,7 +65,7 @@ void MBARForceManager::setSelectorVec(const std::vector<float> &lambdas) {
   ForceManagerComposite::setSelectorVec(lambdas);
 
   // Testing this design
-  auto charges = m_Children[nonZeroLambdaIndex]->getPsf()->getAtomCharges();
+  auto charges = m_Children[nonZeroLambdaIndex]->getPsf()->getCharges();
   double *d_charges;
   cudaMalloc(&d_charges, sizeof(double) * charges.size());
   cudaMemcpy(d_charges, charges.data(), sizeof(double) * charges.size(),

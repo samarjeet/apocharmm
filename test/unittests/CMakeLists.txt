@@ -10,7 +10,7 @@ set(SOURCES_UNITTESTS_TESTS
     unittest-readPRM.cpp
 
     # unittest-ForceManagerGenerator.cpp
-    # unittest-restraintForce.cu
+    unittest-restraintForce.cpp
     unittest-logger.cpp
     unittest-utils.cpp
     unittest-cudaContainers.cpp
@@ -119,7 +119,7 @@ set(TARGETS_ALL ${TARGETS_UNITTESTS_TESTS} CatchMain)
 add_library(CatchMain OBJECT ${UNITTEST_DIR}/${SOURCES_UNITTESTS_MAIN} ${HEADER_DIR}/catch.hpp)
 
 foreach(name ${TARGETS_UNITTESTS_TESTS})
-    if(${name} MATCHES "unittest-restraintForce" OR ${name} MATCHES "unittest-forceManager")
+    if(${name} MATCHES "unittest-forceManager")
         set(filename ${name}.cu)
     else()
         set(filename ${name}.cpp)
