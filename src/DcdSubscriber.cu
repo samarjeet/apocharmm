@@ -8,10 +8,12 @@
 //
 // ENDLICENSE
 
-#include "CharmmContext.h"
 #include "DcdSubscriber.h"
+
+#include "CharmmContext.h"
 #include <array>
 #include <cstdio>
+#include <fstream>
 #include <iostream>
 
 DcdSubscriber::DcdSubscriber(const std::string &fileName)
@@ -20,19 +22,21 @@ DcdSubscriber::DcdSubscriber(const std::string &fileName)
   m_IsHeaderWritten = false;
 }
 
-DcdSubscriber::DcdSubscriber(const std::string &fileName, int reportFrequency)
+DcdSubscriber::DcdSubscriber(const std::string &fileName,
+                             const int reportFrequency)
     : Subscriber(fileName, reportFrequency) {
   m_NumFramesWritten = 0;
   m_IsHeaderWritten = false;
 }
 
-DcdSubscriber::DcdSubscriber(const std::string &fileName, int reportFrequency,
-                             std::shared_ptr<CharmmContext> ctx)
-    : Subscriber(fileName, reportFrequency) {
-  m_NumFramesWritten = 0;
-  m_IsHeaderWritten = false;
-  this->writeHeader();
-}
+// DcdSubscriber::DcdSubscriber(const std::string &fileName, int
+// reportFrequency,
+//                              std::shared_ptr<CharmmContext> ctx)
+//     : Subscriber(fileName, reportFrequency) {
+//   m_NumFramesWritten = 0;
+//   m_IsHeaderWritten = false;
+//   this->writeHeader();
+// }
 
 DcdSubscriber::~DcdSubscriber(void) {
   if (m_FileStream.is_open())

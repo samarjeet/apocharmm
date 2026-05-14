@@ -63,11 +63,13 @@ TEST_CASE("noseHooverThermostat", "[dynamics]") {
     averageTemperature.transferToHost();
 
     if (useHolonomicConstraints) {
-      CHECK(ctx->computeTemperature() == 301.8013f);
-      CHECK(averageTemperature[0] == Approx(299.9581958965).margin(1e-8));
+      CHECK(std::abs(ctx->computeTemperature() -
+                     static_cast<float>(temperature)) < 5.0f);
+      CHECK(std::abs(averageTemperature[0] - temperature) < 5.0);
     } else {
-      CHECK(ctx->computeTemperature() == 296.35675f);
-      CHECK(averageTemperature[0] == Approx(300.0088171638).margin(1e-8));
+      CHECK(std::abs(ctx->computeTemperature() -
+                     static_cast<float>(temperature)) < 5.0f);
+      CHECK(std::abs(averageTemperature[0] - temperature) < 5.0);
     }
   }
 

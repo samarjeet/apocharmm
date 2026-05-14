@@ -1242,7 +1242,8 @@ __global__ static void UpdatePressureKernel(
   return;
 }
 
-/** @brief Compute the next-half-step kinetic energy component of the pressure
+/**
+ *@brief Compute the next-half-step kinetic energy component of the pressure
  * using updated coordsDelta. This is the only component of the pressure that
  * is updated during the pred-corr (the previous-half-step does not change and
  * the virial part is considered constant)
@@ -1841,7 +1842,7 @@ void CudaLangevinPistonIntegrator::propagateOneStep(void) {
       static_cast<void *>(m_DeltaKineticPressureTensor.getDeviceArray().data()),
       0, 9 * sizeof(double), *m_IntegratorStream));
 
-  ComputeDeltaKineticPressureKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
+  ComputeDeltaKineticPressureKernel<<<1, 512, 0, *m_IntegratorStream>>>(
       m_DeltaKineticPressureTensor.getDeviceArray().data(), velMass,
       m_CoordsDelta.getDeviceArray().data(), numAtoms,
       0.5 * charmm::constants::patmos / volume, m_TimeStep);
@@ -1923,7 +1924,13 @@ void CudaLangevinPistonIntegrator::propagateOneStep(void) {
             m_DeltaKineticPressureTensor.getDeviceArray().data()),
         0, 9 * sizeof(double), *m_IntegratorStream));
 
-    ComputeDeltaKineticPressureKernel<<<1, 1024, 0, *m_IntegratorStream>>>(
+    // APO_LAUNCH_CHECK(ComputeDeltaKineticPressureKernel, dim3(1, 1, 1),
+    //                  dim3(512, 1, 1), 0, *m_IntegratorStream,
+    //                  m_DeltaKineticPressureTensor.getDeviceArray().data(),
+    //                  velMass, m_CoordsDelta.getDeviceArray().data(),
+    //                  numAtoms, 0.5 * charmm::constants::patmos / volume,
+    //                  m_TimeStep);
+    ComputeDeltaKineticPressureKernel<<<1, 512, 0, *m_IntegratorStream>>>(
         m_DeltaKineticPressureTensor.getDeviceArray().data(), velMass,
         m_CoordsDeltaPredicted.getDeviceArray().data(), numAtoms,
         0.5 * charmm::constants::patmos / volume, m_TimeStep);

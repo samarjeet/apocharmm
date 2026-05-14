@@ -8,6 +8,9 @@ set -e
 # If any of the tests in this script FAIL, DO NOT PUSH YOUR CHANGES TO THE
 # GITHUB REPOSITORY!
 
+echo "./build/test/unittests/unittest-deviceVector"
+./build/test/unittests/unittest-deviceVector
+
 echo "./build/test/unittests/unittest-noseHoover"
 ./build/test/unittests/unittest-noseHoover
 
@@ -19,6 +22,9 @@ echo "./build/test/unittests/unittest-langevinThermostat"
 
 echo "./build/test/unittests/unittest-restart"
 ./build/test/unittests/unittest-restart
+
+echo "./build/test/unittests/unittest-restraintForce"
+./build/test/unittests/unittest-restraintForce
 
 # unittest-noseHoover
 rm -rf waterbox_1_s_new.dcd waterbox_1_s_old.dcd

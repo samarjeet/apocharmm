@@ -157,6 +157,9 @@ void ForceManager::setBoxDimensions(const std::vector<double> &boxDimensions) {
   if (m_DirectForcePtr != nullptr)
     m_DirectForcePtr->setBoxDimensions(boxDimensions);
 
+  for (ForceView &forceView : m_ForceViews)
+    forceView.setBoxDimensions(boxDimensions);
+
   return;
 }
 
@@ -521,6 +524,13 @@ void ForceManager::initialize(void) {
   m_DirectForcePtr->set_vdwtype14(vdwParamsAndTypes.vdw14Types);
   m_DirectForcePtr->set_14_list(inExLists.sizes, inExLists.in14_ex14);
 
+  // Initialize any forces that are already subscribed
+  for (ForceView &forceView : m_ForceViews) {
+    forceView.initialize(numAtoms, {static_cast<double>(m_BoxX),
+                                    static_cast<double>(m_BoxY),
+                                    static_cast<double>(m_BoxZ)});
+  }
+
   m_ForceManagerStream = std::make_shared<cudaStream_t>();
   cudaCheck(cudaStreamCreate(m_ForceManagerStream.get()));
 
@@ -555,9 +565,6 @@ void ForceManager::calcForcePart1(const float4 *xyzq, const bool reset,
     // updateSortedKernel();
   }
 
-  for (auto &forceView : m_ForceViews)
-    forceView.clear();
-
   if (!m_ClearGraphCreated) {
     cudaCheck(cudaStreamBeginCapture(*m_ForceManagerStream,
                                      cudaStreamCaptureModeGlobal));
@@ -572,11 +579,22 @@ void ForceManager::calcForcePart1(const float4 *xyzq, const bool reset,
   cudaCheck(cudaGraphLaunch(m_CleargraphInstance, *m_ForceManagerStream));
 
   // Clear the virials and energy
-  if (calcEnergy) {
+  if ((calcEnergy == true) && (calcVirial == true)) {
     m_BondedEnergyVirial.clear(*m_BondedStream);
     m_ReciprocalEnergyVirial.clear(*m_ReciprocalStream);
     m_DirectEnergyVirial.clear(*m_DirectStream);
+  } else if (calcEnergy == true) {
+    m_BondedEnergyVirial.clearEnergy(*m_BondedStream);
+    m_ReciprocalEnergyVirial.clearEnergy(*m_ReciprocalStream);
+    m_DirectEnergyVirial.clearEnergy(*m_DirectStream);
+  } else if (calcVirial == true) {
+    m_BondedEnergyVirial.clearVirial(*m_BondedStream);
+    m_ReciprocalEnergyVirial.clearVirial(*m_ReciprocalStream);
+    m_DirectEnergyVirial.clearVirial(*m_DirectStream);
   }
+
+  for (ForceView &forceView : m_ForceViews)
+    forceView.clear();
 
   cudaCheck(cudaStreamSynchronize(*m_ForceManagerStream));
 
@@ -586,9 +604,6 @@ void ForceManager::calcForcePart1(const float4 *xyzq, const bool reset,
 void ForceManager::calcForcePart2(const float4 *xyzq, const bool reset,
                                   const bool calcEnergy,
                                   const bool calcVirial) {
-  for (auto &forceView : m_ForceViews)
-    forceView.calc_force(xyzq, calcEnergy, calcVirial);
-
   gpu_range_start("bonded");
   m_BondedForcePtr->calc_force(xyzq, calcEnergy, calcVirial);
   gpu_range_stop();
@@ -600,6 +615,9 @@ void ForceManager::calcForcePart2(const float4 *xyzq, const bool reset,
   gpu_range_start("direct");
   m_DirectForcePtr->calc_force(xyzq, calcEnergy, calcVirial);
   gpu_range_stop();
+
+  for (ForceView &forceView : m_ForceViews)
+    forceView.calcForce(xyzq, calcEnergy, calcVirial);
 
   return;
 }
@@ -638,8 +656,9 @@ __global__ void UpdatePotentialEnergyKernel(
 __global__ static void
 UpdatePotentialEnergyKernel2(double *__restrict__ pe,
                              const double *__restrict__ en) {
-  if (threadIdx.x == 0)
-    pe[0] += en[0];
+  if ((blockIdx.x == 0) && (blockIdx.y == 0) && (blockIdx.z == 0) &&
+      (threadIdx.x == 0) && (threadIdx.y == 0) && (threadIdx.z == 0))
+    *pe += *en;
   return;
 }
 
@@ -751,21 +770,12 @@ void ForceManager::calcForcePart3(const float4 *xyzq, const bool reset,
         m_DirectEnergyVirial.getEnergyPointer("elec"),
         m_DirectEnergyVirial.getEnergyPointer("vdw"));
 
+    // JEG260514: For now, we are assuming that all added forces only have a
+    // single energy component. This CudaEnergyVirial interface is not very
+    // flexibile. Should be overhauled at some point.
     for (std::size_t i = 0; i < m_ForceViews.size(); i++) {
       UpdatePotentialEnergyKernel2<<<1, 32, 0, *m_ForceManagerStream>>>(
-          m_EnergyVirials[i]->getEnergyPointer("bond"),
-          m_TotalPotentialEnergy.getDeviceArray().data());
-      UpdatePotentialEnergyKernel2<<<1, 32, 0, *m_ForceManagerStream>>>(
-          m_EnergyVirials[i]->getEnergyPointer("angle"),
-          m_TotalPotentialEnergy.getDeviceArray().data());
-      UpdatePotentialEnergyKernel2<<<1, 32, 0, *m_ForceManagerStream>>>(
-          m_EnergyVirials[i]->getEnergyPointer("ureyb"),
-          m_TotalPotentialEnergy.getDeviceArray().data());
-      UpdatePotentialEnergyKernel2<<<1, 32, 0, *m_ForceManagerStream>>>(
-          m_EnergyVirials[i]->getEnergyPointer("dihe"),
-          m_TotalPotentialEnergy.getDeviceArray().data());
-      UpdatePotentialEnergyKernel2<<<1, 32, 0, *m_ForceManagerStream>>>(
-          m_EnergyVirials[i]->getEnergyPointer("imdihe"),
+          m_EnergyVirials[i]->getEnergyPointer(),
           m_TotalPotentialEnergy.getDeviceArray().data());
     }
 
@@ -796,17 +806,8 @@ void ForceManager::calcForcePart3(const float4 *xyzq, const bool reset,
                 << m_DirectEnergyVirial.getEnergy("vdw") << "\n";
 
       for (std::size_t i = 0; i < m_ForceViews.size(); i++) {
-        std::cout << "New Force " << i << ":\n";
-        std::cout << "bond energy         : "
-                  << m_EnergyVirials[i]->getEnergy("bond") << "\n";
-        std::cout << "angle energy        : "
-                  << m_EnergyVirials[i]->getEnergy("angle") << "\n";
-        std::cout << "ureyb energy        : "
-                  << m_EnergyVirials[i]->getEnergy("ureyb") << "\n";
-        std::cout << "dihe energy         : "
-                  << m_EnergyVirials[i]->getEnergy("dihe") << "\n";
-        std::cout << "imdihe energy       : "
-                  << m_EnergyVirials[i]->getEnergy("imdihe") << "\n";
+        std::cout << m_ForceTags[i] << ": " << m_EnergyVirials[i]->getEnergy()
+                  << "\n";
       }
 
       m_TotalPotentialEnergy.transferToHost();

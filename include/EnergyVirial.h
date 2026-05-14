@@ -24,29 +24,41 @@
  *
  */
 class EnergyVirial {
+public:
+  /**
+   * @brief Add energy term to the EnergyVirial object
+   */
+  void insert(const std::string &name);
+  void insert(const char *name);
+
+  /**
+   * @brief Returns number of energy terms
+   */
+  int getN(void) const;
+
+protected:
+  /**
+   * @brief Basic constructor
+   */
+  EnergyVirial(void);
+  ~EnergyVirial(void);
+
+public:
+  /**
+   * @brief  Returns index of energy term
+   */
+  int getEnergyIndex(const std::string &name);
+
 private:
-  /** @brief  Number of energy terms */
-  int n;
+  /**
+   * @brief  Number of energy terms
+   */
+  int m_NumEnergyTerms;
 
   /**
    * @brief Energy term index map (name->index)
    */
-  std::map<std::string, int> energyIndex;
-
-protected:
-  /** @brief Basic constructor */
-  EnergyVirial();
-  ~EnergyVirial() {}
-  /** @brief  Returns index of energy term */
-  int getEnergyIndex(std::string &name);
-
-public:
-  /** @brief Add energy term to the EnergyVirial object
-   */
-  void insert(std::string &name);
-  void insert(const char *name);
-  /** @brief Returns number of energy terms */
-  int getN() const { return n; }
+  std::map<std::string, int> m_EnergyIndex;
 };
 
 #endif // ENERGYVIRIAL_H

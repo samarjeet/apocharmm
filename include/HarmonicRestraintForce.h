@@ -14,6 +14,7 @@
 #include "CudaEnergyVirial.h"
 #include "Force.h"
 #include <memory>
+#include <vector>
 
 //
 // Calculates restraint forces
@@ -25,19 +26,35 @@ public:
   ~HarmonicRestraintForce(void);
 
 public:
-  std::shared_ptr<Force<AT>> getForce(void);
+  void setForceConstant(const double forceConstant);
+  void setForceConstants(const std::vector<double> &forceConstants);
+  void
+  setReferenceCoordinates(const std::vector<double4> &referenceCoordinates);
+  void setReferenceCoordinates(
+      const std::vector<std::vector<double>> &referenceCoordinates);
+  void setMasses(const std::vector<double> &masses);
+  void setBoxDimensions(const std::vector<double> &boxDimensions);
 
 public:
-  void calc_force(const float4 *xyzq, const bool calcEnergy,
-                  const bool calcVirial);
+  std::shared_ptr<CudaEnergyVirial> getEnergyVirial(void);
+  std::shared_ptr<Force<AT>> getForce(void);
+  std::shared_ptr<cudaStream_t> getStream(void);
+
+public:
+  void initialize(const int numAtoms, const std::vector<double> &boxDimensions);
+  void clear(void);
+  void calcForce(const float4 *xyzq, const bool calcEnergy,
+                 const bool calcVirial);
 
 private:
   void dealloc(void);
 
 private:
-  CudaContainer<CT> m_ForceConstants;
+  int m_NumAtoms;
+  CudaContainer<double> m_ForceConstants;
   CudaContainer<double4> m_ReferenceCoordinates;
-  CudaEnergyVirial m_EnergyVirial;
+  CudaContainer<double> m_BoxDimensions;
+  std::shared_ptr<CudaEnergyVirial> m_EnergyVirial;
   std::shared_ptr<Force<AT>> m_Forces;
   std::shared_ptr<cudaStream_t> m_Stream;
 };
