@@ -164,6 +164,7 @@ void CudaIntegrator::propagate(const int numSteps) {
   m_TotNumSteps += static_cast<unsigned long long int>(numSteps);
 
   for (int step = 1; step <= numSteps; step++) {
+    // std::cout << "step = " << step << std::endl;
     // m_CurrentPropagatedStep = step;
     // std::cout << "---\nStep " << step << " of " << numSteps << "\n";
 

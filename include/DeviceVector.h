@@ -11,17 +11,22 @@
 #pragma once
 
 #include <cstddef>
+#include <vector>
 #include <vector_types.h>
 
 template <typename T> class DeviceVector {
 public: // Member functions
   DeviceVector(void);
   DeviceVector(const std::size_t count);
+  DeviceVector(const std::vector<T> &other);
+  DeviceVector(const std::vector<T> &&other);
   DeviceVector(const DeviceVector<T> &other);
   DeviceVector(const DeviceVector<T> &&other);
 
   ~DeviceVector(void);
 
+  DeviceVector<T> &operator=(const std::vector<T> &other);
+  DeviceVector<T> &operator=(const std::vector<T> &&other);
   DeviceVector<T> &operator=(const DeviceVector<T> &other);
   DeviceVector<T> &operator=(const DeviceVector<T> &&other);
 

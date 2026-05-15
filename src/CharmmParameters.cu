@@ -9,14 +9,14 @@
 // ENDLICENSE
 
 #include "CharmmParameters.h"
+
+#include "str_utils.h"
 #include <algorithm>
 #include <cctype>
 #include <cmath>
 #include <fstream>
 #include <iostream>
 #include <sstream>
-
-#include "str_utils.h"
 
 CharmmParameters::CharmmParameters(const std::string &fileName) {
   prmFileNames.push_back(fileName);
@@ -99,11 +99,11 @@ void CharmmParameters::readCharmmParameterFile(std::string fileName) {
     while (!prmFile.eof()) {
       std::getline(prmFile, line);
       // std::cout << "toppar --" << line << "\n";
-      apo::trimIP(line);
+      apo::trim_ip(line);
       std::size_t pos = line.find_first_of('!');
       line = line.substr(0, pos);
-      apo::trimIP(line);
-      apo::toUpperIP(line);
+      apo::trim_ip(line);
+      apo::to_upper_ip(line);
       if (line.find_first_of('*') == 0 || line.find_first_of('!') == 0 ||
           line.size() == 0) {
         // Skip the line
@@ -119,11 +119,11 @@ void CharmmParameters::readCharmmParameterFile(std::string fileName) {
   const float pi_180 = std::acos(-1) / 180.0;
   while (!prmFile.eof()) {
     std::getline(prmFile, line);
-    apo::trimIP(line);
+    apo::trim_ip(line);
     std::size_t pos = line.find_first_of('!');
     line = line.substr(0, pos);
-    apo::trimIP(line);
-    apo::toUpperIP(line);
+    apo::trim_ip(line);
+    apo::to_upper_ip(line);
 
     // std::cout << line << "\n";
     if (line.find_first_of('*') == 0 || line.find_first_of('!') == 0 ||
@@ -237,15 +237,15 @@ void CharmmParameters::readCharmmParameterFile(std::string fileName) {
         if (tokens[0] == "NONBONDED") {
           while (*(tokens.end() - 1) == "-") {
             std::getline(prmFile, line);
-            apo::ltrimIP(line);
+            apo::ltrim_ip(line);
             std::vector<std::string> tokens1 = apo::split(line);
             tokens.insert(tokens.end(), tokens1.begin(), tokens1.end());
           }
         } else {
-          apo::trimIP(line);
+          apo::trim_ip(line);
           std::size_t pos = line.find_first_of('!');
           line = line.substr(0, pos);
-          apo::trimIP(line);
+          apo::trim_ip(line);
           tokens = apo::split(line);
           // if (tokens[0] == "HGA2")
           //   std::cout << line << " " << tokens.size() << "\n";
@@ -377,8 +377,8 @@ BondedParamsAndLists CharmmParameters::getBondedParamsAndLists(
   std::vector<DihedralKey> improperKeysPresent;
 
   for (int bond = 0; bond < psf->getNumBonds(); ++bond) {
-    std::string atom1 = atomTypes[bonds[bond].atom1];
-    std::string atom2 = atomTypes[bonds[bond].atom2];
+    std::string atom1 = atomTypes[bonds[bond].iatom];
+    std::string atom2 = atomTypes[bonds[bond].jatom];
     if (atom1 > atom2)
       std::swap(atom1, atom2);
     auto key = BondKey(atom1, atom2);
@@ -394,12 +394,12 @@ BondedParamsAndLists CharmmParameters::getBondedParamsAndLists(
       findResult =
           std::find(bondKeysPresent.begin(), bondKeysPresent.end(), key);
       int bondType = findResult - std::begin(bondKeysPresent);
-      listVal.push_back({bonds[bond].atom1, bonds[bond].atom2, bondType, 13});
+      listVal.push_back({bonds[bond].iatom, bonds[bond].jatom, bondType, 13});
 
     } else {
       std::stringstream tmpexc;
       tmpexc << "bond not found " << bond << " " << key << " "
-             << bonds[bond].atom1 << " " << bonds[bond].atom2 << "\n";
+             << bonds[bond].iatom << " " << bonds[bond].jatom << "\n";
       throw std::invalid_argument(tmpexc.str());
     }
   }
@@ -413,9 +413,9 @@ BondedParamsAndLists CharmmParameters::getBondedParamsAndLists(
   */
   int ureybCount = 0;
   for (int angle = 0; angle < psf->getNumAngles(); ++angle) {
-    std::string atom1 = atomTypes[angles[angle].atom1];
-    std::string atom2 = atomTypes[angles[angle].atom2];
-    std::string atom3 = atomTypes[angles[angle].atom3];
+    std::string atom1 = atomTypes[angles[angle].iatom];
+    std::string atom2 = atomTypes[angles[angle].jatom];
+    std::string atom3 = atomTypes[angles[angle].katom];
     if (atom1 > atom3)
       std::swap(atom1, atom3);
 
@@ -436,7 +436,7 @@ BondedParamsAndLists CharmmParameters::getBondedParamsAndLists(
           std::find(ureybKeysPresent.begin(), ureybKeysPresent.end(), key);
       int ureybType = findResult - ureybKeysPresent.begin();
       listVal.push_back(
-          {angles[angle].atom1, angles[angle].atom3, ureybType, 13});
+          {angles[angle].iatom, angles[angle].katom, ureybType, 13});
     } else {
       std::stringstream tmpexc;
       tmpexc << "Ureyb not found " << angle << " " << key << "\n";
@@ -447,9 +447,9 @@ BondedParamsAndLists CharmmParameters::getBondedParamsAndLists(
   listsSize.push_back(listVal.size() - listsSize[0]);
 
   for (int angle = 0; angle < psf->getNumAngles(); ++angle) {
-    std::string atom1 = atomTypes[angles[angle].atom1];
-    std::string atom2 = atomTypes[angles[angle].atom2];
-    std::string atom3 = atomTypes[angles[angle].atom3];
+    std::string atom1 = atomTypes[angles[angle].iatom];
+    std::string atom2 = atomTypes[angles[angle].jatom];
+    std::string atom3 = atomTypes[angles[angle].katom];
     if (atom1 > atom3)
       std::swap(atom1, atom3);
 
@@ -465,8 +465,8 @@ BondedParamsAndLists CharmmParameters::getBondedParamsAndLists(
       findResult =
           std::find(angleKeysPresent.begin(), angleKeysPresent.end(), key);
       int angleType = findResult - angleKeysPresent.begin();
-      listVal.push_back({angles[angle].atom1, angles[angle].atom2,
-                         angles[angle].atom3, angleType, 13, 13});
+      listVal.push_back({angles[angle].iatom, angles[angle].jatom,
+                         angles[angle].katom, angleType, 13, 13});
 
     } else {
       std::stringstream tmpexc;
@@ -482,10 +482,10 @@ BondedParamsAndLists CharmmParameters::getBondedParamsAndLists(
   std::map<DihedralKey, int> indexOfKeyInParamsVal;
   const float pi_180 = std::acos(-1) / 180.0;
   for (int dihedral = 0; dihedral < psf->getNumDihedrals(); ++dihedral) {
-    std::string atom1 = atomTypes[dihedrals[dihedral].atom1];
-    std::string atom2 = atomTypes[dihedrals[dihedral].atom2];
-    std::string atom3 = atomTypes[dihedrals[dihedral].atom3];
-    std::string atom4 = atomTypes[dihedrals[dihedral].atom4];
+    std::string atom1 = atomTypes[dihedrals[dihedral].iatom];
+    std::string atom2 = atomTypes[dihedrals[dihedral].jatom];
+    std::string atom3 = atomTypes[dihedrals[dihedral].katom];
+    std::string atom4 = atomTypes[dihedrals[dihedral].latom];
 
     if (atom1 > atom4) {
       std::swap(atom1, atom4);
@@ -522,8 +522,8 @@ BondedParamsAndLists CharmmParameters::getBondedParamsAndLists(
       //                       dihedralKeysPresent.end(), key);
       // int dihedralType = findResult - dihedralKeysPresent.begin();
       int dihedralType = indexOfKeyInParamsVal[key];
-      listVal.push_back({dihedrals[dihedral].atom1, dihedrals[dihedral].atom2,
-                         dihedrals[dihedral].atom3, dihedrals[dihedral].atom4,
+      listVal.push_back({dihedrals[dihedral].iatom, dihedrals[dihedral].jatom,
+                         dihedrals[dihedral].katom, dihedrals[dihedral].latom,
                          dihedralType, 13, 13, 13});
     } else {
       if (atom2 > atom3)
@@ -556,20 +556,20 @@ BondedParamsAndLists CharmmParameters::getBondedParamsAndLists(
         //                       dihedralKeysPresent.end(), key);
         // int dihedralType = findResult - dihedralKeysPresent.begin();
         int dihedralType = indexOfKeyInParamsVal[key];
-        listVal.push_back({dihedrals[dihedral].atom1, dihedrals[dihedral].atom2,
-                           dihedrals[dihedral].atom3, dihedrals[dihedral].atom4,
+        listVal.push_back({dihedrals[dihedral].iatom, dihedrals[dihedral].jatom,
+                           dihedrals[dihedral].katom, dihedrals[dihedral].latom,
                            dihedralType, 13, 13, 13});
       } else {
         std::stringstream tmpexc;
         tmpexc << "dihedral not found " << dihedral << " "
-               << atomTypes[dihedrals[dihedral].atom1] << " "
-               << atomTypes[dihedrals[dihedral].atom2] << " "
-               << atomTypes[dihedrals[dihedral].atom3] << " "
-               << atomTypes[dihedrals[dihedral].atom4] << "\t"
-               << atomNames[dihedrals[dihedral].atom1] << " "
-               << atomNames[dihedrals[dihedral].atom2] << " "
-               << atomNames[dihedrals[dihedral].atom3] << " "
-               << atomNames[dihedrals[dihedral].atom4] << "\n";
+               << atomTypes[dihedrals[dihedral].iatom] << " "
+               << atomTypes[dihedrals[dihedral].jatom] << " "
+               << atomTypes[dihedrals[dihedral].katom] << " "
+               << atomTypes[dihedrals[dihedral].latom] << "\t"
+               << atomNames[dihedrals[dihedral].iatom] << " "
+               << atomNames[dihedrals[dihedral].jatom] << " "
+               << atomNames[dihedrals[dihedral].katom] << " "
+               << atomNames[dihedrals[dihedral].latom] << "\n";
         throw std::invalid_argument(tmpexc.str());
       }
     }
@@ -589,10 +589,10 @@ BondedParamsAndLists CharmmParameters::getBondedParamsAndLists(
   //}
 
   for (int improper = 0; improper < psf->getNumImpropers(); ++improper) {
-    std::string atom1 = atomTypes[impropers[improper].atom1];
-    std::string atom2 = atomTypes[impropers[improper].atom2];
-    std::string atom3 = atomTypes[impropers[improper].atom3];
-    std::string atom4 = atomTypes[impropers[improper].atom4];
+    std::string atom1 = atomTypes[impropers[improper].iatom];
+    std::string atom2 = atomTypes[impropers[improper].jatom];
+    std::string atom3 = atomTypes[impropers[improper].katom];
+    std::string atom4 = atomTypes[impropers[improper].latom];
 
     if (atom1 > atom4) {
       std::swap(atom1, atom4);
@@ -616,8 +616,8 @@ BondedParamsAndLists CharmmParameters::getBondedParamsAndLists(
       findResult = std::find(improperKeysPresent.begin(),
                              improperKeysPresent.end(), key);
       int improperType = findResult - improperKeysPresent.begin();
-      listVal.push_back({impropers[improper].atom1, impropers[improper].atom2,
-                         impropers[improper].atom3, impropers[improper].atom4,
+      listVal.push_back({impropers[improper].iatom, impropers[improper].jatom,
+                         impropers[improper].katom, impropers[improper].latom,
                          improperType, 13, 13, 13});
     } else {
       // if (atom2 > atom3) std::swap(atom2, atom3);
@@ -635,21 +635,21 @@ BondedParamsAndLists CharmmParameters::getBondedParamsAndLists(
         findResult = std::find(improperKeysPresent.begin(),
                                improperKeysPresent.end(), key);
         int improperType = findResult - improperKeysPresent.begin();
-        listVal.push_back({impropers[improper].atom1, impropers[improper].atom2,
-                           impropers[improper].atom3, impropers[improper].atom4,
+        listVal.push_back({impropers[improper].iatom, impropers[improper].jatom,
+                           impropers[improper].katom, impropers[improper].latom,
                            improperType, 13, 13, 13});
 
       } else {
         std::stringstream tmpexc;
         tmpexc << "improper not found " << improper << " "
-               << atomTypes[impropers[improper].atom1] << " "
-               << atomTypes[impropers[improper].atom2] << " "
-               << atomTypes[impropers[improper].atom3] << " "
-               << atomTypes[impropers[improper].atom4] << "\t"
-               << atomNames[impropers[improper].atom1] << " "
-               << atomNames[impropers[improper].atom2] << " "
-               << atomNames[impropers[improper].atom3] << " "
-               << atomNames[impropers[improper].atom4] << "\n";
+               << atomTypes[impropers[improper].iatom] << " "
+               << atomTypes[impropers[improper].jatom] << " "
+               << atomTypes[impropers[improper].katom] << " "
+               << atomTypes[impropers[improper].latom] << "\t"
+               << atomNames[impropers[improper].iatom] << " "
+               << atomNames[impropers[improper].jatom] << " "
+               << atomNames[impropers[improper].katom] << " "
+               << atomNames[impropers[improper].latom] << "\n";
         throw std::invalid_argument(tmpexc.str());
       }
     }
@@ -678,10 +678,10 @@ BondedParamsAndLists CharmmParameters::getBondedParamsAndLists(
     //           "
     //           << atomTypes[cmap.atomk2] << " " << atomTypes[cmap.atoml2]
     //           << "\n";
-    auto dihe1 = DihedralKey(atomTypes[cmap.atomi1], atomTypes[cmap.atomj1],
-                             atomTypes[cmap.atomk1], atomTypes[cmap.atoml1]);
-    auto dihe2 = DihedralKey(atomTypes[cmap.atomi2], atomTypes[cmap.atomj2],
-                             atomTypes[cmap.atomk2], atomTypes[cmap.atoml2]);
+    auto dihe1 = DihedralKey(atomTypes[cmap.iatom1], atomTypes[cmap.jatom1],
+                             atomTypes[cmap.katom1], atomTypes[cmap.latom1]);
+    auto dihe2 = DihedralKey(atomTypes[cmap.iatom2], atomTypes[cmap.jatom2],
+                             atomTypes[cmap.katom2], atomTypes[cmap.latom2]);
     // std::cout << dihe1 << " " << dihe2 << "\n";
     auto key = CmapKey(dihe1, dihe2);
     // auto key = CmapKey(atomTypes[cmap.atom1], atomTypes[cmap.atom2],

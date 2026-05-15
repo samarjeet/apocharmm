@@ -17,5 +17,5 @@ public:
   PDB(const std::string &fileName);
 
 private:
-  void readPDBFile(std::string fileName);
+  void readPDBFile(const std::string &fileName);
 };

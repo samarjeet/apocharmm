@@ -8,12 +8,13 @@
 //
 // ENDLICENSE
 
+#include "RestartSubscriber.h"
+
 #include "CharmmContext.h"
 #include "CudaLangevinPistonIntegrator.h"
 #include "CudaLangevinThermostatIntegrator.h"
 #include "CudaNoseHooverThermostatIntegrator.h"
 #include "PBC.h"
-#include "RestartSubscriber.h"
 #include "str_utils.h"
 #include <iomanip>
 #include <iostream>

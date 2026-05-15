@@ -90,7 +90,7 @@ void AlchemicalForceManagerGenerator::modifyElectrostatics(
 
   // Get PSF's charges
   auto psf = fmIn->getPsf();
-  std::vector<double> charges = psf->getAtomCharges();
+  std::vector<double> charges = psf->getCharges();
 
   // For each element in the alch region, scale the charges by lambdaIn
   for (i = 0; i < alchemicalRegion.size(); i++) {

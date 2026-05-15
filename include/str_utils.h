@@ -10,27 +10,34 @@
 
 #pragma once
 
+#include <cstddef>
 #include <string>
 #include <vector>
 
 namespace apo {
 
-void ltrimIP(std::string &str);
-void rtrimIP(std::string &str);
-void trimIP(std::string &str);
+void ltrim_ip(std::string &str);
+void rtrim_ip(std::string &str);
+void trim_ip(std::string &str);
 
 std::string ltrim(const std::string &str);
 std::string rtrim(const std::string &str);
 std::string trim(const std::string &str);
 
-void toLowerIP(std::string &str);
-void toUpperIP(std::string &str);
+void to_lower_ip(std::string &str);
+void to_upper_ip(std::string &str);
 
-std::string toLower(const std::string &str);
-std::string toUpper(const std::string &str);
+std::string to_lower(const std::string &str);
+std::string to_upper(const std::string &str);
 
 std::vector<std::string> split(const std::string &str,
                                const std::string &delimiter = " ");
+
+void get_line(std::string &line, std::size_t &pos,
+              const std::string &file_data);
+
+void read_file_into_string(std::string &file_data,
+                           const std::string &file_name);
 
 std::string cDoubleToFortSciStr(const double val, const int prec);
 

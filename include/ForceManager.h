@@ -40,44 +40,71 @@ public:
   template <typename ForceType>
   ForceView(ForceType *inputForce)
       : m_Force(static_cast<void *>(inputForce)),
+        initialize_impl{[](void *force, const int numAtoms,
+                           const std::vector<double> &boxDimensions) -> void {
+          ForceType *ptr = static_cast<ForceType *>(force);
+          return ptr->initialize(numAtoms, boxDimensions);
+        }},
         clear_impl{[](void *force) -> void {
           ForceType *ptr = static_cast<ForceType *>(force);
           return ptr->clear();
         }},
-        calc_force_impl{[](void *force, const float4 *xyzq, bool calcEnergy,
-                           bool calcVirial) -> void {
+        calcForce_impl{[](void *force, const float4 *xyzq, bool calcEnergy,
+                          bool calcVirial) -> void {
           ForceType *ptr = static_cast<ForceType *>(force);
-          return ptr->calc_force(xyzq, calcEnergy, calcVirial);
+          return ptr->calcForce(xyzq, calcEnergy, calcVirial);
         }},
-        getForceImpl{[](void *force) -> std::shared_ptr<Force<long long int>> {
+        setBoxDimensions_impl{
+            [](void *force, const std::vector<double> &boxDimensions) -> void {
+              ForceType *ptr = static_cast<ForceType *>(force);
+              return ptr->setBoxDimensions(boxDimensions);
+            }},
+        getForce_impl{[](void *force) -> std::shared_ptr<Force<long long int>> {
           ForceType *ptr = static_cast<ForceType *>(force);
           return ptr->getForce();
-        }} {}
-  //       ,
-  // getEnergyVirialImpl{[](void *force) -> CudaEnergyVirial {
-  //   ForceType *ptr = static_cast<ForceType *>(force);
-  //   return ptr->getEnergyVirial();
-  // }} {}
+        }},
+        getEnergyVirial_impl{
+            [](void *force) -> std::shared_ptr<CudaEnergyVirial> {
+              ForceType *ptr = static_cast<ForceType *>(force);
+              return ptr->getEnergyVirial();
+            }} {}
+
+  void initialize(const int numAtoms,
+                  const std::vector<double> &boxDimensions) {
+    return this->initialize_impl(m_Force, numAtoms, boxDimensions);
+  }
 
   void clear(void) { return this->clear_impl(m_Force); }
 
-  void calc_force(const float4 *xyzq, bool calcEnergy, bool calcVirial) {
-    return this->calc_force_impl(m_Force, xyzq, calcEnergy, calcVirial);
+  void calcForce(const float4 *xyzq, bool calcEnergy, bool calcVirial) {
+    return this->calcForce_impl(m_Force, xyzq, calcEnergy, calcVirial);
+  }
+
+  void setBoxDimensions(const std::vector<double> &boxDimensions) {
+    return this->setBoxDimensions_impl(m_Force, boxDimensions);
   }
 
   std::shared_ptr<Force<long long int>> getForce(void) {
-    return this->getForceImpl(m_Force);
+    return this->getForce_impl(m_Force);
+  }
+
+  std::shared_ptr<CudaEnergyVirial> getEnergyVirial(void) const {
+    return this->getEnergyVirial_impl(m_Force);
   }
 
   // void add()
 
 private:
   void *m_Force;
+  void (*initialize_impl)(void *force, const int numAtoms,
+                          const std::vector<double> &boxDimensions);
   void (*clear_impl)(void *force);
-  void (*calc_force_impl)(void *force, const float4 *xyzq, bool calcEnergy,
-                          bool calcVirial);
-  std::shared_ptr<Force<long long int>> (*getForceImpl)(void *force);
-  // void (*getEnergyVirialImpl)(void *force);
+  void (*calcForce_impl)(void *force, const float4 *xyzq, bool calcEnergy,
+                         bool calcVirial);
+  void (*setBoxDimensions_impl)(void *force,
+                                const std::vector<double> &boxDimensions);
+  std::shared_ptr<Force<long long int>> (*getForce_impl)(void *force);
+  std::shared_ptr<CudaEnergyVirial> (*getEnergyVirial_impl)(void *force);
 };
 
 /**
@@ -411,6 +438,11 @@ public:
     m_ForceStreams.push_back(forceStream);
     m_ForceValues.push_back(forceValues);
     m_EnergyVirials.push_back(energyVirial);
+    if (m_IsInitialized == true) {
+      force->initialize(m_Psf->getNumAtoms(), {static_cast<double>(m_BoxX),
+                                               static_cast<double>(m_BoxY),
+                                               static_cast<double>(m_BoxZ)});
+    }
     return;
   }
 

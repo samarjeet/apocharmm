@@ -11,7 +11,6 @@
 #pragma once
 
 #include "Subscriber.h"
-#include <fstream>
 
 /**
  * @brief CHARMM DCD output Subscriber
@@ -21,11 +20,7 @@
 class DcdSubscriber : public Subscriber {
 public:
   DcdSubscriber(const std::string &fileName);
-  DcdSubscriber(const std::string &fileName, int reportFrequency);
-  /** @deprecated Constructor. CharmmContext dependency should be initialized
-   * upon subscription */
-  DcdSubscriber(const std::string &fileName, int reportFrequency,
-                std::shared_ptr<CharmmContext> ctx);
+  DcdSubscriber(const std::string &fileName, const int reportFrequency);
   ~DcdSubscriber(void);
 
 public:
@@ -35,8 +30,6 @@ private:
   void writeHeader(void);
   void writeXtalData(void);
   void writeCoordData(void);
-
-  // void initialize(void);
 
   /**
    * @brief Number of frames written in total (NFILE)

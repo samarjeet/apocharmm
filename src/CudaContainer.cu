@@ -140,6 +140,12 @@ template <typename T> std::size_t CudaContainer<T>::size(void) const {
   return m_HostArray.size();
 }
 
+template <typename T> void CudaContainer<T>::shrink_to_fit(void) {
+  m_HostArray.shrink_to_fit();
+  m_DeviceArray.shrink_to_fit();
+  return;
+}
+
 template <typename T> void CudaContainer<T>::clear(void) {
   m_HostArray.clear();
   m_DeviceArray.clear();

@@ -23,11 +23,11 @@ CharmmResidueTopology::CharmmResidueTopology(std::string rtfFileName) {}
 std::string getCleanLine(std::ifstream &rtfFile) {
   std::string line;
   std::getline(rtfFile, line);
-  apo::trimIP(line);
+  apo::trim_ip(line);
   std::size_t pos = line.find_first_of('!');
   line = line.substr(0, pos);
-  apo::trimIP(line);
-  apo::toUpperIP(line);
+  apo::trim_ip(line);
+  apo::to_upper_ip(line);
   return line;
 }
 void CharmmResidueTopology::readRTF(std::string fileName) {

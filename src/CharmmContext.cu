@@ -72,90 +72,51 @@ void CharmmContext::setMasses(const std::vector<double> &masses) {
            << " != " << numAtoms << ")\n";
     throw std::invalid_argument(tmpexc.str());
   }
-  assert(velocityMass.size() == numAtoms);
-  for (int i = 0; i < numAtoms; i++) {
+
+  for (int i = 0; i < numAtoms; i++)
     velocityMass[i].w = 1.0 / masses[i];
-  }
   velocityMass.transferToDevice();
+
+  return;
 }
 
 void CharmmContext::setNumAtoms(const int num) { numAtoms = num; }
 
 void CharmmContext::setCoordinates(const std::shared_ptr<Coordinates> crd) {
-  // auto coords = crd->getCoordinates();
-  this->setCoordinates(crd->getCoordinates());
-  /* *
-  if (!forceManager->isComposite()) {
-    assert(coords.size() == forceManager->getPSF()->getNumAtoms());
-  }
-  if (!forceManager->hasCharmmContext()) {
-    linkBackForceManager();
-  }
-  setNumAtoms(coords.size());
-
-  velocityMass.allocate(numAtoms);
-  setMasses(forceManager->getPSF()->getAtomMasses());
-
-  useHolonomicConstraints(usingHolonomicConstraints);
-  auto charges =
-      forceManager->getPSF()->getAtomCharges(); // this is a std::vector<double>
-
-  // 4N-sized vector to contain spatial coords + atomic charges
-  std::vector<double4> crdCharges(coords.size());
-  int i = 0;
-  for (auto &&coord : coords) {
-    coord.w = (float)charges[i]; // put the charges in coords ith element
-    crdCharges[i] = {(double)coord.x, (double)coord.y, (double)coord.z,
-                     (double)coord.w};
-    i++;
-  }
-
-  // xyzq gets initialized with coords (crd->getCoordinates()) + the charges
-  // extracted from the PSF
-  xyzq.set_ncoord(coords.size());
-  xyzq.set_xyzq(coords.size(), coords.data(), 0);
-
-  coordsCharge.allocate(coords.size());
-  coordsCharge.set(crdCharges);
-  resetNeighborList();
-  * */
+  this->setCoordinates(crd->getCoordinatesD());
+  return;
 }
 
-void CharmmContext::setCoordinates(
-    const std::vector<std::vector<double>> &coords) {
-  // Constructor for CharmmCrd casts to float4 which loses precision when
-  // reading from restart file
-  // 1. Create a charmmCrd using this vec{vec{double}}
-  // 2. Call setCoordinates(charmmCrd) with that newly created crd
-  // auto charmmCrd = std::make_shared<CharmmCrd>(crd);
-  // setCoordinates(charmmCrd);
-  if (!forceManager->isComposite()) {
+void CharmmContext::setCoordinates(const std::vector<double4> &coords) {
+  if (!forceManager->isComposite())
     assert(coords.size() == forceManager->getNumAtoms());
-  }
-  if (!forceManager->hasCharmmContext()) {
-    linkBackForceManager();
-  }
-  setNumAtoms(coords.size());
+
+  if (!forceManager->hasCharmmContext())
+    this->linkBackForceManager();
+
+  this->setNumAtoms(coords.size());
 
   velocityMass.resize(numAtoms);
-  setMasses(forceManager->getPsf()->getAtomMasses());
+  this->setMasses(forceManager->getPsf()->getMasses());
 
-  useHolonomicConstraints(usingHolonomicConstraints);
-  std::vector<double> charges = forceManager->getPsf()->getAtomCharges();
+  this->useHolonomicConstraints(usingHolonomicConstraints);
+  std::vector<double> charges = forceManager->getPsf()->getCharges();
 
   xyzq.resize(numAtoms);
   coordsCharge.resize(numAtoms);
   for (int i = 0; i < numAtoms; i++) {
     xyzq[i] = make_float4(
-        static_cast<float>(coords[i][0]), static_cast<float>(coords[i][1]),
-        static_cast<float>(coords[i][2]), static_cast<float>(charges[i]));
+        static_cast<float>(coords[i].x), static_cast<float>(coords[i].y),
+        static_cast<float>(coords[i].z), static_cast<float>(charges[i]));
     coordsCharge[i] =
-        make_double4(coords[i][0], coords[i][1], coords[i][2], charges[i]);
+        make_double4(coords[i].x, coords[i].y, coords[i].z, charges[i]);
   }
   xyzq.transferToDevice();
   coordsCharge.transferToDevice();
 
-  resetNeighborList();
+  this->resetNeighborList();
+
+  return;
 }
 
 std::vector<std::vector<double>> CharmmContext::getCoordinates() {
@@ -206,8 +167,9 @@ void CharmmContext::setCoords(const std::vector<float> &coords) {
 
 int CharmmContext::getNumAtoms() const { return numAtoms; }
 
+/* *
 __global__ static void
-imageCenterKernel(PBC pbc, float3 boxSize, int stride, int numGroups,
+ImageCenterKernel(PBC pbc, float3 boxSize, int stride, int numGroups,
                   const int2 *__restrict__ groups, double4 *__restrict__ xyzq,
                   float4 *__restrict__ xyzqf, double4 *__restrict__ velMass,
                   double *__restrict__ force) {
@@ -303,39 +265,146 @@ imageCenterKernel(PBC pbc, float3 boxSize, int stride, int numGroups,
     }
   }
 }
+* */
 
-void CharmmContext::imageCentering() {
-  auto boxSize = forceManager->getBoxDimensions();
-  double boxx = boxSize[0];
-  double boxy = boxSize[1];
-  double boxz = boxSize[2];
-  auto pbc = forceManager->getPeriodicBoundaryCondition();
+__global__ static void ImageCenteringKernel(
+    double4 *__restrict__ coordsChargesD, float4 *__restrict__ coordsChargesF,
+    double4 *__restrict__ velMass, double *__restrict__ forces,
+    const int forceStride, const int2 *__restrict__ groups, const int numGroups,
+    const double boxX, const double boxY, const double boxZ, const PBC pbc) {
+  const int index = blockIdx.x * blockDim.x + threadIdx.x;
+  const int stride = gridDim.x * blockDim.x;
 
-  auto groups = forceManager->getPsf()->getGroups();
+  for (int i = index; i < numGroups; i += stride) {
+    const int2 group = groups[i];
 
-  auto force = getForces();
-  auto forceStride = getForceStride();
+    double gx = 0.0, gy = 0.0, gz = 0.0;
+    for (int j = group.x; j <= group.y; j++) {
+      gx += coordsChargesD[j].x;
+      gy += coordsChargesD[j].y;
+      gz += coordsChargesD[j].z;
+    }
+    const double ng = static_cast<double>(group.y - group.x + 1);
+    gx /= ng;
+    gy /= ng;
+    gz /= ng;
 
-  // find a better place for this
-  int numGroups = groups.size();
-  int numThreads = 128;
-  int numBlocks = (numGroups - 1) / numThreads + 1;
+    // -X Recenter
+    if (gx < -0.5 * boxX) {
+      for (int j = group.x; j <= group.y; j++) {
+        coordsChargesD[j].x += boxX;
+        coordsChargesF[j].x += static_cast<float>(boxX);
+        if (pbc == PBC::P21) {
+          coordsChargesD[j].y = -coordsChargesD[j].y;
+          coordsChargesD[j].z = -coordsChargesD[j].z;
+          coordsChargesF[j].y = -coordsChargesF[j].y;
+          coordsChargesF[j].z = -coordsChargesF[j].z;
+          velMass[j].y = -velMass[j].y;
+          velMass[j].z = -velMass[j].z;
+          forces[1 * forceStride + j] = -forces[1 * forceStride + j];
+          forces[2 * forceStride + j] = -forces[2 * forceStride + j];
+          gy = -gy;
+          gz = -gz;
+        }
+      }
+    }
 
-  float3 box = {(float)boxSize[0], (float)boxSize[1], (float)boxSize[2]};
+    // +X Recenter
+    if (gx > 0.5 * boxX) {
+      for (int j = group.x; j <= group.y; j++) {
+        coordsChargesD[j].x -= boxX;
+        coordsChargesF[j].x -= static_cast<float>(boxX);
+        if (pbc == PBC::P21) {
+          coordsChargesD[j].y = -coordsChargesD[j].y;
+          coordsChargesD[j].z = -coordsChargesD[j].z;
+          coordsChargesF[j].y = -coordsChargesF[j].y;
+          coordsChargesF[j].z = -coordsChargesF[j].z;
+          velMass[j].y = -velMass[j].y;
+          velMass[j].z = -velMass[j].z;
+          forces[1 * forceStride + j] = -forces[1 * forceStride + j];
+          forces[2 * forceStride + j] = -forces[2 * forceStride + j];
+          gy = -gy;
+          gz = -gz;
+        }
+      }
+    }
 
-  // forces do not necessarily need to be inverted for the case pf o21 since
-  // they will be updated soon during energy/force calculation
+    // -Y Recenter
+    if (gy < -0.5 * boxY) {
+      for (int j = group.x; j <= group.y; j++) {
+        coordsChargesD[j].y += boxY;
+        coordsChargesF[j].y += static_cast<float>(boxY);
+      }
+    }
 
-  imageCenterKernel<<<numBlocks, numThreads>>>(
-      pbc, box, forceStride, numGroups, groups.getDeviceArray().data(),
+    // +Y Recenter
+    if (gy > 0.5 * boxY) {
+      for (int j = group.x; j <= group.y; j++) {
+        coordsChargesD[j].y -= boxY;
+        coordsChargesF[j].y -= static_cast<float>(boxY);
+      }
+    }
+
+    // -Z Recenter
+    if (gz < -0.5 * boxZ) {
+      for (int j = group.x; j <= group.y; j++) {
+        coordsChargesD[j].z += boxZ;
+        coordsChargesF[j].z += static_cast<float>(boxZ);
+      }
+    }
+
+    // +Z Recenter
+    if (gz > 0.5 * boxZ) {
+      for (int j = group.x; j <= group.y; j++) {
+        coordsChargesD[j].z -= boxZ;
+        coordsChargesF[j].z -= static_cast<float>(boxZ);
+      }
+    }
+  }
+
+  return;
+}
+
+void CharmmContext::imageCentering(void) {
+  const double boxx = forceManager->getBoxDimensions()[0];
+  const double boxy = forceManager->getBoxDimensions()[1];
+  const double boxz = forceManager->getBoxDimensions()[2];
+
+  double *forces = this->getForces()->xyz();
+  const int forceStride = this->getForceStride();
+
+  const CudaContainer<int2> &groups = forceManager->getPsf()->getGroups();
+  const int numGroups = groups.size();
+
+  constexpr int numThreads = 128;
+  const int numBlocks = (numGroups + numThreads - 1) / numThreads;
+
+  ImageCenteringKernel<<<numBlocks, numThreads>>>(
       coordsCharge.getDeviceArray().data(), xyzq.getDeviceArray().data(),
-      velocityMass.getDeviceArray().data(), force->xyz());
+      velocityMass.getDeviceArray().data(), forces, forceStride,
+      groups.getDeviceArray().data(), numGroups, boxx, boxy, boxz,
+      forceManager->getPeriodicBoundaryCondition());
+
   cudaCheck(cudaDeviceSynchronize());
+
+  // coordsCharge.transferToHost();
+  // xyzq.transferToHost();
+  // for (int i = 0; i < numAtoms; i++) {
+  //   std::cout << "i = " << i << std::endl;
+  //   std::cout << "D: " << coordsCharge[i].x << ", " << coordsCharge[i].y <<
+  //   ", "
+  //             << coordsCharge[i].z << ", " << coordsCharge[i].w << std::endl;
+  //   std::cout << "F: " << xyzq[i].x << ", " << xyzq[i].y << ", " << xyzq[i].z
+  //             << ", " << xyzq[i].w << std::endl;
+  // }
+
+  return;
 }
 
 void CharmmContext::resetNeighborList() {
-  imageCentering();
+  this->imageCentering();
   forceManager->resetNeighborList(xyzq.getDeviceArray().data());
+  return;
 }
 
 void CharmmContext::calculateForces(bool reset, bool calcEnergy,
@@ -887,6 +956,7 @@ void CharmmContext::writeCrd(std::string fileName) {
   }
 }
 
+/* *
 void CharmmContext::readRestart(std::string fileName) {
   std::ifstream restartFile(fileName);
   std::string line, sectionString = "!VX";
@@ -918,24 +988,15 @@ void CharmmContext::readRestart(std::string fileName) {
 
   // Extract the positions to a float3 vector, then create a CharmmCrd file
   // from it
-  std::vector<float3> inpCrd;
-  float x, y, z;
-  float3 crd;
+  std::vector<double4> crds(numAtoms);
 
-  for (int count = 0; count < numAtoms; count++) {
+  for (int i = 0; i < numAtoms; i++) {
     std::getline(restartFile, line);
     std::stringstream ss(line);
-    ss >> x >> y >> z;
-    // Save somewhere !
-    crd.x = x;
-    crd.y = y;
-    crd.z = z;
-    inpCrd.push_back(crd);
+    crds[i] = make_double4(0.0, 0.0, 0.0, 0.0);
+    ss >> crds[i].x >> crds[i].y >> crds[i].z;
   }
-  auto charmmCrd = std::make_shared<CharmmCrd>(inpCrd);
-  // use setCoordinates to setup ctx.numAtoms as well as charges (from PSF)
-  // and xyzq
-  setCoordinates(charmmCrd);
+  this->setCoordinates(crds);
 
   // Pass the blank line & the comment-title line
   std::getline(restartFile, line);
@@ -967,6 +1028,7 @@ void CharmmContext::readRestart(std::string fileName) {
     setBoxDimensions({x, y, z});
   }
 }
+* */
 
 int CharmmContext::getNumDegreesOfFreedom() { return numDegreesOfFreedom; }
 

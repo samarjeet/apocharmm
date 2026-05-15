@@ -289,7 +289,7 @@ public:
                                   std::vector<int> &inb14);
   void setupNeighborList(int numAtoms);
   void resetNeighborList(const float4 *xyzq, int numAtoms);
-  void setBoxDimensions(std::vector<double> dim);
+  void setBoxDimensions(const std::vector<double> &dim);
   void setStream(std::shared_ptr<cudaStream_t> streamIn) {
     directStream = streamIn;
   }

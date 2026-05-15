@@ -57,11 +57,16 @@ TEST_CASE("CharmmContext", "[unit]") {
 
     // Check that the coordinate setter using vect(vect(double)) works
     std::vector<double> singleCoord = {-1., -2., -3.};
-    std::vector<std::vector<double>> coords;
+    std::vector<double4> coords;
+    std::vector<std::vector<double>> vels;
     for (int i = 0; i < 10; i++) {
-      std::vector<double> currentCoord = {
-          singleCoord[0] + i, singleCoord[1] + i, singleCoord[2] + i};
-      coords.push_back(currentCoord);
+      // std::vector<double> currentCoord = {
+      //     singleCoord[0] + i, singleCoord[1] + i, singleCoord[2] + i};
+      // coords.push_back(currentCoord);
+      coords.push_back(make_double4(singleCoord[0] + i, singleCoord[1] + i,
+                                    singleCoord[2] + i, 0.0));
+      vels.push_back(
+          {singleCoord[0] + i, singleCoord[1] + i, singleCoord[2] + i});
     }
     CHECK_NOTHROW(ctx->setCoordinates(coords));
     auto cccc = ctx->getCoordinatesCharges();
@@ -72,7 +77,7 @@ TEST_CASE("CharmmContext", "[unit]") {
     CHECK(compareVectors(coordToTest, singleCoord));
 
     // Check the velocities setter using vect(vect(double))
-    CHECK_NOTHROW(ctx->assignVelocities(coords));
+    CHECK_NOTHROW(ctx->assignVelocities(vels));
     auto ccvm = ctx->getVelocityMass();
     ccvm.transferFromDevice();
     std::vector<double> velToTest = {ccvm.getHostArray()[0].x,
@@ -112,7 +117,8 @@ TEST_CASE("CharmmContext", "[unit]") {
     auto fm = std::make_shared<ForceManager>(psf, prm);
     fm->setBoxDimensions({50., 50., 50.});
     auto ctx = std::make_shared<CharmmContext>(fm);
-    ctx->readRestart(dataPath + "restart/heat_waterbox.restart");
+    // JEG260505: CharmmContext does not read restart files
+    // ctx->readRestart(dataPath + "restart/heat_waterbox.restart");
 
     // make sure the computePressure function returns the same value as the
     // Langevin piston one

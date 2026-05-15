@@ -4,72 +4,91 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author:  Samarjeet Prasad
+// Author:  James E. Gonzales II, Samarjeet Prasad
 //
 // ENDLICENSE
 
 #include "CharmmContext.h"
 #include "CharmmCrd.h"
-#include "CudaRestraintForce.h"
+#include "CudaLangevinThermostatIntegrator.h"
+#include "DcdSubscriber.h"
 #include "ForceManager.h"
-#include "GeometricRestraintForce.h"
+#include "HarmonicRestraintForce.h"
 #include "catch.hpp"
 #include "test_paths.h"
-#include <cuda_runtime.h>
 #include <iostream>
 #include <memory>
 
-TEST_CASE("restraintForce", "[energy]") {
-  std::string dataPath = getDataPath();
+TEST_CASE("harmonicRestraintForce") {
+  const std::string dataPath = getDataPath();
+  const std::vector<double> boxDims(3, 50.0);
+  const int randomSeed = 314159;
+  const double temperature = 300.0;
+  const int nstep = 10000;
+  const double timeStep = 0.002;
 
-  std::vector<std::string> prmFiles{dataPath + "toppar_water_ions.str"};
-  auto prm = std::make_shared<CharmmParameters>(prmFiles);
-  auto psf = std::make_shared<CharmmPSF>(dataPath + "water2_1.psf");
+  SECTION("nacl") {
+    auto prm =
+        std::make_shared<CharmmParameters>(dataPath + "toppar_water_ions.str");
+    auto psf = std::make_shared<CharmmPSF>(dataPath + "nacl_pair.psf");
+    auto crd = std::make_shared<CharmmCrd>(dataPath + "nacl_pair.cor");
 
-  auto numAtoms = psf->getNumAtoms();
+    // Setup force manager
+    auto fm = std::make_shared<ForceManager>(psf, prm);
+    fm->setBoxDimensions(boxDims);
 
-  auto restraintForceValues = std::make_shared<Force<long long int>>();
-  restraintForceValues->realloc(numAtoms, 1.5f);
+    // Setup CHARMM context
+    auto ctx = std::make_shared<CharmmContext>(fm);
+    ctx->setCoordinates(crd);
+    ctx->setRandomSeedForVelocities(randomSeed);
+    ctx->assignVelocitiesAtTemperature(temperature);
 
-  CudaEnergyVirial restraintEnergyVirial;
-  /*auto restraint = std::make_shared<GeometricRestraintForce<long long,
-  float>>( restraintEnergyVirial); restraint->setForce(restraintForceValues);
-  // put this force on a stream
+    // Setup integrator
+    auto integrator =
+        std::make_shared<CudaLangevinThermostatIntegrator>(timeStep);
+    integrator->setThermostatFriction(1.0);
+    integrator->setThermostatRngSeed(randomSeed);
+    integrator->setCharmmContext(ctx);
 
-  restraint->addRestraint(RestraintShape::PLANE, PotentialFunction::HARMONIC,
-                          false, {0.0, 0.0, 0.0}, true, {1.0, 0.0, 0.0}, false,
-                          1.0, 0.0, {0, 1, 2});
+    // DCD subscriber to visualize effects of restraints
+    // Uncomment the lines below if you want to write out the trajectory
+    // auto dcd = std::make_shared<DcdSubscriber>("tmpHarmRestraint.dcd", 1);
+    // integrator->subscribe(dcd);
 
+    // Setup harmonic restraint
+    auto harm =
+        std::make_shared<HarmonicRestraintForce<long long int, float>>();
+    harm->initialize(ctx->getNumAtoms(), boxDims);
+    harm->setReferenceCoordinates(crd->getCoordinatesD());
+    // harm->setMasses(psf->getMasses());
+    fm->subscribe(harm, "HarmonicRestraint", harm->getStream(),
+                  harm->getForce(), harm->getEnergyVirial());
 
+    // Compute initial distance between Na-Cl before any dynamics
+    CudaContainer<double4> &xyzq = ctx->getCoordinatesCharges();
+    xyzq.transferToHost();
+    const double dx0 = xyzq[1].x - xyzq[0].x;
+    const double dy0 = xyzq[1].y - xyzq[0].y;
+    const double dz0 = xyzq[1].z - xyzq[0].z;
+    const double r0 = std::sqrt(dx0 * dx0 + dy0 * dy0 + dz0 * dz0);
+    std::cout << "r0 = " << r0 << std::endl;
 
+    // Run dynamics with progressively stronger harmonic restraints.
+    // (NOT ACTUALLY GOOD PRACTICE, THIS IS ONLY FOR DEMO/TESTING)
+    double forceConstant = 1e-8;
+    for (int i = 0; i < 14; i++) {
+      harm->setForceConstant(forceConstant);
+      integrator->propagate(1000);
+      forceConstant *= 10.0;
+    }
 
-  auto fm = std::make_shared<ForceManager>(psf, prm);
+    xyzq.transferToHost();
+    const double dx = xyzq[1].x - xyzq[0].x;
+    const double dy = xyzq[1].y - xyzq[0].y;
+    const double dz = xyzq[1].z - xyzq[0].z;
+    const double r = std::sqrt(dx * dx + dy * dy + dz * dz);
+    std::cout << "r = " << r << std::endl;
 
-  fm->setBoxDimensions({50.0, 50.0, 50.0});
-  fm->setFFTGrid(48, 48, 48);
-  fm->setKappa(0.34);
-  fm->setCutoff(12.0);
-  fm->setCtonnb(8.0);
-  fm->setCtofnb(10.0);
-
-  auto ctx = std::make_shared<CharmmContext>(fm);
-  auto crd = std::make_shared<CharmmCrd>(dataPath + "water2.crd");
-  ctx->setCoordinates(crd);
-  ctx->assignVelocitiesAtTemperature(300);
-  ctx->calculatePotentialEnergy(true, true);
-
-  auto xyzq = ctx->getXYZQ();
-
-  restraint->calc_force(xyzq->getDeviceXYZQ(), true, true);
-  cudaDeviceSynchronize();
-
-  // restraintForceValues->transferFromDevice();
-
-  // assert that all the forces are correct
-  // REQUIRE(ctx->getPotentialEnergy() == Approx(-1.041e+04).epsilon(0.01));
-  // REQUIRE(ctx->getForces()[0] == Approx(1.0).epsilon(0.01));
-  // REQUIRE(ctx->getForces()[1] == Approx(1.0).epsilon(0.01));
-  INFO("No assertion performed !!");
-  // CHECK(false);
-  */
+    CHECK(std::abs(r0 - r) < 0.01);
+  }
 }

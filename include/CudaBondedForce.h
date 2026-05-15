@@ -191,7 +191,7 @@ public:
   void setForce(std::shared_ptr<Force<long long int>> &forceValIn);
   void setStream(std::shared_ptr<cudaStream_t> streamIn);
   void calc_force(const float4 *xyzq, bool calcEnergy, bool calcVirial);
-  void setBoxDimensions(std::vector<double> dim) { boxDimensions = dim; }
+  void setBoxDimensions(const std::vector<double> &dim) { boxDimensions = dim; }
 
   std::shared_ptr<Force<long long int>> getForce(void);
 };

@@ -659,9 +659,10 @@ TEST_CASE("waterbox", "[dynamics]") {
     fm->setCtofnb(9.0);
 
     auto ctx = std::make_shared<CharmmContext>(fm);
+    // JEG260505: CharmmContext does not read restart files
     // ctx->readRestart(dataPath + "restart/waterbox.npt.restart");
-    ctx->readRestart(
-        "/u/aviatfel/work/apocharmm/restartgen/equilibratedRestart.res");
+    // ctx->readRestart(
+    //     "/u/aviatfel/work/apocharmm/restartgen/equilibratedRestart.res");
 
     auto dimFromRestart = fm->getBoxDimensions();
     std::cout << "Box dimensions from restart: " << dimFromRestart[0] << " "

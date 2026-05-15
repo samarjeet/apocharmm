@@ -16,6 +16,7 @@
 // #include <nvToolsExt.h>
 #include <nvtx3/nvToolsExt.h>
 // #include <nvtx3/nvtx3.hpp>
+#include <cuda.h>
 #include <cuda_runtime.h>
 #include <stdexcept>
 #include <stdio.h>
@@ -23,13 +24,34 @@
 #include <vector>
 
 #define cudaCheck(result)                                                      \
-  if (result != cudaSuccess) {                                                 \
-    std::string msg = std::string(cudaGetErrorString(result)) + "\n";          \
-    msg += "  file(): " + std::string(__FILE__) + "\n";                        \
-    msg += "   ftn(): " + std::string(__FUNCTION__) + "\n";                    \
-    msg += "  line(): " + std::to_string(__LINE__) + "\n";                     \
-    throw std::runtime_error(msg);                                             \
-  }
+  do {                                                                         \
+    cudaError_t res = result;                                                  \
+    if (res != cudaSuccess) {                                                  \
+      std::string msg = std::string(cudaGetErrorString(res)) + "\n";           \
+      msg += "  file(): " + std::string(__FILE__) + "\n";                      \
+      msg += "   ftn(): " + std::string(__FUNCTION__) + "\n";                  \
+      msg += "  line(): " + std::to_string(__LINE__) + "\n";                   \
+      throw std::runtime_error(msg);                                           \
+    }                                                                          \
+  } while (false);
+
+#define APO_LAUNCH_CHECK(kernel, grid, block, shmem, stream, ...)              \
+  do {                                                                         \
+    cudaFuncAttributes attr{};                                                 \
+    cudaCheck(cudaFuncGetAttributes(&attr, kernel));                           \
+    std::cout << "Launching " << #kernel << " grid.{x, y, z}=" << (grid).x     \
+              << ", " << (grid.y) << ", " << (grid).z                          \
+              << " block.{x, y, z}=" << (block).x << ", " << (block.y) << ", " \
+              << (block).z                                                     \
+              << " maxThreadsPerBlock=" << attr.maxThreadsPerBlock             \
+              << " numRegs=" << attr.numRegs                                   \
+              << " staticShared=" << attr.sharedSizeBytes                      \
+              << " dynamicShared=" << static_cast<std::size_t>(shmem)          \
+              << std::endl;                                                    \
+    kernel<<<grid, block, shmem, stream>>>(__VA_ARGS__);                       \
+    cudaCheck(cudaPeekAtLastError());                                          \
+    cudaCheck(cudaDeviceSynchronize());                                        \
+  } while (false);
 
 // The following macro is from
 // https://stackoverflow.com/questions/6978643/cuda-and-classes

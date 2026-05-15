@@ -7,6 +7,30 @@
 #include <vector>
 
 template <typename T>
+bool CompareVector(const std::vector<T> &vec, const T val,
+                   const double tol = 1e-12, const bool verbose = false) {
+  for (std::size_t i = 0; i < vec.size(); i++) {
+    T diff = std::abs(vec[i] - val);
+    if (diff > tol) {
+      if (verbose == true) {
+        int pwr = static_cast<int>(std::ceil(std::abs(std::log10(tol))));
+        std::ios fmt(nullptr);
+        fmt.copyfmt(std::cout);
+        std::cout << "Vector does not equal val at index " << i << ":\n";
+        std::cout << std::scientific << std::setprecision(pwr);
+        std::cout << " Vector value = " << vec[i] << "\n";
+        std::cout << " Static value = " << val << "\n";
+        std::cout << "   Abs. Diff. = " << diff << std::endl;
+        std::cout.copyfmt(fmt);
+      }
+      return false;
+    }
+  }
+
+  return true;
+}
+
+template <typename T>
 bool CompareVectors(const std::vector<T> &a, const std::vector<T> &b) {
   if (a.size() != b.size())
     return false;

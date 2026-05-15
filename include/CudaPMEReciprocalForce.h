@@ -224,7 +224,7 @@ public:
     numAtoms = n;
   }
 
-  void setBoxDimensions(std::vector<double> dim) { boxDimensions = dim; }
+  void setBoxDimensions(const std::vector<double> &dim) { boxDimensions = dim; }
 
   void clear(void);
 

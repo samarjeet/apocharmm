@@ -15,34 +15,34 @@
 
 #include "PDB.h"
 
-PDB::PDB(const std::string &fileName) { readPDBFile(fileName); }
+PDB::PDB(const std::string &fileName) { this->readPDBFile(fileName); }
 
 /*
 
-COLUMNS        DATA TYPE       CONTENTS                            
+COLUMNS        DATA TYPE       CONTENTS
 --------------------------------------------------------------------------------
-   1 -  6        Record name     "ATOM  "                                            
-   7 - 11        Integer         Atom serial number.                   
-  13 - 16        Atom            Atom name.                            
-  17             Character       Alternate location indicator.         
-  18 - 20        Residue name    Residue name.                         
-  22             Character       Chain identifier.                     
-  23 - 26        Integer         Residue sequence number.              
-  27             AChar           Code for insertion of residues.       
-  31 - 38        Real(8.3)       Orthogonal coordinates for X in Angstroms.         
-  39 - 46        Real(8.3)       Orthogonal coordinates for Y in Angstroms.         
-  47 - 54        Real(8.3)       Orthogonal coordinates for Z in Angstroms.         
-  55 - 60        Real(6.2)       Occupancy.                            
-  61 - 66        Real(6.2)       Temperature factor (Default = 0.0).                
-  73 - 76        LString(4)      Segment identifier, left-justified.   
-  77 - 78        LString(2)      Element symbol, right-justified.      
+   1 -  6        Record name     "ATOM  "
+   7 - 11        Integer         Atom serial number.
+  13 - 16        Atom            Atom name.
+  17             Character       Alternate location indicator.
+  18 - 20        Residue name    Residue name.
+  22             Character       Chain identifier.
+  23 - 26        Integer         Residue sequence number.
+  27             AChar           Code for insertion of residues.
+  31 - 38        Real(8.3)       Orthogonal coordinates for X in Angstroms.
+  39 - 46        Real(8.3)       Orthogonal coordinates for Y in Angstroms.
+  47 - 54        Real(8.3)       Orthogonal coordinates for Z in Angstroms.
+  55 - 60        Real(6.2)       Occupancy.
+  61 - 66        Real(6.2)       Temperature factor (Default = 0.0).
+  73 - 76        LString(4)      Segment identifier, left-justified.
+  77 - 78        LString(2)      Element symbol, right-justified.
   79 - 80        LString(2)      Charge on the atom.
 */
 
 static std::vector<std::string> split(std::string line) {
-  //std::stringstream ss(line);
+  // std::stringstream ss(line);
   std::string atomId, resId, resName, atom, x, y, z;
-  //ss >> atomId >> resId >> resName >> atom >> x >> y >> z;
+  // ss >> atomId >> resId >> resName >> atom >> x >> y >> z;
 
   atomId = line.substr(6, 5);
   atom = line.substr(12, 4);
@@ -56,28 +56,40 @@ static std::vector<std::string> split(std::string line) {
   return content;
 }
 
-void PDB::readPDBFile(std::string fileName) {
+void PDB::readPDBFile(const std::string &fileName) {
   // nelecting lines that do not contain ATOM as the first word
   std::string line;
   std::ifstream pdbFile(fileName);
 
   if (!pdbFile.is_open()) {
-    //std::exception ; //<< "ERROR: Cannot open the file " << fileName << "\n. Exiting\n";
-    //std::bad_exception ; //<< "ERROR: Cannot open the file " << fileName << "\n. Exiting\n";
+    // std::exception ; //<< "ERROR: Cannot open the file " << fileName << "\n.
+    // Exiting\n"; std::bad_exception ; //<< "ERROR: Cannot open the file " <<
+    // fileName << "\n. Exiting\n";
     std::cout << "ERROR: Cannot open the file " << fileName << "\nExiting\n";
     exit(0);
   }
 
   std::getline(pdbFile, line);
+  std::vector<float4> tmp;
   while (line.size() != 0) {
-    if (line.find("ATOM") == 0  || line.find("HETATM") == 0 ){
-      //std::cout << line << "\n";
+    if (line.find("ATOM") == 0 || line.find("HETATM") == 0) {
+      // std::cout << line << "\n";
       auto content = split(line);
-      float x = std::stof(content[4]);
-      float y = std::stof(content[5]);
-      float z = std::stof(content[6]);
-      coords.push_back(make_float4(x, y, z, 0.0));
+      const float x = std::stof(content[4]);
+      const float y = std::stof(content[5]);
+      const float z = std::stof(content[6]);
+      tmp.push_back(make_float4(x, y, z, 0.0f));
     }
     std::getline(pdbFile, line);
   }
+
+  this->setNumAtoms(tmp.size());
+  for (int i = 0; i < m_NumAtoms; i++) {
+    m_CoordinatesD[i] = make_double4(static_cast<double>(tmp[i].x),
+                                     static_cast<double>(tmp[i].y),
+                                     static_cast<double>(tmp[i].z), 0.0f);
+    m_CoordinatesF[i] = tmp[i];
+  }
+
+  return;
 }

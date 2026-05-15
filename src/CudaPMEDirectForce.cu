@@ -1369,7 +1369,8 @@ void CudaPMEDirectForce<AT, CT>::resetNeighborList(const float4 *xyzq,
 }
 
 template <typename AT, typename CT>
-void CudaPMEDirectForce<AT, CT>::setBoxDimensions(std::vector<double> dim) {
+void CudaPMEDirectForce<AT, CT>::setBoxDimensions(
+    const std::vector<double> &dim) {
   boxDimensions = dim;
   set_box_size(dim[0], dim[1], dim[2]);
 }

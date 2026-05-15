@@ -23,6 +23,22 @@ DeviceVector<T>::DeviceVector(const std::size_t count) : DeviceVector() {
 }
 
 template <typename T>
+DeviceVector<T>::DeviceVector(const std::vector<T> &other)
+    : DeviceVector(other.size()) {
+  cudaCheck(cudaMemcpy(static_cast<void *>(m_Data),
+                       static_cast<const void *>(other.data()),
+                       other.size() * sizeof(T), cudaMemcpyHostToDevice));
+}
+
+template <typename T>
+DeviceVector<T>::DeviceVector(const std::vector<T> &&other)
+    : DeviceVector(other.size()) {
+  cudaCheck(cudaMemcpy(static_cast<void *>(m_Data),
+                       static_cast<const void *>(other.data()),
+                       other.size() * sizeof(T), cudaMemcpyHostToDevice));
+}
+
+template <typename T>
 DeviceVector<T>::DeviceVector(const DeviceVector<T> &other)
     : DeviceVector(other.size()) {
   cudaCheck(cudaMemcpy(static_cast<void *>(m_Data),
@@ -40,6 +56,26 @@ DeviceVector<T>::DeviceVector(const DeviceVector<T> &&other)
 
 template <typename T> DeviceVector<T>::~DeviceVector(void) {
   this->deallocate();
+}
+
+template <typename T>
+DeviceVector<T> &DeviceVector<T>::operator=(const std::vector<T> &other) {
+  this->reallocate(other.capacity());
+  m_Size = other.size();
+  cudaCheck(cudaMemcpy(static_cast<void *>(m_Data),
+                       static_cast<const void *>(other.data()),
+                       other.size() * sizeof(T), cudaMemcpyHostToDevice));
+  return *this;
+}
+
+template <typename T>
+DeviceVector<T> &DeviceVector<T>::operator=(const std::vector<T> &&other) {
+  this->reallocate(other.capacity());
+  m_Size = other.size();
+  cudaCheck(cudaMemcpy(static_cast<void *>(m_Data),
+                       static_cast<const void *>(other.data()),
+                       other.size() * sizeof(T), cudaMemcpyHostToDevice));
+  return *this;
 }
 
 template <typename T>
@@ -106,7 +142,7 @@ __global__ static void SetBackKernel(T *data, const std::size_t size,
 
 template <typename T> void DeviceVector<T>::push_back(const T &value) {
   if (m_Size >= m_Capacity) // Increase size of memory block by 50%
-    this->reallocate(m_Capacity + m_Capacity / 2);
+    this->reallocate(m_Capacity + (m_Capacity / 2) + 1);
 
   m_Size++;
 

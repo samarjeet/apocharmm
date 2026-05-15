@@ -159,7 +159,7 @@ void Logger::logForceManager() {
   xmlForceManager->SetAttribute("PBC", tempstr.c_str());
 
   tinyxml2::XMLElement *xmlPSF = xmldoc.NewElement("PSF");
-  xmlPSF->SetText(fm->getPsf()->getOriginalPSFFileName().c_str());
+  xmlPSF->SetText(fm->getPsf()->getFileName().c_str());
   tinyxml2::XMLElement *xmlPRM = xmldoc.NewElement("PRM");
   std::vector<std::string> prmFileNames =
       fm->getPrm()->getOriginalPrmFileNames();

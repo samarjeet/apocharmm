@@ -176,8 +176,8 @@ void StateSubscriber::readReportFlags(
     const std::vector<std::string> &reportStrings) {
   std::vector<std::string> tokens = reportStrings;
   for (std::string &token : tokens) {
-    apo::trimIP(token);
-    apo::toLowerIP(token);
+    apo::trim_ip(token);
+    apo::to_lower_ip(token);
   }
   this->setReportFlags(tokens);
   return;

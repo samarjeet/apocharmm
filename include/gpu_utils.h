@@ -428,25 +428,40 @@ __forceinline__ __device__ void get_val(long long int &val, const int wid) {
 #endif
 //----------------------------------------------------------------------------------------
 
-template <typename T> __device__ __inline__ T WarpReduceSum(T value) {
-#pragma unroll
-  for (unsigned int offset = warpSize / 2; offset > 0; offset /= 2)
-    value += __shfl_down_sync(0xFFFFFFFF, value, offset, warpSize);
+template <typename T> __device__ __forceinline__ T WarpReduceSum(T value) {
+  value += __shfl_down_sync(0xFFFFFFFF, value, 16, warpSize);
+  value += __shfl_down_sync(0xFFFFFFFF, value, 8, warpSize);
+  value += __shfl_down_sync(0xFFFFFFFF, value, 4, warpSize);
+  value += __shfl_down_sync(0xFFFFFFFF, value, 2, warpSize);
+  value += __shfl_down_sync(0xFFFFFFFF, value, 1, warpSize);
   return value;
 }
 
-template <> __device__ __inline__ double4 WarpReduceSum(double4 value) {
-#pragma unroll
-  for (unsigned int offset = warpSize / 2; offset > 0; offset /= 2) {
-    value.x += __shfl_down_sync(0xFFFFFFFF, value.x, offset, warpSize);
-    value.y += __shfl_down_sync(0xFFFFFFFF, value.y, offset, warpSize);
-    value.z += __shfl_down_sync(0xFFFFFFFF, value.z, offset, warpSize);
-    value.w += __shfl_down_sync(0xFFFFFFFF, value.w, offset, warpSize);
-  }
+template <> __device__ __forceinline__ double4 WarpReduceSum(double4 value) {
+  value.x += __shfl_down_sync(0xFFFFFFFF, value.x, 16, warpSize);
+  value.x += __shfl_down_sync(0xFFFFFFFF, value.x, 8, warpSize);
+  value.x += __shfl_down_sync(0xFFFFFFFF, value.x, 4, warpSize);
+  value.x += __shfl_down_sync(0xFFFFFFFF, value.x, 2, warpSize);
+  value.x += __shfl_down_sync(0xFFFFFFFF, value.x, 1, warpSize);
+  value.y += __shfl_down_sync(0xFFFFFFFF, value.y, 16, warpSize);
+  value.y += __shfl_down_sync(0xFFFFFFFF, value.y, 8, warpSize);
+  value.y += __shfl_down_sync(0xFFFFFFFF, value.y, 4, warpSize);
+  value.y += __shfl_down_sync(0xFFFFFFFF, value.y, 2, warpSize);
+  value.y += __shfl_down_sync(0xFFFFFFFF, value.y, 1, warpSize);
+  value.z += __shfl_down_sync(0xFFFFFFFF, value.z, 16, warpSize);
+  value.z += __shfl_down_sync(0xFFFFFFFF, value.z, 8, warpSize);
+  value.z += __shfl_down_sync(0xFFFFFFFF, value.z, 4, warpSize);
+  value.z += __shfl_down_sync(0xFFFFFFFF, value.z, 2, warpSize);
+  value.z += __shfl_down_sync(0xFFFFFFFF, value.z, 1, warpSize);
+  value.w += __shfl_down_sync(0xFFFFFFFF, value.w, 16, warpSize);
+  value.w += __shfl_down_sync(0xFFFFFFFF, value.w, 8, warpSize);
+  value.w += __shfl_down_sync(0xFFFFFFFF, value.w, 4, warpSize);
+  value.w += __shfl_down_sync(0xFFFFFFFF, value.w, 2, warpSize);
+  value.w += __shfl_down_sync(0xFFFFFFFF, value.w, 1, warpSize);
   return value;
 }
 
-template <typename T> __device__ __inline__ T BlockReduceSum(T value) {
+template <typename T> __device__ __forceinline__ T BlockReduceSum(T value) {
   __shared__ T cache[32];
   const unsigned int lane = threadIdx.x % warpSize;
   const unsigned int warpIdx = threadIdx.x / warpSize;
@@ -470,7 +485,7 @@ template <typename T> __device__ __inline__ T BlockReduceSum(T value) {
   return value;
 }
 
-template <> __device__ __inline__ double4 BlockReduceSum(double4 value) {
+template <> __device__ __forceinline__ double4 BlockReduceSum(double4 value) {
   __shared__ double4 cache[32];
   const unsigned int lane = threadIdx.x % warpSize;
   const unsigned int warpIdx = threadIdx.x / warpSize;

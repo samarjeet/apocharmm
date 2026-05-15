@@ -668,7 +668,7 @@ __global__ void buildKernel(
                 }
               }
             } // if (total_xyz > 0)
-          }   // if (total_xy > 0)
+          } // if (total_xy > 0)
 
           if (!IvsI)
             jzone_counter++;
@@ -677,9 +677,9 @@ __global__ void buildKernel(
         // if (wid == 0) shVars->imz++;
       } // for (int imz=imz_lo;imz <= imz_hi;imz++)
         // if (wid == 0) shVars->imy++;
-    }   // for (int imy=imy_lo;imy <= imy_hi;imy++)
-        // if (wid == 0) shVars->imx++;
-  }     // for (int imx=imx_lo;imx <= imx_hi;imx++)
+    } // for (int imy=imy_lo;imy <= imy_hi;imy++)
+      // if (wid == 0) shVars->imx++;
+  } // for (int imx=imx_lo;imx <= imx_hi;imx++)
 }
 
 template <int tilesize>
@@ -942,7 +942,7 @@ __global__ void buildExclKernel(
         } // if (natomj == warpsize)
 
       } // if (__any((r2 < rcut2)))
-    }   // for (int j=0;j <= jatomEnd-jatomStart;j++)
+    } // for (int j=0;j <= jatomEnd-jatomStart;j++)
 
     //---------------------------------------------------------------------------------------
 
@@ -2166,7 +2166,7 @@ void CudaNeighborListBuild<tilesize>::test_build(
           if (pair)
             ncell_pair++;
         } // for (int jcell...)
-      }   // for (int icell...)
+      } // for (int icell...)
     }
   }
 

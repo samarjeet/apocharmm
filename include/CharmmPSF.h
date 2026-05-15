@@ -4,215 +4,156 @@
 // license, as described in the LICENSE file in the top level directory of this
 // project.
 //
-// Author: Samarjeet Prasad
+// Author: Samarjeet Prasad, James E. Gonzales II
 //
 // ENDLICENSE
 
 #pragma once
+
 #include "CudaContainer.h"
 #include <set>
 #include <string>
 #include <vector>
 
-// forward decalation of CharmmResidueTopology
-class CharmmResidueTopology;
-
-class Bond {
-public:
-  int atom1, atom2;
+struct Bond {
+  int iatom, jatom;
 };
 
-class Angle {
-public:
-  int atom1, atom2, atom3;
+struct Angle {
+  int iatom, jatom, katom;
 };
 
-class Dihedral {
-public:
-  int atom1, atom2, atom3, atom4;
+struct Dihedral {
+  int iatom, jatom, katom, latom;
 };
 
-class CrossTerm {
-public:
-  int atomi1, atomj1, atomk1, atoml1;
-  int atomi2, atomj2, atomk2, atoml2;
+struct CrossTerm {
+  int iatom1, jatom1, katom1, latom1;
+  int iatom2, jatom2, katom2, latom2;
 };
 
 struct InclusionExclusion {
   std::vector<int> sizes;
   std::vector<int> in14_ex14;
 
-  InclusionExclusion(std::vector<int> s, std::vector<int> list)
-      : sizes(s), in14_ex14(list) {}
+  InclusionExclusion(const std::vector<int> &_sizes,
+                     const std::vector<int> &_in14_ex14)
+      : sizes(_sizes), in14_ex14(_in14_ex14) {}
 };
 
-/**
- * @brief CHARMM topology file (PSF)
- *
- * CHARMM topology file (PSF) representation. Contains N-sized vector of all
- * the following entries:
- * - Bond bonds (getBonds())
- * - Angle angles (getAngles())
- * - Dihedral dihedrals (getDihedrals())
- * - Dihedral improper dihedrals (getImpropers())
- * - charges (see getAtomCharges())
- *
- * Used to generate ForceManager objects.
- *
- * @note in this documentation page, the system number of atoms is referred to
- * as N.
- *
- */
 class CharmmPSF {
 public:
-  /** @brief Base constructor */
-  CharmmPSF();
-  /** @brief Constructor from a .psf file name */
+  /**
+   * @brief Base constructor
+   */
+  CharmmPSF(void);
+
+  /**
+   * @brief Construct a CharmmPSF object from a CHARMM formatted PSF.
+   */
   CharmmPSF(const std::string &fileName);
 
-  /** @brief Basic copy-constructor
-   * @todo unittest this: same attribute vlaues for the copy, acting on copy
-   * does not change the original
+  /**
+   * @brief Copy constructor
    */
-
-  CharmmPSF(const CharmmPSF &psfIn);
+  CharmmPSF(const CharmmPSF &other);
 
   /**
-   * @brief Increase the mass of the hydrogen atoms to a given amount
-   * Note that function is not 'repartitioning' hydrogen mass to the neighbor
-   * atoms, but rather increasing the mass of the hydrogen atoms to a given
-   * mass
-   * @param _newHyrogenMass (in a.m.u.)
+   * @brief Move constructor
    */
-  void setHydrogenMass(double _newHyrogenMass);
+  CharmmPSF(const CharmmPSF &&other);
 
-  int getNumAtoms() { return numAtoms; }
-  int getNumBonds() { return numBonds; }
-  int getNumAngles() { return numAngles; }
-  int getNumDihedrals() { return numDihedrals; }
-  int getNumImpropers() { return numImpropers; }
-  int getNumCrossTerms() { return numCrossTerms; }
+public:
+  void setNumAtoms(const int numAtoms);
+  void setAtomCharges(const std::vector<double> &charges);
 
-  /** @brief Returns a vector containing all Bond objects */
-  const std::vector<Bond> &getBonds(void) const { return bonds; }
-  std::vector<Bond> &getBonds(void) { return bonds; }
-  /** @brief Returns a vector containing all Angle objects */
-  const std::vector<Angle> &getAngles(void) const { return angles; }
-  std::vector<Angle> &getAngles(void) { return angles; }
-  /** @brief Returns a vector containing all Dihedral objects */
-  const std::vector<Dihedral> &getDihedrals(void) const { return dihedrals; }
-  std::vector<Dihedral> &getDihedrals(void) { return dihedrals; }
-  /** @brief Returns a vector containing all improper dihedral objects */
-  const std::vector<Dihedral> &getImpropers(void) const { return impropers; }
-  std::vector<Dihedral> &getImpropers(void) { return impropers; }
-  /** @brief Returns a vector containing all cross term objects */
-  const std::vector<CrossTerm> &getCrossTerms(void) const { return crossTerms; }
-  std::vector<CrossTerm> &getCrossTerms(void) { return crossTerms; }
+public:
+  int getNumAtoms(void) const;
+  int getNumBonds(void) const;
+  int getNumAngles(void) const;
+  int getNumDihedrals(void) const;
+  int getNumImpropers(void) const;
+  int getNumCrossTerms(void) const;
 
-  /** @brief Returns a N-sized vector containing all atomic masses */
-  const std::vector<double> &getAtomMasses(void) const { return masses; }
-  std::vector<double> &getAtomMasses(void) { return masses; }
-  /** @brief Returns a N-sized vector containing all atomic charges */
-  const std::vector<double> &getAtomCharges(void) const { return charges; }
-  std::vector<double> &getAtomCharges(void) { return charges; }
+  const std::vector<double> &getMasses(void) const;
+  const std::vector<double> &getCharges(void) const;
+  const std::vector<std::string> &getAtomNames(void) const;
+  const std::vector<std::string> &getAtomTypes(void) const;
+  const std::vector<Bond> &getBonds(void) const;
+  const std::vector<Angle> &getAngles(void) const;
+  const std::vector<Dihedral> &getDihedrals(void) const;
+  const std::vector<Dihedral> &getImpropers(void) const;
+  const std::vector<CrossTerm> &getCrossTerms(void) const;
+  const std::vector<std::set<int>> &getConnected12(void) const;
+  const std::vector<std::set<int>> &getConnected13(void) const;
+  const std::vector<std::set<int>> &getConnected14(void) const;
+  const std::vector<int> &getIblo14(void) const;
+  const std::vector<int> &getInb14(void) const;
+  const CudaContainer<int4> &getWaterMolecules(void) const;
+  const CudaContainer<int2> &getResidues(void) const;
+  const CudaContainer<int2> &getGroups(void) const;
+  const std::string &getFileName(void) const;
 
-  /** @brief Returns a N-sized string-vector containing all atomic names */
-  const std::vector<std::string> &getAtomNames(void) const { return atomNames; }
-  std::vector<std::string> &getAtomNames(void) { return atomNames; }
-  /** @brief Returns a N-sized string-vector containing all atomic types */
-  const std::vector<std::string> &getAtomTypes(void) const { return atomTypes; }
-  std::vector<std::string> &getAtomTypes(void) { return atomTypes; }
+  std::vector<double> &getMasses(void);
+  std::vector<double> &getCharges(void);
+  std::vector<std::string> &getAtomNames(void);
+  std::vector<std::string> &getAtomTypes(void);
+  std::vector<Bond> &getBonds(void);
+  std::vector<Angle> &getAngles(void);
+  std::vector<Dihedral> &getDihedrals(void);
+  std::vector<Dihedral> &getImpropers(void);
+  std::vector<CrossTerm> &getCrossTerms(void);
+  std::vector<std::set<int>> &getConnected12(void);
+  std::vector<std::set<int>> &getConnected13(void);
+  std::vector<std::set<int>> &getConnected14(void);
+  std::vector<int> &getIblo14(void);
+  std::vector<int> &getInb14(void);
+  CudaContainer<int4> &getWaterMolecules(void);
+  CudaContainer<int2> &getResidues(void);
+  CudaContainer<int2> &getGroups(void);
+  std::string &getFileName(void);
 
-  const std::string &getAtomType(const int index) const {
-    return atomTypes[index];
-  }
-
-  const std::vector<int> &getInb14(void) const { return inb14; }
-  std::vector<int> &getInb14(void) { return inb14; }
-  const std::vector<int> &getIblo14(void) const { return iblo14; }
-  std::vector<int> &getIblo14(void) { return iblo14; }
-
-  /** @brief Computes number of water molecules.
-   *
-   * Searches for a sequence of one "OT" type atom followed by two "HT" type
-   * atoms.
-   */
-  CudaContainer<int4> getWaterMolecules();
-  CudaContainer<int2> getResidues();
-  CudaContainer<int2> getGroups();
-
-  /** @brief Computes number of degrees of freedom (3N-6)
-   *
-   * Handling constraints is not done here. Should be done by the
-   * ForceManager.
-   */
-
-  int getDegreesOfFreedom();
-
-  int getMass();
-
-  InclusionExclusion getInclusionExclusionLists();
-
-  /** @brief Set charges value */
-  void setAtomCharges(std::vector<double> chargesIn);
-
-  /**
-   * @brief Generates a PSF structure for the sequence of residues
-   * @param rtf : should contain the residues in the `@param` sequence
-   * @param sequence : each element should have an entry in the `@param` rtf
-   * @param segment :
-   */
-  void generate(const CharmmResidueTopology &rtf,
-                const std::vector<std::string> &sequence, std::string segmnet);
-
-  /**
-   * @brief Appends the sequence of residues to the PSF structure using the
-   * RTF object
-   * @param same as generate
-   * If @param segment is same already present in the psf, the residues will
-   * be appeneded to it. Otherwise, a segment in the psf will be created
-   */
-  void append(const CharmmResidueTopology &rtf,
-              const std::vector<std::string> &sequence, std::string segmnet);
-
-  std::string getOriginalPSFFileName() { return originalPSFFileName; }
+  double getTotalMass(void) const;
+  InclusionExclusion getInclusionExclusionLists(void) const;
 
 private:
-  int numAtoms;
-  int numBonds;
-  int numAngles;
-  int numDihedrals;
-  int numImpropers;
-  int numCrossTerms;
-  /** @brief N-sized vector containing the atomic masses */
-  std::vector<double> masses;
+  void initializeWaterMolecules(void);
+  void createConnectedComponents(void);
+  void buildTopologicalExclusions(void);
+  void readCharmmPSF(const std::string &fileName);
 
-  /** @brief N-sized vector containing the atomic charges */
-  std::vector<double> charges;
-  /** @brief N-sized string-vector of atom names */
-  std::vector<std::string> atomNames;
-  /** @brief N-sized string-vector of atom types */
-  std::vector<std::string> atomTypes;
+private:
+  int m_NumAtoms;
+  std::vector<double> m_Masses;
+  std::vector<double> m_Charges;
+  std::vector<std::string> m_AtomNames;
+  std::vector<std::string> m_AtomTypes;
 
-  // std::vector<std::pair<int, int>> bonds;
-  /** @brief vector containing all Bond objects */
-  std::vector<Bond> bonds;
-  std::vector<Angle> angles;
-  std::vector<Dihedral> dihedrals;
-  std::vector<Dihedral> impropers;
-  std::vector<CrossTerm> crossTerms;
+  int m_NumBonds;
+  std::vector<Bond> m_Bonds;
 
-  CudaContainer<int4> waterMolecules;
-  CudaContainer<int2> residues;
-  CudaContainer<int2> groups;
+  int m_NumAngles;
+  std::vector<Angle> m_Angles;
 
-  std::vector<std::set<int>> connected12, connected13, connected14;
-  std::vector<int> iblo14, inb14;
+  int m_NumDihedrals;
+  std::vector<Dihedral> m_Dihedrals;
 
-  void readCharmmPSFFile(std::string fileName);
-  void buildTopologicalExclusions();
-  void createConnectedComponents();
+  int m_NumImpropers;
+  std::vector<Dihedral> m_Impropers;
 
-  /** @brief Keep the original file name to be loggable later. */
-  std::string originalPSFFileName;
+  int m_NumCrossTerms;
+  std::vector<CrossTerm> m_CrossTerms;
+
+  std::vector<std::set<int>> m_Connected12;
+  std::vector<std::set<int>> m_Connected13;
+  std::vector<std::set<int>> m_Connected14;
+
+  std::vector<int> m_Iblo14;
+  std::vector<int> m_Inb14;
+
+  CudaContainer<int4> m_WaterMolecules;
+  CudaContainer<int2> m_Residues;
+  CudaContainer<int2> m_Groups;
+
+  std::string m_FileName;
 };

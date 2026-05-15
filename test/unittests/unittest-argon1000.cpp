@@ -52,7 +52,8 @@ TEST_CASE("argon1000", "[energy conservation]") {
 
   fm->setBoxDimensions({dim, dim, dim});
   auto ctx = std::make_shared<CharmmContext>(fm);
-  ctx->readRestart(dataPath + "restart/argon1000.restart");
+  // JEG260505: CharmmContext does not read restart files
+  // ctx->readRestart(dataPath + "restart/argon1000.restart");
   std::cout << "restart read." << std::endl;
   ctx->assignVelocitiesAtTemperature(300.0);
 
